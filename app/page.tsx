@@ -15,11 +15,28 @@ type AgentResult = {
   konfidens: number;
 };
 
-type Phase = "input" | "result" | "computing";
+type CalculationStep = {
+  title: string;
+  text: string;
+};
+
+type CalculationResult = {
+  short_conclusion: string;
+  assumptions: string[];
+  calculation_steps: CalculationStep[];
+  results: Record<string, string>;
+  limitations: string[];
+  warnings: string[];
+  confidence: "high" | "medium" | "low";
+};
+
+type Phase = "input" | "result" | "calculating" | "calculation_result";
 
 export default function Home() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [calculation, setCalculation] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
@@ -44,6 +61,7 @@ export default function Home() {
       }
 
       setResult(data.result);
+      setRequestId(data.request_id);
       setPhase("result");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
@@ -52,23 +70,53 @@ export default function Home() {
     }
   };
 
-  // Behald input-teksten, gå tilbake til input-fase
   const handleEdit = () => {
     setResult(null);
+    setRequestId(null);
+    setCalculation(null);
     setError(null);
     setPhase("input");
   };
 
-  // Tilbakestill alt
   const handleCancel = () => {
     setInput("");
     setResult(null);
+    setRequestId(null);
+    setCalculation(null);
     setError(null);
     setPhase("input");
   };
 
-  const handleStartCalculation = () => {
-    setPhase("computing");
+  const handleStartCalculation = async () => {
+    if (!result || !requestId) return;
+
+    setPhase("calculating");
+    setError(null);
+
+    try {
+      const response = await fetch("/api/agent-a", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          request_id: requestId,
+          input_review: result,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Agent A klarte ikkje løyse oppgåva");
+        setPhase("result");
+        return;
+      }
+
+      setCalculation(data.result);
+      setPhase("calculation_result");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ukjent feil");
+      setPhase("result");
+    }
   };
 
   return (
@@ -129,10 +177,9 @@ export default function Home() {
           </section>
         )}
 
-        {/* === FASE: RESULT === */}
+        {/* === FASE: RESULT (Input-agent) === */}
         {phase === "result" && result && (
           <>
-            {/* Brukarens originale forespørsel */}
             <section className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                 Din forespørsel
@@ -142,7 +189,6 @@ export default function Home() {
               </p>
             </section>
 
-            {/* Input-agentens tolking */}
             <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <h3 className="text-lg font-semibold text-slate-900">
@@ -206,11 +252,11 @@ export default function Home() {
               )}
             </section>
 
-            {/* Action-bar */}
             <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="text-sm text-slate-600">
-                  Stemmer tolkinga? Då kan du starte berekninga, eller endre forespørselen.
+                  Stemmer tolkinga? Då kan du starte berekninga, eller endre
+                  forespørselen.
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -236,32 +282,164 @@ export default function Home() {
               </div>
               {result.status === "avvist" && (
                 <p className="mt-3 text-xs text-amber-800">
-                  Inputen er klassifisert som avvist. Berekning kan ikkje startast.
+                  Inputen er klassifisert som avvist. Berekning kan ikkje
+                  startast.
                 </p>
               )}
             </section>
           </>
         )}
 
-        {/* === FASE: COMPUTING (placeholder) === */}
-        {phase === "computing" && (
-          <section className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">
-              Berekningsagentane kjem snart
+        {/* === FASE: CALCULATING === */}
+        {phase === "calculating" && (
+          <section className="rounded-lg border border-slate-200 bg-white p-12 text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900"></div>
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">
+              Agent A reknar...
             </h3>
-            <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-              Agent A og Agent B vil her løyse oppgåva uavhengig av kvarandre,
-              samanlikne svara, og levere ein dokumentert rapport. Førebels
-              stoppar systemet her — du har validert at Input-agenten har
-              forstått oppgåva korrekt.
+            <p className="mt-2 text-sm text-slate-600">
+              Stegvis løysing med formlar, einingar og mellomresultat. Dette tek
+              typisk 10-30 sekund.
             </p>
-            <button
-              onClick={handleCancel}
-              className="mt-6 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              Tilbake til start
-            </button>
           </section>
+        )}
+
+        {/* === FASE: CALCULATION_RESULT === */}
+        {phase === "calculation_result" && calculation && (
+          <>
+            {/* Kort svar */}
+            <section className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 p-5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">
+                Kort svar
+              </h3>
+              <p className="text-base text-emerald-900 font-medium">
+                {calculation.short_conclusion}
+              </p>
+            </section>
+
+            {/* Resultat-objekt */}
+            {Object.keys(calculation.results || {}).length > 0 && (
+              <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                  Resultat
+                </h3>
+                <div className="font-mono text-sm space-y-1">
+                  {Object.entries(calculation.results).map(([k, v]) => (
+                    <div key={k} className="flex gap-3">
+                      <span className="text-slate-500 w-24">{k}</span>
+                      <span className="text-slate-900 font-semibold">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Føresetnader */}
+            {calculation.assumptions?.length > 0 && (
+              <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                  Føresetnader brukt
+                </h3>
+                <ul className="text-sm text-slate-800 list-disc list-inside space-y-1">
+                  {calculation.assumptions.map((a, i) => (
+                    <li key={i}>{a}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Stegvis utrekning */}
+            {calculation.calculation_steps?.length > 0 && (
+              <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  Stegvis utrekning
+                </h3>
+                <ol className="space-y-5">
+                  {calculation.calculation_steps.map((step, i) => (
+                    <li key={i} className="flex gap-4">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-900 text-white text-sm flex items-center justify-center font-mono">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900">
+                          {step.title}
+                        </h4>
+                        <pre className="mt-1 text-sm text-slate-700 font-sans whitespace-pre-wrap">
+                          {step.text}
+                        </pre>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+
+            {/* Avgrensingar */}
+            {calculation.limitations?.length > 0 && (
+              <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-800 mb-2">
+                  Kva er ikkje rekna
+                </h3>
+                <ul className="text-sm text-amber-900 list-disc list-inside space-y-1">
+                  {calculation.limitations.map((l, i) => (
+                    <li key={i}>{l}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Åtvaringar */}
+            {calculation.warnings?.length > 0 && (
+              <section className="mt-6 rounded-lg border border-orange-300 bg-orange-50 p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-800 mb-2">
+                  Åtvaringar
+                </h3>
+                <ul className="text-sm text-orange-900 list-disc list-inside space-y-1">
+                  {calculation.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Konfidens */}
+            <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Agent A konfidens
+                </span>
+                <span
+                  className={`ml-3 inline-block rounded px-2 py-0.5 text-xs font-mono uppercase tracking-wider ${
+                    calculation.confidence === "high"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : calculation.confidence === "medium"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {calculation.confidence}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 italic">
+                Berre éin agent — ingen dobbel-kontroll enno
+              </p>
+            </section>
+
+            {/* Action bar */}
+            <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <p className="text-sm text-slate-600">
+                  Resultatet er førebels og må kontrollerast av fagperson.
+                </p>
+                <button
+                  onClick={handleCancel}
+                  className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Tilbake til start
+                </button>
+              </div>
+            </section>
+          </>
         )}
       </div>
     </main>
