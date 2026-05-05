@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 const SYSTEM_PROMPT = `Du er Input-agenten for Ultimate Konstruktøren, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -71,6 +71,8 @@ export async function POST(request: Request) {
     let requestId: string | null = null;
 
     try {
+      const supabase = getSupabase();
+
       // Steg 1: Lagre rå brukarinput
       const { data: requestData, error: requestError } = await supabase
         .from("requests")
