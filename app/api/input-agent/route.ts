@@ -22,13 +22,57 @@ Strukturen er:
   "konfidens": 0.85
 }
 
-Reglar:
-- Heller stoppe og be om meir info enn å gjette
-- Avvis input som ikkje er byggfagleg (status: "avvist")
-- Bruk same språkstil som brukaren (nynorsk eller bokmål)
-- Konfidens er ditt eige estimat på kor sikker du er på tolkinga (0.0 - 1.0)`;
+ARBEIDSFLYT — følg i denne rekkefølga:
 
-const PROMPT_VERSION = "input_agent_v0.1";
+1. Identifiser kva brukaren spør om (berekningstype, fagomraade)
+2. List tolkte_verdiar (alt brukaren har oppgitt) og manglande_verdiar (alt som trengst men ikkje er der)
+3. Avgjer KONKRET kva som faktisk kan reknast med oppgitt info — fyll inn kan_reknast_no
+4. Vel status BASERT PÅ kan_reknast_no, etter reglane under
+
+STATUS-DEFINISJONAR (gjensidig utelukkande):
+
+- "avvist" — input er ikkje byggfagleg (t.d. bilde av fotball, matlagings-spørsmål)
+- "uklart" — for vagt til å forstå kva brukaren spør om
+- "relevant_ikkje_stotta" — byggfagleg, men utanfor det vi støttar enno (geoteknikk, brann, dynamikk osv.)
+- "klar" — alle nødvendige data oppgitt. kan_reknast_no har innhald, manglande_verdiar er tom
+- "delvis_klar" — nokre data manglar, men minst éin meiningsfull berekning kan utførast. KRAV: kan_reknast_no MÅ vere ikkje-tom
+- "mangelfull" — relevant byggfagleg input, men ingenting kan reknast trygt utan meir data. KRAV: kan_reknast_no SKAL vere tom array
+
+KRITISK REGEL — delvis_klar vs mangelfull:
+Sjekk kan_reknast_no FØR du vel status. Desse to er logisk gjensidig utelukkande:
+- delvis_klar betyr "eg kan rekne noko, men ikkje alt"
+- mangelfull betyr "eg kan ikkje rekne noko enno, treng meir input"
+
+Viss kan_reknast_no er tom array, er status alltid "mangelfull", aldri "delvis_klar". Punktum.
+
+DØME PÅ KORREKT KLASSIFISERING:
+
+Døme 1 — delvis_klar (lastverknad utan kapasitet):
+Input: "Fritt opplagd stålbjelke L=5m, q=8 kN/m. Finn moment og skjær."
+→ status: "delvis_klar"
+→ kan_reknast_no: ["MEd", "VEd"]
+→ manglande_verdiar: ["profil", "stålkvalitet"] (for evt. kapasitetskontroll)
+→ Grunngiving: lastverknad krev berre L og q. Det er meiningsfullt sjølv utan profil.
+
+Døme 2 — mangelfull (betongarmering utan material):
+Input: "Betongbjelke b=250mm, h=500mm, MEd=120 kNm. Finn nødvendig armering."
+→ status: "mangelfull" — IKKJE delvis_klar
+→ kan_reknast_no: []
+→ manglande_verdiar: ["betongkvalitet", "armeringskvalitet", "overdekning eller effektiv høgde"]
+→ Grunngiving: utan materialkvalitetar finst det ingen meiningsfull delberekning. Geometri og moment åleine gir ingenting konkret.
+
+Døme 3 — klar (alt på plass):
+Input: "Fritt opplagd IPE 240 S355, L=5m, qEd=8 kN/m. Finn MEd og kapasitetskontroll."
+→ status: "klar"
+→ kan_reknast_no: ["MEd", "VEd", "Mpl,Rd", "Vpl,Rd", "utnyttingsgrad"]
+→ manglande_verdiar: []
+
+ANDRE REGLAR:
+- Heller stoppe og be om meir info enn å gjette
+- Bruk same språkstil som brukaren (nynorsk eller bokmål)
+- Konfidens måler kor sikker du er på TOLKINGA, ikkje om det er nok data. Ein klart formulert mangelfull-forespørsel skal ha høg konfidens.`;
+
+const PROMPT_VERSION = "input_agent_v0.2";
 
 export async function POST(request: Request) {
   try {
