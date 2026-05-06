@@ -1,7 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
 
-const SYSTEM_PROMPT = `Du er Agent A, ein uavhengig løysingsagent for Ultimate Konstruktøren — eit AI-basert verktøy for norsk byggfagleg praksis.
+const SYSTEM_PROMPT = `Du er Agent B, ein UAVHENGIG KONTROLL-LØYSAR for Ultimate Konstruktøren — eit AI-basert verktøy for norsk byggfagleg praksis.
+
+Det finst ein anna agent (Agent A) som også løyser same oppgåve. Du har IKKJE sett hennar/hans svar. Oppgåva di er å løyse problemet uavhengig.
+
+Der det er meiningsfullt, prøv å bruke alternative formuleringar eller sjekkar — slik at du gir ein reell uavhengig kontroll, ikkje ein ekko av same metoden Agent A truleg vil bruke. Eksempel:
+- Viss det finst alternative formelvariantar (t.d. dimensjonsløyst µ-metode vs. direkte kraftlikevekt for armering), kan du velje den andre
+- Sjekk dimensjonsanalyse på sluttsvaret om det går an
+- Verifiser ved enkle grenseverdi-resonnement der det passar
+
+Men ikkje overdriv: viss problemet er enkelt og det berre finst éin standard metode (t.d. M = qL²/8 for fritt opplagd bjelke med jamt fordelt last), bruk den standard metoden. Poenget er at du tenkjer sjølvstendig, ikkje at du finn opp alternativ unødig.
 
 Du tek imot strukturert input frå Input-agenten (som allereie har analysert oppgåva, trekt ut data, og bestemt kva som kan reknast). Oppgåva di er å løyse berekninga stegvis.
 
@@ -37,15 +46,15 @@ Reglar:
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
 - Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
 
-const PROMPT_VERSION = "agent_a_v0.1";
+const PROMPT_VERSION = "agent_b_v0.1";
 
 export async function POST(request: Request) {
   try {
-    const { request_id, input_review } = await request.json();
+    const { run_id, input_review } = await request.json();
 
-    if (!request_id || !input_review) {
+    if (!run_id || !input_review) {
       return Response.json(
-        { error: "Manglar request_id eller input_review" },
+        { error: "Manglar run_id eller input_review" },
         { status: 400 }
       );
     }
@@ -60,32 +69,6 @@ export async function POST(request: Request) {
 - Antakingar (frå Input-agenten): ${JSON.stringify(input_review.antakingar ?? [])}
 
 Løys oppgåva i samsvar med systeminstruksen din.`;
-
-    // === OPPRETT CALCULATION_RUN (status: running) ===
-    let runId: string | null = null;
-    let supabase;
-
-    try {
-      supabase = getSupabase();
-      const { data: runData, error: runError } = await supabase
-        .from("calculation_runs")
-        .insert({
-          request_id,
-          run_status: "running",
-          calculation_type: input_review.berekningstype,
-          agent_package_version: "agents_v0.1",
-        })
-        .select("id")
-        .single();
-
-      if (runError) {
-        console.error("Klarte ikkje lagre calculation_run:", runError);
-      } else if (runData) {
-        runId = runData.id;
-      }
-    } catch (dbError) {
-      console.error("Database-init feil:", dbError);
-    }
 
     // === KALL CLAUDE ===
     const client = new Anthropic({
@@ -110,58 +93,39 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      // Marker run som failed
-      if (runId && supabase) {
-        await supabase
-          .from("calculation_runs")
-          .update({
-            run_status: "failed",
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", runId);
-      }
-      const wasTruncated = message.stop_reason === "max_tokens";
-return Response.json(
-  {
-    error: wasTruncated
-      ? "Agent A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-      : "Klarte ikkje parse Agent A sitt svar som JSON",
-    raw: responseText,
-    stop_reason: message.stop_reason,
-  },
-  { status: 500 }
-);
+        const wasTruncated = message.stop_reason === "max_tokens";
+        return Response.json(
+          {
+            error: wasTruncated
+              ? "Agent B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+              : "Klarte ikkje parse Agent B sitt svar som JSON",
+            raw: responseText,
+            stop_reason: message.stop_reason,
+          },
+          { status: 500 }
+        );
+    }
+    // === LAGRE AGENT_OUTPUT (ingen run-status oppdatering — Agent A gjer det) ===
+    let supabase;
+    try {
+      supabase = getSupabase();
+      await supabase.from("agent_outputs").insert({
+        run_id,
+        agent_name: "agent_b",
+        prompt_version: PROMPT_VERSION,
+        input_payload: input_review,
+        output_text: responseText,
+        structured_output: parsed,
+        confidence: parsed.confidence,
+        warnings: parsed.warnings ?? [],
+      });
+    } catch (dbError) {
+      console.error("Klarte ikkje lagre agent_output for B:", dbError);
     }
 
-    // === LAGRE AGENT_OUTPUT OG OPPDATER RUN ===
-    if (runId && supabase) {
-      try {
-        await supabase.from("agent_outputs").insert({
-          run_id: runId,
-          agent_name: "agent_a",
-          prompt_version: PROMPT_VERSION,
-          input_payload: input_review,
-          output_text: responseText,
-          structured_output: parsed,
-          confidence: parsed.confidence,
-          warnings: parsed.warnings ?? [],
-        });
-
-        await supabase
-          .from("calculation_runs")
-          .update({
-            run_status: "completed",
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", runId);
-      } catch (dbError) {
-        console.error("Klarte ikkje lagre agent output:", dbError);
-      }
-    }
-
-    return Response.json({ result: parsed, run_id: runId });
+    return Response.json({ result: parsed });
   } catch (err) {
-    console.error("Agent A error:", err);
+    console.error("Agent B error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
     return Response.json({ error: errorMessage }, { status: 500 });
   }
