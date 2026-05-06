@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import "./rapport.css";
+import FeilrapportForm from "./feilrapport-form";
 
 type AgentOutput = {
   agent_name: string;
@@ -135,7 +136,6 @@ export default function RapportPage() {
   const blocked = data.controllerDecision?.blocked_outputs ?? [];
   const isBlocked = (field: string) => blocked.includes(field);
 
-  // Bruk Agent A som primær — Agent D har allereie godkjent, og A og B er einige der det betyr noko
   const primary = data.agentA;
 
   const reportDate = new Date(data.report.created_at).toLocaleDateString(
@@ -153,19 +153,27 @@ export default function RapportPage() {
   const matchPhrase =
     MATCH_PHRASES[data.comparison?.match_status ?? ""] ?? "";
 
+  const wordUrl = `/api/rapport/${runId}/word`;
+  const wordFilename = `${data.report.document_id}.docx`;
+
   return (
     <div className="rapport-container">
       <header className="rapport-toolbar no-print">
-        <button onClick={() => router.push("/")} className="uk-btn">
-          ← Tilbake
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="uk-btn uk-btn--primary"
-        >
-          Last ned PDF
-        </button>
-      </header>
+  <button onClick={() => router.push("/")} className="uk-btn">
+    ← Tilbake
+  </button>
+  <div style={{ display: "flex", gap: "0.5rem" }}>
+    <a href={wordUrl} className="uk-btn" download={wordFilename}>
+      Last ned Word
+    </a>
+    <button
+      onClick={() => window.print()}
+      className="uk-btn uk-btn--primary"
+    >
+      Last ned PDF
+    </button>
+  </div>
+</header>
 
       <article className="rapport-document">
         {/* Forside */}
@@ -332,6 +340,8 @@ export default function RapportPage() {
           <p className="rapport-prose">{data.report.conclusion}</p>
         </section>
 
+        <FeilrapportForm reportId={data.report.id} />
+        
         {/* Footer */}
         <footer className="rapport-footer">
           <p>Generert av Ultimate Konstruktøren • {data.report.document_id}</p>
