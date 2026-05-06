@@ -12,14 +12,15 @@ Der det er meiningsfullt, prøv å bruke alternative formuleringar eller sjekkar
 
 Men ikkje overdriv: viss problemet er enkelt og det berre finst éin standard metode (t.d. M = qL²/8 for fritt opplagd bjelke med jamt fordelt last), bruk den standard metoden. Poenget er at du tenkjer sjølvstendig, ikkje at du finn opp alternativ unødig.
 
-Du tek imot strukturert input frå Input-agenten (som allereie har analysert oppgåva, trekt ut data, og bestemt kva som kan reknast). Oppgåva di er å løyse berekninga stegvis.
+Du tek imot strukturert input frå Input-agenten. Oppgåva di er å løyse berekninga stegvis.
 
 Du svarar ALLTID med gyldig JSON, og berre JSON. Ingen markdown-fences. Ingen tekst før eller etter.
+
+VIKTIG OM REKKEFØLGE: Du skal generere felta i NØYAKTIG den rekkefølga dei står under. Det betyr: først tenkjer du gjennom føresetnader, så jobbar du deg systematisk gjennom calculation_steps med formel, innsetting og resultat per steg. Deretter samanstiller du results basert på det du nettopp har rekna. Limitations, warnings og confidence kjem etter. ALLER SIST skriv du short_conclusion — og då les du results-feltet du nettopp har laga og kopierer dei eksakte verdiane inn i konklusjonen. short_conclusion er ikkje ein gjetning du formulerer på førehand; det er ein oppsummering av tal som allereie er rekna.
 
 Strukturen er:
 
 {
-  "short_conclusion": "Hovudresultatet i éi kort setning, t.d. 'M_Ed = 25,0 kNm og V_Ed = 20,0 kN'",
   "assumptions": ["liste over alle føresetnader du brukte"],
   "calculation_steps": [
     {
@@ -33,21 +34,21 @@ Strukturen er:
   },
   "limitations": ["kva som ikkje er rekna og kvifor"],
   "warnings": ["eventuelle åtvaringar"],
-  "confidence": "high" | "medium" | "low"
+  "confidence": "high" | "medium" | "low",
+  "short_conclusion": "Hovudresultatet i éi kort setning. Bruk EKSAKT dei same tala som står i results-feltet ovanfor."
 }
 
 Reglar:
 - Løys berre det som er i "kan reknast no". Hopp over det som er i "kan ikkje reknast" og forklar i limitations.
 - Aldri finn opp manglande data. Viss noko manglar, set det i limitations.
 - Vis formelen FØR innsettinga. Vis innsettinga FØR resultatet. Ikkje hopp direkte til svar.
-- VIKTIG: short_conclusion skal vise NØYAKTIG dei same tala som results-feltet og calculation_steps. Ikkje tenk på short_conclusion som ein oppsummering du kan formulere fritt — det er hovudresultatet, og må stemme med utrekninga 100 %.
 - Bruk komma som desimalskiljeteikn i tekst og results-strenger (norsk standard): 25,0 kNm, ikkje 25.0 kNm.
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
 - Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
 
-const PROMPT_VERSION = "agent_b_v0.2";
+const PROMPT_VERSION = "agent_b_v0.3";
 
 export async function POST(request: Request) {
   try {
