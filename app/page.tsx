@@ -57,6 +57,17 @@ type ComparisonResult = {
   summary: string;
 };
 
+type ControllerDecision = {
+  decision_status: "approved" | "approved_with_warnings" | "uncertain" | "rejected";
+  risk_level: "low" | "medium" | "high";
+  reason: string;
+  user_message: string;
+  blocked_outputs: string[];
+  allowed_outputs: string[];
+  manual_review_required: boolean;
+  controller_notes: string;
+};
+
 type Phase = "input" | "result" | "calculating" | "calculation_result";
 
 type BadgeStatus = "ok" | "warn" | "bad" | "info" | "neutral";
@@ -75,7 +86,7 @@ const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description
   calculating: {
     eyebrow: "REKNAR",
     title: "Agentane jobbar",
-    description: "Dobbel-kontroll med to uavhengige agentar og samanlikning.",
+    description: "Dobbel-kontroll med to uavhengige agentar, samanlikning og kontrolløravgjerd.",
   },
   calculation_result: {
     eyebrow: "STEG 3 AV 3 · RESULTAT",
@@ -98,16 +109,18 @@ const matchStatusLabel: Record<ComparisonResult["match_status"], string> = {
   critical_disagreement: "Kritisk uenigheit",
 };
 
-const recommendedStatusBadge: Record<ComparisonResult["recommended_status"], BadgeStatus> = {
-  approved_preliminary: "ok",
+const decisionStatusBadge: Record<ControllerDecision["decision_status"], BadgeStatus> = {
+  approved: "ok",
+  approved_with_warnings: "info",
   uncertain: "warn",
-  rejected_needs_review: "bad",
+  rejected: "bad",
 };
 
-const recommendedStatusLabel: Record<ComparisonResult["recommended_status"], string> = {
-  approved_preliminary: "Førebels godkjent",
-  uncertain: "Usikker",
-  rejected_needs_review: "Krev gjennomgang",
+const decisionStatusLabel: Record<ControllerDecision["decision_status"], string> = {
+  approved: "Førebels godkjent",
+  approved_with_warnings: "Godkjent med åtvaringar",
+  uncertain: "Usikker — krev gjennomgang",
+  rejected: "Avvist — må kontrollerast",
 };
 
 const severityBadge: Record<ConsistencyIssue["severity"], BadgeStatus> = {
@@ -130,6 +143,7 @@ export default function Home() {
   const [calculationA, setCalculationA] = useState<CalculationResult | null>(null);
   const [calculationB, setCalculationB] = useState<CalculationResult | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
+  const [controllerDecision, setControllerDecision] = useState<ControllerDecision | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
@@ -169,6 +183,7 @@ export default function Home() {
     setCalculationA(null);
     setCalculationB(null);
     setComparison(null);
+    setControllerDecision(null);
     setError(null);
     setPhase("input");
   };
@@ -179,6 +194,8 @@ export default function Home() {
     setRequestId(null);
     setCalculationA(null);
     setCalculationB(null);
+    setComparison(null);
+    setControllerDecision(null);
     setError(null);
     setPhase("input");
   };
@@ -191,39 +208,52 @@ export default function Home() {
     setCalculationA(null);
     setCalculationB(null);
     setComparison(null);
+    setControllerDecision(null);
 
     try {
-      // Steg 1: Agent A
-      const responseA = await fetch("/api/agent-a", {
+      // === STEG 0: Init run ===
+      const initResponse = await fetch("/api/init-run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           request_id: requestId,
-          input_review: result,
+          calculation_type: result.berekningstype,
         }),
       });
 
+      const initData = await initResponse.json();
+
+      if (!initResponse.ok) {
+        setError(initData.error || "Klarte ikkje starte berekningskøyring");
+        setPhase("result");
+        return;
+      }
+
+      const runId: string = initData.run_id;
+
+      // === STEG 1: Agent A og B parallelt ===
+      const [responseA, responseB] = await Promise.all([
+        fetch("/api/agent-a", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_id: runId, input_review: result }),
+        }),
+        fetch("/api/agent-b", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_id: runId, input_review: result }),
+        }),
+      ]);
+
       const dataA = await responseA.json();
+      const dataB = await responseB.json();
 
       if (!responseA.ok) {
         setError(dataA.error || "Agent A klarte ikkje løyse oppgåva");
         setPhase("result");
         return;
       }
-
       setCalculationA(dataA.result);
-
-      // Steg 2: Agent B
-      const responseB = await fetch("/api/agent-b", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          run_id: dataA.run_id,
-          input_review: result,
-        }),
-      });
-
-      const dataB = await responseB.json();
 
       if (!responseB.ok) {
         console.error("Agent B feila:", dataB.error);
@@ -231,15 +261,14 @@ export default function Home() {
         setPhase("calculation_result");
         return;
       }
-
       setCalculationB(dataB.result);
 
-      // Steg 3: Agent C — samanliknar A og B
+      // === STEG 2: Agent C — samanliknar ===
       const responseC = await fetch("/api/agent-c", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          run_id: dataA.run_id,
+          run_id: runId,
           agent_a_output: dataA.result,
           agent_b_output: dataB.result,
         }),
@@ -253,8 +282,31 @@ export default function Home() {
         setPhase("calculation_result");
         return;
       }
-
       setComparison(dataC.result);
+
+      // === STEG 3: Agent D — kontrolløragent ===
+      const responseD = await fetch("/api/agent-d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          run_id: runId,
+          input_review: result,
+          agent_a_output: dataA.result,
+          agent_b_output: dataB.result,
+          comparison_result: dataC.result,
+        }),
+      });
+
+      const dataD = await responseD.json();
+
+      if (!responseD.ok) {
+        console.error("Agent D feila:", dataD.error);
+        // Ikkje sett error — vi har framleis A+B+C, fall tilbake på C sin recommended_status
+        setPhase("calculation_result");
+        return;
+      }
+
+      setControllerDecision(dataD.result);
       setPhase("calculation_result");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
@@ -263,6 +315,10 @@ export default function Home() {
   };
 
   const pageHeader = PHASE_HEADERS[phase];
+
+  // Hjelpar: er eit gitt output blokka av Agent D?
+  const isBlocked = (key: string): boolean =>
+    !!controllerDecision?.blocked_outputs?.includes(key);
 
   return (
     <div className="uk-shell">
@@ -449,15 +505,8 @@ export default function Home() {
                       flexWrap: "wrap",
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: "var(--fg-muted)",
-                        margin: 0,
-                      }}
-                    >
-                      Stemmer tolkinga? Då kan du starte berekninga, eller endre
-                      forespørselen.
+                    <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
+                      Stemmer tolkinga? Då kan du starte berekninga, eller endre forespørselen.
                     </p>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
@@ -492,13 +541,7 @@ export default function Home() {
                   </div>
                   {(result.status === "avvist" ||
                     (result.kan_reknast_no?.length ?? 0) === 0) && (
-                    <p
-                      style={{
-                        marginTop: 12,
-                        fontSize: 12,
-                        color: "var(--warn)",
-                      }}
-                    >
+                    <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
                       {result.status === "avvist"
                         ? "Inputen er klassifisert som avvist. Berekning kan ikkje startast."
                         : "Ingen berekningar er mogleg med oppgitt informasjon. Klikk Endre input og legg til manglar."}
@@ -512,10 +555,7 @@ export default function Home() {
           {/* === FASE: CALCULATING === */}
           {phase === "calculating" && (
             <section className="uk-card">
-              <div
-                className="uk-card__bd"
-                style={{ padding: "48px 16px", textAlign: "center" }}
-              >
+              <div className="uk-card__bd" style={{ padding: "48px 16px", textAlign: "center" }}>
                 <div
                   className="animate-spin"
                   style={{
@@ -536,18 +576,18 @@ export default function Home() {
                     color: "var(--fg)",
                   }}
                 >
-                  {!calculationA
-                    ? "Agent A reknar..."
-                    : !calculationB
-                      ? "Agent B kontrollerer..."
-                      : "Agent C samanliknar..."}
+                  {!calculationA || !calculationB
+                    ? "Agent A og B reknar parallelt..."
+                    : !comparison
+                      ? "Agent C samanliknar..."
+                      : "Agent D vurderer..."}
                 </h3>
                 <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-                  {!calculationA
-                    ? "Stegvis løysing med formlar og einingar."
-                    : !calculationB
-                      ? "Uavhengig løysing for dobbel-kontroll."
-                      : "Finn skilnader i metode, tal og intern konsistens."}
+                  {!calculationA || !calculationB
+                    ? "To uavhengige løysingar samtidig."
+                    : !comparison
+                      ? "Finn skilnader i metode, tal og intern konsistens."
+                      : "Tek endeleg avgjerd om resultatet kan visast."}
                 </p>
                 <div
                   style={{
@@ -556,6 +596,7 @@ export default function Home() {
                     gap: 16,
                     marginTop: 16,
                     fontSize: 11,
+                    flexWrap: "wrap",
                   }}
                 >
                   {(
@@ -563,6 +604,7 @@ export default function Home() {
                       ["Agent A", !!calculationA],
                       ["Agent B", !!calculationB],
                       ["Agent C", !!comparison],
+                      ["Agent D", !!controllerDecision],
                     ] as const
                   ).map(([label, done]) => (
                     <div
@@ -594,10 +636,10 @@ export default function Home() {
           {/* === FASE: CALCULATION_RESULT === */}
           {phase === "calculation_result" && calculationA && (
             <>
-              {/* Verifikasjons-banner */}
-              {comparison && (
+              {/* Agent D si avgjerd — primær banner */}
+              {controllerDecision && (
                 <StatusStripe
-                  status={matchStatusBadge[comparison.match_status]}
+                  status={decisionStatusBadge[controllerDecision.decision_status]}
                   className="mb-4"
                   header={
                     <div
@@ -610,17 +652,27 @@ export default function Home() {
                         marginBottom: 8,
                       }}
                     >
-                      <span
-                        className="uk-eyebrow"
-                        style={{ color: "inherit" }}
-                      >
-                        {matchStatusLabel[comparison.match_status]}
+                      <span className="uk-eyebrow" style={{ color: "inherit" }}>
+                        Agent D — kontrolløragent
                       </span>
-                      <Badge
-                        status={recommendedStatusBadge[comparison.recommended_status]}
-                      >
-                        {recommendedStatusLabel[comparison.recommended_status]}
+                      <Badge status={decisionStatusBadge[controllerDecision.decision_status]}>
+                        {decisionStatusLabel[controllerDecision.decision_status]}
                       </Badge>
+                    </div>
+                  }
+                >
+                  {controllerDecision.user_message}
+                </StatusStripe>
+              )}
+
+              {/* Fallback: Agent C banner viss D feila */}
+              {!controllerDecision && comparison && (
+                <StatusStripe
+                  status={matchStatusBadge[comparison.match_status]}
+                  className="mb-4"
+                  header={
+                    <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
+                      {matchStatusLabel[comparison.match_status]}
                     </div>
                   }
                 >
@@ -628,34 +680,41 @@ export default function Home() {
                 </StatusStripe>
               )}
 
-              {/* Kort svar */}
-              <StatusStripe
-                status="ok"
-                header={
-                  <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                    Kort svar
-                  </div>
-                }
-              >
-                <span style={{ fontSize: 15, color: "var(--fg)", fontWeight: 500 }}>
-                  {calculationA.short_conclusion}
-                </span>
-              </StatusStripe>
+              {/* Kort svar — eller blokka-varsel */}
+              {(isBlocked("short_conclusion_a") || isBlocked("short_conclusion_b")) ? (
+                <StatusStripe status="warn">
+                  <strong>Sluttkonklusjon utelaten av Agent D.</strong>{" "}
+                  Kontrolløragenten identifiserte hallusinasjonar i agentane sin
+                  kortform-konklusjon. Sjå Resultat-felt og full utrekning under
+                  for korrekte verdiar.
+                </StatusStripe>
+              ) : (
+                <StatusStripe
+                  status="ok"
+                  header={
+                    <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
+                      Kort svar
+                    </div>
+                  }
+                >
+                  <span style={{ fontSize: 15, color: "var(--fg)", fontWeight: 500 }}>
+                    {calculationA.short_conclusion}
+                  </span>
+                </StatusStripe>
+              )}
 
               {/* Resultat-objekt */}
-              {Object.keys(calculationA.results || {}).length > 0 && (
+              {!isBlocked("results_a") && Object.keys(calculationA.results || {}).length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
                     <div className="uk-card__title">Resultat</div>
                   </div>
                   <div className="uk-card__bd">
-                    {Object.entries(calculationA.results).map(([k, v], i, arr) => (
+                    {Object.entries(calculationA.results).map(([k, v], i) => (
                       <div
                         key={k}
                         className="uk-kv"
-                        style={{
-                          borderTop: i === 0 ? "none" : undefined,
-                        }}
+                        style={{ borderTop: i === 0 ? "none" : undefined }}
                       >
                         <span className="uk-kv__k uk-mono">{k}</span>
                         <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
@@ -692,7 +751,7 @@ export default function Home() {
               )}
 
               {/* Stegvis utrekning */}
-              {calculationA.calculation_steps?.length > 0 && (
+              {!isBlocked("calculation_steps_a") && calculationA.calculation_steps?.length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
                     <div className="uk-card__title">Stegvis utrekning</div>
@@ -760,10 +819,7 @@ export default function Home() {
               {calculationA.limitations?.length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div
-                      className="uk-card__title"
-                      style={{ color: "var(--warn)" }}
-                    >
+                    <div className="uk-card__title" style={{ color: "var(--warn)" }}>
                       Kva er ikkje rekna
                     </div>
                   </div>
@@ -815,14 +871,7 @@ export default function Home() {
               {/* Konfidens */}
               <section className="uk-card" style={{ marginTop: 16 }}>
                 <div className="uk-card__bd" style={{ padding: 14 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 24,
-                      alignItems: "center",
-                    }}
-                  >
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span className="uk-eyebrow">Agent A konfidens</span>
                       <Badge status={confidenceBadge[calculationA.confidence]}>
@@ -848,37 +897,31 @@ export default function Home() {
                   style={{ marginTop: 16, background: "var(--surface-2)" }}
                 >
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">
-                      Agent B — uavhengig kontroll
-                    </div>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "var(--fg-muted)",
-                        fontStyle: "italic",
-                      }}
-                    >
+                    <div className="uk-card__title">Agent B — uavhengig kontroll</div>
+                    <span style={{ fontSize: 11, color: "var(--fg-muted)", fontStyle: "italic" }}>
                       Løyste oppgåva utan å sjå Agent A sitt svar
                     </span>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div
-                      style={{
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--r-sm)",
-                        padding: 12,
-                      }}
-                    >
-                      <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
-                        Agent B sin konklusjon
+                    {!isBlocked("short_conclusion_b") && (
+                      <div
+                        style={{
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--r-sm)",
+                          padding: 12,
+                        }}
+                      >
+                        <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
+                          Agent B sin konklusjon
+                        </div>
+                        <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
+                          {calculationB.short_conclusion}
+                        </p>
                       </div>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
-                        {calculationB.short_conclusion}
-                      </p>
-                    </div>
+                    )}
 
-                    {Object.keys(calculationB.results || {}).length > 0 && (
+                    {!isBlocked("results_b") && Object.keys(calculationB.results || {}).length > 0 && (
                       <div
                         style={{
                           background: "var(--surface)",
@@ -894,10 +937,7 @@ export default function Home() {
                           <div
                             key={k}
                             className="uk-kv"
-                            style={{
-                              borderTop: i === 0 ? "none" : undefined,
-                              padding: "6px 0",
-                            }}
+                            style={{ borderTop: i === 0 ? "none" : undefined, padding: "6px 0" }}
                           >
                             <span className="uk-kv__k uk-mono">{k}</span>
                             <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
@@ -916,9 +956,11 @@ export default function Home() {
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
                     <div className="uk-card__title">Agent C — samanlikning</div>
+                    <Badge status={matchStatusBadge[comparison.match_status]}>
+                      {matchStatusLabel[comparison.match_status]}
+                    </Badge>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                    {/* Numeriske skilnader */}
                     {comparison.numeric_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
@@ -932,11 +974,7 @@ export default function Home() {
                                   <th
                                     key={h}
                                     className="uk-eyebrow"
-                                    style={{
-                                      textAlign: "left",
-                                      padding: "8px 10px 8px 0",
-                                      fontWeight: 500,
-                                    }}
+                                    style={{ textAlign: "left", padding: "8px 10px 8px 0", fontWeight: 500 }}
                                   >
                                     {h}
                                   </th>
@@ -959,9 +997,7 @@ export default function Home() {
                                     {diff.percent_diff?.toFixed(1)}%
                                   </td>
                                   <td style={{ padding: "8px 0" }}>
-                                    <Badge status={severityBadge[diff.severity]}>
-                                      {diff.severity}
-                                    </Badge>
+                                    <Badge status={severityBadge[diff.severity]}>{diff.severity}</Badge>
                                   </td>
                                 </tr>
                               ))}
@@ -971,15 +1007,13 @@ export default function Home() {
                         <ul style={{ marginTop: 12, paddingLeft: 0, listStyle: "none", fontSize: 12, color: "var(--fg-muted)" }}>
                           {comparison.numeric_differences.map((diff, i) => (
                             <li key={i} style={{ padding: "3px 0" }}>
-                              <span className="uk-mono">{diff.field}:</span>{" "}
-                              {diff.likely_cause}
+                              <span className="uk-mono">{diff.field}:</span> {diff.likely_cause}
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
 
-                    {/* Metodiske skilnader */}
                     {comparison.method_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
@@ -993,7 +1027,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Føresetnadsforskjellar */}
                     {comparison.assumption_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
@@ -1007,7 +1040,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Intern konsistens — kritisk */}
                     {((comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 ||
                       (comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0) && (
                       <div
@@ -1019,31 +1051,19 @@ export default function Home() {
                           padding: "12px 14px",
                         }}
                       >
-                        <div
-                          className="uk-eyebrow"
-                          style={{ color: "var(--warn)", marginBottom: 10 }}
-                        >
+                        <div className="uk-eyebrow" style={{ color: "var(--warn)", marginBottom: 10 }}>
                           ⚠ Intern inkonsistens
                         </div>
                         {(comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 && (
                           <div style={{ marginBottom: 12 }}>
-                            <div
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                color: "var(--fg)",
-                                marginBottom: 4,
-                              }}
-                            >
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
                               Agent A
                             </div>
                             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                               {comparison.internal_consistency_issues.agent_a.map((issue, i) => (
                                 <li key={i}>
                                   {issue.issue}{" "}
-                                  <Badge status={severityBadge[issue.severity]}>
-                                    {issue.severity}
-                                  </Badge>
+                                  <Badge status={severityBadge[issue.severity]}>{issue.severity}</Badge>
                                 </li>
                               ))}
                             </ul>
@@ -1051,23 +1071,14 @@ export default function Home() {
                         )}
                         {(comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0 && (
                           <div>
-                            <div
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                color: "var(--fg)",
-                                marginBottom: 4,
-                              }}
-                            >
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
                               Agent B
                             </div>
                             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                               {comparison.internal_consistency_issues.agent_b.map((issue, i) => (
                                 <li key={i}>
                                   {issue.issue}{" "}
-                                  <Badge status={severityBadge[issue.severity]}>
-                                    {issue.severity}
-                                  </Badge>
+                                  <Badge status={severityBadge[issue.severity]}>{issue.severity}</Badge>
                                 </li>
                               ))}
                             </ul>
@@ -1111,9 +1122,7 @@ export default function Home() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", gap: 12, fontSize: 13 }}>
-      <span style={{ color: "var(--fg-muted)", width: 128, flexShrink: 0 }}>
-        {label}
-      </span>
+      <span style={{ color: "var(--fg-muted)", width: 128, flexShrink: 0 }}>{label}</span>
       <span style={{ color: "var(--fg)" }}>{value}</span>
     </div>
   );
@@ -1130,9 +1139,7 @@ function ListSection({
 }) {
   return (
     <div>
-      <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-        {label}
-      </div>
+      <div className="uk-eyebrow" style={{ marginBottom: 6 }}>{label}</div>
       <ul
         style={{
           margin: 0,

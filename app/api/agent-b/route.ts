@@ -40,13 +40,14 @@ Reglar:
 - Løys berre det som er i "kan reknast no". Hopp over det som er i "kan ikkje reknast" og forklar i limitations.
 - Aldri finn opp manglande data. Viss noko manglar, set det i limitations.
 - Vis formelen FØR innsettinga. Vis innsettinga FØR resultatet. Ikkje hopp direkte til svar.
+- VIKTIG: short_conclusion skal vise NØYAKTIG dei same tala som results-feltet og calculation_steps. Ikkje tenk på short_conclusion som ein oppsummering du kan formulere fritt — det er hovudresultatet, og må stemme med utrekninga 100 %.
 - Bruk komma som desimalskiljeteikn i tekst og results-strenger (norsk standard): 25,0 kNm, ikkje 25.0 kNm.
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
 - Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
 
-const PROMPT_VERSION = "agent_b_v0.1";
+const PROMPT_VERSION = "agent_b_v0.2";
 
 export async function POST(request: Request) {
   try {

@@ -31,26 +31,26 @@ Reglar:
 - Løys berre det som er i "kan reknast no". Hopp over det som er i "kan ikkje reknast" og forklar i limitations.
 - Aldri finn opp manglande data. Viss noko manglar, set det i limitations.
 - Vis formelen FØR innsettinga. Vis innsettinga FØR resultatet. Ikkje hopp direkte til svar.
+- VIKTIG: short_conclusion skal vise NØYAKTIG dei same tala som results-feltet og calculation_steps. Ikkje tenk på short_conclusion som ein oppsummering du kan formulere fritt — det er hovudresultatet, og må stemme med utrekninga 100 %.
 - Bruk komma som desimalskiljeteikn i tekst og results-strenger (norsk standard): 25,0 kNm, ikkje 25.0 kNm.
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
 - Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
 
-const PROMPT_VERSION = "agent_a_v0.1";
+const PROMPT_VERSION = "agent_a_v0.2";
 
 export async function POST(request: Request) {
   try {
-    const { request_id, input_review } = await request.json();
+    const { run_id, input_review } = await request.json();
 
-    if (!request_id || !input_review) {
+    if (!run_id || !input_review) {
       return Response.json(
-        { error: "Manglar request_id eller input_review" },
+        { error: "Manglar run_id eller input_review" },
         { status: 400 }
       );
     }
 
-    // === BYGG USER MESSAGE MED KONTEKST ===
     const userMessage = `INPUT-AGENTENS TOLKING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
@@ -61,33 +61,6 @@ export async function POST(request: Request) {
 
 Løys oppgåva i samsvar med systeminstruksen din.`;
 
-    // === OPPRETT CALCULATION_RUN (status: running) ===
-    let runId: string | null = null;
-    let supabase;
-
-    try {
-      supabase = getSupabase();
-      const { data: runData, error: runError } = await supabase
-        .from("calculation_runs")
-        .insert({
-          request_id,
-          run_status: "running",
-          calculation_type: input_review.berekningstype,
-          agent_package_version: "agents_v0.1",
-        })
-        .select("id")
-        .single();
-
-      if (runError) {
-        console.error("Klarte ikkje lagre calculation_run:", runError);
-      } else if (runData) {
-        runId = runData.id;
-      }
-    } catch (dbError) {
-      console.error("Database-init feil:", dbError);
-    }
-
-    // === KALL CLAUDE ===
     const client = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
@@ -110,56 +83,37 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      // Marker run som failed
-      if (runId && supabase) {
-        await supabase
-          .from("calculation_runs")
-          .update({
-            run_status: "failed",
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", runId);
-      }
       const wasTruncated = message.stop_reason === "max_tokens";
-return Response.json(
-  {
-    error: wasTruncated
-      ? "Agent A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-      : "Klarte ikkje parse Agent A sitt svar som JSON",
-    raw: responseText,
-    stop_reason: message.stop_reason,
-  },
-  { status: 500 }
-);
+      return Response.json(
+        {
+          error: wasTruncated
+            ? "Agent A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+            : "Klarte ikkje parse Agent A sitt svar som JSON",
+          raw: responseText,
+          stop_reason: message.stop_reason,
+        },
+        { status: 500 }
+      );
     }
 
-    // === LAGRE AGENT_OUTPUT OG OPPDATER RUN ===
-    if (runId && supabase) {
-      try {
-        await supabase.from("agent_outputs").insert({
-          run_id: runId,
-          agent_name: "agent_a",
-          prompt_version: PROMPT_VERSION,
-          input_payload: input_review,
-          output_text: responseText,
-          structured_output: parsed,
-          confidence: parsed.confidence,
-          warnings: parsed.warnings ?? [],
-        });
-
-        await supabase
-          .from("calculation_runs")
-          .update({
-            run_status: "completed",
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", runId);
-      } catch (dbError) {
-        console.error("Klarte ikkje lagre agent output:", dbError);
-      }
+    let supabase;
+    try {
+      supabase = getSupabase();
+      await supabase.from("agent_outputs").insert({
+        run_id,
+        agent_name: "agent_a",
+        prompt_version: PROMPT_VERSION,
+        input_payload: input_review,
+        output_text: responseText,
+        structured_output: parsed,
+        confidence: parsed.confidence,
+        warnings: parsed.warnings ?? [],
+      });
+    } catch (dbError) {
+      console.error("Klarte ikkje lagre agent output for A:", dbError);
     }
 
-    return Response.json({ result: parsed, run_id: runId });
+    return Response.json({ result: parsed });
   } catch (err) {
     console.error("Agent A error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
