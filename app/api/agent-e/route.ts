@@ -53,18 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check cache: returner eksisterande rapport viss han finst
-    const { data: existing } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("run_id", run_id)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json({ report: existing, cached: true });
-    }
-
-    // Hent all oppstrøms-data
+    // Hent all oppstrøms-data — trengst både til LLM-kontekst og til rapport-rendering
     const { data: run, error: runError } = await supabase
       .from("calculation_runs")
       .select("*, request:requests(*)")
@@ -89,8 +78,8 @@ export async function POST(request: Request) {
       .select("*")
       .eq("run_id", run_id);
 
-    const agentA = agentOutputs?.find(o => o.agent_name === "agent_a");
-    const agentB = agentOutputs?.find(o => o.agent_name === "agent_b");
+    const agentA = agentOutputs?.find((o) => o.agent_name === "agent_a");
+    const agentB = agentOutputs?.find((o) => o.agent_name === "agent_b");
 
     const { data: comparison } = await supabase
       .from("comparisons")
@@ -104,7 +93,27 @@ export async function POST(request: Request) {
       .eq("run_id", run_id)
       .maybeSingle();
 
-    // Bygg kontekst for LLM
+    // Sjekk caching for rapport
+    const { data: existing } = await supabase
+      .from("reports")
+      .select("*")
+      .eq("run_id", run_id)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({
+        report: existing,
+        cached: true,
+        run,
+        inputReview,
+        agentA,
+        agentB,
+        comparison,
+        controllerDecision,
+      });
+    }
+
+    // Generer ny rapport via LLM
     const userMessage = `Skriv rapport-prosa basert på følgjande arbeid frå tidlegare agentar:
 
 BRUKAR-FORESPURNAD:
@@ -127,7 +136,6 @@ ${JSON.stringify(controllerDecision, null, 2)}
 
 Generer JSON med executive_summary, technical_assessment og conclusion.`;
 
-    // LLM-kall
     const response = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 2000,
@@ -136,8 +144,8 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
     });
 
     const responseText = response.content
-      .filter(b => b.type === "text")
-      .map(b => (b as { text: string }).text)
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { text: string }).text)
       .join("\n");
 
     let parsed: {
@@ -148,7 +156,7 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
 
     try {
       parsed = JSON.parse(responseText);
-    } catch (e) {
+    } catch {
       console.error("Failed to parse Agent E response:", responseText);
       return NextResponse.json(
         { error: "Agent E returned invalid JSON" },
@@ -159,7 +167,6 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
     // Generer dokument-ID frå dei første 8 teikna i run_id
     const documentId = `UK-${run_id.split("-")[0].toUpperCase()}`;
 
-    // Lagre i database
     const { data: newReport, error: insertError } = await supabase
       .from("reports")
       .insert({
@@ -181,7 +188,16 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
       );
     }
 
-    return NextResponse.json({ report: newReport, cached: false });
+    return NextResponse.json({
+      report: newReport,
+      cached: false,
+      run,
+      inputReview,
+      agentA,
+      agentB,
+      comparison,
+      controllerDecision,
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown error in Agent E";

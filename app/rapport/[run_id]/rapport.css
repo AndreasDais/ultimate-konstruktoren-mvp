@@ -1,0 +1,264 @@
+.rapport-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    gap: 1rem;
+  }
+  
+  .rapport-container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+  
+  .rapport-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+  }
+  
+  .rapport-document {
+    background: white;
+    padding: 5rem 5rem 6rem;
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: #1a1a1a;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+  }
+  
+  .rapport-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted, #666);
+    margin-bottom: 0.5rem;
+  }
+  
+  .rapport-document h1 {
+    font-family: var(--font-sans);
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  
+  .rapport-document h2 {
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 3rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border, #e5e5e5);
+    letter-spacing: -0.01em;
+  }
+  
+  .rapport-document h3 {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+  }
+  
+  .rapport-document p {
+    margin: 0 0 1rem;
+  }
+  
+  .document-meta {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--text-muted, #666);
+    margin: 0 0 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border, #e5e5e5);
+    border-bottom: 1px solid var(--border, #e5e5e5);
+  }
+  
+  .document-meta > div {
+    margin: 0.25rem 0;
+  }
+  
+  .document-meta span {
+    display: inline-block;
+    width: 9rem;
+    font-weight: 500;
+  }
+  
+  .rapport-disclaimer {
+    background: #fef9e7;
+    border-left: 3px solid #d4a017;
+    padding: 1rem 1.25rem;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    margin: 2rem 0;
+  }
+  
+  .rapport-disclaimer strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.05em;
+  }
+  
+  .rapport-section {
+    break-inside: avoid;
+  }
+  
+  .rapport-prose {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+  
+  .rapport-quote {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.875rem;
+    background: #f8f8f8;
+    border-left: 3px solid var(--border, #d4d4d4);
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    white-space: pre-wrap;
+  }
+  
+  .rapport-data {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.8125rem;
+    background: #fafafa;
+    padding: 0.75rem 1rem;
+    border-radius: 3px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+  }
+  
+  .rapport-list {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1rem;
+    line-height: 1.7;
+    padding-left: 1.5rem;
+    margin: 0;
+  }
+  
+  .rapport-list li {
+    margin: 0.25rem 0;
+  }
+  
+  .rapport-list-warnings li {
+    color: #8b4513;
+  }
+  
+  .rapport-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    margin: 0.5rem 0;
+  }
+  
+  .rapport-table th,
+  .rapport-table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border, #e5e5e5);
+    vertical-align: top;
+  }
+  
+  .rapport-table th {
+    font-weight: 500;
+    color: var(--text-muted, #555);
+    width: 45%;
+  }
+  
+  .rapport-step {
+    margin: 1.5rem 0;
+  }
+  
+  .rapport-step-text {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.875rem;
+    background: #fafafa;
+    padding: 1rem;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    margin: 0;
+  }
+  
+  .rapport-decision {
+    background: #f0f4f8;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--info, #4a73a8);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+  }
+  
+  .rapport-decision em {
+    display: block;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: var(--text-muted, #555);
+  }
+  
+  .rapport-footer {
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border, #e5e5e5);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    color: var(--text-muted, #666);
+    text-align: center;
+  }
+  
+  .rapport-footer p {
+    margin: 0.25rem 0;
+  }
+  
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  
+    body {
+      background: white !important;
+    }
+  
+    .rapport-container {
+      background: white !important;
+      padding: 0 !important;
+      max-width: none !important;
+    }
+  
+    .rapport-document {
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+    }
+  
+    @page {
+      margin: 2cm;
+      size: A4;
+    }
+  
+    h1,
+    h2,
+    h3 {
+      page-break-after: avoid;
+    }
+  
+    .rapport-section,
+    .rapport-step {
+      page-break-inside: avoid;
+    }
+  }

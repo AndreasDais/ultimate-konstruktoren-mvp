@@ -144,6 +144,7 @@ export default function Home() {
   const [calculationB, setCalculationB] = useState<CalculationResult | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [controllerDecision, setControllerDecision] = useState<ControllerDecision | null>(null);
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
@@ -184,6 +185,7 @@ export default function Home() {
     setCalculationB(null);
     setComparison(null);
     setControllerDecision(null);
+    setCurrentRunId(null);
     setError(null);
     setPhase("input");
   };
@@ -196,6 +198,7 @@ export default function Home() {
     setCalculationB(null);
     setComparison(null);
     setControllerDecision(null);
+    setCurrentRunId(null);
     setError(null);
     setPhase("input");
   };
@@ -230,6 +233,7 @@ export default function Home() {
       }
 
       const runId: string = initData.run_id;
+      setCurrentRunId(runId);
 
       // === STEG 1: Agent A og B parallelt ===
       const [responseA, responseB] = await Promise.all([
@@ -1105,9 +1109,19 @@ export default function Home() {
                     <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
                       Resultatet er førebels og må kontrollerast av fagperson.
                     </p>
-                    <button onClick={handleCancel} className="uk-btn">
-                      Tilbake til start
-                    </button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={handleCancel} className="uk-btn">
+                        Tilbake til start
+                      </button>
+                      {currentRunId && calculationA && calculationB && (
+                        <a
+                          href={`/rapport/${currentRunId}`}
+                          className="uk-btn uk-btn--primary"
+                        >
+                          Generer rapport →
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </section>
