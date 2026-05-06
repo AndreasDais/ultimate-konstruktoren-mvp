@@ -30,6 +30,33 @@ type CalculationResult = {
   confidence: "high" | "medium" | "low";
 };
 
+type ConsistencyIssue = {
+  issue: string;
+  severity: "low" | "medium" | "high" | "critical";
+};
+
+type NumericDifference = {
+  field: string;
+  agent_a_value: string;
+  agent_b_value: string;
+  percent_diff: number;
+  severity: "low" | "medium" | "high" | "critical";
+  likely_cause: string;
+};
+
+type ComparisonResult = {
+  match_status: "match" | "minor_differences" | "significant_differences" | "critical_disagreement";
+  numeric_differences: NumericDifference[];
+  method_differences: string[];
+  assumption_differences: string[];
+  internal_consistency_issues: {
+    agent_a: ConsistencyIssue[];
+    agent_b: ConsistencyIssue[];
+  };
+  recommended_status: "approved_preliminary" | "uncertain" | "rejected_needs_review";
+  summary: string;
+};
+
 type Phase = "input" | "result" | "calculating" | "calculation_result";
 
 export default function Home() {
@@ -38,6 +65,7 @@ export default function Home() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [calculationA, setCalculationA] = useState<CalculationResult | null>(null);
   const [calculationB, setCalculationB] = useState<CalculationResult | null>(null);
+  const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
@@ -76,6 +104,7 @@ export default function Home() {
     setRequestId(null);
     setCalculationA(null);
     setCalculationB(null);
+    setComparison(null);
     setError(null);
     setPhase("input");
   };
@@ -97,9 +126,10 @@ export default function Home() {
     setError(null);
     setCalculationA(null);
     setCalculationB(null);
+    setComparison(null);
   
     try {
-      // Steg 1: Agent A (opprettar også calculation_run)
+      // Steg 1: Agent A
       const responseA = await fetch("/api/agent-a", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,7 +149,7 @@ export default function Home() {
   
       setCalculationA(dataA.result);
   
-      // Steg 2: Agent B (brukar run_id frå A)
+      // Steg 2: Agent B
       const responseB = await fetch("/api/agent-b", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,14 +162,36 @@ export default function Home() {
       const dataB = await responseB.json();
   
       if (!responseB.ok) {
-        // A lukkast, B feila — vis A og logg B-feilen
         console.error("Agent B feila:", dataB.error);
-        setError(`Agent B feila: ${dataB.error}. Viser berre Agent A sitt svar.`);
+        setError(`Agent B feila: ${dataB.error}. Hoppar over samanlikning.`);
         setPhase("calculation_result");
         return;
       }
   
       setCalculationB(dataB.result);
+  
+      // Steg 3: Agent C — samanliknar A og B
+      const responseC = await fetch("/api/agent-c", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          run_id: dataA.run_id,
+          agent_a_output: dataA.result,
+          agent_b_output: dataB.result,
+        }),
+      });
+  
+      const dataC = await responseC.json();
+  
+      if (!responseC.ok) {
+        console.error("Agent C feila:", dataC.error);
+        // Vi har framleis A og B — vis dei utan samanlikning
+        setError(`Agent C feila: ${dataC.error}. Viser A og B utan samanlikning.`);
+        setPhase("calculation_result");
+        return;
+      }
+  
+      setComparison(dataC.result);
       setPhase("calculation_result");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
@@ -323,25 +375,127 @@ export default function Home() {
   <section className="rounded-lg border border-slate-200 bg-white p-12 text-center">
     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900"></div>
     <h3 className="mt-4 text-lg font-semibold text-slate-900">
-      {calculationA ? "Agent B kontrollerer..." : "Agent A reknar..."}
+      {!calculationA
+        ? "Agent A reknar..."
+        : !calculationB
+        ? "Agent B kontrollerer..."
+        : "Agent C samanliknar..."}
     </h3>
     <p className="mt-2 text-sm text-slate-600">
-      {calculationA
-        ? "Uavhengig løysing for dobbel-kontroll. Tek typisk 10-30 sekund."
-        : "Stegvis løysing med formlar, einingar og mellomresultat. Tek typisk 10-30 sekund."}
+      {!calculationA
+        ? "Stegvis løysing med formlar og einingar."
+        : !calculationB
+        ? "Uavhengig løysing for dobbel-kontroll."
+        : "Finn skilnader i metode, tal og intern konsistens."}
     </p>
-    {calculationA && (
-      <div className="mt-4 inline-flex items-center gap-2 text-xs text-emerald-700">
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-        Agent A ferdig
+    <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+      <div
+        className={`flex items-center gap-2 ${
+          calculationA ? "text-emerald-700" : "text-slate-400"
+        }`}
+      >
+        <span
+          className={`inline-block w-2 h-2 rounded-full ${
+            calculationA ? "bg-emerald-500" : "bg-slate-300"
+          }`}
+        ></span>
+        Agent A
       </div>
-    )}
+      <div
+        className={`flex items-center gap-2 ${
+          calculationB ? "text-emerald-700" : "text-slate-400"
+        }`}
+      >
+        <span
+          className={`inline-block w-2 h-2 rounded-full ${
+            calculationB ? "bg-emerald-500" : "bg-slate-300"
+          }`}
+        ></span>
+        Agent B
+      </div>
+      <div
+        className={`flex items-center gap-2 ${
+          comparison ? "text-emerald-700" : "text-slate-400"
+        }`}
+      >
+        <span
+          className={`inline-block w-2 h-2 rounded-full ${
+            comparison ? "bg-emerald-500" : "bg-slate-300"
+          }`}
+        ></span>
+        Agent C
+      </div>
+    </div>
   </section>
-  )}
+)}
 
         {/* === FASE: CALCULATION_RESULT === */}
         {phase === "calculation_result" && calculationA && (
           <>
+          {/* Verifikasjons-banner */}
+{comparison && (
+  <section
+    className={`rounded-lg border-l-4 p-4 mb-6 ${
+      comparison.match_status === "match"
+        ? "border-emerald-500 bg-emerald-50"
+        : comparison.match_status === "minor_differences"
+        ? "border-amber-400 bg-amber-50"
+        : comparison.match_status === "significant_differences"
+        ? "border-orange-500 bg-orange-50"
+        : "border-red-500 bg-red-50"
+    }`}
+  >
+    <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+      <h3
+        className={`text-sm font-semibold uppercase tracking-wider ${
+          comparison.match_status === "match"
+            ? "text-emerald-900"
+            : comparison.match_status === "minor_differences"
+            ? "text-amber-900"
+            : comparison.match_status === "significant_differences"
+            ? "text-orange-900"
+            : "text-red-900"
+        }`}
+      >
+        {comparison.match_status === "match"
+          ? "✓ Begge agentar er einige"
+          : comparison.match_status === "minor_differences"
+          ? "Mindre forskjellar"
+          : comparison.match_status === "significant_differences"
+          ? "Betydelege forskjellar"
+          : "Kritisk uenigheit"}
+      </h3>
+      <span
+        className={`text-xs font-mono uppercase tracking-wider rounded px-2 py-0.5 bg-white ${
+          comparison.recommended_status === "approved_preliminary"
+            ? "text-emerald-700"
+            : comparison.recommended_status === "uncertain"
+            ? "text-amber-700"
+            : "text-red-700"
+        }`}
+      >
+        {comparison.recommended_status === "approved_preliminary"
+          ? "Førebels godkjent"
+          : comparison.recommended_status === "uncertain"
+          ? "Usikker"
+          : "Krev gjennomgang"}
+      </span>
+    </div>
+    <p
+      className={`text-sm leading-relaxed ${
+        comparison.match_status === "match"
+          ? "text-emerald-900"
+          : comparison.match_status === "minor_differences"
+          ? "text-amber-900"
+          : comparison.match_status === "significant_differences"
+          ? "text-orange-900"
+          : "text-red-900"
+      }`}
+    >
+      {comparison.summary}
+    </p>
+  </section>
+)}
             {/* Kort svar */}
             <section className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 p-5">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">
@@ -517,6 +671,151 @@ export default function Home() {
     <p className="mt-3 text-xs text-slate-500 italic">
       Samanlikningsagenten (Agent C) kjem i neste sesjon — han vil analysere forskjellar systematisk.
     </p>
+  </section>
+)}
+
+{/* Comparison details — Agent C */}
+{comparison && (
+  <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+    <h3 className="text-lg font-semibold text-slate-900 mb-4">
+      Agent C — samanlikning
+    </h3>
+
+    {/* Numeriske skilnader */}
+    {comparison.numeric_differences?.length > 0 && (
+      <div className="mb-5">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          Numeriske skilnader
+        </h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500">
+                <th className="text-left py-2 pr-3 font-normal">Felt</th>
+                <th className="text-left py-2 pr-3 font-normal">Agent A</th>
+                <th className="text-left py-2 pr-3 font-normal">Agent B</th>
+                <th className="text-left py-2 pr-3 font-normal">Skilnad</th>
+                <th className="text-left py-2 font-normal">Alvor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparison.numeric_differences.map((diff, i) => (
+                <tr key={i} className="border-b border-slate-100">
+                  <td className="py-2 pr-3 font-mono text-slate-700">
+                    {diff.field}
+                  </td>
+                  <td className="py-2 pr-3 font-mono">
+                    {diff.agent_a_value}
+                  </td>
+                  <td className="py-2 pr-3 font-mono">
+                    {diff.agent_b_value}
+                  </td>
+                  <td className="py-2 pr-3 font-mono">
+                    {diff.percent_diff?.toFixed(1)}%
+                  </td>
+                  <td className="py-2">
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 text-xs font-mono uppercase ${
+                        diff.severity === "low"
+                          ? "bg-slate-100 text-slate-700"
+                          : diff.severity === "medium"
+                          ? "bg-amber-100 text-amber-800"
+                          : diff.severity === "high"
+                          ? "bg-orange-100 text-orange-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {diff.severity}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Likely causes som tekst-liste under */}
+        <ul className="mt-3 text-xs text-slate-600 space-y-1">
+          {comparison.numeric_differences.map((diff, i) => (
+            <li key={i}>
+              <span className="font-mono">{diff.field}:</span>{" "}
+              {diff.likely_cause}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {/* Metodiske skilnader */}
+    {comparison.method_differences?.length > 0 && (
+      <div className="mb-5">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          Metodiske skilnader
+        </h4>
+        <ul className="text-sm text-slate-800 list-disc list-inside space-y-1">
+          {comparison.method_differences.map((m, i) => (
+            <li key={i}>{m}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {/* Føresetnadsforskjellar */}
+    {comparison.assumption_differences?.length > 0 && (
+      <div className="mb-5">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          Forskjellar i føresetnader
+        </h4>
+        <ul className="text-sm text-slate-800 list-disc list-inside space-y-1">
+          {comparison.assumption_differences.map((a, i) => (
+            <li key={i}>{a}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {/* Intern konsistens — kritisk */}
+    {((comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 ||
+      (comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0) && (
+      <div className="mt-4 rounded border border-orange-300 bg-orange-50 p-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-orange-800 mb-2">
+          ⚠ Intern inkonsistens
+        </h4>
+        {(comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 && (
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-orange-900 mb-1">
+              Agent A
+            </div>
+            <ul className="text-sm text-orange-900 list-disc list-inside space-y-1">
+              {comparison.internal_consistency_issues.agent_a.map((issue, i) => (
+                <li key={i}>
+                  {issue.issue}{" "}
+                  <span className="font-mono text-xs uppercase">
+                    [{issue.severity}]
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {(comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-orange-900 mb-1">
+              Agent B
+            </div>
+            <ul className="text-sm text-orange-900 list-disc list-inside space-y-1">
+              {comparison.internal_consistency_issues.agent_b.map((issue, i) => (
+                <li key={i}>
+                  {issue.issue}{" "}
+                  <span className="font-mono text-xs uppercase">
+                    [{issue.severity}]
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    )}
   </section>
 )}
 
