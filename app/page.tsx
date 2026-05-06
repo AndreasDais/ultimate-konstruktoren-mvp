@@ -699,38 +699,38 @@ export default function Home() {
               </tr>
             </thead>
             <tbody>
-              {comparison.numeric_differences.map((diff, i) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td className="py-2 pr-3 font-mono text-slate-700">
-                    {diff.field}
-                  </td>
-                  <td className="py-2 pr-3 font-mono">
-                    {diff.agent_a_value}
-                  </td>
-                  <td className="py-2 pr-3 font-mono">
-                    {diff.agent_b_value}
-                  </td>
-                  <td className="py-2 pr-3 font-mono">
-                    {diff.percent_diff?.toFixed(1)}%
-                  </td>
-                  <td className="py-2">
-                    <span
-                      className={`inline-block rounded px-2 py-0.5 text-xs font-mono uppercase ${
-                        diff.severity === "low"
-                          ? "bg-slate-100 text-slate-700"
-                          : diff.severity === "medium"
-                          ? "bg-amber-100 text-amber-800"
-                          : diff.severity === "high"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {diff.severity}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+  {comparison.numeric_differences.map((diff, i) => (
+    <tr key={i} className="border-b border-slate-100">
+      <td className="py-2 pr-3 font-mono text-slate-700">
+        {diff.field}
+      </td>
+      <td className="py-2 pr-3 font-mono text-slate-800">
+        {diff.agent_a_value}
+      </td>
+      <td className="py-2 pr-3 font-mono text-slate-800">
+        {diff.agent_b_value}
+      </td>
+      <td className="py-2 pr-3 font-mono text-slate-800">
+        {diff.percent_diff?.toFixed(1)}%
+      </td>
+      <td className="py-2">
+        <span
+          className={`inline-block rounded px-2 py-0.5 text-xs font-mono uppercase ${
+            diff.severity === "low"
+              ? "bg-slate-100 text-slate-700"
+              : diff.severity === "medium"
+              ? "bg-amber-100 text-amber-800"
+              : diff.severity === "high"
+              ? "bg-orange-100 text-orange-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {diff.severity}
+        </span>
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
         </div>
         {/* Likely causes som tekst-liste under */}
