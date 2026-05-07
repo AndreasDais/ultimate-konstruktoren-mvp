@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
 type ErrorReportStatus =
   | "open"
@@ -10,6 +12,12 @@ type ErrorReportStatus =
   | "fixed";
 
 type ErrorReportSeverity = "low" | "medium" | "high";
+
+type LastReview = {
+  email: string;
+  decision: string;
+  created_at: string;
+};
 
 type ErrorReport = {
   id: string;
@@ -21,17 +29,13 @@ type ErrorReport = {
   user_comment: string;
   status: ErrorReportStatus;
   created_at: string;
-  // Frå JOIN med reports-tabellen. Kan vere null om reports-rada manglar
-  // eller ikkje har eit run_id sett.
   reports: { run_id: string | null } | null;
-  // Frå manual_reviews-tabellen — count av eksisterande reviews
   review_count: number;
+  last_review: LastReview | null;
 };
 
 type BadgeStatus = "ok" | "warn" | "bad" | "info" | "neutral";
 
-// Berre desse statusane utløyser review-modal. "under_review" er ein
-// arbeidstilstand utan endeleg avgjerd og lagrast direkte.
 type SubstantialDecision = "confirmed" | "rejected" | "fixed";
 
 type ReviewModalState = {
@@ -61,6 +65,12 @@ const DECISION_LABELS: Record<SubstantialDecision, string> = {
   fixed: "Markér som fiksa",
 };
 
+const DECISION_DISPLAY: Record<string, string> = {
+  confirmed: "bekrefta",
+  rejected: "avvist",
+  fixed: "fiksa",
+};
+
 const ERROR_TYPE_LABELS: Record<string, string> = {
   feil_talverdi: "Feil talverdi",
   feil_formel: "Feil formel",
@@ -79,12 +89,14 @@ const SEVERITY_BADGE: Record<ErrorReportSeverity, BadgeStatus> = {
 };
 
 export default function ErrorReportsAdmin() {
+  const router = useRouter();
   const [reports, setReports] = useState<ErrorReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Review-modal state
   const [reviewModal, setReviewModal] = useState<ReviewModalState | null>(null);
@@ -120,7 +132,27 @@ export default function ErrorReportsAdmin() {
     fetchReports();
   }, [fetchReports]);
 
-  // Direkte oppdatering — berre for "under_review" (ingen review-data nødvendig)
+  // Hent innlogga brukars email for visning i topbar
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) setUserEmail(user.email);
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  };
+
   const quickUpdate = async (id: string, newStatus: ErrorReportStatus) => {
     setUpdatingId(id);
     setError(null);
@@ -145,7 +177,6 @@ export default function ErrorReportsAdmin() {
     }
   };
 
-  // Substansiell avgjerd — opnar modal for å samle notes/action_taken
   const openReviewModal = (id: string, decision: SubstantialDecision) => {
     setReviewModal({ errorReportId: id, decision });
     setReviewNotes("");
@@ -193,10 +224,34 @@ export default function ErrorReportsAdmin() {
 
   return (
     <div className="uk-shell">
-      <header className="uk-topbar">
+      <header
+        className="uk-topbar"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div className="uk-topbar__brand">
           <div className="uk-topbar__logo">UK</div>
           Konstruktøren — Admin
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {userEmail && (
+            <span
+              className="uk-mono"
+              style={{ fontSize: 11, color: "var(--fg-muted)" }}
+            >
+              {userEmail}
+            </span>
+          )}
+          <button
+            onClick={handleLogout}
+            className="uk-btn uk-btn--ghost"
+            style={{ fontSize: 12 }}
+          >
+            Logg ut
+          </button>
         </div>
       </header>
 
@@ -226,7 +281,8 @@ export default function ErrorReportsAdmin() {
               }}
             >
               Triage av brukarrapporterte feil. Substansielle avgjerder (Bekreft,
-              Avvis, Fiksa) blir lagra i manual_reviews med notat for læringssløyfa.
+              Avvis, Fiksa) blir lagra i manual_reviews med notat for
+              læringssløyfa.
             </p>
           </header>
 
@@ -234,7 +290,11 @@ export default function ErrorReportsAdmin() {
           <section className="uk-card" style={{ marginBottom: 16 }}>
             <div
               className="uk-card__bd"
-              style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}
+              style={{
+                display: "grid",
+                gap: 12,
+                gridTemplateColumns: "1fr 1fr",
+              }}
             >
               <div>
                 <label
@@ -330,9 +390,16 @@ export default function ErrorReportsAdmin() {
                 style={{ marginBottom: 12 }}
               >
                 <div className="uk-card__hd">
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                  >
                     <div
-                      style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
                     >
                       <Badge status={SEVERITY_BADGE[report.severity_user]}>
                         {report.severity_user}
@@ -381,6 +448,34 @@ export default function ErrorReportsAdmin() {
                   </div>
                   <Row label="Rapport-ID" value={report.report_id} mono />
                   {runId && <Row label="Run-ID" value={runId} mono />}
+
+                  {report.last_review && (
+                    <div
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--r-sm)",
+                        padding: "10px 12px",
+                        fontSize: 12,
+                        color: "var(--fg-muted)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <span className="uk-eyebrow" style={{ marginRight: 8 }}>
+                        Siste review
+                      </span>
+                      <span style={{ color: "var(--fg-2)" }}>
+                        {DECISION_DISPLAY[report.last_review.decision] ??
+                          report.last_review.decision}{" "}
+                        av{" "}
+                        <span className="uk-mono">{report.last_review.email}</span>{" "}
+                        ·{" "}
+                        {new Date(report.last_review.created_at).toLocaleString(
+                          "nb-NO"
+                        )}
+                      </span>
+                    </div>
+                  )}
 
                   <div
                     style={{
@@ -454,7 +549,6 @@ export default function ErrorReportsAdmin() {
         </div>
       </main>
 
-      {/* Review-modal */}
       {reviewModal && (
         <ReviewModal
           decision={reviewModal.decision}
@@ -701,9 +795,21 @@ function Badge({
   const colors: Record<BadgeStatus, { fg: string; bg: string; border: string }> =
     {
       ok: { fg: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
-      warn: { fg: "var(--warn)", bg: "var(--warn-bg)", border: "var(--warn-border)" },
-      bad: { fg: "var(--bad)", bg: "var(--bad-bg)", border: "var(--bad-border)" },
-      info: { fg: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)" },
+      warn: {
+        fg: "var(--warn)",
+        bg: "var(--warn-bg)",
+        border: "var(--warn-border)",
+      },
+      bad: {
+        fg: "var(--bad)",
+        bg: "var(--bad-bg)",
+        border: "var(--bad-border)",
+      },
+      info: {
+        fg: "var(--info)",
+        bg: "var(--info-bg)",
+        border: "var(--info-border)",
+      },
       neutral: {
         fg: "var(--fg-2)",
         bg: "var(--surface-2)",
@@ -748,9 +854,21 @@ function StatusStripe({
   const colors: Record<BadgeStatus, { fg: string; bg: string; border: string }> =
     {
       ok: { fg: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
-      warn: { fg: "var(--warn)", bg: "var(--warn-bg)", border: "var(--warn-border)" },
-      bad: { fg: "var(--bad)", bg: "var(--bad-bg)", border: "var(--bad-border)" },
-      info: { fg: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)" },
+      warn: {
+        fg: "var(--warn)",
+        bg: "var(--warn-bg)",
+        border: "var(--warn-border)",
+      },
+      bad: {
+        fg: "var(--bad)",
+        bg: "var(--bad-bg)",
+        border: "var(--bad-border)",
+      },
+      info: {
+        fg: "var(--info)",
+        bg: "var(--info-bg)",
+        border: "var(--info-border)",
+      },
       neutral: {
         fg: "var(--fg-2)",
         bg: "var(--surface-2)",

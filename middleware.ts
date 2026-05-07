@@ -1,50 +1,90 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
-// Middleware som beskyttar admin-grensesnittet med HTTP Basic Auth.
-// Passordet ligg i miljøvariabel ADMIN_PASSWORD. Om det manglar,
-// returnerer vi 500 så feilen blir tydeleg under utvikling.
-//
-// Brukarnamn er irrelevant — vi sjekkar berre passordet. Skriv kva du vil
-// i brukarnamn-feltet i nettlesarens prompt, eller la det vere tomt.
-export function middleware(request: NextRequest) {
-  const password = process.env.ADMIN_PASSWORD;
-
-  if (!password) {
-    return new NextResponse(
-      "Admin-passord er ikkje konfigurert. Set ADMIN_PASSWORD i .env.local.",
-      { status: 500 }
-    );
+export async function middleware(request: NextRequest) {
+  // Login-sida er offentleg — utan dette får vi redirect-loop
+  if (request.nextUrl.pathname === "/admin/login") {
+    return NextResponse.next();
   }
 
-  const authHeader = request.headers.get("authorization");
-
-  if (authHeader) {
-    const [type, encoded] = authHeader.split(" ");
-    if (type === "Basic" && encoded) {
-      try {
-        // atob er tilgjengeleg i Edge Runtime
-        const decoded = atob(encoded);
-        const colonIndex = decoded.indexOf(":");
-        // Alt etter første kolon er passord (brukarnamn ignorerast)
-        const submittedPassword = decoded.slice(colonIndex + 1);
-        if (submittedPassword === password) {
-          return NextResponse.next();
-        }
-      } catch {
-        // Ugyldig base64 — fall gjennom til 401
-      }
-    }
-  }
-
-  return new NextResponse("Authentication required", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Ultimate Konstruktoren Admin"',
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
     },
   });
+
+  // Steg 1: hent innlogga brukar via cookies
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Ingen session → tilbake til login
+  if (!user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Steg 2: sjekk at brukaren faktisk er admin (admins-tabellen).
+  // Vi bruker service-role for å unngå RLS-konflikter — admins-tabellen
+  // skal aldri vere lesbar for vanlege brukarar.
+  const adminSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: adminRow, error: adminError } = await adminSupabase
+    .from("admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (adminError) {
+    console.error("[middleware] Admin lookup failed:", adminError);
+    // Sikkerhets-fail: nekt tilgang ved feil i admin-sjekk
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("error", "lookup_failed");
+    return NextResponse.redirect(url);
+  }
+
+  if (!adminRow) {
+    // Innlogga, men ikkje admin — logg ut og redirect
+    await supabase.auth.signOut();
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("error", "not_admin");
+    return NextResponse.redirect(url);
+  }
+
+  return response;
 }
 
 export const config = {
-  // Matchar både admin-sider og admin-API. Begge må vere bak passord.
   matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

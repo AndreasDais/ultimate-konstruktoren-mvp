@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { cookies } from "next/headers";
 
 const VALID_STATUSES = [
   "open",
@@ -14,18 +11,14 @@ const VALID_STATUSES = [
   "fixed",
 ];
 
-// Status-verdiar som utløyser opprettelse av manual_reviews-rad.
-// "open" og "under_review" reknast som arbeidsstatusar, ikkje endelege avgjerder.
 const SUBSTANTIAL_DECISIONS = ["confirmed", "rejected", "fixed"];
 
-// Mapping frå error_reports.status til manual_reviews.decision
 const STATUS_TO_DECISION: Record<string, string> = {
   confirmed: "confirmed",
   rejected: "rejected",
   fixed: "fixed",
 };
 
-// Next.js 15+ App Router: params kjem som Promise og må await-as
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -43,11 +36,41 @@ export async function PATCH(
     }
 
     if (!status || !VALID_STATUSES.includes(status)) {
-      return NextResponse.json(
-        { error: "Ugyldig status" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Ugyldig status" }, { status: 400 });
     }
+
+    // Hent innlogga brukar frå session.
+    // Middleware har allereie verifisert at brukaren er admin, men vi
+    // dobbel-sjekkar her for defense in depth.
+    const cookieStore = await cookies();
+    const supabaseSSR = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {
+            // Ikkje nødvendig i API-route, men signaturen krev det
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabaseSSR.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Ikkje autentisert" }, { status: 401 });
+    }
+
+    // Service-role for å oppdatere DB (bypassar RLS)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Steg 1: oppdater error_reports.status
     const { data, error } = await supabase
@@ -72,9 +95,7 @@ export async function PATCH(
       );
     }
 
-    // Steg 2: om dette er ei substansiell avgjerd, lagre i manual_reviews.
-    // Vi feiler ikkje heile responsen om review-innsending feilar — status er
-    // allereie oppdatert. Loggar berre.
+    // Steg 2: om dette er ei substansiell avgjerd, lagre i manual_reviews
     if (SUBSTANTIAL_DECISIONS.includes(status)) {
       const decision = STATUS_TO_DECISION[status];
 
@@ -83,7 +104,7 @@ export async function PATCH(
         .insert({
           related_type: "error_report",
           related_id: id,
-          reviewer_id: "admin", // Hardkoda — vil bli sett frå Supabase Auth seinare
+          reviewer_id: user.id, // UUID frå auth.users
           decision,
           notes: notes ?? null,
           action_taken: action_taken ?? null,
@@ -94,15 +115,16 @@ export async function PATCH(
           "[admin/error-reports/PATCH] Manual review insert failed:",
           reviewError
         );
+        // Ikkje feil ut — status er allereie oppdatert
       } else {
         console.log(
-          `[admin/error-reports/PATCH] Manual review logga: ${id} -> ${decision}`
+          `[admin/error-reports/PATCH] Manual review logga: ${id} -> ${decision} av ${user.email}`
         );
       }
     }
 
     console.log(
-      `[admin/error-reports/PATCH] ${id} -> status="${status}"`
+      `[admin/error-reports/PATCH] ${id} -> status="${status}" av ${user.email}`
     );
 
     return NextResponse.json({ success: true, report: data });
