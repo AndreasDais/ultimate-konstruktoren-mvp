@@ -136,6 +136,32 @@ const confidenceBadge: Record<CalculationResult["confidence"], BadgeStatus> = {
   low: "bad",
 };
 
+// Returnerer ein menneskeleg-lesbar grunn til at "Start berekning" er deaktivert,
+// eller null viss berekning kan startast. Status-spesifikk for å unngå
+// misvisande "legg til manglar"-melding på t.d. relevant_ikkje_stotta.
+function getBlockedReason(result: AgentResult | null): string | null {
+  if (!result) return null;
+
+  if (result.status === "avvist") {
+    return "Inputen er ikkje byggfagleg. Berekning kan ikkje startast.";
+  }
+
+  if (result.status === "relevant_ikkje_stotta") {
+    return "Forespurnaden er byggfagleg relevant, men ligg utanfor det MVP-en støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.";
+  }
+
+  if (result.status === "uklart") {
+    return "Forespurnaden er for vag til å tolke trygt. Klikk Endre input og legg til meir konkret informasjon om geometri, last og materiale.";
+  }
+
+  if ((result.kan_reknast_no?.length ?? 0) === 0) {
+    // mangelfull, eller andre statusar utan kan_reknast_no
+    return "Ingen berekning er mogleg med oppgitt informasjon. Klikk Endre input og legg til manglande data.";
+  }
+
+  return null;
+}
+
 export default function Home() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
@@ -323,6 +349,10 @@ export default function Home() {
   // Hjelpar: er eit gitt output blokka av Agent D?
   const isBlocked = (key: string): boolean =>
     !!controllerDecision?.blocked_outputs?.includes(key);
+
+  // Hjelpar: kan brukaren starte berekninga? Status-spesifikk melding viss ikkje.
+  const blockedReason = getBlockedReason(result);
+  const canStart = blockedReason === null;
 
   return (
     <div className="uk-shell">
@@ -521,34 +551,20 @@ export default function Home() {
                       </button>
                       <button
                         onClick={handleStartCalculation}
-                        disabled={
-                          result.status === "avvist" ||
-                          (result.kan_reknast_no?.length ?? 0) === 0
-                        }
+                        disabled={!canStart}
                         className="uk-btn uk-btn--primary"
                         style={{
-                          opacity:
-                            result.status === "avvist" ||
-                              (result.kan_reknast_no?.length ?? 0) === 0
-                              ? 0.5
-                              : 1,
-                          cursor:
-                            result.status === "avvist" ||
-                              (result.kan_reknast_no?.length ?? 0) === 0
-                              ? "not-allowed"
-                              : "pointer",
+                          opacity: canStart ? 1 : 0.5,
+                          cursor: canStart ? "pointer" : "not-allowed",
                         }}
                       >
                         Start berekning →
                       </button>
                     </div>
                   </div>
-                  {(result.status === "avvist" ||
-                    (result.kan_reknast_no?.length ?? 0) === 0) && (
+                  {blockedReason && (
                     <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
-                      {result.status === "avvist"
-                        ? "Inputen er klassifisert som avvist. Berekning kan ikkje startast."
-                        : "Ingen berekningar er mogleg med oppgitt informasjon. Klikk Endre input og legg til manglar."}
+                      {blockedReason}
                     </p>
                   )}
                 </div>
