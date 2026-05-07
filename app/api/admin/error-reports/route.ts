@@ -42,6 +42,10 @@ type ReportRow = {
   run_id: string | null;
 };
 
+type ManualReviewRow = {
+  related_id: string;
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -93,8 +97,6 @@ export async function GET(request: Request) {
         .in("id", uniqueReportIds);
 
       if (reportsError) {
-        // Logg, men feil ikkje heile responsen — admin får framleis lista,
-        // berre utan run_id-lenker.
         console.error(
           "[admin/error-reports/GET] Fetch reports failed:",
           reportsError
@@ -106,13 +108,40 @@ export async function GET(request: Request) {
       }
     }
 
-    // Steg 3: bygg respons der kvar error_report har eit `reports`-objekt
-    // med run_id (eller null om ikkje funne)
+    // Steg 3: hent review-count for kvar error_report
+    const errorReportIds = rows.map((r) => r.id);
+    const reviewCountMap = new Map<string, number>();
+
+    if (errorReportIds.length > 0) {
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("manual_reviews")
+        .select("related_id")
+        .eq("related_type", "error_report")
+        .in("related_id", errorReportIds);
+
+      if (reviewsError) {
+        console.error(
+          "[admin/error-reports/GET] Fetch manual_reviews failed:",
+          reviewsError
+        );
+      } else {
+        for (const review of (reviewsData ?? []) as ManualReviewRow[]) {
+          reviewCountMap.set(
+            review.related_id,
+            (reviewCountMap.get(review.related_id) ?? 0) + 1
+          );
+        }
+      }
+    }
+
+    // Steg 4: bygg respons der kvar error_report har eit `reports`-objekt
+    // med run_id (eller null om ikkje funne) og `review_count`
     const enriched = rows.map((r) => ({
       ...r,
       reports: r.report_id
         ? { run_id: reportsMap.get(r.report_id) ?? null }
         : null,
+      review_count: reviewCountMap.get(r.id) ?? 0,
     }));
 
     return NextResponse.json({ reports: enriched });
