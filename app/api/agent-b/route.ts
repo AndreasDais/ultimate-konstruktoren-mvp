@@ -1,5 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
+import {
+  extractMentionedProfiles,
+  buildProfileDataPromptBlock,
+} from "@/lib/profiles/extract";
 
 const SYSTEM_PROMPT = `Du er Agent B, ein UAVHENGIG KONTROLL-LØYSAR for Ultimate Konstruktøren — eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -46,13 +50,14 @@ Reglar:
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
-- Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
+- Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.
+- Når meldinga inneheld ei PROFILDATA-blokk øvst med eksakte tverrsnittsverdiar, bruk DESSE verdiane direkte. Ikkje hugs profil-data frå minnet — verdiane i blokka er autoritative.`;
 
-const PROMPT_VERSION = "agent_b_v0.3";
+const PROMPT_VERSION = "agent_b_v0.4";
 
 export async function POST(request: Request) {
   try {
-    const { run_id, input_review } = await request.json();
+    const { run_id, input_review, raw_text } = await request.json();
 
     if (!run_id || !input_review) {
       return Response.json(
@@ -61,8 +66,20 @@ export async function POST(request: Request) {
       );
     }
 
+    // === PROFIL-DATA INJEKSJON ===
+    const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
+    const mentionedProfiles = extractMentionedProfiles(searchText);
+    const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
+
+    if (mentionedProfiles.length > 0) {
+      console.log(
+        `[agent-b] Injecting ${mentionedProfiles.length} profile(s):`,
+        mentionedProfiles.map((p) => p.name).join(", ")
+      );
+    }
+
     // === BYGG USER MESSAGE MED KONTEKST ===
-    const userMessage = `INPUT-AGENTENS TOLKING:
+    const userMessage = `${profileBlock}INPUT-AGENTENS TOLKING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
@@ -95,18 +112,19 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-        const wasTruncated = message.stop_reason === "max_tokens";
-        return Response.json(
-          {
-            error: wasTruncated
-              ? "Agent B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-              : "Klarte ikkje parse Agent B sitt svar som JSON",
-            raw: responseText,
-            stop_reason: message.stop_reason,
-          },
-          { status: 500 }
-        );
+      const wasTruncated = message.stop_reason === "max_tokens";
+      return Response.json(
+        {
+          error: wasTruncated
+            ? "Agent B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+            : "Klarte ikkje parse Agent B sitt svar som JSON",
+          raw: responseText,
+          stop_reason: message.stop_reason,
+        },
+        { status: 500 }
+      );
     }
+
     // === LAGRE AGENT_OUTPUT (ingen run-status oppdatering — Agent A gjer det) ===
     let supabase;
     try {
@@ -115,7 +133,10 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
         run_id,
         agent_name: "agent_b",
         prompt_version: PROMPT_VERSION,
-        input_payload: input_review,
+        input_payload: {
+          ...input_review,
+          _injected_profiles: mentionedProfiles.map((p) => p.name),
+        },
         output_text: responseText,
         structured_output: parsed,
         confidence: parsed.confidence,

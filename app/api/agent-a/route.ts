@@ -1,5 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
+import {
+  extractMentionedProfiles,
+  buildProfileDataPromptBlock,
+} from "@/lib/profiles/extract";
 
 const SYSTEM_PROMPT = `Du er Agent A, ein uavhengig løysingsagent for Ultimate Konstruktøren — eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -37,13 +41,14 @@ Reglar:
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
-- Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.`;
+- Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.
+- Når meldinga inneheld ei PROFILDATA-blokk øvst med eksakte tverrsnittsverdiar, bruk DESSE verdiane direkte. Ikkje hugs profil-data frå minnet — verdiane i blokka er autoritative.`;
 
-const PROMPT_VERSION = "agent_a_v0.3";
+const PROMPT_VERSION = "agent_a_v0.4";
 
 export async function POST(request: Request) {
   try {
-    const { run_id, input_review } = await request.json();
+    const { run_id, input_review, raw_text } = await request.json();
 
     if (!run_id || !input_review) {
       return Response.json(
@@ -52,7 +57,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const userMessage = `INPUT-AGENTENS TOLKING:
+    // === PROFIL-DATA INJEKSJON ===
+    // Søk gjennom både raw_text (viss tilgjengeleg) og heile input_review.
+    // Profilar som blir funne får sine eksakte verdiar injisert i prompten.
+    const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
+    const mentionedProfiles = extractMentionedProfiles(searchText);
+    const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
+
+    if (mentionedProfiles.length > 0) {
+      console.log(
+        `[agent-a] Injecting ${mentionedProfiles.length} profile(s):`,
+        mentionedProfiles.map((p) => p.name).join(", ")
+      );
+    }
+
+    const userMessage = `${profileBlock}INPUT-AGENTENS TOLKING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
@@ -104,7 +123,10 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
         run_id,
         agent_name: "agent_a",
         prompt_version: PROMPT_VERSION,
-        input_payload: input_review,
+        input_payload: {
+          ...input_review,
+          _injected_profiles: mentionedProfiles.map((p) => p.name),
+        },
         output_text: responseText,
         structured_output: parsed,
         confidence: parsed.confidence,
