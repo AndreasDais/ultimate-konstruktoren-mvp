@@ -5,7 +5,7 @@
   justify-content: center;
   min-height: 60vh;
   font-family: var(--font-sans);
-  color: var(--text-muted);
+  color: var(--fg-muted);
   gap: 1rem;
 }
 
@@ -24,12 +24,12 @@
 }
 
 .rapport-document {
-  background: white;
+  background: var(--surface);
   padding: 5rem 5rem 6rem;
-  font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+  font-family: var(--font-serif);
   font-size: 1rem;
   line-height: 1.75;
-  color: #1a1a1a;
+  color: var(--fg);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   border-radius: 4px;
 }
@@ -40,7 +40,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-muted, #666);
+  color: var(--fg-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -51,6 +51,7 @@
   margin: 0 0 1.5rem;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  color: var(--fg);
 }
 
 .rapport-document h2 {
@@ -59,8 +60,9 @@
   font-weight: 600;
   margin: 3rem 0 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border, #e5e5e5);
+  border-bottom: 1px solid var(--border);
   letter-spacing: -0.01em;
+  color: var(--fg);
 }
 
 .rapport-document h3 {
@@ -68,6 +70,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   margin: 1.5rem 0 0.5rem;
+  color: var(--fg);
 }
 
 .rapport-document p {
@@ -77,11 +80,11 @@
 .document-meta {
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  color: var(--text-muted, #666);
+  color: var(--fg-muted);
   margin: 0 0 2rem;
   padding: 1rem 0;
-  border-top: 1px solid var(--border, #e5e5e5);
-  border-bottom: 1px solid var(--border, #e5e5e5);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .document-meta > div {
@@ -95,13 +98,14 @@
 }
 
 .rapport-disclaimer {
-  background: #fef9e7;
-  border-left: 3px solid #d4a017;
+  background: var(--disclaimer-bg);
+  border-left: 3px solid var(--disclaimer-stripe);
   padding: 1rem 1.25rem;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.55;
   margin: 2rem 0;
+  color: var(--disclaimer-fg);
 }
 
 .rapport-disclaimer strong {
@@ -115,34 +119,36 @@
 }
 
 .rapport-prose {
-  font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+  font-family: var(--font-serif);
   font-size: 1.0625rem;
   line-height: 1.75;
 }
 
 .rapport-quote {
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  background: #f8f8f8;
-  border-left: 3px solid var(--border, #d4d4d4);
+  background: var(--surface-2);
+  border-left: 3px solid var(--border);
   padding: 0.75rem 1rem;
   margin: 0.5rem 0;
   white-space: pre-wrap;
+  color: var(--fg-2);
 }
 
 .rapport-data {
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-mono);
   font-size: 0.8125rem;
-  background: #fafafa;
+  background: var(--surface-2);
   padding: 0.75rem 1rem;
   border-radius: 3px;
   overflow-x: auto;
   margin: 0.5rem 0;
   line-height: 1.5;
+  color: var(--fg-2);
 }
 
 .rapport-list {
-  font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+  font-family: var(--font-serif);
   font-size: 1rem;
   line-height: 1.7;
   padding-left: 1.5rem;
@@ -154,7 +160,7 @@
 }
 
 .rapport-list-warnings li {
-  color: #8b4513;
+  color: var(--warn);
 }
 
 .rapport-table {
@@ -169,13 +175,13 @@
 .rapport-table td {
   text-align: left;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border, #e5e5e5);
+  border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
 
 .rapport-table th {
   font-weight: 500;
-  color: var(--text-muted, #555);
+  color: var(--fg-muted);
   width: 45%;
 }
 
@@ -184,40 +190,42 @@
 }
 
 .rapport-step-text {
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  background: #fafafa;
+  background: var(--surface-2);
   padding: 1rem;
   border-radius: 3px;
   white-space: pre-wrap;
   line-height: 1.6;
   margin: 0;
+  color: var(--fg-2);
 }
 
 .rapport-decision {
-  background: #f0f4f8;
+  background: var(--info-bg);
   padding: 1rem 1.25rem;
-  border-left: 3px solid var(--info, #4a73a8);
+  border-left: 3px solid var(--info);
   font-family: var(--font-sans);
   font-size: 0.95rem;
   line-height: 1.6;
   margin: 1rem 0;
+  color: var(--fg);
 }
 
 .rapport-decision em {
   display: block;
   margin-top: 0.5rem;
   font-style: italic;
-  color: var(--text-muted, #555);
+  color: var(--fg-muted);
 }
 
 .rapport-footer {
   margin-top: 5rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--border, #e5e5e5);
+  border-top: 1px solid var(--border);
   font-family: var(--font-sans);
   font-size: 0.8125rem;
-  color: var(--text-muted, #666);
+  color: var(--fg-muted);
   text-align: center;
 }
 
@@ -230,8 +238,8 @@
 .feilrapport-trigger {
   margin-top: 4rem;
   padding: 1.75rem 2rem;
-  background: #fafafa;
-  border: 1px solid var(--border, #e5e5e5);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -249,7 +257,7 @@
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--fg);
   margin: 0 0 0.4rem;
   line-height: 1.4;
 }
@@ -258,14 +266,14 @@
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.55;
-  color: var(--text-muted, #666);
+  color: var(--fg-muted);
 }
 
 .feilrapport-form {
   margin-top: 4rem;
   padding: 2rem 2.5rem;
-  background: #fafafa;
-  border: 1px solid var(--border, #e5e5e5);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-family: var(--font-sans);
 }
@@ -276,12 +284,12 @@
   font-weight: 600;
   margin: 0 0 0.4rem;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: var(--fg);
 }
 
 .feilrapport-form-subtitle {
   font-size: 0.8125rem;
-  color: var(--text-muted, #666);
+  color: var(--fg-muted);
   margin: 0 0 2rem;
   line-height: 1.5;
 }
@@ -297,7 +305,7 @@
   font-family: var(--font-sans);
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #333;
+  color: var(--fg-2);
   margin-bottom: 0.5rem;
   letter-spacing: 0.01em;
 }
@@ -309,10 +317,10 @@
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   line-height: 1.5;
-  border: 1px solid var(--border, #d4d4d4);
+  border: 1px solid var(--border-2);
   border-radius: 6px;
-  background: white;
-  color: #1a1a1a;
+  background: var(--surface);
+  color: var(--fg);
   box-sizing: border-box;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
@@ -324,13 +332,13 @@
 
 .feilrapport-input:focus {
   outline: none;
-  border-color: #4a73a8;
-  box-shadow: 0 0 0 3px rgba(74, 115, 168, 0.12);
+  border-color: var(--fg-2);
+  box-shadow: 0 0 0 3px var(--surface-3);
 }
 
 .feilrapport-input:disabled {
-  background: #f5f5f5;
-  color: #999;
+  background: var(--surface-3);
+  color: var(--fg-muted);
   cursor: not-allowed;
 }
 
@@ -345,13 +353,13 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--border, #d4d4d4);
+  border: 1px solid var(--border-2);
   border-radius: 6px;
-  background: white;
+  background: var(--surface);
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 400;
-  color: #333;
+  color: var(--fg-2);
   cursor: pointer;
   user-select: none;
   margin: 0;
@@ -359,13 +367,13 @@
 }
 
 .feilrapport-severity-option:hover {
-  background: #f0f0f0;
+  background: var(--surface-2);
 }
 
 .feilrapport-severity-option:has(input:checked) {
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
+  background: var(--fg);
+  color: var(--surface);
+  border-color: var(--fg);
 }
 
 .feilrapport-severity-option input {
@@ -373,9 +381,9 @@
 }
 
 .feilrapport-error {
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--bad);
+  background: var(--bad-bg);
+  border: 1px solid var(--bad-border);
   padding: 0.75rem 0.875rem;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -389,14 +397,14 @@
   gap: 0.5rem;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #ececec;
+  border-top: 1px solid var(--border);
 }
 
 .feilrapport-success {
   margin-top: 4rem;
   padding: 2rem 2.5rem;
-  background: #f0f9f4;
-  border: 1px solid #b8d8c4;
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-border);
   border-radius: 8px;
   font-family: var(--font-sans);
 }
@@ -406,13 +414,13 @@
   font-size: 1.0625rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  color: #2d5e44;
+  color: var(--ok);
 }
 
 .feilrapport-success p {
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: #4a6a58;
+  color: var(--fg-2);
   margin: 0 0 1.25rem;
 }
 
@@ -449,9 +457,7 @@
     size: A4;
   }
 
-  h1,
-  h2,
-  h3 {
+  h1, h2, h3 {
     page-break-after: avoid;
   }
 

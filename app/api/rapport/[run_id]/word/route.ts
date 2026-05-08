@@ -488,7 +488,11 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ run_id: string }> }
 ) {
+  const requestStart = Date.now();
+  let stage = "init";
+
   try {
+    stage = "params";
     const { run_id } = await context.params;
 
     if (!run_id) {
@@ -498,29 +502,59 @@ export async function GET(
       );
     }
 
-    // Hent same data-bundle som rapport-sida brukar
+    // Vidaresend cookies frå brukaren slik at evt. Vercel-auth/Supabase-session
+    // følgjer med på den interne fetchen til /api/agent-e
+    stage = "fetch_data";
     const origin = request.nextUrl.origin;
+    const cookieHeader = request.headers.get("cookie") ?? "";
+
     const agentERes = await fetch(`${origin}/api/agent-e`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
       body: JSON.stringify({ run_id }),
     });
 
     if (!agentERes.ok) {
-      const err = await agentERes.json().catch(() => ({}));
+      const errBody = await agentERes.json().catch(() => ({}));
+      console.error("Word export: agent-e fetch failed", {
+        run_id,
+        status: agentERes.status,
+        body: errBody,
+        had_cookie: cookieHeader.length > 0,
+      });
       return NextResponse.json(
-        { error: err.error || "Kunne ikkje hente rapport-data" },
+        {
+          error: errBody.error || "Kunne ikkje hente rapport-data",
+          stage,
+        },
         { status: agentERes.status }
       );
     }
 
+    stage = "parse_data";
     const data: FullReportResponse = await agentERes.json();
 
-    // Bygg docx
+    stage = "build_docx";
     const doc = buildDocument(data);
+
+    stage = "pack_docx";
     const buffer = await Packer.toBuffer(doc);
 
-    return new NextResponse(buffer as unknown as BodyInit, {
+    // Konverter Buffer til Uint8Array — ryddig BodyInit utan `as unknown` cast
+    stage = "respond";
+    const body = new Uint8Array(buffer);
+
+    const elapsed = Date.now() - requestStart;
+    console.log("Word export: success", {
+      run_id,
+      elapsed_ms: elapsed,
+      size_bytes: body.length,
+    });
+
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type":
@@ -531,7 +565,11 @@ export async function GET(
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Ukjend feil";
-    console.error("Word export error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("Word export error:", { stage, message, stack });
+    return NextResponse.json(
+      { error: message, stage },
+      { status: 500 }
+    );
   }
 }
