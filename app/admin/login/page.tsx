@@ -43,8 +43,6 @@ function LoginForm() {
       return;
     }
 
-    // router.refresh() trigger ny middleware-kjøring slik at admin-sjekken
-    // skjer med den nye sessionen
     router.push(redirectTo);
     router.refresh();
   };
@@ -88,83 +86,44 @@ function LoginForm() {
                 }}
               >
                 {error && (
-                  <div
-                    style={{
-                      background: "var(--bad-bg)",
-                      border: "1px solid var(--bad-border)",
-                      borderLeft: "3px solid var(--bad)",
-                      padding: "10px 12px",
-                      fontSize: 12,
-                      color: "var(--bad)",
-                      borderRadius: "var(--r-sm)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {error}
-                  </div>
+                  <div className="uk-stripe uk-stripe--bad">{error}</div>
                 )}
 
                 <div>
-                  <label
-                    className="uk-eyebrow"
-                    style={{ marginBottom: 6, display: "block" }}
-                  >
+                  <label htmlFor="email" className="uk-label">
                     E-post
                   </label>
                   <input
+                    id="email"
                     type="email"
+                    className="uk-input"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
                     autoFocus
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      fontSize: 13,
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--r-sm)",
-                      color: "var(--fg)",
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label
-                    className="uk-eyebrow"
-                    style={{ marginBottom: 6, display: "block" }}
-                  >
+                  <label htmlFor="password" className="uk-label">
                     Passord
                   </label>
                   <input
+                    id="password"
                     type="password"
+                    className="uk-input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      fontSize: 13,
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--r-sm)",
-                      color: "var(--fg)",
-                    }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="uk-btn"
-                  style={{
-                    fontSize: 13,
-                    padding: "10px 14px",
-                    opacity: loading ? 0.5 : 1,
-                    cursor: loading ? "not-allowed" : "pointer",
-                  }}
+                  className="uk-btn uk-btn--primary"
                 >
                   {loading ? "Loggar inn..." : "Logg inn"}
                 </button>

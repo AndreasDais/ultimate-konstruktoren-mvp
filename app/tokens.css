@@ -7,39 +7,34 @@
 
    :root,
    [data-palette="slate"] {
-     /* Surfaces */
      --bg:           #fafafa;
      --bg-sunken:   #f4f4f5;
      --surface:     #ffffff;
      --surface-2:   #f7f7f8;
      --surface-3:   #f0f0f2;
    
-     /* Borders */
      --border:      #e4e4e7;
      --border-2:    #d4d4d8;
      --border-strong: #a1a1aa;
    
-     /* Text */
      --fg:          #18181b;
      --fg-2:        #3f3f46;
      --fg-muted:    #71717a;
      --fg-faint:    #a1a1aa;
    
-     /* Accents — kald, dempa */
-     --accent:      #2f4858;       /* deep slate-blue, "engineering" */
+     --accent:      #2f4858;
      --accent-bg:   #eef2f5;
      --accent-fg:   #1e2f3a;
    
-     /* Status — dempa, aldri pastell */
-     --ok:          #2f6d4f;       /* mørk grøn */
+     --ok:          #2f6d4f;
      --ok-bg:       #ecf3ee;
      --ok-border:   #c8d9cd;
    
-     --warn:        #8a5a00;       /* burnt amber */
+     --warn:        #8a5a00;
      --warn-bg:     #fbf3e2;
      --warn-border: #ead7a8;
    
-     --bad:         #9a2a2a;       /* mørk vinraud */
+     --bad:         #9a2a2a;
      --bad-bg:      #f8ecec;
      --bad-border:  #e3c8c8;
    
@@ -47,7 +42,6 @@
      --info-bg:     #eef2f5;
      --info-border: #cfd9e0;
    
-     /* Disclaimer */
      --disclaimer-stripe: #8a5a00;
      --disclaimer-bg:     #fbf6e9;
      --disclaimer-fg:     #4a3500;
@@ -143,7 +137,6 @@
      --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
      --font-doc:   'Source Serif 4', Georgia, 'Times New Roman', serif;
    
-     /* Aliases — so rapport.css og andre filer som bruker konvensjonelle font-namn fungerer */
      --font-sans:  var(--font-ui);
      --font-serif: var(--font-doc);
    
@@ -181,7 +174,6 @@
       Common atoms
       ========================================================= */
    
-   /* Eyebrow / tiny uppercase label */
    .uk-eyebrow {
      font-family: var(--font-mono);
      font-size: 11px;
@@ -207,6 +199,10 @@
      transition: background 120ms, border-color 120ms;
    }
    .uk-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+   .uk-btn:disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+   }
    .uk-btn--primary {
      background: var(--fg);
      color: var(--surface);
@@ -219,6 +215,126 @@
    .uk-btn--danger { color: var(--bad); border-color: var(--bad-border); }
    .uk-btn--danger:hover { background: var(--bad-bg); }
    
+   /* Badge — kompakt status-merke i Outline-stil */
+   .uk-badge {
+     display: inline-flex;
+     align-items: center;
+     gap: 4px;
+     padding: 2px 8px;
+     border-radius: var(--r-xs);
+     border: 1px solid var(--border);
+     background: var(--surface-2);
+     color: var(--fg-2);
+     font-family: var(--font-mono);
+     font-size: 11px;
+     font-weight: 500;
+     text-transform: uppercase;
+     letter-spacing: 0.05em;
+     white-space: nowrap;
+     line-height: 1.4;
+   }
+   .uk-badge--ok    { background: var(--ok-bg);    border-color: var(--ok-border);    color: var(--ok); }
+   .uk-badge--warn  { background: var(--warn-bg);  border-color: var(--warn-border);  color: var(--warn); }
+   .uk-badge--bad   { background: var(--bad-bg);   border-color: var(--bad-border);   color: var(--bad); }
+   .uk-badge--info  { background: var(--info-bg);  border-color: var(--info-border);  color: var(--info); }
+   
+   /* Stripe — full-width status-banner med farga venstrekant */
+   .uk-stripe {
+     border: 1px solid var(--border);
+     border-left: 3px solid var(--fg-muted);
+     border-radius: var(--r-sm);
+     padding: 14px 16px;
+     background: var(--surface-2);
+     font-size: 13px;
+     line-height: 1.55;
+   }
+   .uk-stripe__label {
+     font-family: var(--font-mono);
+     font-size: 11px;
+     font-weight: 600;
+     text-transform: uppercase;
+     letter-spacing: 0.08em;
+     margin-bottom: 6px;
+   }
+   .uk-stripe__body {
+     color: var(--fg-2);
+     font-size: 13px;
+     line-height: 1.55;
+   }
+   .uk-stripe--ok    { background: var(--ok-bg);    border-color: var(--ok-border);    border-left-color: var(--ok);    color: var(--ok); }
+   .uk-stripe--warn  { background: var(--warn-bg);  border-color: var(--warn-border);  border-left-color: var(--warn);  color: var(--warn); }
+   .uk-stripe--bad   { background: var(--bad-bg);   border-color: var(--bad-border);   border-left-color: var(--bad);   color: var(--bad); }
+   .uk-stripe--info  { background: var(--info-bg);  border-color: var(--info-border);  border-left-color: var(--info);  color: var(--info); }
+   
+/* Steps — fase-indikator på topp av sida */
+.uk-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.uk-steps__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-faint);
+}
+.uk-steps__num {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--fg-faint);
+  flex-shrink: 0;
+}
+.uk-steps__item--active { color: var(--fg); }
+.uk-steps__item--active .uk-steps__num {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--surface);
+}
+.uk-steps__item--done { color: var(--fg-2); }
+.uk-steps__item--done .uk-steps__num {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--surface);
+}
+.uk-steps__sep {
+  color: var(--fg-faint);
+  margin: 0 12px;
+  font-family: var(--font-mono);
+}
+
+/* Chip — kompakt eksempel-trigger */
+.uk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  text-align: left;
+  width: fit-content;
+}
+.uk-chip:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+
    /* Card / panel */
    .uk-card {
      background: var(--surface);
@@ -240,7 +356,7 @@
    }
    .uk-card__bd { padding: 16px; }
    
-   /* Disclaimer block — alltid same DNA: tjukk venstrestrek, varselgul */
+   /* Disclaimer block */
    .uk-disclaimer {
      background: var(--disclaimer-bg);
      border: 1px solid var(--warn-border);
@@ -316,8 +432,6 @@
    .uk-kv:first-child { border-top: none; }
    .uk-kv__k {
      color: var(--fg-muted);
-     /* Lat lange technical-namn (t.d. "Konsekvens_MEd_større_enn_MRd")
-        brytast i staden for å overflyte inn i verdi-kolonnen */
      min-width: 0;
      overflow-wrap: anywhere;
    }
@@ -328,7 +442,7 @@
    }
    .uk-kv__v.uk-mono { font-size: 12.5px; }
    
-   /* Page chrome (faux app shell) */
+   /* Page chrome */
    .uk-shell {
      display: grid;
      grid-template-rows: auto 1fr;
@@ -368,7 +482,6 @@
    .uk-topbar__meta { display: flex; gap: 12px; align-items: center; font-size: 12px; color: var(--fg-muted); }
    .uk-topbar__meta .uk-mono { font-size: 11.5px; }
    
-   /* Avatar circle */
    .uk-avatar {
      width: 24px; height: 24px;
      border-radius: 50%;
@@ -379,7 +492,6 @@
      font-weight: 600;
    }
    
-   /* Scrollshadow inside an artboard */
    .uk-scroll {
      overflow: hidden;
    }

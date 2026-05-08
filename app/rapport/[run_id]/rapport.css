@@ -452,6 +452,11 @@
     padding: 0 !important;
   }
 
+  [data-palette="stone"] {
+    background: white !important;
+    color: black !important;
+  }
+
   @page {
     margin: 2cm;
     size: A4;

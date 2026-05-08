@@ -72,6 +72,13 @@ type Phase = "input" | "result" | "calculating" | "calculation_result";
 
 type BadgeStatus = "ok" | "warn" | "bad" | "info" | "neutral";
 
+const EXAMPLE_PROMPTS = [
+  "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
+  "Lastkombinasjon for kontorbygg, G = 4,5 kN/m², Q = 3,0 kN/m²",
+  "Armering i betongbjelke, MEd = 120 kNm, b = 250 mm, d = 450 mm",
+  "Stålkapasitet, IPE 240, S355, NEd = 180 kN",
+];
+
 const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description: string }> = {
   input: {
     eyebrow: "NY BEREKNING",
@@ -155,7 +162,6 @@ function getBlockedReason(result: AgentResult | null): string | null {
   }
 
   if ((result.kan_reknast_no?.length ?? 0) === 0) {
-    // mangelfull, eller andre statusar utan kan_reknast_no
     return "Ingen berekning er mogleg med oppgitt informasjon. Klikk Endre input og legg til manglande data.";
   }
 
@@ -331,7 +337,6 @@ export default function Home() {
 
       if (!responseD.ok) {
         console.error("Agent D feila:", dataD.error);
-        // Ikkje sett error — vi har framleis A+B+C, fall tilbake på C sin recommended_status
         setPhase("calculation_result");
         return;
       }
@@ -346,11 +351,9 @@ export default function Home() {
 
   const pageHeader = PHASE_HEADERS[phase];
 
-  // Hjelpar: er eit gitt output blokka av Agent D?
   const isBlocked = (key: string): boolean =>
     !!controllerDecision?.blocked_outputs?.includes(key);
 
-  // Hjelpar: kan brukaren starte berekninga? Status-spesifikk melding viss ikkje.
   const blockedReason = getBlockedReason(result);
   const canStart = blockedReason === null;
 
@@ -365,6 +368,8 @@ export default function Home() {
 
       <main>
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+          {phase !== "calculating" && <StepIndicator phase={phase} />}
+
           <header className="mb-10">
             <div className="uk-eyebrow">{pageHeader.eyebrow}</div>
             <h1
@@ -413,11 +418,28 @@ export default function Home() {
                 placeholder="Til dømes: Finn maksimalt moment og skjær for ein fritt opplagd bjelke med L = 5 m og jamt fordelt last q = 8 kN/m..."
                 className="uk-textarea"
               />
+
+              <div style={{ marginTop: 20 }}>
+                <div className="uk-eyebrow" style={{ marginBottom: 10 }}>Eksempel</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                  {EXAMPLE_PROMPTS.map((example, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="uk-chip"
+                      onClick={() => setInput(example)}
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={handleSubmit}
                 disabled={!input.trim() || loading}
                 className="uk-btn uk-btn--primary"
-                style={{ marginTop: 12 }}
+                style={{ marginTop: 20 }}
               >
                 {loading ? "Tolkar..." : "Send til Input-agent"}
               </button>
@@ -553,10 +575,6 @@ export default function Home() {
                         onClick={handleStartCalculation}
                         disabled={!canStart}
                         className="uk-btn uk-btn--primary"
-                        style={{
-                          opacity: canStart ? 1 : 0.5,
-                          cursor: canStart ? "pointer" : "not-allowed",
-                        }}
                       >
                         Start berekning →
                       </button>
@@ -1130,10 +1148,7 @@ export default function Home() {
                         Tilbake til start
                       </button>
                       {currentRunId && calculationA && calculationB && (
-                        <a
-                          href={`/rapport/${currentRunId}`}
-                          className="uk-btn uk-btn--primary"
-                        >
+                        <a href={`/rapport/${currentRunId}`} className="uk-btn uk-btn--primary">
                           Generer rapport →
                         </a>
                       )}
@@ -1187,6 +1202,32 @@ function ListSection({
   );
 }
 
+function StepIndicator({ phase }: { phase: Phase }) {
+  const current = phase === "input" ? 1 : phase === "result" ? 2 : 3;
+  const steps = [
+    { num: 1, label: "Input" },
+    { num: 2, label: "Bekreft tolking" },
+    { num: 3, label: "Rapport" },
+  ];
+  return (
+    <div className="uk-steps">
+      {steps.map((step, i) => {
+        const state =
+          step.num < current ? "done" : step.num === current ? "active" : "todo";
+        return (
+          <span key={step.num} style={{ display: "inline-flex", alignItems: "center" }}>
+            <span className={`uk-steps__item uk-steps__item--${state}`}>
+              <span className="uk-steps__num">{state === "done" ? "✓" : step.num}</span>
+              <span>{step.label}</span>
+            </span>
+            {i < steps.length - 1 && <span className="uk-steps__sep">→</span>}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function Badge({
   status,
   children,
@@ -1194,35 +1235,9 @@ function Badge({
   status: BadgeStatus;
   children: React.ReactNode;
 }) {
-  const colors: Record<BadgeStatus, { fg: string; bg: string; border: string }> = {
-    ok: { fg: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
-    warn: { fg: "var(--warn)", bg: "var(--warn-bg)", border: "var(--warn-border)" },
-    bad: { fg: "var(--bad)", bg: "var(--bad-bg)", border: "var(--bad-border)" },
-    info: { fg: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)" },
-    neutral: { fg: "var(--fg-2)", bg: "var(--surface-2)", border: "var(--border)" },
-  };
-  const c = colors[status];
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        padding: "2px 8px",
-        borderRadius: 4,
-        border: `1px solid ${c.border}`,
-        background: c.bg,
-        color: c.fg,
-        fontFamily: "var(--font-mono)",
-        fontSize: 11,
-        fontWeight: 500,
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </span>
-  );
+  const variant = status === "neutral" ? "" : `uk-badge--${status}`;
+  const fullClass = ["uk-badge", variant].filter(Boolean).join(" ");
+  return <span className={fullClass}>{children}</span>;
 }
 
 function StatusStripe({
@@ -1238,44 +1253,13 @@ function StatusStripe({
   children: React.ReactNode;
   className?: string;
 }) {
-  const colors: Record<BadgeStatus, { fg: string; bg: string; border: string }> = {
-    ok: { fg: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
-    warn: { fg: "var(--warn)", bg: "var(--warn-bg)", border: "var(--warn-border)" },
-    bad: { fg: "var(--bad)", bg: "var(--bad-bg)", border: "var(--bad-border)" },
-    info: { fg: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)" },
-    neutral: { fg: "var(--fg-2)", bg: "var(--surface-2)", border: "var(--border)" },
-  };
-  const c = colors[status];
+  const variant = status === "neutral" ? "" : `uk-stripe--${status}`;
+  const fullClass = ["uk-stripe", variant, className].filter(Boolean).join(" ");
   return (
-    <section
-      className={className}
-      style={{
-        background: c.bg,
-        border: `1px solid ${c.border}`,
-        borderLeft: `3px solid ${c.fg}`,
-        borderRadius: "var(--r-sm)",
-        padding: "14px 16px",
-        color: c.fg,
-      }}
-    >
-      {label && (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 6,
-          }}
-        >
-          {label}
-        </div>
-      )}
+    <section className={fullClass}>
+      {label && <div className="uk-stripe__label">{label}</div>}
       {header}
-      <div style={{ color: "var(--fg-2)", fontSize: 13, lineHeight: 1.55 }}>
-        {children}
-      </div>
+      <div className="uk-stripe__body">{children}</div>
     </section>
   );
 }
