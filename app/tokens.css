@@ -368,7 +368,7 @@
      line-height: 1.55;
    }
    .uk-disclaimer__label {
-     display: inline-flex;
+     display: flex;
      align-items: center;
      gap: 6px;
      font-family: var(--font-mono);
