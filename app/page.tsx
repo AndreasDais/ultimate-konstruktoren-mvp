@@ -83,17 +83,17 @@ const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description
   input: {
     eyebrow: "NY BEREKNING",
     title: "Beskriv oppgåva",
-    description: "Input-agenten les forespørselen og viser tolkinga før berekning startar.",
+    description: "Tolkaren les forespørselen og viser tolkinga før berekning startar.",
   },
   result: {
     eyebrow: "STEG 2 AV 3 · BEKREFT",
-    title: "Tolking frå Input-agent",
+    title: "Tolking frå Tolkaren",
     description: "Sjekk at dette stemmer før berekning. Du kan endre input eller starte berekninga.",
   },
   calculating: {
     eyebrow: "REKNAR",
-    title: "Agentane jobbar",
-    description: "Dobbel-kontroll med to uavhengige agentar, samanlikning og kontrolløravgjerd.",
+    title: "Konstruktørane jobbar",
+    description: "Dobbel-kontroll med to uavhengige konstruktørar, samanlikning og kontrolløravgjerd.",
   },
   calculation_result: {
     eyebrow: "STEG 3 AV 3 · RESULTAT",
@@ -110,7 +110,7 @@ const matchStatusBadge: Record<ComparisonResult["match_status"], BadgeStatus> = 
 };
 
 const matchStatusLabel: Record<ComparisonResult["match_status"], string> = {
-  match: "Begge agentar er einige",
+  match: "Begge konstruktørar er einige",
   minor_differences: "Mindre forskjellar",
   significant_differences: "Betydelege forskjellar",
   critical_disagreement: "Kritisk uenigheit",
@@ -319,7 +319,7 @@ const saveStateToSession = () => {
       const runId: string = initData.run_id;
       setCurrentRunId(runId);
 
-      // === STEG 1: Agent A og B parallelt ===
+      // === STEG 1: Konstruktør A og B parallelt ===
       const [responseA, responseB] = await Promise.all([
         fetch("/api/agent-a", {
           method: "POST",
@@ -337,21 +337,21 @@ const saveStateToSession = () => {
       const dataB = await responseB.json();
 
       if (!responseA.ok) {
-        setError(dataA.error || "Agent A klarte ikkje løyse oppgåva");
+        setError(dataA.error || "Konstruktør A klarte ikkje løyse oppgåva");
         setPhase("result");
         return;
       }
       setCalculationA(dataA.result);
 
       if (!responseB.ok) {
-        console.error("Agent B feila:", dataB.error);
-        setError(`Agent B feila: ${dataB.error}. Hoppar over samanlikning.`);
+        console.error("Konstruktør B feila:", dataB.error);
+        setError(`Konstruktør B feila: ${dataB.error}. Hoppar over samanlikning.`);
         setPhase("calculation_result");
         return;
       }
       setCalculationB(dataB.result);
 
-      // === STEG 2: Agent C — samanliknar ===
+      // === STEG 2: Samanliknar ===
       const responseC = await fetch("/api/agent-c", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -365,14 +365,14 @@ const saveStateToSession = () => {
       const dataC = await responseC.json();
 
       if (!responseC.ok) {
-        console.error("Agent C feila:", dataC.error);
-        setError(`Agent C feila: ${dataC.error}. Viser A og B utan samanlikning.`);
+        console.error("Samanliknar feila:", dataC.error);
+        setError(`Samanliknar feila: ${dataC.error}. Viser A og B utan samanlikning.`);
         setPhase("calculation_result");
         return;
       }
       setComparison(dataC.result);
 
-      // === STEG 3: Agent D — kontrolløragent ===
+      // === STEG 3: Kontrolløren ===
       const responseD = await fetch("/api/agent-d", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -388,7 +388,7 @@ const saveStateToSession = () => {
       const dataD = await responseD.json();
 
       if (!responseD.ok) {
-        console.error("Agent D feila:", dataD.error);
+        console.error("Kontrollør feila:", dataD.error);
         setPhase("calculation_result");
         return;
       }
@@ -413,8 +413,18 @@ const saveStateToSession = () => {
     <div className="uk-shell">
       <header className="uk-topbar">
         <div className="uk-topbar__brand">
-          <div className="uk-topbar__logo">UK</div>
-          Konstruktøren
+          <span
+            style={{
+              fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif',
+              fontSize: 22,
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+              color: "var(--fg)",
+              lineHeight: 1,
+            }}
+          >
+            Pilar
+          </span>
         </div>
       </header>
 
@@ -493,7 +503,7 @@ const saveStateToSession = () => {
                 className="uk-btn uk-btn--primary"
                 style={{ marginTop: 20 }}
               >
-                {loading ? "Tolkar..." : "Send til Input-agent"}
+                {loading ? "Tolkar..." : "Send til Tolkaren"}
               </button>
             </section>
           )}
@@ -505,8 +515,8 @@ const saveStateToSession = () => {
             </StatusStripe>
           )}
 
-          {/* === FASE: RESULT (Input-agent) === */}
-          {/* === FASE: RESULT (Input-agent — to-kolonne) === */}
+          {/* === FASE: RESULT (Tolkar) === */}
+          {/* === FASE: RESULT (Tolkar — to-kolonne) === */}
           {phase === "result" && result && (
             <>
               <div className="uk-confirm-grid">
@@ -535,7 +545,7 @@ const saveStateToSession = () => {
                   <section className="uk-card">
                     <div className="uk-card__hd">
                       <div className="uk-card__title">Tolking</div>
-                      <Badge status="neutral">Agent 0</Badge>
+                      <Badge status="neutral">Tolkar</Badge>
                     </div>
                     <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                       <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
@@ -722,10 +732,10 @@ const saveStateToSession = () => {
                   }}
                 >
                   {!calculationA || !calculationB
-                    ? "Agent A og B reknar parallelt..."
+                    ? "Konstruktør A og B reknar parallelt..."
                     : !comparison
-                      ? "Agent C samanliknar..."
-                      : "Agent D vurderer..."}
+                      ? "Samanliknaren finn skilnader..."
+                      : "Kontrolløren vurderer..."}
                 </h3>
                 <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
                   {!calculationA || !calculationB
@@ -746,10 +756,10 @@ const saveStateToSession = () => {
                 >
                   {(
                     [
-                      ["Agent A", !!calculationA],
-                      ["Agent B", !!calculationB],
-                      ["Agent C", !!comparison],
-                      ["Agent D", !!controllerDecision],
+                      ["Konstruktør A", !!calculationA],
+                      ["Konstruktør B", !!calculationB],
+                      ["Samanliknar", !!comparison],
+                      ["Kontrollør", !!controllerDecision],
                     ] as const
                   ).map(([label, done]) => (
                     <div
@@ -781,7 +791,7 @@ const saveStateToSession = () => {
           {/* === FASE: CALCULATION_RESULT === */}
           {phase === "calculation_result" && calculationA && (
             <>
-              {/* Agent D si avgjerd — primær banner */}
+              {/* Kontrolløren si avgjerd — primær banner */}
               {controllerDecision && (
                 <StatusStripe
                   status={decisionStatusBadge[controllerDecision.decision_status]}
@@ -798,7 +808,7 @@ const saveStateToSession = () => {
                       }}
                     >
                       <span className="uk-eyebrow" style={{ color: "inherit" }}>
-                        Agent D — kontrolløragent
+                        Kontrollør — endeleg avgjerd
                       </span>
                       <Badge status={decisionStatusBadge[controllerDecision.decision_status]}>
                         {decisionStatusLabel[controllerDecision.decision_status]}
@@ -810,7 +820,7 @@ const saveStateToSession = () => {
                 </StatusStripe>
               )}
 
-              {/* Fallback: Agent C banner viss D feila */}
+              {/* Fallback: Samanliknar-banner viss Kontrolløren feila */}
               {!controllerDecision && comparison && (
                 <StatusStripe
                   status={matchStatusBadge[comparison.match_status]}
@@ -828,8 +838,8 @@ const saveStateToSession = () => {
               {/* Kort svar — eller blokka-varsel */}
               {(isBlocked("short_conclusion_a") || isBlocked("short_conclusion_b")) ? (
                 <StatusStripe status="warn">
-                  <strong>Sluttkonklusjon utelaten av Agent D.</strong>{" "}
-                  Kontrolløragenten identifiserte hallusinasjonar i agentane sin
+                  <strong>Sluttkonklusjon utelaten av Kontrolløren.</strong>{" "}
+                  Kontrolløren identifiserte hallusinasjonar i konstruktørane sin
                   kortform-konklusjon. Sjå Resultat-felt og full utrekning under
                   for korrekte verdiar.
                 </StatusStripe>
@@ -1018,14 +1028,14 @@ const saveStateToSession = () => {
                 <div className="uk-card__bd" style={{ padding: 14 }}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span className="uk-eyebrow">Agent A konfidens</span>
+                      <span className="uk-eyebrow">Konstruktør A konfidens</span>
                       <Badge status={confidenceBadge[calculationA.confidence]}>
                         {calculationA.confidence}
                       </Badge>
                     </div>
                     {calculationB && (
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span className="uk-eyebrow">Agent B konfidens</span>
+                        <span className="uk-eyebrow">Konstruktør B konfidens</span>
                         <Badge status={confidenceBadge[calculationB.confidence]}>
                           {calculationB.confidence}
                         </Badge>
@@ -1035,16 +1045,16 @@ const saveStateToSession = () => {
                 </div>
               </section>
 
-              {/* Agent B-resultat (uavhengig kontroll) */}
+              {/* Konstruktør B-resultat (uavhengig kontroll) */}
               {calculationB && (
                 <section
                   className="uk-card"
                   style={{ marginTop: 16, background: "var(--surface-2)" }}
                 >
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Agent B — uavhengig kontroll</div>
+                    <div className="uk-card__title">Konstruktør B — uavhengig kontroll</div>
                     <span style={{ fontSize: 11, color: "var(--fg-muted)", fontStyle: "italic" }}>
-                      Løyste oppgåva utan å sjå Agent A sitt svar
+                      Løyste oppgåva utan å sjå Konstruktør A sitt svar
                     </span>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1058,7 +1068,7 @@ const saveStateToSession = () => {
                         }}
                       >
                         <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
-                          Agent B sin konklusjon
+                          Konstruktør B sin konklusjon
                         </div>
                         <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
                           {calculationB.short_conclusion}
@@ -1076,7 +1086,7 @@ const saveStateToSession = () => {
                         }}
                       >
                         <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                          Agent B sine resultat
+                          Konstruktør B sine resultat
                         </div>
                         {Object.entries(calculationB.results).map(([k, v], i) => (
                           <div
@@ -1096,11 +1106,11 @@ const saveStateToSession = () => {
                 </section>
               )}
 
-              {/* Comparison details — Agent C */}
+              {/* Comparison details — Samanliknar */}
               {comparison && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Agent C — samanlikning</div>
+                    <div className="uk-card__title">Samanliknar — skilnader funne</div>
                     <Badge status={matchStatusBadge[comparison.match_status]}>
                       {matchStatusLabel[comparison.match_status]}
                     </Badge>
@@ -1115,7 +1125,7 @@ const saveStateToSession = () => {
                           <table style={{ width: "100%", fontSize: 12.5, borderCollapse: "collapse" }}>
                             <thead>
                               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                                {["Felt", "Agent A", "Agent B", "Skilnad", "Alvor"].map((h) => (
+                                {["Felt", "Konstruktør A", "Konstruktør B", "Skilnad", "Alvor"].map((h) => (
                                   <th
                                     key={h}
                                     className="uk-eyebrow"
@@ -1202,7 +1212,7 @@ const saveStateToSession = () => {
                         {(comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 && (
                           <div style={{ marginBottom: 12 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
-                              Agent A
+                              Konstruktør A
                             </div>
                             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                               {comparison.internal_consistency_issues.agent_a.map((issue, i) => (
@@ -1217,7 +1227,7 @@ const saveStateToSession = () => {
                         {(comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0 && (
                           <div>
                             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
-                              Agent B
+                              Konstruktør B
                             </div>
                             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                               {comparison.internal_consistency_issues.agent_b.map((issue, i) => (
