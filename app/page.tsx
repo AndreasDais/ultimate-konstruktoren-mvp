@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type AgentResult = {
   status: string;
@@ -181,6 +181,51 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
 
+// Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport
+useEffect(() => {
+  try {
+    const saved = sessionStorage.getItem("uk-state");
+    if (!saved) return;
+    const state = JSON.parse(saved);
+    if (!state.currentRunId) return;
+
+    setInput(state.input ?? "");
+    setResult(state.result ?? null);
+    setRequestId(state.requestId ?? null);
+    setCalculationA(state.calculationA ?? null);
+    setCalculationB(state.calculationB ?? null);
+    setComparison(state.comparison ?? null);
+    setControllerDecision(state.controllerDecision ?? null);
+    setCurrentRunId(state.currentRunId);
+    setPhase(state.phase ?? "calculation_result");
+
+    sessionStorage.removeItem("uk-state");
+  } catch (e) {
+    console.warn("Klarte ikkje laste tilstand frå sessionStorage", e);
+  }
+}, []);
+
+const saveStateToSession = () => {
+  try {
+    sessionStorage.setItem(
+      "uk-state",
+      JSON.stringify({
+        input,
+        result,
+        requestId,
+        calculationA,
+        calculationB,
+        comparison,
+        controllerDecision,
+        currentRunId,
+        phase: "calculation_result",
+      })
+    );
+  } catch (e) {
+    console.warn("Klarte ikkje lagre tilstand til sessionStorage", e);
+  }
+};
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -237,6 +282,13 @@ export default function Home() {
 
   const handleStartCalculation = async () => {
     if (!result || !requestId) return;
+
+    // Hopp rett til resultatet viss berekninga allereie er gjort
+    // (skjer når brukar kjem tilbake frå calc_result til bekreft og trykker Start igjen)
+    if (calculationA && currentRunId) {
+      setPhase("calculation_result");
+      return;
+    }
 
     setPhase("calculating");
     setError(null);
@@ -1144,11 +1196,11 @@ export default function Home() {
                       Resultatet er førebels og må kontrollerast av fagperson.
                     </p>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={handleCancel} className="uk-btn">
-                        Tilbake til start
+                    <button onClick={() => setPhase("result")} className="uk-btn">
+                        ← Tilbake
                       </button>
                       {currentRunId && calculationA && calculationB && (
-                        <a href={`/rapport/${currentRunId}`} className="uk-btn uk-btn--primary">
+                        <a href={`/rapport/${currentRunId}`} className="uk-btn uk-btn--primary" onClick={saveStateToSession}>
                           Generer rapport →
                         </a>
                       )}

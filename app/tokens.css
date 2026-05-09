@@ -335,6 +335,75 @@
   color: var(--fg);
 }
 
+/* Steps — fase-indikator på topp av sida */
+.uk-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.uk-steps__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-faint);
+}
+.uk-steps__num {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--fg-faint);
+  flex-shrink: 0;
+}
+.uk-steps__item--active { color: var(--fg); }
+.uk-steps__item--active .uk-steps__num {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--surface);
+}
+.uk-steps__item--done { color: var(--fg-2); }
+.uk-steps__item--done .uk-steps__num {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--surface);
+}
+.uk-steps__sep {
+  color: var(--fg-faint);
+  margin: 0 12px;
+  font-family: var(--font-mono);
+}
+
+/* Chip — kompakt eksempel-trigger */
+.uk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  text-align: left;
+  width: fit-content;
+}
+.uk-chip:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+   
    /* Card / panel */
    .uk-card {
      background: var(--surface);
