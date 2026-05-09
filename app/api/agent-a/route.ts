@@ -5,18 +5,20 @@ import {
   buildProfileDataPromptBlock,
 } from "@/lib/profiles/extract";
 
-const SYSTEM_PROMPT = `Du er Agent A, ein uavhengig løysingsagent for Ultimate Konstruktøren — eit AI-basert verktøy for norsk byggfagleg praksis.
+const SYSTEM_PROMPT = `Du er Konstruktør A, ein uavhengig løysingsagent for Pilar — eit AI-basert verktøy for norsk byggfagleg praksis.
 
-Du tek imot strukturert input frå Input-agenten (som allereie har analysert oppgåva, trekt ut data, og bestemt kva som kan reknast). Oppgåva di er å løyse berekninga stegvis.
+Du tek imot strukturert input frå Tolkar (som allereie har analysert oppgåva, trekt ut data, og bestemt kva som kan reknast). Oppgåva di er å løyse berekninga stegvis.
 
 Du svarar ALLTID med gyldig JSON, og berre JSON. Ingen markdown-fences. Ingen tekst før eller etter.
 
-VIKTIG OM REKKEFØLGE: Du skal generere felta i NØYAKTIG den rekkefølga dei står under. Det betyr: først tenkjer du gjennom føresetnader, så jobbar du deg systematisk gjennom calculation_steps med formel, innsetting og resultat per steg. Deretter samanstiller du results basert på det du nettopp har rekna. Limitations, warnings og confidence kjem etter. ALLER SIST skriv du short_conclusion — og då les du results-feltet du nettopp har laga og kopierer dei eksakte verdiane inn i konklusjonen. short_conclusion er ikkje ein gjetning du formulerer på førehand; det er ein oppsummering av tal som allereie er rekna.
+VIKTIG OM REKKEFØLGE: Generer felta i NØYAKTIG den rekkefølga dei står under. Tenk først gjennom føresetnader, så jobb deg systematisk gjennom calculation_steps med formel, innsetting og resultat per steg. Deretter samanstill results basert på det som nettopp er rekna. Limitations, warnings og confidence kjem etter. ALLER SIST skriv du short_conclusion — og då les du results-feltet du nettopp har laga og kopierer dei eksakte verdiane inn i konklusjonen. short_conclusion er ikkje ein gjetning du formulerer på førehand; det er ein oppsummering av tal som allereie er rekna.
+
+SJØLVREFERANSE: I prosa-felta (calculation_steps.text, limitations, warnings, short_conclusion) skal du referere til deg sjølv som "Konstruktør A" i tredjeperson eller bruke passivform — aldri "eg". Døme: "Konstruktør A har valt formel M = qL²/8" eller "Lasten er antatt som dimensjonerande", ikkje "Eg har valt..." eller "Eg antar...".
 
 Strukturen er:
 
 {
-  "assumptions": ["liste over alle føresetnader du brukte"],
+  "assumptions": ["liste over alle føresetnader brukt"],
   "calculation_steps": [
     {
       "title": "Kort tittel for steget",
@@ -41,10 +43,10 @@ Reglar:
 - Bruk SI-einingar konsekvent.
 - Skil mellom karakteristiske og dimensjonerande verdiar der det er relevant.
 - Speil språkstilen til brukaren (nynorsk eller bokmål).
-- Konfidens skal reflektere kor sikker du faktisk er. Sett "low" viss du gjettar.
+- Konfidens skal reflektere kor sikker Konstruktør A faktisk er. Sett "low" viss det er gjetting involvert.
 - Når meldinga inneheld ei PROFILDATA-blokk øvst med eksakte tverrsnittsverdiar, bruk DESSE verdiane direkte. Ikkje hugs profil-data frå minnet — verdiane i blokka er autoritative.`;
 
-const PROMPT_VERSION = "agent_a_v0.4";
+const PROMPT_VERSION = "agent_a_v0.5";
 
 export async function POST(request: Request) {
   try {
@@ -71,13 +73,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const userMessage = `${profileBlock}INPUT-AGENTENS TOLKING:
+    const userMessage = `${profileBlock}TOLKAR SI VURDERING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
 - Kan reknast no: ${JSON.stringify(input_review.kan_reknast_no ?? [])}
 - Kan ikkje reknast: ${JSON.stringify(input_review.kan_ikkje_reknast ?? [])}
-- Antakingar (frå Input-agenten): ${JSON.stringify(input_review.antakingar ?? [])}
+- Antakingar (frå Tolkar): ${JSON.stringify(input_review.antakingar ?? [])}
 
 Løys oppgåva i samsvar med systeminstruksen din.`;
 
@@ -107,8 +109,8 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
       return Response.json(
         {
           error: wasTruncated
-            ? "Agent A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-            : "Klarte ikkje parse Agent A sitt svar som JSON",
+            ? "Konstruktør A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+            : "Klarte ikkje parse Konstruktør A sitt svar som JSON",
           raw: responseText,
           stop_reason: message.stop_reason,
         },
@@ -138,7 +140,7 @@ Løys oppgåva i samsvar med systeminstruksen din.`;
 
     return Response.json({ result: parsed });
   } catch (err) {
-    console.error("Agent A error:", err);
+    console.error("Konstruktør A error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
     return Response.json({ error: errorMessage }, { status: 500 });
   }

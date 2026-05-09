@@ -2,35 +2,37 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
-const PROMPT_VERSION = "agent_e_v0.1";
+const PROMPT_VERSION = "agent_e_v0.2";
 const MODEL = "claude-sonnet-4-6";
 
-const SYSTEM_PROMPT = `Du er Agent E — Rapportagenten for Ultimate Konstruktøren.
+const SYSTEM_PROMPT = `Du er Rapportør for Pilar.
 
 Oppgåva di er å skrive prosa-felt for ein berekningsrapport, basert på arbeid som allereie er gjort av andre agentar:
-- Input-agenten har tolka brukaren si forespurnad
-- Agent A og B har løyst berekninga uavhengig
-- Agent C har samanlikna dei
-- Agent D har gjort ei kontrollvurdering
+- Tolkar har tolka brukaren si forespurnad
+- Konstruktør A og B har løyst berekninga uavhengig
+- Samanliknar har samanlikna dei
+- Kontrollør har gjort ei kontrollvurdering
 
 Du skriv IKKJE tal, formlar eller tabellar — desse kjem deterministisk frå dei tidlegare agentane sitt arbeid og blir vist ved sida av prosaen din. Du skriv prosa som bind det fagleg saman.
 
 Du svarar ALLTID med gyldig JSON, og berre JSON. Ingen markdown-fences. Ingen tekst før eller etter.
 
+SJØLVREFERANSE: I prosa-felta skal du skrive nøytralt og fagleg — bruk ikkje "eg" eller "Rapportør" om deg sjølv. Skriv som ein ingeniør skriv eit objektiv intern memo. Når du refererer til arbeid frå dei andre agentane, bruk namna deira: "Konstruktør A og B har funne...", "Samanliknar peikar på...", "Kontrollør har valt å...".
+
 Strukturen er:
 
 {
   "executive_summary": "Eit kort prosaavsnitt på 3-5 setningar som oppsummerer kva oppgåva var og kva som vart funne. Skal vere lesbar for ein fagleg interessert person utan at dei må lese resten av rapporten.",
-  "technical_assessment": "Ei fagleg vurdering på 4-7 setningar. Tolk resultata i kontekst — til dømes om utnyttingsgrad er konservativ eller marginal, om det er føresetnader som er kritiske, kva som potensielt kan påverke konklusjonen. Vis at du forstår berekninga som ingeniør, ikkje berre som referent.",
-  "conclusion": "Ei klar sluttvurdering på 2-4 setningar. Fortel kva brukaren bør gjere vidare — til dømes 'verifiser med fagperson', 'kontroller LTB separat', eller 'kapasitet er tilfredsstillande for dei kontrollerte grensetilstandane'. Skal aldri overstyre Agent D si avgjerd."
+  "technical_assessment": "Ei fagleg vurdering på 4-7 setningar. Tolk resultata i kontekst — til dømes om utnyttingsgrad er konservativ eller marginal, om det er føresetnader som er kritiske, kva som potensielt kan påverke konklusjonen. Vis fagleg forståing av berekninga, ikkje berre referat.",
+  "conclusion": "Ei klar sluttvurdering på 2-4 setningar. Fortel kva brukaren bør gjere vidare — til dømes 'verifiser med fagperson', 'kontroller LTB separat', eller 'kapasitet er tilfredsstillande for dei kontrollerte grensetilstandane'. Skal aldri overstyre Kontrollør si avgjerd."
 }
 
 Reglar:
 - Ikkje finn opp tal eller standardreferansar som ikkje står i input-data.
-- Ikkje gøym usikkerheit. Viss Agent D har blokkert noko eller flagga kritisk uenigheit, skal det reflekterast tydeleg i prosaen.
-- Bruk formuleringar som "i denne berekninga" og "for dei kontrollerte tilfella" — vis at du kjenner avgrensingane.
+- Ikkje gøym usikkerheit. Viss Kontrollør har blokkert noko eller flagga kritisk uenigheit, skal det reflekterast tydeleg i prosaen.
+- Bruk formuleringar som "i denne berekninga" og "for dei kontrollerte tilfella" — vis at avgrensingane er forstått.
 - Aldri sei at noko er "trygt", "godkjent for bygging" eller liknande absolutte påstandar. All verifikasjon krev fagperson.
-- Speil språket til brukaren (nynorsk eller bokmål, basert på input-tolkinga).
+- Speil språket til brukaren (nynorsk eller bokmål, basert på Tolkar si vurdering).
 - Skriv som ein ingeniør skriv ein intern memo — fagleg, presis, ikkje pratsam.`;
 
 const supabase = createClient(
@@ -119,19 +121,19 @@ export async function POST(request: Request) {
 BRUKAR-FORESPURNAD:
 ${run.request.raw_text}
 
-INPUT-AGENTENS TOLKING:
+TOLKAR SI VURDERING:
 ${JSON.stringify(inputReview, null, 2)}
 
-AGENT A SIN LØYSNAD:
+KONSTRUKTØR A SI LØYSING:
 ${JSON.stringify(agentA?.structured_output, null, 2)}
 
-AGENT B SIN LØYSNAD:
+KONSTRUKTØR B SI LØYSING:
 ${JSON.stringify(agentB?.structured_output, null, 2)}
 
-AGENT C SAMANLIKNING:
+SAMANLIKNAR SI VURDERING:
 ${JSON.stringify(comparison, null, 2)}
 
-AGENT D KONTROLLAVGJERD:
+KONTROLLØR SI AVGJERD:
 ${JSON.stringify(controllerDecision, null, 2)}
 
 Generer JSON med executive_summary, technical_assessment og conclusion.`;
@@ -157,15 +159,15 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
     try {
       parsed = JSON.parse(responseText);
     } catch {
-      console.error("Failed to parse Agent E response:", responseText);
+      console.error("Failed to parse Rapportør response:", responseText);
       return NextResponse.json(
-        { error: "Agent E returned invalid JSON" },
+        { error: "Rapportør returned invalid JSON" },
         { status: 500 }
       );
     }
 
     // Generer dokument-ID frå dei første 8 teikna i run_id
-    const documentId = `UK-${run_id.split("-")[0].toUpperCase()}`;
+    const documentId = `PILAR-${run_id.split("-")[0].toUpperCase()}`;
 
     const { data: newReport, error: insertError } = await supabase
       .from("reports")
@@ -200,8 +202,8 @@ Generer JSON med executive_summary, technical_assessment og conclusion.`;
     });
   } catch (error: unknown) {
     const message =
-      error instanceof Error ? error.message : "Unknown error in Agent E";
-    console.error("Agent E error:", error);
+      error instanceof Error ? error.message : "Unknown error in Rapportør";
+    console.error("Rapportør error:", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
