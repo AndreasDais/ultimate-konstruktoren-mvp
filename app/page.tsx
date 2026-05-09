@@ -506,102 +506,157 @@ const saveStateToSession = () => {
           )}
 
           {/* === FASE: RESULT (Input-agent) === */}
+          {/* === FASE: RESULT (Input-agent — to-kolonne) === */}
           {phase === "result" && result && (
             <>
-              <section className="uk-card">
-                <div className="uk-card__hd">
-                  <div className="uk-card__title">Din forespørsel</div>
-                </div>
-                <div className="uk-card__bd">
-                  <p
-                    className="uk-mono"
-                    style={{
-                      fontSize: 13,
-                      color: "var(--fg-2)",
-                      whiteSpace: "pre-wrap",
-                      margin: 0,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {input}
-                  </p>
-                </div>
-              </section>
-
-              <section className="uk-card" style={{ marginTop: 16 }}>
-                <div className="uk-card__hd">
-                  <div className="uk-card__title">Input-agentens tolking</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Badge status="neutral">{result.status}</Badge>
-                    <span
-                      className="uk-mono"
-                      style={{ fontSize: 11, color: "var(--fg-muted)" }}
-                    >
-                      konfidens {result.konfidens?.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55 }}>
-                    {result.tolkings_oppsummering}
-                  </p>
-
-                  {result.berekningstype && (
-                    <Row label="Berekningstype" value={result.berekningstype} />
-                  )}
-
-                  {Object.keys(result.tolkte_verdiar || {}).length > 0 && (
-                    <div>
-                      <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                        Tolkte verdiar
-                      </div>
-                      <ul
+              <div className="uk-confirm-grid">
+                {/* === Venstre kolonne: forespørsel + tolking === */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <section className="uk-card">
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">Din forespørsel</div>
+                    </div>
+                    <div className="uk-card__bd">
+                      <p
                         className="uk-mono"
                         style={{
-                          fontSize: 12.5,
-                          color: "var(--fg)",
+                          fontSize: 13,
+                          color: "var(--fg-2)",
+                          whiteSpace: "pre-wrap",
                           margin: 0,
-                          paddingLeft: 0,
-                          listStyle: "none",
+                          lineHeight: 1.55,
                         }}
                       >
-                        {Object.entries(result.tolkte_verdiar).map(([k, v]) => (
-                          <li key={k} style={{ padding: "2px 0" }}>
-                            {k} = {v}
-                          </li>
-                        ))}
-                      </ul>
+                        {input}
+                      </p>
                     </div>
-                  )}
+                  </section>
 
-                  {result.manglande_verdiar?.length > 0 && (
-                    <ListSection
-                      label="Manglande data"
-                      items={result.manglande_verdiar}
-                      tone="warn"
-                    />
-                  )}
+                  <section className="uk-card">
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">Tolking</div>
+                      <Badge status="neutral">Agent 0</Badge>
+                    </div>
+                    <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
+                        {result.tolkings_oppsummering}
+                      </p>
 
-                  {result.kan_reknast_no?.length > 0 && (
-                    <ListSection
-                      label="Kan reknast no"
-                      items={result.kan_reknast_no}
-                    />
-                  )}
+                      {result.berekningstype && (
+                        <Row label="Berekningstype" value={result.berekningstype} />
+                      )}
 
-                  {result.kan_ikkje_reknast?.length > 0 && (
-                    <ListSection
-                      label="Kan ikkje reknast enno"
-                      items={result.kan_ikkje_reknast}
-                    />
-                  )}
+                      {Object.keys(result.tolkte_verdiar || {}).length > 0 && (
+                        <div>
+                          <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
+                            Tolkte verdiar
+                          </div>
+                          <ul
+                            className="uk-mono"
+                            style={{
+                              fontSize: 12.5,
+                              color: "var(--fg)",
+                              margin: 0,
+                              paddingLeft: 0,
+                              listStyle: "none",
+                            }}
+                          >
+                            {Object.entries(result.tolkte_verdiar).map(([k, v]) => (
+                              <li key={k} style={{ padding: "2px 0" }}>
+                                {k} = {v}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
-                  {result.antakingar?.length > 0 && (
-                    <ListSection label="Antakingar" items={result.antakingar} />
-                  )}
+                      {result.manglande_verdiar?.length > 0 && (
+                        <ListSection
+                          label="Manglande data"
+                          items={result.manglande_verdiar}
+                          tone="warn"
+                        />
+                      )}
+
+                      {result.antakingar?.length > 0 && (
+                        <ListSection label="Antakingar" items={result.antakingar} />
+                      )}
+                    </div>
+                  </section>
                 </div>
-              </section>
 
+                {/* === Høgre kolonne: kva kan reknast + status === */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <section className="uk-card">
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">Kva kan reknast no</div>
+                    </div>
+                    <div className="uk-card__bd">
+                      {result.kan_reknast_no?.map((item) => (
+                        <div key={item} className="uk-checkitem uk-checkitem--active">
+                          <span className="uk-checkitem__icon">●</span>
+                          <span className="uk-checkitem__label">{item}</span>
+                        </div>
+                      ))}
+                      {result.kan_ikkje_reknast?.map((item) => (
+                        <div key={item} className="uk-checkitem uk-checkitem--blocked">
+                          <span className="uk-checkitem__icon">○</span>
+                          <span className="uk-checkitem__label">{item}</span>
+                          <span className="uk-checkitem__note">krev meir input</span>
+                        </div>
+                      ))}
+                      {(result.kan_reknast_no?.length ?? 0) === 0 &&
+                        (result.kan_ikkje_reknast?.length ?? 0) === 0 && (
+                          <p style={{ margin: 0, fontSize: 13, color: "var(--fg-muted)" }}>
+                            Ingen berekningar oppgitt.
+                          </p>
+                        )}
+                    </div>
+                  </section>
+
+                  <section className="uk-card">
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">Status</div>
+                    </div>
+                    <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
+                      <StatusKV
+                        label="Inputstatus"
+                        tone={
+                          result.status === "klar"
+                            ? "ok"
+                            : result.status === "delvis_klar"
+                              ? "info"
+                              : result.status === "avvist"
+                                ? "bad"
+                                : "warn"
+                        }
+                        value={result.status}
+                      />
+                      {result.fagomraade && (
+                        <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
+                      )}
+                      <StatusKV
+                        label="Støtta i MVP"
+                        tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
+                        value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
+                      />
+                      <StatusKV
+                        label="Konfidens"
+                        tone={
+                          result.konfidens >= 0.7
+                            ? "ok"
+                            : result.konfidens >= 0.4
+                              ? "warn"
+                              : "bad"
+                        }
+                        value={result.konfidens?.toFixed(2) ?? "—"}
+                      />
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              {/* Action-bar — full bredde under begge kolonnene */}
               <section className="uk-card" style={{ marginTop: 16 }}>
                 <div className="uk-card__bd">
                   <div
@@ -1250,6 +1305,23 @@ function ListSection({
           <li key={i}>{item}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function StatusKV({
+  label,
+  tone,
+  value,
+}: {
+  label: string;
+  tone: BadgeStatus;
+  value: string;
+}) {
+  return (
+    <div className="uk-status-kv">
+      <span>{label}</span>
+      <Badge status={tone}>{value}</Badge>
     </div>
   );
 }
