@@ -3,7 +3,7 @@ import "./globals.css";
 import "./tokens.css";
 
 export const metadata: Metadata = {
-  title: "Den Ultimate Konstruktøren",
+  title: "Pilar — AI-konstruksjonsassistent",
   description: "AI-basert konstruksjonsassistent for norsk byggfagleg praksis",
 };
 

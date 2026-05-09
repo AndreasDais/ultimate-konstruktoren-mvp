@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Berekningsnotat — Ultimate Konstruktøren",
+  title: "Berekningsnotat — Pilar",
 };
 
 export default function RapportLayout({
