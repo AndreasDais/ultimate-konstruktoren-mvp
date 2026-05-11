@@ -770,3 +770,103 @@
     height: 32px;
   }
 }
+/* === KaTeX-formel-rendering ============================
+   Wrapper rundt katex.renderToString-output. KaTeX kjem
+   med eigne fontar og styling — vi treng berre å handtere
+   margin og horisontal overflow for lange uttrykk.
+   ====================================================== */
+
+   .rapport-formula {
+    margin: 1.25rem 0;
+    padding: 0.5rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  /* KaTeX sin display-modus er sentrert som default. */
+  .rapport-formula .katex-display {
+    margin: 0;
+  }
+  
+  /* Lange uttrykk (t.d. kjede-likskap) kan trenge horisontal
+     scroll. Skjul scrollbar-en på vanleg skjerm, men la han
+     vere klikkbar på mobil/touch. */
+  .rapport-formula::-webkit-scrollbar {
+    height: 4px;
+  }
+  .rapport-formula::-webkit-scrollbar-thumb {
+    background: var(--border-2);
+    border-radius: 2px;
+  }
+  
+  /* Print: la formlar bryte naturleg. Overflow er for skjerm. */
+  @media print {
+    .rapport-formula {
+      overflow: visible;
+    }
+  }
+
+  /* === Prosa-utrekning-toggle ============================
+   Gøymer rå-utrekninga i prosa når typeset LaTeX finst.
+   Toggle er kollapsert på skjerm, alltid utvida i print.
+   ====================================================== */
+
+.rapport-step-prose {
+  margin-top: 0.5rem;
+}
+
+.rapport-step-prose summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--fg-muted);
+  padding: 0.35rem 0;
+  list-style: none;
+  font-family: var(--font-sans);
+  transition: color 120ms;
+}
+
+.rapport-step-prose summary::-webkit-details-marker {
+  display: none;
+}
+
+.rapport-step-prose summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 150ms;
+  font-size: 0.75rem;
+}
+
+.rapport-step-prose[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.rapport-step-prose summary:hover {
+  color: var(--fg);
+}
+
+.rapport-step-prose pre {
+  margin-top: 0.5rem;
+}
+
+@media print {
+  /* I print vil vi sjå alt — gøym toggle-en, vis innhaldet. */
+  .rapport-step-prose summary {
+    display: none;
+  }
+  .rapport-step-prose pre {
+    display: block !important;
+    margin-top: 0;
+  }
+  .rapport-step-prose::before {
+    content: "Utrekning som tekst:";
+    display: block;
+    font-size: 0.75rem;
+    color: var(--fg-muted);
+    margin: 0.5rem 0 0.25rem;
+    font-style: italic;
+    font-family: var(--font-sans);
+  }
+}

@@ -48,7 +48,7 @@ type AgentOutput = {
   structured_output: {
     short_conclusion?: string;
     assumptions?: string[];
-    calculation_steps?: { title: string; text: string }[];
+    calculation_steps?: { title: string; text: string; latex_formula?: string | null }[];
     results?: Record<string, string>;
     limitations?: string[];
     warnings?: string[];

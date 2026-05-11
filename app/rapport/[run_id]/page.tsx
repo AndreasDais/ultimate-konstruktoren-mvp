@@ -18,13 +18,14 @@ import {
 import "./rapport.css";
 import FeilrapportForm from "./feilrapport-form";
 import { QRCodeSVG } from "qrcode.react";
+import Formula from "@/app/components/Formula";
 
 type AgentOutput = {
   agent_name: string;
   structured_output: {
     short_conclusion?: string;
     assumptions?: string[];
-    calculation_steps?: { title: string; text: string }[];
+    calculation_steps?: { title: string; text: string; latex_formula?: string | null }[];
     results?: Record<string, string>;
     limitations?: string[];
     warnings?: string[];
@@ -407,13 +408,23 @@ export default function RapportPage() {
               >
                 <h2>Stegvis utrekning</h2>
                 {primary.structured_output.calculation_steps.map((step, i) => (
-                  <div key={i} className="rapport-step">
-                    <h3>
-                      {i + 1}. {step.title}
-                    </h3>
-                    <pre className="rapport-step-text">{step.text}</pre>
-                  </div>
-                ))}
+  <div key={i} className="rapport-step">
+    <h3>
+      {i + 1}. {step.title}
+    </h3>
+    {step.latex_formula ? (
+      <>
+        <Formula latex={step.latex_formula} fallbackText={step.text} />
+        <details className="rapport-step-prose">
+          <summary>Vis prosa-utrekning</summary>
+          <pre className="rapport-step-text">{step.text}</pre>
+        </details>
+      </>
+    ) : (
+      <pre className="rapport-step-text">{step.text}</pre>
+    )}
+  </div>
+))}
               </section>
             )}
 
@@ -495,26 +506,26 @@ export default function RapportPage() {
             <FeilrapportForm reportId={data.report.id} />
           </div>
 
-          {/* Footer-signatur */}
+{/* Footer-signatur */}
 <footer className="rapport-footer">
-  <p className="rapport-footer__warning">
-  <div className="rapport-footer__manual-sign">
-  <div className="rapport-footer__sign-field">
-    <span className="rapport-footer__sign-label">Kontrollert av</span>
-    <span className="rapport-footer__sign-line" />
-  </div>
-  <div className="rapport-footer__sign-field">
-    <span className="rapport-footer__sign-label">Signatur</span>
-    <span className="rapport-footer__sign-line" />
-  </div>
-  <div className="rapport-footer__sign-field">
-    <span className="rapport-footer__sign-label">Dato</span>
-    <span className="rapport-footer__sign-line" />
-  </div>
+<div className="rapport-footer__warning">
+  Førebels berekning — må kontrollerast av fagperson før bruk i
+  prosjektering.
 </div>
-    Førebels berekning — må kontrollerast av fagperson før bruk i
-    prosjektering.
-  </p>
+  <div className="rapport-footer__manual-sign">
+    <div className="rapport-footer__sign-field">
+      <span className="rapport-footer__sign-label">Kontrollert av</span>
+      <span className="rapport-footer__sign-line" />
+    </div>
+    <div className="rapport-footer__sign-field">
+      <span className="rapport-footer__sign-label">Signatur</span>
+      <span className="rapport-footer__sign-line" />
+    </div>
+    <div className="rapport-footer__sign-field">
+      <span className="rapport-footer__sign-label">Dato</span>
+      <span className="rapport-footer__sign-line" />
+    </div>
+  </div>
   <div className="rapport-footer__signature">
     <div className="rapport-footer__signature-text">
       <div className="rapport-footer__brand">
