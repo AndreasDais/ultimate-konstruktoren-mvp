@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  MATCH_STATUS_LABELS, MATCH_STATUS_TONES,
+  DECISION_STATUS_LABELS, DECISION_STATUS_TONES,
+  CONFIDENCE_TONES, SEVERITY_TONES,
+  INPUT_STATUS_LABELS, INPUT_STATUS_TONES,
+  type Tone,
+} from "@/lib/format";
 
 type AgentResult = {
   status: string;
@@ -70,8 +77,6 @@ type ControllerDecision = {
 
 type Phase = "input" | "result" | "calculating" | "calculation_result";
 
-type BadgeStatus = "ok" | "warn" | "bad" | "info" | "neutral";
-
 const EXAMPLE_PROMPTS = [
   "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
   "Lastkombinasjon for kontorbygg, G = 4,5 kN/m², Q = 3,0 kN/m²",
@@ -100,47 +105,6 @@ const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description
     title: "Berekningsnotat",
     description: "Førebels resultat med agentkontroll. Må kontrollerast av fagperson før bruk.",
   },
-};
-
-const matchStatusBadge: Record<ComparisonResult["match_status"], BadgeStatus> = {
-  match: "ok",
-  minor_differences: "info",
-  significant_differences: "warn",
-  critical_disagreement: "bad",
-};
-
-const matchStatusLabel: Record<ComparisonResult["match_status"], string> = {
-  match: "Begge konstruktørar er einige",
-  minor_differences: "Mindre forskjellar",
-  significant_differences: "Betydelege forskjellar",
-  critical_disagreement: "Kritisk uenigheit",
-};
-
-const decisionStatusBadge: Record<ControllerDecision["decision_status"], BadgeStatus> = {
-  approved: "ok",
-  approved_with_warnings: "info",
-  uncertain: "warn",
-  rejected: "bad",
-};
-
-const decisionStatusLabel: Record<ControllerDecision["decision_status"], string> = {
-  approved: "Førebels godkjent",
-  approved_with_warnings: "Godkjent med åtvaringar",
-  uncertain: "Usikker — krev gjennomgang",
-  rejected: "Avvist — må kontrollerast",
-};
-
-const severityBadge: Record<ConsistencyIssue["severity"], BadgeStatus> = {
-  low: "neutral",
-  medium: "info",
-  high: "warn",
-  critical: "bad",
-};
-
-const confidenceBadge: Record<CalculationResult["confidence"], BadgeStatus> = {
-  high: "ok",
-  medium: "warn",
-  low: "bad",
 };
 
 // Returnerer ein menneskeleg-lesbar grunn til at "Start berekning" er deaktivert,
@@ -411,23 +375,6 @@ const saveStateToSession = () => {
 
   return (
     <div className="uk-shell">
-      <header className="uk-topbar">
-        <div className="uk-topbar__brand">
-          <span
-            style={{
-              fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif',
-              fontSize: 22,
-              fontWeight: 600,
-              letterSpacing: "-0.015em",
-              color: "var(--fg)",
-              lineHeight: 1,
-            }}
-          >
-            Pilar
-          </span>
-        </div>
-      </header>
-
       <main>
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
           {phase !== "calculating" && <StepIndicator phase={phase} />}
@@ -456,15 +403,6 @@ const saveStateToSession = () => {
               {pageHeader.description}
             </p>
           </header>
-
-          <div className="uk-disclaimer" style={{ marginBottom: 32 }}>
-            <div className="uk-disclaimer__label">VIKTIG MERKNAD</div>
-            Dette er ein tidleg testversjon under utvikling. Resultata er ikkje
-            kontrollerte og kan vere feilaktige. Verktøyet skal ikkje brukast
-            som grunnlag for reell prosjektering, byggesøknader eller utføring.
-            All berekning må kontrollerast av kvalifisert byggingeniør før
-            praktisk bruk.
-          </div>
 
           {/* === FASE: INPUT === */}
           {phase === "input" && (
@@ -500,7 +438,8 @@ const saveStateToSession = () => {
               <button
                 onClick={handleSubmit}
                 disabled={!input.trim() || loading}
-                className="uk-btn uk-btn--primary"
+                aria-busy={loading}
+                className={`uk-btn uk-btn--primary${loading ? " uk-btn--loading" : ""}`}
                 style={{ marginTop: 20 }}
               >
                 {loading ? "Tolkar..." : "Send til Tolkaren"}
@@ -631,16 +570,8 @@ const saveStateToSession = () => {
                     <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
                       <StatusKV
                         label="Inputstatus"
-                        tone={
-                          result.status === "klar"
-                            ? "ok"
-                            : result.status === "delvis_klar"
-                              ? "info"
-                              : result.status === "avvist"
-                                ? "bad"
-                                : "warn"
-                        }
-                        value={result.status}
+                        tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
+                        value={INPUT_STATUS_LABELS[result.status] ?? result.status}
                       />
                       {result.fagomraade && (
                         <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
@@ -794,7 +725,7 @@ const saveStateToSession = () => {
               {/* Kontrolløren si avgjerd — primær banner */}
               {controllerDecision && (
                 <StatusStripe
-                  status={decisionStatusBadge[controllerDecision.decision_status]}
+                  status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
                   className="mb-4"
                   header={
                     <div
@@ -810,8 +741,8 @@ const saveStateToSession = () => {
                       <span className="uk-eyebrow" style={{ color: "inherit" }}>
                         Kontrollør — endeleg avgjerd
                       </span>
-                      <Badge status={decisionStatusBadge[controllerDecision.decision_status]}>
-                        {decisionStatusLabel[controllerDecision.decision_status]}
+                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
+                        {DECISION_STATUS_LABELS[controllerDecision.decision_status]}
                       </Badge>
                     </div>
                   }
@@ -823,11 +754,11 @@ const saveStateToSession = () => {
               {/* Fallback: Samanliknar-banner viss Kontrolløren feila */}
               {!controllerDecision && comparison && (
                 <StatusStripe
-                  status={matchStatusBadge[comparison.match_status]}
+                  status={MATCH_STATUS_TONES[comparison.match_status]}
                   className="mb-4"
                   header={
                     <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      {matchStatusLabel[comparison.match_status]}
+                      {MATCH_STATUS_LABELS[comparison.match_status]}
                     </div>
                   }
                 >
@@ -1029,14 +960,14 @@ const saveStateToSession = () => {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span className="uk-eyebrow">Konstruktør A konfidens</span>
-                      <Badge status={confidenceBadge[calculationA.confidence]}>
+                      <Badge status={CONFIDENCE_TONES[calculationA.confidence]}>
                         {calculationA.confidence}
                       </Badge>
                     </div>
                     {calculationB && (
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span className="uk-eyebrow">Konstruktør B konfidens</span>
-                        <Badge status={confidenceBadge[calculationB.confidence]}>
+                        <Badge status={CONFIDENCE_TONES[calculationB.confidence]}>
                           {calculationB.confidence}
                         </Badge>
                       </div>
@@ -1111,8 +1042,8 @@ const saveStateToSession = () => {
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
                     <div className="uk-card__title">Samanliknar — skilnader funne</div>
-                    <Badge status={matchStatusBadge[comparison.match_status]}>
-                      {matchStatusLabel[comparison.match_status]}
+                    <Badge status={MATCH_STATUS_TONES[comparison.match_status]}>
+                      {MATCH_STATUS_LABELS[comparison.match_status]}
                     </Badge>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -1152,7 +1083,7 @@ const saveStateToSession = () => {
                                     {diff.percent_diff?.toFixed(1)}%
                                   </td>
                                   <td style={{ padding: "8px 0" }}>
-                                    <Badge status={severityBadge[diff.severity]}>{diff.severity}</Badge>
+                                    <Badge status={SEVERITY_TONES[diff.severity]}>{diff.severity}</Badge>
                                   </td>
                                 </tr>
                               ))}
@@ -1218,7 +1149,7 @@ const saveStateToSession = () => {
                               {comparison.internal_consistency_issues.agent_a.map((issue, i) => (
                                 <li key={i}>
                                   {issue.issue}{" "}
-                                  <Badge status={severityBadge[issue.severity]}>{issue.severity}</Badge>
+                                  <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
                                 </li>
                               ))}
                             </ul>
@@ -1233,7 +1164,7 @@ const saveStateToSession = () => {
                               {comparison.internal_consistency_issues.agent_b.map((issue, i) => (
                                 <li key={i}>
                                   {issue.issue}{" "}
-                                  <Badge status={severityBadge[issue.severity]}>{issue.severity}</Badge>
+                                  <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
                                 </li>
                               ))}
                             </ul>
@@ -1325,7 +1256,7 @@ function StatusKV({
   value,
 }: {
   label: string;
-  tone: BadgeStatus;
+  tone: Tone;
   value: string;
 }) {
   return (
@@ -1366,7 +1297,7 @@ function Badge({
   status,
   children,
 }: {
-  status: BadgeStatus;
+  status: Tone;
   children: React.ReactNode;
 }) {
   const variant = status === "neutral" ? "" : `uk-badge--${status}`;
@@ -1381,7 +1312,7 @@ function StatusStripe({
   children,
   className,
 }: {
-  status: BadgeStatus;
+  status: Tone;
   header?: React.ReactNode;
   label?: React.ReactNode;
   children: React.ReactNode;

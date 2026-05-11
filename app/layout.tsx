@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./tokens.css";
+import Header from "./components/Header";
 
 export const metadata: Metadata = {
   title: "Pilar — AI-konstruksjonsassistent",
@@ -18,6 +19,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col uk-app"
         suppressHydrationWarning
       >
+        <Header />
         {children}
       </body>
     </html>

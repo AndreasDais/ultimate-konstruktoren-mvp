@@ -219,6 +219,8 @@
   color: var(--fg-muted);
 }
 
+/* === Footer-signatur === */
+
 .rapport-footer {
   margin-top: 5rem;
   padding-top: 2rem;
@@ -226,11 +228,94 @@
   font-family: var(--font-sans);
   font-size: 0.8125rem;
   color: var(--fg-muted);
-  text-align: center;
 }
 
-.rapport-footer p {
-  margin: 0.25rem 0;
+.rapport-footer__warning {
+  font-size: 0.8125rem;
+  color: var(--fg-muted);
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-style: italic;
+}
+
+.rapport-footer__signature {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.rapport-footer__signature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.rapport-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.rapport-footer__logo-bar {
+  width: 4px;
+  height: 14px;
+  background: var(--fg);
+}
+
+.rapport-footer__brand-name {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--fg);
+  margin-left: 8px;
+}
+
+.rapport-footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: var(--fg-2);
+}
+
+.rapport-footer__sep {
+  color: var(--fg-faint);
+}
+
+.rapport-footer__url {
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  word-break: break-all;
+}
+
+.rapport-footer__qr {
+  flex-shrink: 0;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+@media print {
+  .rapport-footer__qr {
+    border: none;
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .rapport-footer__signature {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .rapport-footer__qr {
+    align-self: flex-start;
+  }
 }
 
 /* — Feilrapport-skjema — */
@@ -639,3 +724,49 @@
       padding: 2rem 1.5rem 3rem;
     }
   }
+
+  /* === Manuell signatur-blokk på rapport-footer === */
+
+.rapport-footer__manual-sign {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 2rem;
+  margin: 1.5rem 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.rapport-footer__sign-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rapport-footer__sign-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rapport-footer__sign-line {
+  display: block;
+  height: 28px;
+  border-bottom: 1px solid var(--fg-2);
+}
+
+@media (max-width: 640px) {
+  .rapport-footer__manual-sign {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media print {
+  .rapport-footer__sign-line {
+    border-bottom-color: black;
+    height: 32px;
+  }
+}

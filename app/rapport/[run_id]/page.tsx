@@ -2,8 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  DECISION_STATUS_LABELS,
+  DECISION_STATUS_SHORT,
+  DECISION_STATUS_TONES,
+  MATCH_STATUS_SHORT,
+  MATCH_STATUS_TONES,
+  MATCH_PHRASES,
+  INPUT_STATUS_LABELS,
+  INPUT_STATUS_TONES,
+  CONFIDENCE_TONES,
+  formatDate,
+  type Tone,
+} from "@/lib/format";
 import "./rapport.css";
 import FeilrapportForm from "./feilrapport-form";
+import { QRCodeSVG } from "qrcode.react";
 
 type AgentOutput = {
   agent_name: string;
@@ -57,81 +71,6 @@ type FullReportResponse = {
   agentB: AgentOutput;
   comparison: Comparison | null;
   controllerDecision: ControllerDecision | null;
-};
-
-type StatusTone = "ok" | "warn" | "bad" | "info" | "neutral";
-
-const DECISION_LABELS: Record<string, string> = {
-  approved: "Førebels godkjent",
-  approved_with_warnings: "Godkjent med åtvaringar",
-  rejected: "Avvist — må kontrollerast",
-  uncertain: "Usikker",
-  needs_more_input: "Treng meir informasjon",
-};
-
-const DECISION_SHORT: Record<string, string> = {
-  approved: "Godkjent",
-  approved_with_warnings: "Med åtvaring",
-  rejected: "Avvist",
-  uncertain: "Usikker",
-  needs_more_input: "Manglar input",
-};
-
-const MATCH_PHRASES: Record<string, string> = {
-  match: " Dei kom fram til same resultat.",
-  minor_disagreement:
-    " Det er små forskjellar mellom svara, hovudsakleg avrunding.",
-  significant_disagreement:
-    " Det er betydelege forskjellar mellom svara — sjå Agent D-vurderinga nedanfor.",
-  critical_disagreement: " Det er kritiske forskjellar mellom svara.",
-};
-
-const INPUT_STATUS_TONE: Record<string, StatusTone> = {
-  klar: "ok",
-  delvis_klar: "info",
-  mangelfull: "warn",
-  uklar: "warn",
-  uklart: "warn",
-  avvist: "bad",
-  relevant_ikkje_stotta: "warn",
-};
-
-const INPUT_STATUS_LABEL: Record<string, string> = {
-  klar: "Klar",
-  delvis_klar: "Delvis klar",
-  mangelfull: "Mangelfull",
-  uklar: "Uklar",
-  uklart: "Uklar",
-  avvist: "Avvist",
-  relevant_ikkje_stotta: "Ikkje støtta",
-};
-
-const CONFIDENCE_TONE: Record<string, StatusTone> = {
-  high: "ok",
-  medium: "warn",
-  low: "bad",
-};
-
-const MATCH_TONE: Record<string, StatusTone> = {
-  match: "ok",
-  minor_disagreement: "info",
-  significant_disagreement: "warn",
-  critical_disagreement: "bad",
-};
-
-const MATCH_SHORT: Record<string, string> = {
-  match: "Einige",
-  minor_disagreement: "Mindre avvik",
-  significant_disagreement: "Stor avvik",
-  critical_disagreement: "Kritisk",
-};
-
-const DECISION_TONE: Record<string, StatusTone> = {
-  approved: "ok",
-  approved_with_warnings: "info",
-  uncertain: "warn",
-  rejected: "bad",
-  needs_more_input: "warn",
 };
 
 export default function RapportPage() {
@@ -191,6 +130,15 @@ export default function RapportPage() {
     return () => observer.disconnect();
   }, [data]);
 
+  // Rapport-URL for QR-kode i footer-signatur.
+  // window.location.origin er undefined under SSR, så vi set i useEffect.
+  const [rapportUrl, setRapportUrl] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRapportUrl(`${window.location.origin}/rapport/${runId}`);
+    }
+  }, [runId]);
+
   if (error) {
     return (
       <div className="rapport-loading">
@@ -218,14 +166,13 @@ export default function RapportPage() {
   const isBlocked = (field: string) => blocked.includes(field);
   const primary = data.agentA;
 
-  const reportDate = new Date(data.report.created_at).toLocaleDateString(
-    "nn-NO",
-    { year: "numeric", month: "long", day: "numeric" }
-  );
+  const reportDate = formatDate(data.report.created_at);
 
   const decisionLabel =
-    DECISION_LABELS[data.controllerDecision?.decision_status ?? ""] ?? "Ukjent";
-  const matchPhrase = MATCH_PHRASES[data.comparison?.match_status ?? ""] ?? "";
+    DECISION_STATUS_LABELS[data.controllerDecision?.decision_status ?? ""] ??
+    "Ukjent";
+  const matchPhrase =
+    MATCH_PHRASES[data.comparison?.match_status ?? ""] ?? "";
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
@@ -261,33 +208,34 @@ export default function RapportPage() {
     primary.structured_output.warnings.length > 0
   )
     tocEntries.push({ id: "atvaringar", label: "Åtvaringar" });
-  tocEntries.push({ id: "agentkontroll", label: "Agentkontroll" });
+  tocEntries.push({ id: "agentkontroll", label: "Konstruktørkontroll" });
   tocEntries.push({ id: "konklusjon", label: "Konklusjon" });
 
   // === Kontrollstatus-mapping ===
   const inputStatus = data.inputReview?.input_status ?? "";
-  const inputTone: StatusTone = INPUT_STATUS_TONE[inputStatus] ?? "neutral";
-  const inputLabel = INPUT_STATUS_LABEL[inputStatus] ?? inputStatus ?? "—";
+  const inputTone: Tone = INPUT_STATUS_TONES[inputStatus] ?? "neutral";
+  const inputLabel = INPUT_STATUS_LABELS[inputStatus] ?? inputStatus ?? "—";
 
   const agentAConf = primary.structured_output.confidence ?? "";
-  const agentATone: StatusTone = CONFIDENCE_TONE[agentAConf] ?? "neutral";
+  const agentATone: Tone = CONFIDENCE_TONES[agentAConf] ?? "neutral";
 
   const agentBConf = data.agentB.structured_output.confidence ?? "";
-  const agentBTone: StatusTone = CONFIDENCE_TONE[agentBConf] ?? "neutral";
+  const agentBTone: Tone = CONFIDENCE_TONES[agentBConf] ?? "neutral";
 
   const matchStatus = data.comparison?.match_status ?? "";
-  const matchTone: StatusTone = MATCH_TONE[matchStatus] ?? "neutral";
-  const matchLabel = MATCH_SHORT[matchStatus] ?? "—";
+  const matchTone: Tone = MATCH_STATUS_TONES[matchStatus] ?? "neutral";
+  const matchLabel = MATCH_STATUS_SHORT[matchStatus] ?? "—";
 
   const decisionStatus = data.controllerDecision?.decision_status ?? "";
-  const controllerTone: StatusTone = DECISION_TONE[decisionStatus] ?? "neutral";
-  const controllerShort = DECISION_SHORT[decisionStatus] ?? "—";
+  const controllerTone: Tone =
+    DECISION_STATUS_TONES[decisionStatus] ?? "neutral";
+  const controllerShort = DECISION_STATUS_SHORT[decisionStatus] ?? "—";
 
   return (
     <div className="rapport-shell">
       {/* === Venstre sidebar: TOC + metadata === */}
       <aside className="rapport-sidebar rapport-sidebar--left no-print">
-      <button
+        <button
           onClick={() => router.push("/")}
           className="rapport-back-link"
         >
@@ -337,7 +285,7 @@ export default function RapportPage() {
             data-toc-id="forside"
           >
             <div className="rapport-eyebrow">Berekningsnotat</div>
-            <h1>Ultimate Konstruktøren</h1>
+            <h1>Pilar</h1>
 
             <div className="document-meta">
               <div>
@@ -398,7 +346,7 @@ export default function RapportPage() {
             >
               <h2>Input-tolking</h2>
               <p className="rapport-prose">
-                Status: <strong>{data.inputReview.input_status}</strong>
+                Status: <strong>{inputLabel}</strong>
               </p>
               {data.inputReview.parsed_data ? (
                 <pre className="rapport-data">
@@ -513,20 +461,21 @@ export default function RapportPage() {
               </section>
             )}
 
-          {/* Agentkontroll */}
+          {/* Konstruktørkontroll */}
           <section
             className="rapport-section"
             id="agentkontroll"
             data-toc-id="agentkontroll"
           >
-            <h2>Agentkontroll</h2>
+            <h2>Konstruktørkontroll</h2>
             <p className="rapport-prose">
-              Berekninga er løyst uavhengig av to AI-agentar (Agent A og Agent B).
+              Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør
+              A og Konstruktør B).
               {matchPhrase}
             </p>
             {data.controllerDecision && (
               <div className="rapport-decision">
-                <strong>Agent D-avgjerd:</strong> {decisionLabel}
+                <strong>Kontrolløren si avgjerd:</strong> {decisionLabel}
                 <em>{data.controllerDecision.user_message}</em>
               </div>
             )}
@@ -546,16 +495,56 @@ export default function RapportPage() {
             <FeilrapportForm reportId={data.report.id} />
           </div>
 
-          {/* Footer */}
-          <footer className="rapport-footer">
-            <p>
-              Generert av Ultimate Konstruktøren • {data.report.document_id}
-            </p>
-            <p>
-              Resultatet er førebels og må kontrollerast av fagperson før bruk i
-              prosjektering.
-            </p>
-          </footer>
+          {/* Footer-signatur */}
+<footer className="rapport-footer">
+  <p className="rapport-footer__warning">
+  <div className="rapport-footer__manual-sign">
+  <div className="rapport-footer__sign-field">
+    <span className="rapport-footer__sign-label">Kontrollert av</span>
+    <span className="rapport-footer__sign-line" />
+  </div>
+  <div className="rapport-footer__sign-field">
+    <span className="rapport-footer__sign-label">Signatur</span>
+    <span className="rapport-footer__sign-line" />
+  </div>
+  <div className="rapport-footer__sign-field">
+    <span className="rapport-footer__sign-label">Dato</span>
+    <span className="rapport-footer__sign-line" />
+  </div>
+</div>
+    Førebels berekning — må kontrollerast av fagperson før bruk i
+    prosjektering.
+  </p>
+  <div className="rapport-footer__signature">
+    <div className="rapport-footer__signature-text">
+      <div className="rapport-footer__brand">
+        <span className="rapport-footer__logo-bar" />
+        <span className="rapport-footer__logo-bar" />
+        <span className="rapport-footer__brand-name">Pilar</span>
+      </div>
+      <div className="rapport-footer__meta">
+        <span className="uk-mono">{data.report.document_id}</span>
+        <span className="rapport-footer__sep">·</span>
+        <span>Generert {reportDate}</span>
+        <span className="rapport-footer__sep">·</span>
+        <span className="uk-mono">{data.report.prompt_version}</span>
+      </div>
+      {rapportUrl && (
+        <div className="rapport-footer__url uk-mono">{rapportUrl}</div>
+      )}
+    </div>
+    {rapportUrl && (
+      <div className="rapport-footer__qr">
+        <QRCodeSVG
+          value={rapportUrl}
+          size={88}
+          level="M"
+          marginSize={0}
+        />
+      </div>
+    )}
+  </div>
+</footer>
         </article>
       </main>
 
@@ -579,11 +568,31 @@ export default function RapportPage() {
 
         <div className="rapport-status-panel">
           <div className="uk-eyebrow">Kontrollstatus</div>
-          <StatusRow label="Input-tolking" tone={inputTone} value={inputLabel} />
-          <StatusRow label="Agent A" tone={agentATone} value={agentAConf || "—"} />
-          <StatusRow label="Agent B" tone={agentBTone} value={agentBConf || "—"} />
-          <StatusRow label="Samanlikning" tone={matchTone} value={matchLabel} />
-          <StatusRow label="Kontrollør" tone={controllerTone} value={controllerShort} />
+          <StatusRow
+            label="Input-tolking"
+            tone={inputTone}
+            value={inputLabel}
+          />
+          <StatusRow
+            label="Konstruktør A"
+            tone={agentATone}
+            value={agentAConf || "—"}
+          />
+          <StatusRow
+            label="Konstruktør B"
+            tone={agentBTone}
+            value={agentBConf || "—"}
+          />
+          <StatusRow
+            label="Samanlikning"
+            tone={matchTone}
+            value={matchLabel}
+          />
+          <StatusRow
+            label="Kontrollør"
+            tone={controllerTone}
+            value={controllerShort}
+          />
           <StatusRow label="Fagperson" tone="warn" value="Ikkje kontrollert" />
         </div>
       </aside>
@@ -597,7 +606,7 @@ function StatusRow({
   value,
 }: {
   label: string;
-  tone: StatusTone;
+  tone: Tone;
   value: string;
 }) {
   const variant = tone === "neutral" ? "" : `uk-badge--${tone}`;

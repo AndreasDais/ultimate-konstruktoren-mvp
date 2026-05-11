@@ -563,3 +563,191 @@
   border-top: none;
   padding-top: 4px;
 }
+
+/* ============================================================
+   HEADER — global, brand-forward (Workbench + alle hovudsider)
+   Append til botnen av app/tokens.css
+   ============================================================ */
+
+   .uk-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  
+  .uk-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .uk-header__brand:hover .uk-header__wordmark {
+    color: var(--fg);
+  }
+  
+  .uk-header__logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;        /* var 4px */
+    flex-shrink: 0;
+  }
+  
+  .uk-header__logo-bar {
+    width: 6px;
+    height: 22px;
+    background: var(--fg);
+                     /* border-radius fjerna heilt */
+  }
+  .uk-header__brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.1;
+  }
+  
+  .uk-header__wordmark {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+  }
+  
+  .uk-header__tagline {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+  }
+  
+  .uk-header__spacer {
+    flex: 1;
+  }
+  
+  /* AI-disclaimer-chip — erstattar dei store VIKTIG MERKNAD-blokkene
+     på arbeids-skjermane. Full disclaimer ligg framleis på rapporten. */
+  .uk-header__ai-chip {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--disclaimer-stripe);
+    border-radius: 999px;
+    background: var(--disclaimer-bg);
+    color: var(--disclaimer-fg);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: help;
+    transition: background 120ms, border-color 120ms, transform 120ms;
+  }
+  
+  .uk-header__ai-chip:hover {
+    background: var(--surface);
+    border-color: var(--disclaimer-stripe);
+  }
+  
+  .uk-header__ai-chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--disclaimer-stripe);
+    flex-shrink: 0;
+  }
+  
+  .uk-header__ai-chip-arrow {
+    font-size: 13px;
+    margin-left: 2px;
+    opacity: 0.7;
+  }
+  
+  /* nn|nb-toggle — visuell i pilot, funksjonell i v0.2 */
+  .uk-header__locale {
+    display: inline-flex;
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  
+  .uk-header__locale-btn {
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: 6px 11px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+  }
+  
+  .uk-header__locale-btn:hover {
+    background: var(--surface-2);
+    color: var(--fg);
+  }
+  
+  .uk-header__locale-btn--active,
+  .uk-header__locale-btn--active:hover {
+    background: var(--fg);
+    color: var(--surface);
+  }
+  
+  /* Mobil — kompakter ned og skjul tagline + lang chip-tekst */
+  @media (max-width: 768px) {
+    .uk-header {
+      padding: 12px 16px;
+      gap: 10px;
+    }
+    .uk-header__tagline {
+      display: none;
+    }
+    .uk-header__ai-chip {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+    .uk-header__ai-chip-arrow {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .uk-header__ai-chip span:nth-child(2) {
+      display: none; /* Skjul tekst på smale mobilar — berre dot+arrow att */
+    }
+  }
+  
+  /* Print — ingen header på rapport-utskrift */
+  @media print {
+    .uk-header {
+      display: none !important;
+    }
+  }
+/* === Loading-knapp-variant ============================
+   Held primær svart bakgrunn under prosessering (Tolkar,
+   Sender osv.) i staden for å gå over til disabled-grå.
+   Skil mellom "kan ikkje klikke fordi input er ugyldig"
+   (uk-btn:disabled — grå, 50 % opacity, ikkje-tillaten-cursor)
+   og "kan ikkje klikke fordi vi ventar på AI" (uk-btn--loading
+   — primær svart, full opacity, vent-cursor).
+   ====================================================== */
+
+.uk-btn--loading:disabled,
+.uk-btn--loading:disabled:hover {
+  opacity: 1;
+  cursor: wait;
+  background: var(--fg);
+  color: var(--surface);
+  border-color: var(--fg);
+}
