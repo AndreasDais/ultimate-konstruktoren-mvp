@@ -347,9 +347,6 @@ try {
   throw new Error("Klarte ikkje parse Konstruktør A sitt svar som JSON");
 }
 
-    // Strip markdown-fences viss modellen har lagt dei til trass for prompt-instruks.
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
-
     let parsed: {
       executive_summary: string;
       technical_assessment: string;
