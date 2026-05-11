@@ -870,3 +870,354 @@
     font-family: var(--font-sans);
   }
 }
+
+/* ============================================================
+   TILLIT-GAUGE
+   Sirkulær gauge på rapport-forsida med click-to-expand breakdown.
+   ============================================================ */
+
+   .tillit-gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .tillit-gauge--idle {
+    padding: 1.5rem 2rem;
+    border: 1px dashed var(--rule, #E2E8F0);
+    border-radius: 8px;
+    background: var(--surface, #F8FAFC);
+  }
+  
+  .tillit-gauge__placeholder {
+    color: var(--muted, #475569);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  
+  /* === Knappen som omsluttar gauge — heile gauge'n er klikkbar === */
+  .tillit-gauge__button {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font: inherit;
+    color: inherit;
+    transition: transform 0.15s ease;
+  }
+  
+  .tillit-gauge__button:hover {
+    transform: scale(1.02);
+  }
+  
+  .tillit-gauge__button:focus-visible {
+    outline: 2px solid var(--fg, #0F172A);
+    outline-offset: 6px;
+    border-radius: 50%;
+  }
+  
+  .tillit-gauge__svg {
+    display: block;
+  }
+  
+  .tillit-gauge__progress {
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* === Sentrum av gauge'n — tal + /100 === */
+  .tillit-gauge__center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -65%);
+    display: flex;
+    align-items: baseline;
+    gap: 0.125rem;
+    pointer-events: none;
+  }
+  
+  .tillit-gauge__score {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--fg, #0F172A);
+  }
+  
+  .tillit-gauge__max {
+    font-family: var(--font-ui, "Inter", sans-serif);
+    font-size: 0.875rem;
+    color: var(--muted, #475569);
+    font-weight: 400;
+  }
+  
+  /* === Etikett under tala === */
+  .tillit-gauge__label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 65%);
+    font-family: var(--font-ui, "Inter", sans-serif);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  
+  /* === Breakdown-panel under gauge'n === */
+  .tillit-gauge__breakdown {
+    width: 100%;
+    max-width: 360px;
+    padding: 1rem 1.25rem;
+    background: var(--surface, #F8FAFC);
+    border-radius: 8px;
+    border: 1px solid var(--rule, #E2E8F0);
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  
+  /* Gøym når ikkje utvida (skjerm). I print: alltid synleg (sjå @media print). */
+  .tillit-gauge__breakdown[data-expanded="false"] {
+    display: none;
+  }
+  
+  .tillit-gauge__row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  
+  .tillit-gauge__row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  
+  .tillit-gauge__row-label {
+    font-size: 0.875rem;
+    color: var(--fg, #0F172A);
+    font-weight: 500;
+  }
+  
+  .tillit-gauge__row-value {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.75rem;
+    color: var(--muted, #475569);
+  }
+  
+  .tillit-gauge__row-bar {
+    height: 3px;
+    background: var(--rule, #E2E8F0);
+    border-radius: 1.5px;
+    overflow: hidden;
+  }
+  
+  .tillit-gauge__row-bar-fill {
+    height: 100%;
+    background: var(--fg, #0F172A);
+    transition: width 0.4s ease;
+  }
+  
+  .tillit-gauge__row-detail {
+    font-size: 0.75rem;
+    color: var(--muted, #475569);
+  }
+  
+  .tillit-gauge__formula-note {
+    margin: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rule, #E2E8F0);
+    font-size: 0.7rem;
+    color: var(--muted, #475569);
+    line-height: 1.5;
+    font-style: italic;
+  }
+  
+  /* === Print-mode: breakdown alltid utvida, knapp-hover gøymd === */
+  @media print {
+    .tillit-gauge__button {
+      cursor: default;
+    }
+  
+    .tillit-gauge__breakdown[data-expanded="false"],
+    .tillit-gauge__breakdown[data-expanded="true"] {
+      display: flex !important;
+    }
+  
+    .tillit-gauge__row-bar {
+      background: #E2E8F0;
+    }
+  }
+
+  /* ============================================================
+   FORSIDE-HEADER med tillit-gauge
+   Two-column layout: tittel + metadata til venstre, gauge til høgre.
+   ============================================================ */
+
+.rapport-forside-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.rapport-forside-header__title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Document-meta får mindre margin når han er inni forside-header,
+   sidan disclaimer-blokka under har eigen margin-top. */
+.rapport-forside-header__title .document-meta {
+  margin-bottom: 0;
+}
+
+.rapport-forside-header__gauge {
+  flex-shrink: 0;
+  /* Optisk innretting: gauge sentrum bør møte ca. h1-baseline */
+  padding-top: 1.5rem;
+}
+
+/* Mobil og smal skjerm: stack vertikalt med gauge over (visuelt fokus). */
+@media (max-width: 768px) {
+  .rapport-forside-header {
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 2rem;
+  }
+  .rapport-forside-header__title {
+    width: 100%;
+  }
+  .rapport-forside-header__gauge {
+    padding-top: 0;
+  }
+}
+
+@media print {
+  /* Stack vertikalt i print — flex fragmenterer page-breaks dårleg.
+     Tittel først, så gauge, så breakdown, så disclaimer. */
+  .rapport-forside-header {
+    display: block;
+  }
+  
+  .rapport-forside-header__title {
+    margin-bottom: 1.5rem;
+  }
+  
+  .rapport-forside-header__gauge {
+    padding-top: 0;
+    margin: 0 auto 1.5rem;
+    page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Behald gauge sentrert med breakdown rett under */
+  .tillit-gauge {
+    align-items: center;
+  }
+  
+  .tillit-gauge__breakdown {
+    max-width: 500px;
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   SEKSJONS-GRUPPE-HIERARKI (Dag 3, chunk 4)
+   Etter TOC-konsolidering har vi 4 outer-sections (Samandrag, 
+   Berekning, Vurdering, Kontroll) som inneheld subsections med h3.
+   ============================================================ */
+
+/* Outer-section (h2-nivå) får meir vertikal pust enn enkelt-seksjonar */
+.rapport-section--group {
+  margin-top: 2rem;
+}
+
+.rapport-section--group:first-of-type {
+  margin-top: 0;
+}
+
+/* h2 i outer-section er hovud-anker — større og tydelegare enn før */
+.rapport-section--group > h2 {
+  font-size: 1.375rem;
+  margin: 3rem 0 1.5rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 2px solid var(--fg);
+  letter-spacing: -0.015em;
+}
+
+/* h3 i subsection — visuelt distinkt frå outer-h2 */
+.rapport-section--group .rapport-subsection > h3 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+
+/* h4 brukast no for kalkulasjons-steg under stegvis utrekning */
+.rapport-step > h4 {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--fg);
+}
+
+/* Subsection-wrapper — held subsections gruppert med rett spacing */
+.rapport-subsection {
+  margin-bottom: 1.5rem;
+}
+
+.rapport-subsection:last-child {
+  margin-bottom: 0;
+}
+
+/* Print: hold seksjons-grupper saman, men la subsections bryte fritt */
+@media print {
+  .rapport-section--group {
+    page-break-inside: auto;
+  }
+  
+  .rapport-section--group > h2 {
+    page-break-after: avoid;
+  }
+  
+  .rapport-subsection {
+    page-break-inside: auto;
+  }
+  
+  .rapport-subsection > h3 {
+    page-break-after: avoid;
+  }
+}
+
+/* Scroll-anchor offset: når brukar klikkar TOC-lenke,
+   hopp slik at h2 ikkje gøymast under det faste header-bandet. */
+   .rapport-section--group {
+    scroll-margin-top: 80px;
+  }
+  
+  .rapport-subsection {
+    scroll-margin-top: 80px;
+  }
+  
+  @media print {
+    .rapport-section--group,
+    .rapport-subsection {
+      scroll-margin-top: 0;
+    }
+  }

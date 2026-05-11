@@ -19,6 +19,8 @@ import "./rapport.css";
 import FeilrapportForm from "./feilrapport-form";
 import { QRCodeSVG } from "qrcode.react";
 import Formula from "@/app/components/Formula";
+import { TillitGauge } from "@/app/components/TillitGauge";
+import type { TillitBreakdown } from "@/lib/tillit-score";
 
 type AgentOutput = {
   agent_name: string;
@@ -61,6 +63,8 @@ type Report = {
   conclusion: string;
   prompt_version: string;
   created_at: string;
+  tillit_score: number | null;
+  tillit_breakdown: TillitBreakdown | null;
 };
 
 type FullReportResponse = {
@@ -110,7 +114,8 @@ export default function RapportPage() {
     loadReport();
   }, [runId]);
 
-  // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg
+  // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
+  // Etter konsolidering ser observer berre på dei 4 outer-sections.
   useEffect(() => {
     if (!data) return;
     const observer = new IntersectionObserver(
@@ -139,6 +144,19 @@ export default function RapportPage() {
       setRapportUrl(`${window.location.origin}/rapport/${runId}`);
     }
   }, [runId]);
+
+  // Tving alle <details>-element til å vere open under print.
+  // CSS aleine klarar ikkje overstyre user-agent sin closed-state.
+  // MÅ ligge FØR early-returns under for å respektere Rules of Hooks.
+  useEffect(() => {
+    const openAll = () => {
+      document.querySelectorAll("details").forEach((d) => {
+        d.open = true;
+      });
+    };
+    window.addEventListener("beforeprint", openAll);
+    return () => window.removeEventListener("beforeprint", openAll);
+  }, []);
 
   if (error) {
     return (
@@ -178,39 +196,13 @@ export default function RapportPage() {
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
 
-  // === TOC entries — bygg basert på kva seksjonar som faktisk renderast ===
-  const tocEntries: Array<{ id: string; label: string }> = [];
-  tocEntries.push({ id: "forside", label: "Forside" });
-  tocEntries.push({ id: "samandrag", label: "Samandrag" });
-  tocEntries.push({ id: "forespurnad", label: "Forespurnad" });
-  if (data.inputReview)
-    tocEntries.push({ id: "input-tolking", label: "Input-tolking" });
-  if (
-    primary.structured_output.assumptions &&
-    primary.structured_output.assumptions.length > 0
-  )
-    tocEntries.push({ id: "foresetnader", label: "Føresetnader" });
-  if (primary.structured_output.results && !isBlocked("results_a"))
-    tocEntries.push({ id: "resultat", label: "Resultat" });
-  if (
-    primary.structured_output.calculation_steps &&
-    primary.structured_output.calculation_steps.length > 0 &&
-    !isBlocked("calculation_steps_a")
-  )
-    tocEntries.push({ id: "utrekning", label: "Stegvis utrekning" });
-  tocEntries.push({ id: "fagleg-vurdering", label: "Fagleg vurdering" });
-  if (
-    primary.structured_output.limitations &&
-    primary.structured_output.limitations.length > 0
-  )
-    tocEntries.push({ id: "ikkje-rekna", label: "Kva er ikkje rekna" });
-  if (
-    primary.structured_output.warnings &&
-    primary.structured_output.warnings.length > 0
-  )
-    tocEntries.push({ id: "atvaringar", label: "Åtvaringar" });
-  tocEntries.push({ id: "agentkontroll", label: "Konstruktørkontroll" });
-  tocEntries.push({ id: "konklusjon", label: "Konklusjon" });
+  // === TOC entries — fire konsoliderte seksjonar ===
+  const tocEntries: Array<{ id: string; label: string }> = [
+    { id: "samandrag", label: "Samandrag" },
+    { id: "berekning", label: "Berekning" },
+    { id: "vurdering", label: "Vurdering" },
+    { id: "kontroll", label: "Kontroll" },
+  ];
 
   // === Kontrollstatus-mapping ===
   const inputStatus = data.inputReview?.input_status ?? "";
@@ -231,6 +223,24 @@ export default function RapportPage() {
   const controllerTone: Tone =
     DECISION_STATUS_TONES[decisionStatus] ?? "neutral";
   const controllerShort = DECISION_STATUS_SHORT[decisionStatus] ?? "—";
+
+  // Berekning-seksjonen har innhald viss minst éin subsection har data
+  const hasBerekningContent =
+    !!data.inputReview ||
+    (primary.structured_output.assumptions &&
+      primary.structured_output.assumptions.length > 0) ||
+    (primary.structured_output.results && !isBlocked("results_a")) ||
+    (primary.structured_output.calculation_steps &&
+      primary.structured_output.calculation_steps.length > 0 &&
+      !isBlocked("calculation_steps_a"));
+
+  // Vurdering-seksjonen har innhald viss minst éin subsection har data
+  const hasVurderingContent =
+    !!data.report.technical_assessment ||
+    (primary.structured_output.limitations &&
+      primary.structured_output.limitations.length > 0) ||
+    (primary.structured_output.warnings &&
+      primary.structured_output.warnings.length > 0);
 
   return (
     <div className="rapport-shell">
@@ -279,27 +289,42 @@ export default function RapportPage() {
       {/* === Hovudkolonne: dokument === */}
       <main className="rapport-main">
         <article className="rapport-document">
-          {/* Forside */}
+          {/* ============================================================
+              FORSIDE — cover med gauge. Ingen eigen TOC-entry; scroll-spy
+              behandlar henne som del av Samandrag (data-toc-id="samandrag").
+              Behaldar gammal #forside-anchor for deep-link-kompatibilitet.
+              ============================================================ */}
           <section
             className="rapport-section"
             id="forside"
-            data-toc-id="forside"
+            data-toc-id="samandrag"
           >
-            <div className="rapport-eyebrow">Berekningsnotat</div>
-            <h1>Pilar</h1>
+            <div className="rapport-forside-header">
+              <div className="rapport-forside-header__title">
+                <div className="rapport-eyebrow">Berekningsnotat</div>
+                <h1>Pilar</h1>
 
-            <div className="document-meta">
-              <div>
-                <span>Dokument-ID:</span> {data.report.document_id}
+                <div className="document-meta">
+                  <div>
+                    <span>Dokument-ID:</span> {data.report.document_id}
+                  </div>
+                  <div>
+                    <span>Dato:</span> {reportDate}
+                  </div>
+                  <div>
+                    <span>Status:</span> {decisionLabel}
+                  </div>
+                  <div>
+                    <span>Rapport-versjon:</span> {data.report.prompt_version}
+                  </div>
+                </div>
               </div>
-              <div>
-                <span>Dato:</span> {reportDate}
-              </div>
-              <div>
-                <span>Status:</span> {decisionLabel}
-              </div>
-              <div>
-                <span>Rapport-versjon:</span> {data.report.prompt_version}
+
+              <div className="rapport-forside-header__gauge">
+                <TillitGauge
+                  score={data.report.tillit_score}
+                  breakdown={data.report.tillit_breakdown}
+                />
               </div>
             </div>
 
@@ -316,190 +341,199 @@ export default function RapportPage() {
             </div>
           </section>
 
-          {/* Samandrag */}
+          {/* ============================================================
+              01 SAMANDRAG — executive_summary + forespurnad
+              ============================================================ */}
           <section
-            className="rapport-section"
+            className="rapport-section rapport-section--group"
             id="samandrag"
             data-toc-id="samandrag"
           >
             <h2>Samandrag</h2>
+
             <p className="rapport-prose">{data.report.executive_summary}</p>
+
+            <div id="forespurnad" className="rapport-subsection">
+              <h3>Forespurnad</h3>
+              <blockquote className="rapport-quote">
+                {data.run.request.raw_text}
+              </blockquote>
+            </div>
           </section>
 
-          {/* Forespurnad */}
-          <section
-            className="rapport-section"
-            id="forespurnad"
-            data-toc-id="forespurnad"
-          >
-            <h2>Forespurnad</h2>
-            <blockquote className="rapport-quote">
-              {data.run.request.raw_text}
-            </blockquote>
-          </section>
-
-          {/* Input-tolking */}
-          {data.inputReview && (
+          {/* ============================================================
+              02 BEREKNING — input-tolking, føresetnader, resultat, stegvis
+              ============================================================ */}
+          {hasBerekningContent && (
             <section
-              className="rapport-section"
-              id="input-tolking"
-              data-toc-id="input-tolking"
+              className="rapport-section rapport-section--group"
+              id="berekning"
+              data-toc-id="berekning"
             >
-              <h2>Input-tolking</h2>
-              <p className="rapport-prose">
-                Status: <strong>{inputLabel}</strong>
-              </p>
-              {data.inputReview.parsed_data ? (
-                <pre className="rapport-data">
-                  {JSON.stringify(data.inputReview.parsed_data, null, 2)}
-                </pre>
-              ) : null}
+              <h2>Berekning</h2>
+
+              {/* Input-tolking */}
+              {data.inputReview && (
+                <div id="input-tolking" className="rapport-subsection">
+                  <h3>Input-tolking</h3>
+                  <p className="rapport-prose">
+                    Status: <strong>{inputLabel}</strong>
+                  </p>
+                  {data.inputReview.parsed_data ? (
+                    <pre className="rapport-data">
+                      {JSON.stringify(data.inputReview.parsed_data, null, 2)}
+                    </pre>
+                  ) : null}
+                </div>
+              )}
+
+              {/* Føresetnader */}
+              {primary.structured_output.assumptions &&
+                primary.structured_output.assumptions.length > 0 && (
+                  <div id="foresetnader" className="rapport-subsection">
+                    <h3>Føresetnader</h3>
+                    <ul className="rapport-list">
+                      {primary.structured_output.assumptions.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              {/* Resultat */}
+              {primary.structured_output.results &&
+                !isBlocked("results_a") && (
+                  <div id="resultat" className="rapport-subsection">
+                    <h3>Resultat</h3>
+                    <table className="rapport-table">
+                      <tbody>
+                        {Object.entries(
+                          primary.structured_output.results
+                        ).map(([k, v]) => (
+                          <tr key={k}>
+                            <th>{k}</th>
+                            <td>{v}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+              {/* Stegvis utrekning */}
+              {primary.structured_output.calculation_steps &&
+                primary.structured_output.calculation_steps.length > 0 &&
+                !isBlocked("calculation_steps_a") && (
+                  <div id="utrekning" className="rapport-subsection">
+                    <h3>Stegvis utrekning</h3>
+                    {primary.structured_output.calculation_steps.map(
+                      (step, i) => (
+                        <div key={i} className="rapport-step">
+                          <h4>
+                            {i + 1}. {step.title}
+                          </h4>
+                          {step.latex_formula ? (
+                            <>
+                              <Formula
+                                latex={step.latex_formula}
+                                fallbackText={step.text}
+                              />
+                              <details className="rapport-step-prose">
+                                <summary>Vis prosa-utrekning</summary>
+                                <pre className="rapport-step-text">
+                                  {step.text}
+                                </pre>
+                              </details>
+                            </>
+                          ) : (
+                            <pre className="rapport-step-text">{step.text}</pre>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
             </section>
           )}
 
-          {/* Føresetnader */}
-          {primary.structured_output.assumptions &&
-            primary.structured_output.assumptions.length > 0 && (
-              <section
-                className="rapport-section"
-                id="foresetnader"
-                data-toc-id="foresetnader"
-              >
-                <h2>Føresetnader</h2>
-                <ul className="rapport-list">
-                  {primary.structured_output.assumptions.map((a, i) => (
-                    <li key={i}>{a}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-          {/* Resultat */}
-          {primary.structured_output.results && !isBlocked("results_a") && (
+          {/* ============================================================
+              03 VURDERING — fagleg vurdering, ikkje rekna, åtvaringar
+              ============================================================ */}
+          {hasVurderingContent && (
             <section
-              className="rapport-section"
-              id="resultat"
-              data-toc-id="resultat"
+              className="rapport-section rapport-section--group"
+              id="vurdering"
+              data-toc-id="vurdering"
             >
-              <h2>Resultat</h2>
-              <table className="rapport-table">
-                <tbody>
-                  {Object.entries(primary.structured_output.results).map(
-                    ([k, v]) => (
-                      <tr key={k}>
-                        <th>{k}</th>
-                        <td>{v}</td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </section>
-          )}
+              <h2>Vurdering</h2>
 
-          {/* Stegvis utrekning */}
-          {primary.structured_output.calculation_steps &&
-            primary.structured_output.calculation_steps.length > 0 &&
-            !isBlocked("calculation_steps_a") && (
-              <section
-                className="rapport-section"
-                id="utrekning"
-                data-toc-id="utrekning"
-              >
-                <h2>Stegvis utrekning</h2>
-                {primary.structured_output.calculation_steps.map((step, i) => (
-  <div key={i} className="rapport-step">
-    <h3>
-      {i + 1}. {step.title}
-    </h3>
-    {step.latex_formula ? (
-      <>
-        <Formula latex={step.latex_formula} fallbackText={step.text} />
-        <details className="rapport-step-prose">
-          <summary>Vis prosa-utrekning</summary>
-          <pre className="rapport-step-text">{step.text}</pre>
-        </details>
-      </>
-    ) : (
-      <pre className="rapport-step-text">{step.text}</pre>
-    )}
-  </div>
-))}
-              </section>
-            )}
-
-          {/* Fagleg vurdering */}
-          <section
-            className="rapport-section"
-            id="fagleg-vurdering"
-            data-toc-id="fagleg-vurdering"
-          >
-            <h2>Fagleg vurdering</h2>
-            <p className="rapport-prose">{data.report.technical_assessment}</p>
-          </section>
-
-          {/* Avgrensingar */}
-          {primary.structured_output.limitations &&
-            primary.structured_output.limitations.length > 0 && (
-              <section
-                className="rapport-section"
-                id="ikkje-rekna"
-                data-toc-id="ikkje-rekna"
-              >
-                <h2>Kva er ikkje rekna</h2>
-                <ul className="rapport-list">
-                  {primary.structured_output.limitations.map((l, i) => (
-                    <li key={i}>{l}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-          {/* Åtvaringar */}
-          {primary.structured_output.warnings &&
-            primary.structured_output.warnings.length > 0 && (
-              <section
-                className="rapport-section"
-                id="atvaringar"
-                data-toc-id="atvaringar"
-              >
-                <h2>Åtvaringar</h2>
-                <ul className="rapport-list rapport-list-warnings">
-                  {primary.structured_output.warnings.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-          {/* Konstruktørkontroll */}
-          <section
-            className="rapport-section"
-            id="agentkontroll"
-            data-toc-id="agentkontroll"
-          >
-            <h2>Konstruktørkontroll</h2>
-            <p className="rapport-prose">
-              Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør
-              A og Konstruktør B).
-              {matchPhrase}
-            </p>
-            {data.controllerDecision && (
-              <div className="rapport-decision">
-                <strong>Kontrolløren si avgjerd:</strong> {decisionLabel}
-                <em>{data.controllerDecision.user_message}</em>
+              {/* Fagleg vurdering */}
+              <div id="fagleg-vurdering" className="rapport-subsection">
+                <h3>Fagleg vurdering</h3>
+                <p className="rapport-prose">
+                  {data.report.technical_assessment}
+                </p>
               </div>
-            )}
-          </section>
 
-          {/* Konklusjon */}
+              {/* Avgrensingar */}
+              {primary.structured_output.limitations &&
+                primary.structured_output.limitations.length > 0 && (
+                  <div id="ikkje-rekna" className="rapport-subsection">
+                    <h3>Kva er ikkje rekna</h3>
+                    <ul className="rapport-list">
+                      {primary.structured_output.limitations.map((l, i) => (
+                        <li key={i}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              {/* Åtvaringar */}
+              {primary.structured_output.warnings &&
+                primary.structured_output.warnings.length > 0 && (
+                  <div id="atvaringar" className="rapport-subsection">
+                    <h3>Åtvaringar</h3>
+                    <ul className="rapport-list rapport-list-warnings">
+                      {primary.structured_output.warnings.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+            </section>
+          )}
+
+          {/* ============================================================
+              04 KONTROLL — konstruktørkontroll + konklusjon
+              ============================================================ */}
           <section
-            className="rapport-section"
-            id="konklusjon"
-            data-toc-id="konklusjon"
+            className="rapport-section rapport-section--group"
+            id="kontroll"
+            data-toc-id="kontroll"
           >
-            <h2>Konklusjon</h2>
-            <p className="rapport-prose">{data.report.conclusion}</p>
+            <h2>Kontroll</h2>
+
+            {/* Konstruktørkontroll */}
+            <div id="agentkontroll" className="rapport-subsection">
+              <h3>Konstruktørkontroll</h3>
+              <p className="rapport-prose">
+                Berekninga er løyst uavhengig av to AI-konstruktørar
+                (Konstruktør A og Konstruktør B).
+                {matchPhrase}
+              </p>
+              {data.controllerDecision && (
+                <div className="rapport-decision">
+                  <strong>Kontrolløren si avgjerd:</strong> {decisionLabel}
+                  <em>{data.controllerDecision.user_message}</em>
+                </div>
+              )}
+            </div>
+
+            {/* Konklusjon */}
+            <div id="konklusjon" className="rapport-subsection">
+              <h3>Konklusjon</h3>
+              <p className="rapport-prose">{data.report.conclusion}</p>
+            </div>
           </section>
 
           <div id="feilrapport">
