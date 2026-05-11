@@ -8,6 +8,7 @@ import {
   INPUT_STATUS_LABELS, INPUT_STATUS_TONES,
   type Tone,
 } from "@/lib/format";
+import MissionControl from "@/app/components/MissionControl";
 
 type AgentResult = {
   status: string;
@@ -393,30 +394,32 @@ useEffect(() => {
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
           {phase !== "calculating" && <StepIndicator phase={phase} />}
 
-          <header className="mb-10">
-            <div className="uk-eyebrow">{pageHeader.eyebrow}</div>
-            <h1
-              style={{
-                fontSize: 28,
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                margin: "8px 0 6px",
-                color: "var(--fg)",
-              }}
-            >
-              {pageHeader.title}
-            </h1>
-            <p
-              style={{
-                color: "var(--fg-muted)",
-                fontSize: 14,
-                lineHeight: 1.5,
-                margin: 0,
-              }}
-            >
-              {pageHeader.description}
-            </p>
-          </header>
+          {phase !== "calculating" && (
+            <header className="mb-10">
+              <div className="uk-eyebrow">{pageHeader.eyebrow}</div>
+              <h1
+                style={{
+                  fontSize: 28,
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  margin: "8px 0 6px",
+                  color: "var(--fg)",
+                }}
+              >
+                {pageHeader.title}
+              </h1>
+              <p
+                style={{
+                  color: "var(--fg-muted)",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  margin: 0,
+                }}
+              >
+                {pageHeader.description}
+              </p>
+            </header>
+          )}
 
           {/* === FASE: WORKBENCH === */}
           {/* Slått saman skjerm 1 (input) + skjerm 2 (Tolkar-resultat) til éin side.
@@ -643,85 +646,13 @@ useEffect(() => {
             </StatusStripe>
           )}
 
-          {/* === FASE: CALCULATING === */}
+          {/* === FASE: CALCULATING (Mission Control v1) === */}
           {phase === "calculating" && (
-            <section className="uk-card">
-              <div className="uk-card__bd" style={{ padding: "48px 16px", textAlign: "center" }}>
-                <div
-                  className="animate-spin"
-                  style={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    border: "4px solid var(--border)",
-                    borderTopColor: "var(--fg)",
-                  }}
-                />
-                <h3
-                  style={{
-                    marginTop: 16,
-                    marginBottom: 6,
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: "var(--fg)",
-                  }}
-                >
-                  {!calculationA || !calculationB
-                    ? "Konstruktør A og B reknar parallelt..."
-                    : !comparison
-                      ? "Samanliknaren finn skilnader..."
-                      : "Kontrolløren vurderer..."}
-                </h3>
-                <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-                  {!calculationA || !calculationB
-                    ? "To uavhengige løysingar samtidig."
-                    : !comparison
-                      ? "Finn skilnader i metode, tal og intern konsistens."
-                      : "Tek endeleg avgjerd om resultatet kan visast."}
-                </p>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 16,
-                    marginTop: 16,
-                    fontSize: 11,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {(
-                    [
-                      ["Konstruktør A", !!calculationA],
-                      ["Konstruktør B", !!calculationB],
-                      ["Samanliknar", !!comparison],
-                      ["Kontrollør", !!controllerDecision],
-                    ] as const
-                  ).map(([label, done]) => (
-                    <div
-                      key={label}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        color: done ? "var(--ok)" : "var(--fg-faint)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: done ? "var(--ok)" : "var(--border-2)",
-                        }}
-                      />
-                      {label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+            <MissionControl
+              calculationA={calculationA}
+              calculationB={calculationB}
+              comparison={comparison}
+            />
           )}
 
           {/* === FASE: CALCULATION_RESULT === */}

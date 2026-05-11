@@ -207,16 +207,20 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     // JSON-output. Avgjerande for engineering-berekningar der ein einaste teikn-feil
     // eller einings-feil kan invalidere alt. For Konstruktør B er thinking spesielt
     // verdfullt fordi val av alternativ metode krev fagleg vurdering før utskriving.
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 16384,
-      thinking: {
-        type: "enabled",
-        budget_tokens: 4000,
-      },
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    // Bruk streaming for å unngå Anthropic SDK sin 10-minutt-timeout-sjekk
+// ved høge max_tokens-verdiar. .finalMessage() ventar til streamen er
+// ferdig og returnerer samla respons — same shape som create() ville gitt.
+// Sann streaming til klienten kjem i v0.2.
+const message = await client.messages.stream({
+  model: "claude-sonnet-4-6",
+  max_tokens: 32768,
+  thinking: {
+    type: "enabled",
+    budget_tokens: 3000,
+  },
+  system: SYSTEM_PROMPT,
+  messages: [{ role: "user", content: userMessage }],
+}).finalMessage();
 
     const responseText = message.content
       .filter((block) => block.type === "text")

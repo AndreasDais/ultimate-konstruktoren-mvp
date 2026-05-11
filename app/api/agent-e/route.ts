@@ -328,9 +328,24 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
     });
 
     const responseText = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { text: string }).text)
-      .join("\n");
+  .filter((b) => b.type === "text")
+  .map((b) => (b as { text: string }).text)
+  .join("\n");
+
+// Strip markdown-fences viss modellen har lagt dei til trass for prompt-instruks
+const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+
+let parsed;
+try {
+  parsed = JSON.parse(cleaned);
+} catch (e) {
+  console.error("[agent-a] Failed to parse response. Raw text follows:");
+  console.error("====== RAW START ======");
+  console.error(responseText);
+  console.error("====== RAW END ======");
+  console.error("Parse error:", e);
+  throw new Error("Klarte ikkje parse Konstruktør A sitt svar som JSON");
+}
 
     // Strip markdown-fences viss modellen har lagt dei til trass for prompt-instruks.
     const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();

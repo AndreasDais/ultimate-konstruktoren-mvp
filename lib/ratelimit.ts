@@ -62,10 +62,14 @@ function getClientIp(request: NextRequest): string {
  * Returnerer NextResponse med 429 viss blokkert, null viss requesten kan passere.
  */
 export async function checkRateLimit(
-  request: NextRequest
-): Promise<NextResponse | null> {
-  // Viss limiters ikkje er konfigurert, let passere (dev-modus)
-  if (!hourlyLimit || !dailyLimit) return null;
+    request: NextRequest
+  ): Promise<NextResponse | null> {
+    // Skip rate-limit i lokal utvikling — ellers blir vi blokka av eigen
+    // testing. Aktiv på Vercel-deploys der NODE_ENV === "production".
+    if (process.env.NODE_ENV === "development") return null;
+  
+    // Viss limiters ikkje er konfigurert, let passere
+    if (!hourlyLimit || !dailyLimit) return null;
 
   const ip = getClientIp(request);
 

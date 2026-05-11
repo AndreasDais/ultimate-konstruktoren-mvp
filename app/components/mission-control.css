@@ -1,0 +1,381 @@
+/* ============================================================
+   MISSION CONTROL v1 (Dag 7)
+   Lasteskjerm som demonstrerer at to konstruktørar arbeider
+   parallelt. Resultat-verdiar lagt til som dei to siste
+   avhuka stega under tjukk skiljelinje (matchar mockup).
+   ============================================================ */
+
+   .mc {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-top: 2.5rem;
+  }
+  
+  .mc-header {
+    margin-bottom: 2.5rem;
+  }
+  
+  .mc-eyebrow {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted, #475569);
+    margin: 0 0 0.625rem;
+  }
+  
+  .mc-title {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1.875rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg, #0F172A);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+  }
+  
+  .mc-subtitle {
+    font-size: 0.9375rem;
+    color: var(--muted, #475569);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 640px;
+  }
+  
+  /* === To-kolonne-grid === */
+  .mc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .mc-agent-card {
+    background: var(--surface, #FFFFFF);
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.3s ease;
+  }
+  
+  .mc-agent-card--complete {
+    border-color: var(--fg, #0F172A);
+  }
+  
+  /* Agent-header med wrap-vennleg tag */
+  .mc-agent-header {
+    display: flex;
+    align-items: flex-start; /* top-align så namn og tag startar likt */
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mc-agent-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface-alt, #F8FAFC);
+    border: 1px solid var(--border, #E2E8F0);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg, #0F172A);
+    flex-shrink: 0;
+  }
+  
+  .mc-agent-name {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg, #0F172A);
+    flex: 1;
+    line-height: 1.4;
+    min-width: 0; /* la flex-item krympe under content-width */
+  }
+  
+  /* Tag wrappar til to liner viss for lang. max-width hindrar at han
+     pressar namnet til null-bredde, og text-wrap: balance gir penare
+     linjebryt enn standard. */
+  .mc-agent-tag {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: var(--muted, #475569);
+    text-align: right;
+    line-height: 1.4;
+    max-width: 140px;
+    white-space: normal;
+    flex-shrink: 0;
+    padding-top: 4px; /* visuell baseline-justering med serif-namn */
+  }
+  
+  /* === Steg-liste === */
+  .mc-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .mc-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.75rem 0;
+    border-top: 1px dashed var(--rule, #E2E8F0);
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+  }
+  
+  .mc-step:first-child {
+    border-top: 1px solid var(--rule, #E2E8F0);
+  }
+  
+  .mc-step-icon {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .mc-step-text {
+    flex: 1;
+    line-height: 1.5;
+  }
+  
+  .mc-step--ventar {
+    color: var(--muted, #94A3B8);
+  }
+  
+  .mc-step--ventar .mc-step-icon {
+    color: var(--muted, #94A3B8);
+  }
+  
+  .mc-step--pågår {
+    color: var(--fg, #0F172A);
+  }
+  
+  .mc-step--pågår .mc-step-icon {
+    color: var(--fg, #0F172A);
+    animation: mc-pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes mc-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  
+  .mc-step--utført {
+    color: var(--fg, #0F172A);
+  }
+  
+  .mc-step--utført .mc-step-icon {
+    color: #4F8B6E;
+    font-weight: 700;
+  }
+  
+  /* === Resultat-steg (dei siste 2 radene) === */
+  /* Først resultat-steg har tjukk skiljelinje over (matchar mockup) */
+  .mc-step--result {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.875rem;
+    animation: mc-fade-in 0.4s ease-out;
+  }
+  
+  .mc-step--result-first {
+    border-top: 2px solid var(--fg, #0F172A) !important;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+  }
+  
+  .mc-result-text {
+    display: flex;
+    gap: 0;
+    align-items: baseline;
+  }
+  
+  .mc-result-key {
+    color: var(--muted, #475569);
+    min-width: 90px;
+  }
+  
+  .mc-result-equals {
+    color: var(--muted, #475569);
+  }
+  
+  .mc-result-value {
+    font-weight: 600;
+    color: var(--fg, #0F172A);
+  }
+  
+  @keyframes mc-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* === Samanliknar-panel === */
+  .mc-compare {
+    margin-top: 1.5rem;
+    background: var(--surface, #FFFFFF);
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 12px;
+    padding: 1.25rem 1.75rem;
+    transition: opacity 0.4s ease;
+  }
+  
+  .mc-compare--waiting,
+  .mc-compare--working {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+  
+  .mc-compare--waiting {
+    opacity: 0.5;
+  }
+  
+  .mc-compare--ready {
+    animation: mc-slide-up 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes mc-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .mc-compare-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface-alt, #F8FAFC);
+    border: 1px solid var(--border, #E2E8F0);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg, #0F172A);
+    flex-shrink: 0;
+  }
+  
+  .mc-compare-name {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg, #0F172A);
+    flex: 1;
+  }
+  
+  .mc-compare-pill {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted, #475569);
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--rule, #E2E8F0);
+    border-radius: 999px;
+    background: var(--surface-alt, #F8FAFC);
+    white-space: nowrap;
+  }
+  
+  .mc-compare-pill--active {
+    color: var(--fg, #0F172A);
+    border-color: var(--fg, #0F172A);
+    animation: mc-pulse 1.5s ease-in-out infinite;
+  }
+  
+  .mc-compare-pill--success {
+    color: #4F8B6E;
+    border-color: #4F8B6E;
+    background: rgba(79, 139, 110, 0.06);
+  }
+  
+  .mc-compare-pill--success::before {
+    content: "● ";
+    color: #4F8B6E;
+  }
+  
+  .mc-compare-ready-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .mc-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  
+  .mc-compare-cell-label {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted, #475569);
+    margin-bottom: 0.5rem;
+  }
+  
+  .mc-compare-cell-value {
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-size: 1.5rem;
+    color: var(--fg, #0F172A);
+    line-height: 1.1;
+  }
+  
+  .mc-compare-cell-value--prose {
+    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-style: italic;
+    font-size: 1.25rem;
+  }
+  
+  .mc-compare-cell-note {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--muted, #475569);
+    line-height: 1.4;
+  }
+  
+  /* === Mobile responsive === */
+  @media (max-width: 768px) {
+    .mc {
+      padding-top: 1.5rem;
+    }
+  
+    .mc-title {
+      font-size: 1.5rem;
+    }
+  
+    .mc-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  
+    .mc-agent-card {
+      padding: 1.25rem;
+    }
+  
+    .mc-agent-tag {
+      max-width: 110px;
+      font-size: 0.625rem;
+    }
+  
+    .mc-compare-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  
+    .mc-compare-cell-value {
+      font-size: 1.25rem;
+    }
+  }
