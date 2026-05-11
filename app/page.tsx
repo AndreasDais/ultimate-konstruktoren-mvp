@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MATCH_STATUS_LABELS, MATCH_STATUS_TONES,
   DECISION_STATUS_LABELS, DECISION_STATUS_TONES,
@@ -75,25 +75,19 @@ type ControllerDecision = {
   controller_notes: string;
 };
 
-type Phase = "input" | "result" | "calculating" | "calculation_result";
+type Phase = "workbench" | "calculating" | "calculation_result";
 
 const EXAMPLE_PROMPTS = [
   "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
   "Lastkombinasjon for kontorbygg, G = 4,5 kN/m², Q = 3,0 kN/m²",
   "Armering i betongbjelke, MEd = 120 kNm, b = 250 mm, d = 450 mm",
-  "Stålkapasitet, IPE 240, S355, NEd = 180 kN",
 ];
 
 const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description: string }> = {
-  input: {
+  workbench: {
     eyebrow: "NY BEREKNING",
     title: "Beskriv oppgåva",
-    description: "Tolkaren les forespørselen og viser tolkinga før berekning startar.",
-  },
-  result: {
-    eyebrow: "STEG 2 AV 3 · BEKREFT",
-    title: "Tolking frå Tolkaren",
-    description: "Sjekk at dette stemmer før berekning. Du kan endre input eller starte berekninga.",
+    description: "Skriv inn forespørselen. Tolkaren les og viser tolkinga her — du kan redigere og tolke på nytt før du startar berekninga.",
   },
   calculating: {
     eyebrow: "REKNAR",
@@ -122,11 +116,11 @@ function getBlockedReason(result: AgentResult | null): string | null {
   }
 
   if (result.status === "uklart") {
-    return "Forespurnaden er for vag til å tolke trygt. Klikk Endre input og legg til meir konkret informasjon om geometri, last og materiale.";
+    return "Forespurnaden er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med meir konkret informasjon om geometri, last og materiale.";
   }
 
   if ((result.kan_reknast_no?.length ?? 0) === 0) {
-    return "Ingen berekning er mogleg med oppgitt informasjon. Klikk Endre input og legg til manglande data.";
+    return "Ingen berekning er mogleg med oppgitt informasjon. Rediger forespørselen og legg til manglande data.";
   }
 
   return null;
@@ -143,54 +137,84 @@ export default function Home() {
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState<Phase>("input");
+  const [phase, setPhase] = useState<Phase>("workbench");
 
-// Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport
+  // Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport.
+  // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("uk-state");
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      if (!state.currentRunId) return;
+
+      setInput(state.input ?? "");
+      setResult(state.result ?? null);
+      setRequestId(state.requestId ?? null);
+      setCalculationA(state.calculationA ?? null);
+      setCalculationB(state.calculationB ?? null);
+      setComparison(state.comparison ?? null);
+      setControllerDecision(state.controllerDecision ?? null);
+      setCurrentRunId(state.currentRunId);
+
+      // Map legacy phase names for bakoverkompatibilitet med pågåande sessions
+      const legacyPhase = state.phase;
+      if (legacyPhase === "input" || legacyPhase === "result") {
+        setPhase("workbench");
+      } else if (legacyPhase === "calculation_result" || legacyPhase === "calculating") {
+        setPhase(legacyPhase);
+      } else {
+        setPhase("calculation_result");
+      }
+
+      sessionStorage.removeItem("uk-state");
+    } catch (e) {
+      console.warn("Klarte ikkje laste tilstand frå sessionStorage", e);
+    }
+  }, []);
+
+  const saveStateToSession = () => {
+    try {
+      sessionStorage.setItem(
+        "uk-state",
+        JSON.stringify({
+          input,
+          result,
+          requestId,
+          calculationA,
+          calculationB,
+          comparison,
+          controllerDecision,
+          currentRunId,
+          phase: "calculation_result",
+        })
+      );
+    } catch (e) {
+      console.warn("Klarte ikkje lagre tilstand til sessionStorage", e);
+    }
+  };
+
+// Ref til tolking-panelet for auto-scroll når Tolkar er ferdig.
+const tolkingPanelRef = useRef<HTMLDivElement | null>(null);
+
+// Scroll smooth til tolking-panelet kvar gang `result` blir populert
+// eller erstatta (etter "Tolk på nytt"). Eit lite delay sikrar at DOM-en
+// har rendra panelet før vi scrollar.
 useEffect(() => {
-  try {
-    const saved = sessionStorage.getItem("uk-state");
-    if (!saved) return;
-    const state = JSON.parse(saved);
-    if (!state.currentRunId) return;
-
-    setInput(state.input ?? "");
-    setResult(state.result ?? null);
-    setRequestId(state.requestId ?? null);
-    setCalculationA(state.calculationA ?? null);
-    setCalculationB(state.calculationB ?? null);
-    setComparison(state.comparison ?? null);
-    setControllerDecision(state.controllerDecision ?? null);
-    setCurrentRunId(state.currentRunId);
-    setPhase(state.phase ?? "calculation_result");
-
-    sessionStorage.removeItem("uk-state");
-  } catch (e) {
-    console.warn("Klarte ikkje laste tilstand frå sessionStorage", e);
+  if (result && tolkingPanelRef.current) {
+    const timer = setTimeout(() => {
+      tolkingPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+    return () => clearTimeout(timer);
   }
-}, []);
+}, [result]);
 
-const saveStateToSession = () => {
-  try {
-    sessionStorage.setItem(
-      "uk-state",
-      JSON.stringify({
-        input,
-        result,
-        requestId,
-        calculationA,
-        calculationB,
-        comparison,
-        controllerDecision,
-        currentRunId,
-        phase: "calculation_result",
-      })
-    );
-  } catch (e) {
-    console.warn("Klarte ikkje lagre tilstand til sessionStorage", e);
-  }
-};
-
-  const handleSubmit = async () => {
+  // Tolk forespurnaden. Fyller result-state utan å bytte phase — Tolkar-panelet
+  // dukkar opp under input-feltet. Brukar kan redigere input og tolke på nytt.
+  const handleTolk = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -211,7 +235,7 @@ const saveStateToSession = () => {
 
       setResult(data.result);
       setRequestId(data.request_id);
-      setPhase("result");
+      // Phase forblir "workbench" — Tolkar-panelet renderast inline under input
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
     } finally {
@@ -219,18 +243,7 @@ const saveStateToSession = () => {
     }
   };
 
-  const handleEdit = () => {
-    setResult(null);
-    setRequestId(null);
-    setCalculationA(null);
-    setCalculationB(null);
-    setComparison(null);
-    setControllerDecision(null);
-    setCurrentRunId(null);
-    setError(null);
-    setPhase("input");
-  };
-
+  // Avbryt og start på nytt med tomt arbeidsbord.
   const handleCancel = () => {
     setInput("");
     setResult(null);
@@ -241,14 +254,14 @@ const saveStateToSession = () => {
     setControllerDecision(null);
     setCurrentRunId(null);
     setError(null);
-    setPhase("input");
+    setPhase("workbench");
   };
 
   const handleStartCalculation = async () => {
     if (!result || !requestId) return;
 
     // Hopp rett til resultatet viss berekninga allereie er gjort
-    // (skjer når brukar kjem tilbake frå calc_result til bekreft og trykker Start igjen)
+    // (skjer når brukar kjem tilbake frå calc_result til workbench og trykker Start igjen)
     if (calculationA && currentRunId) {
       setPhase("calculation_result");
       return;
@@ -276,7 +289,7 @@ const saveStateToSession = () => {
 
       if (!initResponse.ok) {
         setError(initData.error || "Klarte ikkje starte berekningskøyring");
-        setPhase("result");
+        setPhase("workbench");
         return;
       }
 
@@ -302,7 +315,7 @@ const saveStateToSession = () => {
 
       if (!responseA.ok) {
         setError(dataA.error || "Konstruktør A klarte ikkje løyse oppgåva");
-        setPhase("result");
+        setPhase("workbench");
         return;
       }
       setCalculationA(dataA.result);
@@ -361,7 +374,7 @@ const saveStateToSession = () => {
       setPhase("calculation_result");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
-      setPhase("result");
+      setPhase("workbench");
     }
   };
 
@@ -371,7 +384,8 @@ const saveStateToSession = () => {
     !!controllerDecision?.blocked_outputs?.includes(key);
 
   const blockedReason = getBlockedReason(result);
-  const canStart = blockedReason === null;
+  const canStart = result !== null && blockedReason === null;
+  const hasTolket = result !== null;
 
   return (
     <div className="uk-shell">
@@ -404,8 +418,12 @@ const saveStateToSession = () => {
             </p>
           </header>
 
-          {/* === FASE: INPUT === */}
-          {phase === "input" && (
+          {/* === FASE: WORKBENCH === */}
+          {/* Slått saman skjerm 1 (input) + skjerm 2 (Tolkar-resultat) til éin side.
+              Input-felt øvst, suggestion-chips, "Tolk oppgåva →"-knapp som fyller
+              Tolkar-panelet under. Brukar kan redigere input og tolke på nytt.
+              "Start berekning →" som sekundær CTA i botnen av Tolkar-panelet. */}
+          {phase === "workbench" && (
             <section>
               <label htmlFor="oppgave" className="uk-label">
                 Skriv inn ei konstruksjonsoppgåve
@@ -436,206 +454,193 @@ const saveStateToSession = () => {
               </div>
 
               <button
-                onClick={handleSubmit}
+                onClick={handleTolk}
                 disabled={!input.trim() || loading}
                 aria-busy={loading}
                 className={`uk-btn uk-btn--primary${loading ? " uk-btn--loading" : ""}`}
                 style={{ marginTop: 20 }}
               >
-                {loading ? "Tolkar..." : "Send til Tolkaren"}
+                {loading
+                  ? "Tolkar..."
+                  : hasTolket
+                    ? "Tolk på nytt →"
+                    : "Tolk oppgåva →"}
               </button>
+
+              {/* === Feil-stripe — gjeld både tolk-feil og berekning-feil === */}
+              {error && (
+                <StatusStripe status="bad" label="Feil" className="mt-8">
+                  {error}
+                </StatusStripe>
+              )}
+
+              {/* TOLKING-PANEL — synleg når Tolkar har returnert resultat */}
+              {result && (
+                <div ref={tolkingPanelRef} style={{ scrollMarginTop: "24px" }}>
+                  <div className="uk-confirm-grid" style={{ marginTop: 32 }}>
+                    {/* === Venstre kolonne: forespurnad + tolking === */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <section className="uk-card">
+                        <div className="uk-card__hd">
+                          <div className="uk-card__title">Tolking</div>
+                          <Badge status="neutral">Tolkar</Badge>
+                        </div>
+                        <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                          <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
+                            {result.tolkings_oppsummering}
+                          </p>
+
+                          {result.berekningstype && (
+                            <Row label="Berekningstype" value={result.berekningstype} />
+                          )}
+
+                          {Object.keys(result.tolkte_verdiar || {}).length > 0 && (
+                            <div>
+                              <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
+                                Tolkte verdiar
+                              </div>
+                              <ul
+                                className="uk-mono"
+                                style={{
+                                  fontSize: 12.5,
+                                  color: "var(--fg)",
+                                  margin: 0,
+                                  paddingLeft: 0,
+                                  listStyle: "none",
+                                }}
+                              >
+                                {Object.entries(result.tolkte_verdiar).map(([k, v]) => (
+                                  <li key={k} style={{ padding: "2px 0" }}>
+                                    {k} = {v}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {result.manglande_verdiar?.length > 0 && (
+                            <ListSection
+                              label="Manglande data"
+                              items={result.manglande_verdiar}
+                              tone="warn"
+                            />
+                          )}
+
+                          {result.antakingar?.length > 0 && (
+                            <ListSection label="Antakingar" items={result.antakingar} />
+                          )}
+                        </div>
+                      </section>
+                    </div>
+
+                    {/* === Høgre kolonne: kva kan reknast + status === */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <section className="uk-card">
+                        <div className="uk-card__hd">
+                          <div className="uk-card__title">Kva kan reknast no</div>
+                        </div>
+                        <div className="uk-card__bd">
+                          {result.kan_reknast_no?.map((item) => (
+                            <div key={item} className="uk-checkitem uk-checkitem--active">
+                              <span className="uk-checkitem__icon">●</span>
+                              <span className="uk-checkitem__label">{item}</span>
+                            </div>
+                          ))}
+                          {result.kan_ikkje_reknast?.map((item) => (
+                            <div key={item} className="uk-checkitem uk-checkitem--blocked">
+                              <span className="uk-checkitem__icon">○</span>
+                              <span className="uk-checkitem__label">{item}</span>
+                              <span className="uk-checkitem__note">krev meir input</span>
+                            </div>
+                          ))}
+                          {(result.kan_reknast_no?.length ?? 0) === 0 &&
+                            (result.kan_ikkje_reknast?.length ?? 0) === 0 && (
+                              <p style={{ margin: 0, fontSize: 13, color: "var(--fg-muted)" }}>
+                                Ingen berekningar oppgitt.
+                              </p>
+                            )}
+                        </div>
+                      </section>
+
+                      <section className="uk-card">
+                        <div className="uk-card__hd">
+                          <div className="uk-card__title">Status</div>
+                        </div>
+                        <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
+                          <StatusKV
+                            label="Inputstatus"
+                            tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
+                            value={INPUT_STATUS_LABELS[result.status] ?? result.status}
+                          />
+                          {result.fagomraade && (
+                            <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
+                          )}
+                          <StatusKV
+                            label="Støtta i MVP"
+                            tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
+                            value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
+                          />
+                          <StatusKV
+                            label="Konfidens"
+                            tone={
+                              result.konfidens >= 0.7
+                                ? "ok"
+                                : result.konfidens >= 0.4
+                                  ? "warn"
+                                  : "bad"
+                            }
+                            value={result.konfidens?.toFixed(2) ?? "—"}
+                          />
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+
+                  {/* Sekundær CTA — Start berekning. Synleg når Tolkar-panelet har innhold. */}
+                  <section className="uk-card" style={{ marginTop: 16 }}>
+                    <div className="uk-card__bd">
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 16,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
+                          Stemmer tolkinga? Då kan du starte berekninga.
+                        </p>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
+                            Avbryt
+                          </button>
+                          <button
+                            onClick={handleStartCalculation}
+                            disabled={!canStart}
+                            className="uk-btn uk-btn--primary"
+                          >
+                            Start berekning →
+                          </button>
+                        </div>
+                      </div>
+                      {blockedReason && (
+                        <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
+                          {blockedReason}
+                        </p>
+                      )}
+                    </div>
+                    </section>
+                </div>
+              )}
             </section>
           )}
 
-          {/* === FEIL === */}
-          {error && (
+          {/* === FEIL utanfor workbench (calculating/result fase) === */}
+          {phase !== "workbench" && error && (
             <StatusStripe status="bad" label="Feil" className="mt-8">
               {error}
             </StatusStripe>
-          )}
-
-          {/* === FASE: RESULT (Tolkar) === */}
-          {/* === FASE: RESULT (Tolkar — to-kolonne) === */}
-          {phase === "result" && result && (
-            <>
-              <div className="uk-confirm-grid">
-                {/* === Venstre kolonne: forespørsel + tolking === */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <section className="uk-card">
-                    <div className="uk-card__hd">
-                      <div className="uk-card__title">Din forespørsel</div>
-                    </div>
-                    <div className="uk-card__bd">
-                      <p
-                        className="uk-mono"
-                        style={{
-                          fontSize: 13,
-                          color: "var(--fg-2)",
-                          whiteSpace: "pre-wrap",
-                          margin: 0,
-                          lineHeight: 1.55,
-                        }}
-                      >
-                        {input}
-                      </p>
-                    </div>
-                  </section>
-
-                  <section className="uk-card">
-                    <div className="uk-card__hd">
-                      <div className="uk-card__title">Tolking</div>
-                      <Badge status="neutral">Tolkar</Badge>
-                    </div>
-                    <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
-                        {result.tolkings_oppsummering}
-                      </p>
-
-                      {result.berekningstype && (
-                        <Row label="Berekningstype" value={result.berekningstype} />
-                      )}
-
-                      {Object.keys(result.tolkte_verdiar || {}).length > 0 && (
-                        <div>
-                          <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                            Tolkte verdiar
-                          </div>
-                          <ul
-                            className="uk-mono"
-                            style={{
-                              fontSize: 12.5,
-                              color: "var(--fg)",
-                              margin: 0,
-                              paddingLeft: 0,
-                              listStyle: "none",
-                            }}
-                          >
-                            {Object.entries(result.tolkte_verdiar).map(([k, v]) => (
-                              <li key={k} style={{ padding: "2px 0" }}>
-                                {k} = {v}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {result.manglande_verdiar?.length > 0 && (
-                        <ListSection
-                          label="Manglande data"
-                          items={result.manglande_verdiar}
-                          tone="warn"
-                        />
-                      )}
-
-                      {result.antakingar?.length > 0 && (
-                        <ListSection label="Antakingar" items={result.antakingar} />
-                      )}
-                    </div>
-                  </section>
-                </div>
-
-                {/* === Høgre kolonne: kva kan reknast + status === */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <section className="uk-card">
-                    <div className="uk-card__hd">
-                      <div className="uk-card__title">Kva kan reknast no</div>
-                    </div>
-                    <div className="uk-card__bd">
-                      {result.kan_reknast_no?.map((item) => (
-                        <div key={item} className="uk-checkitem uk-checkitem--active">
-                          <span className="uk-checkitem__icon">●</span>
-                          <span className="uk-checkitem__label">{item}</span>
-                        </div>
-                      ))}
-                      {result.kan_ikkje_reknast?.map((item) => (
-                        <div key={item} className="uk-checkitem uk-checkitem--blocked">
-                          <span className="uk-checkitem__icon">○</span>
-                          <span className="uk-checkitem__label">{item}</span>
-                          <span className="uk-checkitem__note">krev meir input</span>
-                        </div>
-                      ))}
-                      {(result.kan_reknast_no?.length ?? 0) === 0 &&
-                        (result.kan_ikkje_reknast?.length ?? 0) === 0 && (
-                          <p style={{ margin: 0, fontSize: 13, color: "var(--fg-muted)" }}>
-                            Ingen berekningar oppgitt.
-                          </p>
-                        )}
-                    </div>
-                  </section>
-
-                  <section className="uk-card">
-                    <div className="uk-card__hd">
-                      <div className="uk-card__title">Status</div>
-                    </div>
-                    <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
-                      <StatusKV
-                        label="Inputstatus"
-                        tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
-                        value={INPUT_STATUS_LABELS[result.status] ?? result.status}
-                      />
-                      {result.fagomraade && (
-                        <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
-                      )}
-                      <StatusKV
-                        label="Støtta i MVP"
-                        tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
-                        value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
-                      />
-                      <StatusKV
-                        label="Konfidens"
-                        tone={
-                          result.konfidens >= 0.7
-                            ? "ok"
-                            : result.konfidens >= 0.4
-                              ? "warn"
-                              : "bad"
-                        }
-                        value={result.konfidens?.toFixed(2) ?? "—"}
-                      />
-                    </div>
-                  </section>
-                </div>
-              </div>
-
-              {/* Action-bar — full bredde under begge kolonnene */}
-              <section className="uk-card" style={{ marginTop: 16 }}>
-                <div className="uk-card__bd">
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 16,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-                      Stemmer tolkinga? Då kan du starte berekninga, eller endre forespørselen.
-                    </p>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
-                        Avbryt
-                      </button>
-                      <button onClick={handleEdit} className="uk-btn">
-                        Endre input
-                      </button>
-                      <button
-                        onClick={handleStartCalculation}
-                        disabled={!canStart}
-                        className="uk-btn uk-btn--primary"
-                      >
-                        Start berekning →
-                      </button>
-                    </div>
-                  </div>
-                  {blockedReason && (
-                    <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
-                      {blockedReason}
-                    </p>
-                  )}
-                </div>
-              </section>
-            </>
           )}
 
           {/* === FASE: CALCULATING === */}
@@ -1192,7 +1197,7 @@ const saveStateToSession = () => {
                       Resultatet er førebels og må kontrollerast av fagperson.
                     </p>
                     <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setPhase("result")} className="uk-btn">
+                      <button onClick={() => setPhase("workbench")} className="uk-btn">
                         ← Tilbake
                       </button>
                       {currentRunId && calculationA && calculationB && (
@@ -1268,10 +1273,13 @@ function StatusKV({
 }
 
 function StepIndicator({ phase }: { phase: Phase }) {
-  const current = phase === "input" ? 1 : phase === "result" ? 2 : 3;
+  // Tre steg per visjon-dokument: Workbench → Mission Control → Rapport.
+  // Workbench omfattar både input og Tolkar-resultat (slått saman i dag 4).
+  // Mission Control er reknar-fasen. Rapport er calculation_result + /rapport.
+  const current = phase === "workbench" ? 1 : phase === "calculating" ? 2 : 3;
   const steps = [
-    { num: 1, label: "Input" },
-    { num: 2, label: "Bekreft tolking" },
+    { num: 1, label: "Workbench" },
+    { num: 2, label: "Mission Control" },
     { num: 3, label: "Rapport" },
   ];
   return (
