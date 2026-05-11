@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
+    "@sentry/nextjs": "^10.52.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.3",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "docx": "^9.6.1",
     "katex": "^0.16.45",
     "next": "16.2.4",

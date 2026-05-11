@@ -1,10 +1,29 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // === RATE-LIMIT-BRANCH ===
+  // Alle AI-tunge ruter går gjennom rate-limit-sjekk.
+  // /api/input-agent og /api/agent-* kostar Anthropic-tokens — utan grense
+  // kan ein einsleg brukar (eller bot) brenne pilot-budsjettet på minutter.
+  if (
+    pathname === "/api/input-agent" ||
+    pathname.startsWith("/api/agent-")
+  ) {
+    const blocked = await checkRateLimit(request);
+    if (blocked) return blocked;
+    return NextResponse.next();
+  }
+
+  // === ADMIN-AUTH-BRANCH ===
+  // Resten (matcher = /admin/* og /api/admin/*) går gjennom Supabase-auth.
+
   // Login-sida er offentleg — utan dette får vi redirect-loop
-  if (request.nextUrl.pathname === "/admin/login") {
+  if (pathname === "/admin/login") {
     return NextResponse.next();
   }
 
@@ -86,5 +105,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    // Admin-auth
+    "/admin/:path*",
+    "/api/admin/:path*",
+    // Rate-limit (eksplisitt enumerert sidan path-to-regexp ikkje matchar
+    // dash-prefix-pattern reint)
+    "/api/input-agent",
+    "/api/agent-a",
+    "/api/agent-b",
+    "/api/agent-c",
+    "/api/agent-d",
+    "/api/agent-e",
+  ],
 };

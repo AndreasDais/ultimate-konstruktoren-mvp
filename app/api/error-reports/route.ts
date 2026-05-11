@@ -6,8 +6,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Aksepterte feiltyper. Modal viser eit subset (5 spec'a chips), men backend
-// godtek alle for bakoverkompatibilitet — admin kan også lagre andre typer.
 const VALID_ERROR_TYPES = [
   "feil_talverdi",
   "feil_formel",
@@ -16,19 +14,107 @@ const VALID_ERROR_TYPES = [
   "feil_foresetnad",
   "uklart_sprak",
   "manglande_kontroll",
-  "feil_tolking", // NYTT for dag 5 (modal-chip)
+  "feil_tolking",
   "anna",
 ];
 
 const VALID_SEVERITIES = ["low", "medium", "high"];
+
+/**
+ * Send Slack-varsling for høg-severity tilbakemelding.
+ * Fire-and-forget: feilar ikkje request-en om Slack er nede.
+ */
+async function notifyHighSeveritySlack(payload: {
+  errorReportId: string;
+  reportId: string;
+  errorTypes: string[];
+  selectedSection: string;
+  userComment: string;
+  baseUrl: string;
+}) {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.warn("[slack] SLACK_WEBHOOK_URL ikkje sett — hopper over notifikasjon");
+    return;
+  }
+
+  // Trunkér kommentar til ~200 teikn for Slack-display
+  const commentExcerpt =
+    payload.userComment.length > 200
+      ? payload.userComment.slice(0, 200) + "…"
+      : payload.userComment;
+
+      const adminUrl = `${payload.baseUrl}/admin/error-reports?highlight=${payload.errorReportId}`;
+
+  const slackPayload = {
+    text: `🚨 Høg-severity tilbakemelding på Pilar`,
+    blocks: [
+      {
+        type: "header",
+        text: { type: "plain_text", text: "🚨 Høg-severity tilbakemelding" },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Rapport-ID:*\n\`${payload.reportId.slice(0, 8)}…\``,
+          },
+          {
+            type: "mrkdwn",
+            text: `*Seksjon:*\n${payload.selectedSection}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Type feil:*\n${payload.errorTypes.map((t) => `\`${t}\``).join(", ")}`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Kommentar:*\n>${commentExcerpt.replace(/\n/g, "\n>")}`,
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: { type: "plain_text", text: "Opn i admin →" },
+            url: adminUrl,
+          },
+        ],
+      },
+    ],
+  };
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(slackPayload),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[slack] Webhook returnerte ${res.status}: ${body}`);
+    }
+  } catch (err) {
+    console.error("[slack] Webhook feila:", err);
+  }
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
       report_id,
-      error_type,       // legacy single-value (gammal inline-form)
-      error_types,      // ny array (dag 5 modal)
+      error_type,
+      error_types,
       selected_section,
       severity_user,
       user_comment,
@@ -42,8 +128,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Aksepter enten error_types (array, ny modal) eller error_type (string, legacy form).
-    // Multi-select frå modal sender alltid array.
+    // Aksepter enten error_types (array, ny modal) eller error_type (string, legacy)
     let typesArray: string[];
     if (Array.isArray(error_types) && error_types.length > 0) {
       typesArray = error_types;
@@ -56,7 +141,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validér at alle verdiar er kjende
     for (const t of typesArray) {
       if (typeof t !== "string" || !VALID_ERROR_TYPES.includes(t)) {
         return NextResponse.json(
@@ -89,7 +173,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Sjekk at rapporten finst
     const { data: report } = await supabase
       .from("reports")
       .select("id")
@@ -103,8 +186,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Dual-write: error_type held første val (for bakoverkompatibilitet med
-    // admin-view som les single-value), error_types lagrar full array.
+    const finalSeverity = severity_user || "medium";
+
     const { data, error } = await supabase
       .from("error_reports")
       .insert({
@@ -112,7 +195,7 @@ export async function POST(request: Request) {
         error_type: typesArray[0],
         error_types: typesArray,
         selected_section,
-        severity_user: severity_user || "medium",
+        severity_user: finalSeverity,
         user_comment: user_comment.trim(),
         status: "open",
       })
@@ -128,8 +211,22 @@ export async function POST(request: Request) {
     }
 
     console.log(
-      `[error-reports] Logged: types=[${typesArray.join(",")}], section="${selected_section}", severity=${severity_user || "medium"}, report=${report_id}`
+      `[error-reports] Logged: types=[${typesArray.join(",")}], section="${selected_section}", severity=${finalSeverity}, report=${report_id}`
     );
+
+    // === SLACK-NOTIFIKASJON ved høg severity ===
+    // Wrappa i try-catch så feil ikkje breaker respons-pathen til brukaren.
+    if (finalSeverity === "high") {
+      const baseUrl = new URL(request.url).origin;
+      await notifyHighSeveritySlack({
+        errorReportId: data.id,
+        reportId: report_id,
+        errorTypes: typesArray,
+        selectedSection: selected_section,
+        userComment: user_comment.trim(),
+        baseUrl,
+      });
+    }
 
     return NextResponse.json({
       success: true,
