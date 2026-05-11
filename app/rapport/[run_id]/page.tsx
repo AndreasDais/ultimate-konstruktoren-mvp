@@ -16,7 +16,7 @@ import {
   type Tone,
 } from "@/lib/format";
 import "./rapport.css";
-import FeilrapportForm from "./feilrapport-form";
+import FeilrapportModal from "./feilrapport-modal";
 import { QRCodeSVG } from "qrcode.react";
 import Formula from "@/app/components/Formula";
 import { TillitGauge } from "@/app/components/TillitGauge";
@@ -87,6 +87,7 @@ export default function RapportPage() {
   const [loadingMessage, setLoadingMessage] = useState("Genererer rapport...");
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>("");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     async function loadReport() {
@@ -536,10 +537,6 @@ export default function RapportPage() {
             </div>
           </section>
 
-          <div id="feilrapport">
-            <FeilrapportForm reportId={data.report.id} />
-          </div>
-
 {/* Footer-signatur */}
 <footer className="rapport-footer">
 <div className="rapport-footer__warning">
@@ -606,9 +603,12 @@ export default function RapportPage() {
           <a href={wordUrl} className="uk-btn" download={wordFilename}>
             Last ned Word
           </a>
-          <a href="#feilrapport" className="uk-btn">
-            Send feilrapport
-          </a>
+          <button
+            onClick={() => setFeedbackOpen(true)}
+            className="uk-btn"
+          >
+            Send tilbakemelding
+          </button>
         </div>
 
         <div className="rapport-status-panel">
@@ -640,9 +640,17 @@ export default function RapportPage() {
           />
           <StatusRow label="Fagperson" tone="warn" value="Ikkje kontrollert" />
         </div>
-      </aside>
-    </div>
-  );
+        </aside>
+
+<FeilrapportModal
+  open={feedbackOpen}
+  onClose={() => setFeedbackOpen(false)}
+  reportId={data.report.id}
+  documentId={data.report.document_id}
+  runId={runId}
+/>
+</div>
+);
 }
 
 function StatusRow({

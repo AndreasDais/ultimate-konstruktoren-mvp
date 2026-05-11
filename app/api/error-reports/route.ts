@@ -6,6 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Aksepterte feiltyper. Modal viser eit subset (5 spec'a chips), men backend
+// godtek alle for bakoverkompatibilitet — admin kan også lagre andre typer.
 const VALID_ERROR_TYPES = [
   "feil_talverdi",
   "feil_formel",
@@ -14,6 +16,7 @@ const VALID_ERROR_TYPES = [
   "feil_foresetnad",
   "uklart_sprak",
   "manglande_kontroll",
+  "feil_tolking", // NYTT for dag 5 (modal-chip)
   "anna",
 ];
 
@@ -24,25 +27,45 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       report_id,
-      error_type,
+      error_type,       // legacy single-value (gammal inline-form)
+      error_types,      // ny array (dag 5 modal)
       selected_section,
       severity_user,
       user_comment,
     } = body;
 
-    // Validering
+    // === Validering ===
     if (!report_id || typeof report_id !== "string") {
       return NextResponse.json(
         { error: "report_id er påkravd" },
         { status: 400 }
       );
     }
-    if (!error_type || !VALID_ERROR_TYPES.includes(error_type)) {
+
+    // Aksepter enten error_types (array, ny modal) eller error_type (string, legacy form).
+    // Multi-select frå modal sender alltid array.
+    let typesArray: string[];
+    if (Array.isArray(error_types) && error_types.length > 0) {
+      typesArray = error_types;
+    } else if (typeof error_type === "string" && error_type) {
+      typesArray = [error_type];
+    } else {
       return NextResponse.json(
-        { error: "Ugyldig feiltype" },
+        { error: "Vel minst éin feiltype" },
         { status: 400 }
       );
     }
+
+    // Validér at alle verdiar er kjende
+    for (const t of typesArray) {
+      if (typeof t !== "string" || !VALID_ERROR_TYPES.includes(t)) {
+        return NextResponse.json(
+          { error: `Ugyldig feiltype: ${t}` },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!selected_section || typeof selected_section !== "string") {
       return NextResponse.json(
         { error: "Vel kva seksjon feilen gjeld" },
@@ -80,12 +103,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Lagre feilrapport
+    // Dual-write: error_type held første val (for bakoverkompatibilitet med
+    // admin-view som les single-value), error_types lagrar full array.
     const { data, error } = await supabase
       .from("error_reports")
       .insert({
         report_id,
-        error_type,
+        error_type: typesArray[0],
+        error_types: typesArray,
         selected_section,
         severity_user: severity_user || "medium",
         user_comment: user_comment.trim(),
@@ -97,13 +122,13 @@ export async function POST(request: Request) {
     if (error) {
       console.error("[error-reports] Insert failed:", error);
       return NextResponse.json(
-        { error: "Kunne ikkje lagre feilrapport" },
+        { error: "Kunne ikkje lagre tilbakemelding" },
         { status: 500 }
       );
     }
 
     console.log(
-      `[error-reports] Logged: type=${error_type}, section="${selected_section}", report=${report_id}`
+      `[error-reports] Logged: types=[${typesArray.join(",")}], section="${selected_section}", severity=${severity_user || "medium"}, report=${report_id}`
     );
 
     return NextResponse.json({
