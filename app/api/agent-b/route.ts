@@ -167,29 +167,38 @@ Bruk & rett FØR =-symbolet for vertikal justering. Bruk \\\\ etter kvar line ut
 
 const PROMPT_VERSION = "agent_b_v0.8";
 
-export async function POST(request: Request) {
-  try {
-    const { run_id, input_review, raw_text } = await request.json();
+type CoreCallArgs = {
+  run_id: string;
+  input_review: Record<string, unknown>;
+  raw_text?: string;
+  onTextDelta?: (delta: string) => void;
+};
 
-    if (!run_id || !input_review) {
-      return Response.json(
-        { error: "Manglar run_id eller input_review" },
-        { status: 400 }
-      );
-    }
+type CoreCallResult =
+  | { ok: true; result: Record<string, unknown>; responseText: string }
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      raw?: string;
+      stopReason?: string;
+    };
 
-    const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
-    const mentionedProfiles = extractMentionedProfiles(searchText);
-    const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
+async function callKonstruktorB(args: CoreCallArgs): Promise<CoreCallResult> {
+  const { run_id, input_review, raw_text, onTextDelta } = args;
 
-    if (mentionedProfiles.length > 0) {
-      console.log(
-        `[agent-b] Injecting ${mentionedProfiles.length} profile(s):`,
-        mentionedProfiles.map((p) => p.name).join(", ")
-      );
-    }
+  const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
+  const mentionedProfiles = extractMentionedProfiles(searchText);
+  const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
 
-    const userMessage = `${profileBlock}TOLKAR SI VURDERING:
+  if (mentionedProfiles.length > 0) {
+    console.log(
+      `[agent-b] Injecting ${mentionedProfiles.length} profile(s):`,
+      mentionedProfiles.map((p) => p.name).join(", ")
+    );
+  }
+
+  const userMessage = `${profileBlock}TOLKAR SI VURDERING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
@@ -199,74 +208,162 @@ export async function POST(request: Request) {
 
 Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist før du skriv short_conclusion.`;
 
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  const stream = client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: 32768,
+    thinking: {
+      type: "enabled",
+      budget_tokens: 3000,
+    },
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  if (onTextDelta) {
+    stream.on("text", onTextDelta);
+  }
+
+  const message = await stream.finalMessage();
+
+  const responseText = message.content
+    .filter((block) => block.type === "text")
+    .map((block) => (block as { type: "text"; text: string }).text)
+    .join("");
+
+  const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const wasTruncated = message.stop_reason === "max_tokens";
+    return {
+      ok: false,
+      status: 500,
+      error: wasTruncated
+        ? "Konstruktør B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+        : "Klarte ikkje parse Konstruktør B sitt svar som JSON",
+      raw: responseText,
+      stopReason: message.stop_reason ?? undefined,
+    };
+  }
+
+  try {
+    const supabase = getSupabase();
+    await supabase.from("agent_outputs").insert({
+      run_id,
+      agent_name: "agent_b",
+      prompt_version: PROMPT_VERSION,
+      input_payload: {
+        ...input_review,
+        _injected_profiles: mentionedProfiles.map((p) => p.name),
+      },
+      output_text: responseText,
+      structured_output: parsed,
+      confidence: parsed.confidence,
+      warnings: parsed.warnings ?? [],
     });
+  } catch (dbError) {
+    console.error("Klarte ikkje lagre agent_output for B:", dbError);
+  }
 
-    // Extended thinking enabled: gir modellen rom til å reasonere før strukturert
-    // JSON-output. Avgjerande for engineering-berekningar der ein einaste teikn-feil
-    // eller einings-feil kan invalidere alt. For Konstruktør B er thinking spesielt
-    // verdfullt fordi val av alternativ metode krev fagleg vurdering før utskriving.
-    // Bruk streaming for å unngå Anthropic SDK sin 10-minutt-timeout-sjekk
-// ved høge max_tokens-verdiar. .finalMessage() ventar til streamen er
-// ferdig og returnerer samla respons — same shape som create() ville gitt.
-// Sann streaming til klienten kjem i v0.2.
-const message = await client.messages.stream({
-  model: "claude-sonnet-4-6",
-  max_tokens: 32768,
-  thinking: {
-    type: "enabled",
-    budget_tokens: 3000,
-  },
-  system: SYSTEM_PROMPT,
-  messages: [{ role: "user", content: userMessage }],
-}).finalMessage();
+  return { ok: true, result: parsed, responseText };
+}
 
-    const responseText = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => (block as { type: "text"; text: string }).text)
-      .join("");
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
 
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { run_id, input_review, raw_text } = body;
 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const wasTruncated = message.stop_reason === "max_tokens";
+    if (!run_id || !input_review) {
       return Response.json(
-        {
-          error: wasTruncated
-            ? "Konstruktør B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-            : "Klarte ikkje parse Konstruktør B sitt svar som JSON",
-          raw: responseText,
-          stop_reason: message.stop_reason,
-        },
-        { status: 500 }
+        { error: "Manglar run_id eller input_review" },
+        { status: 400 }
       );
     }
 
-    let supabase;
-    try {
-      supabase = getSupabase();
-      await supabase.from("agent_outputs").insert({
-        run_id,
-        agent_name: "agent_b",
-        prompt_version: PROMPT_VERSION,
-        input_payload: {
-          ...input_review,
-          _injected_profiles: mentionedProfiles.map((p) => p.name),
+    const acceptHeader = request.headers.get("accept") ?? "";
+    const wantsSSE = acceptHeader.includes("text/event-stream");
+
+    if (wantsSSE) {
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          let closed = false;
+          const send = (event: string, data: unknown) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(sseEvent(event, data)));
+            } catch {
+              closed = true;
+            }
+          };
+
+          send("thinking_start", {});
+
+          try {
+            let firstDeltaSeen = false;
+            const result = await callKonstruktorB({
+              run_id,
+              input_review,
+              raw_text,
+              onTextDelta: (delta) => {
+                if (!firstDeltaSeen) {
+                  firstDeltaSeen = true;
+                  send("text_start", {});
+                }
+                send("delta", { text: delta });
+              },
+            });
+
+            if (!result.ok) {
+              send("error", {
+                message: result.error,
+                raw: result.raw,
+                stopReason: result.stopReason,
+              });
+            } else {
+              send("complete", { result: result.result });
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Ukjent feil";
+            send("error", { message });
+          } finally {
+            closed = true;
+            controller.close();
+          }
         },
-        output_text: responseText,
-        structured_output: parsed,
-        confidence: parsed.confidence,
-        warnings: parsed.warnings ?? [],
       });
-    } catch (dbError) {
-      console.error("Klarte ikkje lagre agent_output for B:", dbError);
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no",
+          Connection: "keep-alive",
+        },
+      });
     }
 
-    return Response.json({ result: parsed });
+    const result = await callKonstruktorB({ run_id, input_review, raw_text });
+
+    if (!result.ok) {
+      return Response.json(
+        { error: result.error, raw: result.raw, stop_reason: result.stopReason },
+        { status: result.status }
+      );
+    }
+
+    return Response.json({ result: result.result });
   } catch (err) {
     console.error("Konstruktør B error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";

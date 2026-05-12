@@ -379,3 +379,30 @@
       font-size: 1.25rem;
     }
   }
+
+  /* === Chunk 3: streaming-polish ===
+   Fade-in for nye steg som dukkar opp under streaming. Animasjon utløysast
+   berre når elementet mountar — eksisterande element re-animerast ikkje på
+   re-render (sikra av stabile keys i React).
+   :not(.mc-step--result) for å unngå dobbel-animasjon på resultat-rader
+   som allereie har eigen fade-in. */
+.mc-step--utført:not(.mc-step--result) {
+    animation: mc-fade-in 0.35s ease-out;
+  }
+  
+  /* Error-state for agent-kort */
+  .mc-error {
+    padding: 12px 14px;
+    background: rgba(139, 35, 49, 0.06);
+    border: 1px solid rgba(139, 35, 49, 0.2);
+    border-left: 3px solid #8B2331;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: #8B2331;
+    line-height: 1.5;
+    animation: mc-fade-in 0.3s ease-out;
+  }
+  
+  .mc-error strong {
+    font-weight: 600;
+  }

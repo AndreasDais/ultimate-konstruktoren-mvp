@@ -157,29 +157,43 @@ FEIL (horisontal med \\qquad eller mellomrom — fører til kutting på smale sk
 
 const PROMPT_VERSION = "agent_a_v0.8";
 
-export async function POST(request: Request) {
-  try {
-    const { run_id, input_review, raw_text } = await request.json();
+type CoreCallArgs = {
+  run_id: string;
+  input_review: Record<string, unknown>;
+  raw_text?: string;
+  onTextDelta?: (delta: string) => void;
+};
 
-    if (!run_id || !input_review) {
-      return Response.json(
-        { error: "Manglar run_id eller input_review" },
-        { status: 400 }
-      );
-    }
+type CoreCallResult =
+  | { ok: true; result: Record<string, unknown>; responseText: string }
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      raw?: string;
+      stopReason?: string;
+    };
 
-    const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
-    const mentionedProfiles = extractMentionedProfiles(searchText);
-    const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
+/**
+ * Felles logikk for både JSON- og SSE-handlerane. Kallar Anthropic med
+ * extended thinking, parser JSON-output, lagrar i agent_outputs.
+ * Viss onTextDelta er gjeve, blir han kalla for kvar tekst-delta frå streamen.
+ */
+async function callKonstruktorA(args: CoreCallArgs): Promise<CoreCallResult> {
+  const { run_id, input_review, raw_text, onTextDelta } = args;
 
-    if (mentionedProfiles.length > 0) {
-      console.log(
-        `[agent-a] Injecting ${mentionedProfiles.length} profile(s):`,
-        mentionedProfiles.map((p) => p.name).join(", ")
-      );
-    }
+  const searchText = `${raw_text ?? ""} ${JSON.stringify(input_review)}`;
+  const mentionedProfiles = extractMentionedProfiles(searchText);
+  const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
 
-    const userMessage = `${profileBlock}TOLKAR SI VURDERING:
+  if (mentionedProfiles.length > 0) {
+    console.log(
+      `[agent-a] Injecting ${mentionedProfiles.length} profile(s):`,
+      mentionedProfiles.map((p) => p.name).join(", ")
+    );
+  }
+
+  const userMessage = `${profileBlock}TOLKAR SI VURDERING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
@@ -189,74 +203,169 @@ export async function POST(request: Request) {
 
 Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist før du skriv short_conclusion.`;
 
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  // Streaming for å unngå 10-min SDK-timeout med max_tokens=32768.
+  // Tekst-deltaer går til onTextDelta viss SSE-modus. I JSON-modus ventar
+  // vi berre på finalMessage().
+  const stream = client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: 32768,
+    thinking: {
+      type: "enabled",
+      budget_tokens: 3000,
+    },
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  if (onTextDelta) {
+    stream.on("text", onTextDelta);
+  }
+
+  const message = await stream.finalMessage();
+
+  const responseText = message.content
+    .filter((block) => block.type === "text")
+    .map((block) => (block as { type: "text"; text: string }).text)
+    .join("");
+
+  const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const wasTruncated = message.stop_reason === "max_tokens";
+    return {
+      ok: false,
+      status: 500,
+      error: wasTruncated
+        ? "Konstruktør A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+        : "Klarte ikkje parse Konstruktør A sitt svar som JSON",
+      raw: responseText,
+      stopReason: message.stop_reason ?? undefined,
+    };
+  }
+
+  // Lagring i agent_outputs — feil her stoppar ikkje køyringa
+  try {
+    const supabase = getSupabase();
+    await supabase.from("agent_outputs").insert({
+      run_id,
+      agent_name: "agent_a",
+      prompt_version: PROMPT_VERSION,
+      input_payload: {
+        ...input_review,
+        _injected_profiles: mentionedProfiles.map((p) => p.name),
+      },
+      output_text: responseText,
+      structured_output: parsed,
+      confidence: parsed.confidence,
+      warnings: parsed.warnings ?? [],
     });
+  } catch (dbError) {
+    console.error("Klarte ikkje lagre agent output for A:", dbError);
+  }
 
-    // Extended thinking enabled: gir modellen rom til å reasonere før strukturert
-    // JSON-output. Avgjerande for engineering-berekningar der ein einaste teikn-feil
-    // eller einings-feil kan invalidere alt. Budsjett 4000 tokens — nok til verification-
-    // sjekklista og metode-vurdering utan å sprenge cost.
-    // Bruk streaming for å unngå Anthropic SDK sin 10-minutt-timeout-sjekk
-// ved høge max_tokens-verdiar. .finalMessage() ventar til streamen er
-// ferdig og returnerer samla respons — same shape som create() ville gitt.
-// Sann streaming til klienten kjem i v0.2.
-const message = await client.messages.stream({
-  model: "claude-sonnet-4-6",
-  max_tokens: 32768,
-  thinking: {
-    type: "enabled",
-    budget_tokens: 3000,
-  },
-  system: SYSTEM_PROMPT,
-  messages: [{ role: "user", content: userMessage }],
-}).finalMessage();
+  return { ok: true, result: parsed, responseText };
+}
 
-    const responseText = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => (block as { type: "text"; text: string }).text)
-      .join("");
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
 
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { run_id, input_review, raw_text } = body;
 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const wasTruncated = message.stop_reason === "max_tokens";
+    if (!run_id || !input_review) {
       return Response.json(
-        {
-          error: wasTruncated
-            ? "Konstruktør A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-            : "Klarte ikkje parse Konstruktør A sitt svar som JSON",
-          raw: responseText,
-          stop_reason: message.stop_reason,
-        },
-        { status: 500 }
+        { error: "Manglar run_id eller input_review" },
+        { status: 400 }
       );
     }
 
-    let supabase;
-    try {
-      supabase = getSupabase();
-      await supabase.from("agent_outputs").insert({
-        run_id,
-        agent_name: "agent_a",
-        prompt_version: PROMPT_VERSION,
-        input_payload: {
-          ...input_review,
-          _injected_profiles: mentionedProfiles.map((p) => p.name),
+    const acceptHeader = request.headers.get("accept") ?? "";
+    const wantsSSE = acceptHeader.includes("text/event-stream");
+
+    // === SSE-MODUS: stream tekst-deltaer til klient ===
+    if (wantsSSE) {
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          let closed = false;
+          const send = (event: string, data: unknown) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(sseEvent(event, data)));
+            } catch {
+              closed = true;
+            }
+          };
+
+          send("thinking_start", {});
+
+          try {
+            let firstDeltaSeen = false;
+            const result = await callKonstruktorA({
+              run_id,
+              input_review,
+              raw_text,
+              onTextDelta: (delta) => {
+                if (!firstDeltaSeen) {
+                  firstDeltaSeen = true;
+                  send("text_start", {});
+                }
+                send("delta", { text: delta });
+              },
+            });
+
+            if (!result.ok) {
+              send("error", {
+                message: result.error,
+                raw: result.raw,
+                stopReason: result.stopReason,
+              });
+            } else {
+              send("complete", { result: result.result });
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Ukjent feil";
+            send("error", { message });
+          } finally {
+            closed = true;
+            controller.close();
+          }
         },
-        output_text: responseText,
-        structured_output: parsed,
-        confidence: parsed.confidence,
-        warnings: parsed.warnings ?? [],
       });
-    } catch (dbError) {
-      console.error("Klarte ikkje lagre agent output for A:", dbError);
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          // Hindrar Nginx-buffering på Vercel og liknande proxy-lag
+          "X-Accel-Buffering": "no",
+          Connection: "keep-alive",
+        },
+      });
     }
 
-    return Response.json({ result: parsed });
+    // === JSON-MODUS (bakoverkompatibel) ===
+    const result = await callKonstruktorA({ run_id, input_review, raw_text });
+
+    if (!result.ok) {
+      return Response.json(
+        { error: result.error, raw: result.raw, stop_reason: result.stopReason },
+        { status: result.status }
+      );
+    }
+
+    return Response.json({ result: result.result });
   } catch (err) {
     console.error("Konstruktør A error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";

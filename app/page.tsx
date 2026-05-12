@@ -8,7 +8,9 @@ import {
   INPUT_STATUS_LABELS, INPUT_STATUS_TONES,
   type Tone,
 } from "@/lib/format";
-import MissionControl from "@/app/components/MissionControl";
+import MissionControl, { type AgentStreamingState } from "@/app/components/MissionControl";
+import { streamAgent } from "@/lib/stream-agent";
+import { extractStreamingState } from "@/lib/partial-json";
 
 type AgentResult = {
   status: string;
@@ -140,6 +142,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("workbench");
 
+  // Streaming-state for Mission Control v2 — populert progressivt frå SSE.
+  // Når agent-en er ferdig, blir calculationA/B sett som vanleg og MC byter
+  // til complete-state med endeleg liste + results under tjukk skiljelinje.
+  const INITIAL_STREAMING: AgentStreamingState = {
+    phase: "idle",
+    stepTitles: [],
+    results: {},
+  };
+  const [streamingA, setStreamingA] = useState<AgentStreamingState>(INITIAL_STREAMING);
+  const [streamingB, setStreamingB] = useState<AgentStreamingState>(INITIAL_STREAMING);
+
   // Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport.
   // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
   useEffect(() => {
@@ -198,6 +211,18 @@ export default function Home() {
 // Ref til tolking-panelet for auto-scroll når Tolkar er ferdig.
 const tolkingPanelRef = useRef<HTMLDivElement | null>(null);
 
+// AbortController for å avbryte aktive SSE-streams ved cancel/unmount.
+// Hindrar zombie-streams som held fram å bruke Anthropic-tokens etter
+// at brukaren ikkje lenger ser resultatet.
+const abortControllerRef = useRef<AbortController | null>(null);
+
+// Avbryt aktive streams når komponenten unmountar (rute-navigasjon e.l.)
+useEffect(() => {
+  return () => {
+    abortControllerRef.current?.abort();
+  };
+}, []);
+
 // Scroll smooth til tolking-panelet kvar gang `result` blir populert
 // eller erstatta (etter "Tolk på nytt"). Eit lite delay sikrar at DOM-en
 // har rendra panelet før vi scrollar.
@@ -246,6 +271,8 @@ useEffect(() => {
 
   // Avbryt og start på nytt med tomt arbeidsbord.
   const handleCancel = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setInput("");
     setResult(null);
     setRequestId(null);
@@ -256,6 +283,8 @@ useEffect(() => {
     setCurrentRunId(null);
     setError(null);
     setPhase("workbench");
+    setStreamingA(INITIAL_STREAMING);
+    setStreamingB(INITIAL_STREAMING);
   };
 
   const handleStartCalculation = async () => {
@@ -268,12 +297,19 @@ useEffect(() => {
       return;
     }
 
+    // Avbryt eventuelle pågåande streams før vi startar nye
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setPhase("calculating");
     setError(null);
     setCalculationA(null);
     setCalculationB(null);
     setComparison(null);
     setControllerDecision(null);
+    setStreamingA({ ...INITIAL_STREAMING, phase: "thinking" });
+    setStreamingB({ ...INITIAL_STREAMING, phase: "thinking" });
 
     try {
       // === STEG 0: Init run ===
@@ -297,37 +333,89 @@ useEffect(() => {
       const runId: string = initData.run_id;
       setCurrentRunId(runId);
 
-      // === STEG 1: Konstruktør A og B parallelt ===
-      const [responseA, responseB] = await Promise.all([
-        fetch("/api/agent-a", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ run_id: runId, input_review: result }),
-        }),
-        fetch("/api/agent-b", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ run_id: runId, input_review: result }),
-        }),
+      // === STEG 1: Konstruktør A og B parallelt via SSE-streaming ===
+      // Begge agentar streamar samtidig. Vi held lokale variablar for
+      // sluttresultata, og setter calculationA/B i onComplete så
+      // MissionControl-komponenten kan vise progress real-time.
+      let resA: CalculationResult | null = null;
+      let resB: CalculationResult | null = null;
+      let errA: string | null = null;
+      let errB: string | null = null;
+
+      const agentBody = { run_id: runId, input_review: result };
+
+      await Promise.all([
+        streamAgent("/api/agent-a", agentBody, {
+          onThinkingStart: () =>
+            setStreamingA((s) => ({ ...s, phase: "thinking" })),
+          onTextStart: () =>
+            setStreamingA((s) => ({ ...s, phase: "streaming" })),
+          onDelta: (_delta, accumulated) => {
+            const extracted = extractStreamingState(accumulated);
+            setStreamingA((s) => ({
+              ...s,
+              phase: "streaming",
+              stepTitles: extracted.stepTitles,
+              results: extracted.results,
+            }));
+          },
+          onComplete: (r) => {
+            resA = r as unknown as CalculationResult;
+            setCalculationA(resA);
+            setStreamingA((s) => ({ ...s, phase: "complete" }));
+          },
+          onError: (msg) => {
+            errA = msg;
+            setStreamingA((s) => ({ ...s, phase: "error", error: msg }));
+          },
+        }, controller.signal),
+        streamAgent("/api/agent-b", agentBody, {
+          onThinkingStart: () =>
+            setStreamingB((s) => ({ ...s, phase: "thinking" })),
+          onTextStart: () =>
+            setStreamingB((s) => ({ ...s, phase: "streaming" })),
+          onDelta: (_delta, accumulated) => {
+            const extracted = extractStreamingState(accumulated);
+            setStreamingB((s) => ({
+              ...s,
+              phase: "streaming",
+              stepTitles: extracted.stepTitles,
+              results: extracted.results,
+            }));
+          },
+          onComplete: (r) => {
+            resB = r as unknown as CalculationResult;
+            setCalculationB(resB);
+            setStreamingB((s) => ({ ...s, phase: "complete" }));
+          },
+          onError: (msg) => {
+            errB = msg;
+            setStreamingB((s) => ({ ...s, phase: "error", error: msg }));
+          },
+        }, controller.signal),
       ]);
 
-      const dataA = await responseA.json();
-      const dataB = await responseB.json();
-
-      if (!responseA.ok) {
-        setError(dataA.error || "Konstruktør A klarte ikkje løyse oppgåva");
+      if (errA) {
+        setError(errA || "Konstruktør A klarte ikkje løyse oppgåva");
         setPhase("workbench");
         return;
       }
-      setCalculationA(dataA.result);
 
-      if (!responseB.ok) {
-        console.error("Konstruktør B feila:", dataB.error);
-        setError(`Konstruktør B feila: ${dataB.error}. Hoppar over samanlikning.`);
+      if (errB || !resB) {
+        console.error("Konstruktør B feila:", errB);
+        setError(`Konstruktør B feila: ${errB}. Hoppar over samanlikning.`);
         setPhase("calculation_result");
         return;
       }
-      setCalculationB(dataB.result);
+
+      // Lokale resA/resB blir brukt i Samanliknar/Kontrollør-kalla nedanfor
+      // (i staden for dataA.result/dataB.result frå før). Sjekkar at dei ikkje
+      // er null sjølv om TS-typing skulle tilseie det.
+      if (!resA) {
+        setError("Uventa: Konstruktør A returnerte tomt resultat");
+        setPhase("workbench");
+        return;
+      }
 
       // === STEG 2: Samanliknar ===
       const responseC = await fetch("/api/agent-c", {
@@ -335,8 +423,8 @@ useEffect(() => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           run_id: runId,
-          agent_a_output: dataA.result,
-          agent_b_output: dataB.result,
+          agent_a_output: resA,
+          agent_b_output: resB,
         }),
       });
 
@@ -357,8 +445,8 @@ useEffect(() => {
         body: JSON.stringify({
           run_id: runId,
           input_review: result,
-          agent_a_output: dataA.result,
-          agent_b_output: dataB.result,
+          agent_a_output: resA,
+          agent_b_output: resB,
           comparison_result: dataC.result,
         }),
       });
@@ -652,6 +740,8 @@ useEffect(() => {
               calculationA={calculationA}
               calculationB={calculationB}
               comparison={comparison}
+              streamingA={streamingA}
+              streamingB={streamingB}
             />
           )}
 
