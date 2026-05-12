@@ -406,3 +406,25 @@
   .mc-error strong {
     font-weight: 600;
   }
+
+  /* === Tolkar-panel streaming animasjon (dag 10) ===
+   Reuser mc-fade-in @keyframes definert ovanfor (sidan denne fila er
+   globalt lasta uansett om MissionControl rendrar eller ikkje).
+   Animasjon utløysast når elementet mountar — eksisterande element
+   re-animerast IKKJE på re-render. Resultat: cascade-effekt der nye
+   streamande element (li, blokk, card) kjem inn ein om gangen utan
+   å re-animere det som allereie er der. */
+
+.tolkar-stream .uk-card {
+    animation: mc-fade-in 0.4s ease-out;
+  }
+  
+  .tolkar-stream .uk-card__bd > div,
+  .tolkar-stream .uk-card__bd > p {
+    animation: mc-fade-in 0.4s ease-out;
+  }
+  
+  .tolkar-stream li,
+  .tolkar-stream .uk-checkitem {
+    animation: mc-fade-in 0.3s ease-out;
+  }

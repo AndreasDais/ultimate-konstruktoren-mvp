@@ -10,7 +10,7 @@ import {
 } from "@/lib/format";
 import MissionControl, { type AgentStreamingState } from "@/app/components/MissionControl";
 import { streamAgent } from "@/lib/stream-agent";
-import { extractStreamingState } from "@/lib/partial-json";
+import { extractStreamingState, extractTolkarState, type PartialTolkarState } from "@/lib/partial-json";
 
 type AgentResult = {
   status: string;
@@ -153,6 +153,50 @@ export default function Home() {
   const [streamingA, setStreamingA] = useState<AgentStreamingState>(INITIAL_STREAMING);
   const [streamingB, setStreamingB] = useState<AgentStreamingState>(INITIAL_STREAMING);
 
+  // Streaming-state for Tolkar (dag 10). Phase går "idle" → "streaming"
+  // → "complete" eller "error". Partial blir populert progressivt frå SSE.
+  type TolkarStreamingState = {
+    phase: "idle" | "streaming" | "complete" | "error";
+    partial: PartialTolkarState;
+    error?: string;
+  };
+  const INITIAL_TOLKAR: TolkarStreamingState = {
+    phase: "idle",
+    partial: {
+      berekningstype: null,
+      fagomraade: null,
+      tolkte_verdiar: {},
+      antakingar: [],
+      manglande_verdiar: [],
+      kan_reknast_no: [],
+      kan_ikkje_reknast: [],
+      tolkings_oppsummering: null,
+      konfidens: null,
+      status: null,
+    },
+  };
+  const [streamingTolkar, setStreamingTolkar] = useState<TolkarStreamingState>(INITIAL_TOLKAR);
+
+  // Konstruerer ein AgentResult-shape frå partial-state for å kunne dele
+  // render-koden mellom streaming og complete. Manglar fyllast med tomme
+  // arrays/strenger så eksisterande conditional-renderar i panelet skjuler dei.
+  const tolkingView: AgentResult | null =
+    result ??
+    (streamingTolkar.phase === "streaming"
+      ? {
+          status: streamingTolkar.partial.status ?? "",
+          berekningstype: streamingTolkar.partial.berekningstype,
+          fagomraade: streamingTolkar.partial.fagomraade,
+          tolkte_verdiar: streamingTolkar.partial.tolkte_verdiar,
+          manglande_verdiar: streamingTolkar.partial.manglande_verdiar,
+          kan_reknast_no: streamingTolkar.partial.kan_reknast_no,
+          kan_ikkje_reknast: streamingTolkar.partial.kan_ikkje_reknast,
+          antakingar: streamingTolkar.partial.antakingar,
+          tolkings_oppsummering: streamingTolkar.partial.tolkings_oppsummering ?? "",
+          konfidens: streamingTolkar.partial.konfidens ?? 0,
+        }
+      : null);
+
   // Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport.
   // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
   useEffect(() => {
@@ -211,6 +255,10 @@ export default function Home() {
 // Ref til tolking-panelet for auto-scroll når Tolkar er ferdig.
 const tolkingPanelRef = useRef<HTMLDivElement | null>(null);
 
+// Refs til milestone-cardene for auto-scroll under Tolkar-streaming.
+const reknastCardRef = useRef<HTMLElement | null>(null);
+const statusCardRef = useRef<HTMLElement | null>(null);
+
 // AbortController for å avbryte aktive SSE-streams ved cancel/unmount.
 // Hindrar zombie-streams som held fram å bruke Anthropic-tokens etter
 // at brukaren ikkje lenger ser resultatet.
@@ -223,47 +271,73 @@ useEffect(() => {
   };
 }, []);
 
-// Scroll smooth til tolking-panelet kvar gang `result` blir populert
-// eller erstatta (etter "Tolk på nytt"). Eit lite delay sikrar at DOM-en
-// har rendra panelet før vi scrollar.
+// Auto-scroll for Tolkar-panelet (dag 10):
+// Berre éin scroll når streaming startar — panel-overskriftene kjem til
+// topps og blir ståande der. Innhaldet veks UNDER overskriftene, og
+// brukar les i sitt eige tempo. Hvis panelet veks forbi viewport-en
+// (sjeldan — krev veldig lang antakingar-liste), kan brukar scrolle
+// manuelt for å sjå botnen.
+//
+// NB: padding-bottom på workbench-seksjonen gir document nok scroll-rom
+// til at scrollIntoView faktisk kan plassere panel-toppen ved viewport-
+// toppen sjølv om sida elles er kort.
 useEffect(() => {
-  if (result && tolkingPanelRef.current) {
-    const timer = setTimeout(() => {
-      tolkingPanelRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
-    return () => clearTimeout(timer);
-  }
-}, [result]);
+  if (streamingTolkar.phase !== "streaming") return;
+  const panel = tolkingPanelRef.current;
+  if (!panel) return;
 
-  // Tolk forespurnaden. Fyller result-state utan å bytte phase — Tolkar-panelet
-  // dukkar opp under input-feltet. Brukar kan redigere input og tolke på nytt.
+  const timer = setTimeout(() => {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
+  return () => clearTimeout(timer);
+}, [streamingTolkar.phase]);
+
+  // Tolk forespurnaden via SSE-streaming. Panelet dukkar opp så snart første
+  // delta kjem og fyllest progressivt. Når streamen er komplett, blir result
+  // sett som vanleg og "Start berekning →" enablar.
   const handleTolk = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setStreamingTolkar({ ...INITIAL_TOLKAR, phase: "streaming" });
+
+    // Avbryt eventuell tidlegare stream (t.d. ved "Tolk på nytt")
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
-      const response = await fetch("/api/input-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Noko gjekk galt");
-        return;
-      }
-
-      setResult(data.result);
-      setRequestId(data.request_id);
-      // Phase forblir "workbench" — Tolkar-panelet renderast inline under input
+      await streamAgent(
+        "/api/input-agent",
+        { text: input },
+        {
+          onTextStart: () =>
+            setStreamingTolkar((s) => ({ ...s, phase: "streaming" })),
+          onDelta: (_delta, accumulated) => {
+            const partial = extractTolkarState(accumulated);
+            setStreamingTolkar((s) => ({ ...s, phase: "streaming", partial }));
+          },
+          onComplete: (data) => {
+            // request_id ligg som ekstra felt på result — plukk han ut
+            const { request_id, ...resultFields } = data as Record<string, unknown> & {
+              request_id?: string | null;
+            };
+            setResult(resultFields as unknown as AgentResult);
+            if (typeof request_id === "string") {
+              setRequestId(request_id);
+            }
+            setStreamingTolkar((s) => ({ ...s, phase: "complete" }));
+          },
+          onError: (msg) => {
+            setError(msg);
+            setStreamingTolkar((s) => ({ ...s, phase: "error", error: msg }));
+          },
+        },
+        controller.signal
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
+      setStreamingTolkar((s) => ({ ...s, phase: "error" }));
     } finally {
       setLoading(false);
     }
@@ -285,6 +359,7 @@ useEffect(() => {
     setPhase("workbench");
     setStreamingA(INITIAL_STREAMING);
     setStreamingB(INITIAL_STREAMING);
+    setStreamingTolkar(INITIAL_TOLKAR);
   };
 
   const handleStartCalculation = async () => {
@@ -515,7 +590,18 @@ useEffect(() => {
               Tolkar-panelet under. Brukar kan redigere input og tolke på nytt.
               "Start berekning →" som sekundær CTA i botnen av Tolkar-panelet. */}
           {phase === "workbench" && (
-            <section>
+            <section
+              style={{
+                // Gir document-en ekstra scroll-headroom så scrollIntoView
+                // faktisk kan plassere milestone-corda ved viewport-toppen.
+                // Utan dette stoppar scrollen midt på sida fordi sida ikkje
+                // er lang nok i starten av Tolkar-streaminga.
+                paddingBottom:
+                  streamingTolkar.phase === "streaming" || result !== null
+                    ? "60vh"
+                    : undefined,
+              }}
+            >
               <label htmlFor="oppgave" className="uk-label">
                 Skriv inn ei konstruksjonsoppgåve
               </label>
@@ -565,27 +651,50 @@ useEffect(() => {
                 </StatusStripe>
               )}
 
-              {/* TOLKING-PANEL — synleg når Tolkar har returnert resultat */}
-              {result && (
-                <div ref={tolkingPanelRef} style={{ scrollMarginTop: "24px" }}>
+              {/* TOLKING-PANEL — synleg under streaming OG når komplett. Bruker tolkingView
+                  som er enten fullt result eller streaming.partial coerca til AgentResult-shape.
+                  tolkar-stream-klassen aktiverer fade-in-animasjon for streamande innhald. */}
+              {tolkingView && (
+                <div ref={tolkingPanelRef} className="tolkar-stream" style={{ scrollMarginTop: "24px" }}>
                   <div className="uk-confirm-grid" style={{ marginTop: 32 }}>
                     {/* === Venstre kolonne: forespurnad + tolking === */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                       <section className="uk-card">
                         <div className="uk-card__hd">
                           <div className="uk-card__title">Tolking</div>
-                          <Badge status="neutral">Tolkar</Badge>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <Badge status="neutral">Tolkar</Badge>
+                            {streamingTolkar.phase === "streaming" && (
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono, monospace)",
+                                  fontSize: 11,
+                                  letterSpacing: "0.08em",
+                                  color: "var(--fg-2)",
+                                  padding: "2px 8px",
+                                  border: "1px solid var(--rule, #E2E8F0)",
+                                  borderRadius: 999,
+                                  background: "var(--surface-alt, #F8FAFC)",
+                                  animation: "mc-pulse 1.5s ease-in-out infinite",
+                                }}
+                              >
+                                ● STRØYMER
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
-                            {result.tolkings_oppsummering}
-                          </p>
-
-                          {result.berekningstype && (
-                            <Row label="Berekningstype" value={result.berekningstype} />
+                          {tolkingView.tolkings_oppsummering && (
+                            <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
+                              {tolkingView.tolkings_oppsummering}
+                            </p>
                           )}
 
-                          {Object.keys(result.tolkte_verdiar || {}).length > 0 && (
+                          {tolkingView.berekningstype && (
+                            <Row label="Berekningstype" value={tolkingView.berekningstype} />
+                          )}
+
+                          {Object.keys(tolkingView.tolkte_verdiar || {}).length > 0 && (
                             <div>
                               <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
                                 Tolkte verdiar
@@ -600,7 +709,7 @@ useEffect(() => {
                                   listStyle: "none",
                                 }}
                               >
-                                {Object.entries(result.tolkte_verdiar).map(([k, v]) => (
+                                {Object.entries(tolkingView.tolkte_verdiar).map(([k, v]) => (
                                   <li key={k} style={{ padding: "2px 0" }}>
                                     {k} = {v}
                                   </li>
@@ -609,16 +718,16 @@ useEffect(() => {
                             </div>
                           )}
 
-                          {result.manglande_verdiar?.length > 0 && (
+                          {tolkingView.manglande_verdiar?.length > 0 && (
                             <ListSection
                               label="Manglande data"
-                              items={result.manglande_verdiar}
+                              items={tolkingView.manglande_verdiar}
                               tone="warn"
                             />
                           )}
 
-                          {result.antakingar?.length > 0 && (
-                            <ListSection label="Antakingar" items={result.antakingar} />
+                          {tolkingView.antakingar?.length > 0 && (
+                            <ListSection label="Antakingar" items={tolkingView.antakingar} />
                           )}
                         </div>
                       </section>
@@ -626,106 +735,116 @@ useEffect(() => {
 
                     {/* === Høgre kolonne: kva kan reknast + status === */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      <section className="uk-card">
-                        <div className="uk-card__hd">
-                          <div className="uk-card__title">Kva kan reknast no</div>
-                        </div>
-                        <div className="uk-card__bd">
-                          {result.kan_reknast_no?.map((item) => (
-                            <div key={item} className="uk-checkitem uk-checkitem--active">
-                              <span className="uk-checkitem__icon">●</span>
-                              <span className="uk-checkitem__label">{item}</span>
-                            </div>
-                          ))}
-                          {result.kan_ikkje_reknast?.map((item) => (
-                            <div key={item} className="uk-checkitem uk-checkitem--blocked">
-                              <span className="uk-checkitem__icon">○</span>
-                              <span className="uk-checkitem__label">{item}</span>
-                              <span className="uk-checkitem__note">krev meir input</span>
-                            </div>
-                          ))}
-                          {(result.kan_reknast_no?.length ?? 0) === 0 &&
-                            (result.kan_ikkje_reknast?.length ?? 0) === 0 && (
-                              <p style={{ margin: 0, fontSize: 13, color: "var(--fg-muted)" }}>
-                                Ingen berekningar oppgitt.
-                              </p>
+                    {((tolkingView.kan_reknast_no?.length ?? 0) > 0 ||
+                        (tolkingView.kan_ikkje_reknast?.length ?? 0) > 0) && (
+                        <section
+                          ref={reknastCardRef}
+                          className="uk-card"
+                          style={{ scrollMarginTop: 24 }}
+                        >
+                          <div className="uk-card__hd">
+                            <div className="uk-card__title">Kva kan reknast no</div>
+                          </div>
+                          <div className="uk-card__bd">
+                            {tolkingView.kan_reknast_no?.map((item) => (
+                              <div key={item} className="uk-checkitem uk-checkitem--active">
+                                <span className="uk-checkitem__icon">●</span>
+                                <span className="uk-checkitem__label">{item}</span>
+                              </div>
+                            ))}
+                            {tolkingView.kan_ikkje_reknast?.map((item) => (
+                              <div key={item} className="uk-checkitem uk-checkitem--blocked">
+                                <span className="uk-checkitem__icon">○</span>
+                                <span className="uk-checkitem__label">{item}</span>
+                                <span className="uk-checkitem__note">krev meir input</span>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Status-card vises berre når Tolkar er ferdig — Status og Konfidens
+                          kjem som dei siste felta i streamen, så det er den naturlege overgangen
+                          frå "streamar" til "klar". */}
+                      {result && (
+                        <section
+                          ref={statusCardRef}
+                          className="uk-card"
+                          style={{ scrollMarginTop: 24 }}
+                        >
+                          <div className="uk-card__hd">
+                            <div className="uk-card__title">Status</div>
+                          </div>
+                          <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
+                            <StatusKV
+                              label="Inputstatus"
+                              tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
+                              value={INPUT_STATUS_LABELS[result.status] ?? result.status}
+                            />
+                            {result.fagomraade && (
+                              <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
                             )}
-                        </div>
-                      </section>
-
-                      <section className="uk-card">
-                        <div className="uk-card__hd">
-                          <div className="uk-card__title">Status</div>
-                        </div>
-                        <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
-                          <StatusKV
-                            label="Inputstatus"
-                            tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
-                            value={INPUT_STATUS_LABELS[result.status] ?? result.status}
-                          />
-                          {result.fagomraade && (
-                            <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
-                          )}
-                          <StatusKV
-                            label="Støtta i MVP"
-                            tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
-                            value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
-                          />
-                          <StatusKV
-                            label="Konfidens"
-                            tone={
-                              result.konfidens >= 0.7
-                                ? "ok"
-                                : result.konfidens >= 0.4
-                                  ? "warn"
-                                  : "bad"
-                            }
-                            value={result.konfidens?.toFixed(2) ?? "—"}
-                          />
-                        </div>
-                      </section>
-                    </div>
-                  </div>
-
-                  {/* Sekundær CTA — Start berekning. Synleg når Tolkar-panelet har innhold. */}
-                  <section className="uk-card" style={{ marginTop: 16 }}>
-                    <div className="uk-card__bd">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 16,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-                          Stemmer tolkinga? Då kan du starte berekninga.
-                        </p>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
-                            Avbryt
-                          </button>
-                          <button
-                            onClick={handleStartCalculation}
-                            disabled={!canStart}
-                            className="uk-btn uk-btn--primary"
-                          >
-                            Start berekning →
-                          </button>
-                        </div>
-                      </div>
-                      {blockedReason && (
-                        <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
-                          {blockedReason}
-                        </p>
+                            <StatusKV
+                              label="Støtta i MVP"
+                              tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
+                              value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
+                            />
+                            <StatusKV
+                              label="Konfidens"
+                              tone={
+                                result.konfidens >= 0.7
+                                  ? "ok"
+                                  : result.konfidens >= 0.4
+                                    ? "warn"
+                                    : "bad"
+                              }
+                              value={result.konfidens?.toFixed(2) ?? "—"}
+                            />
+                          </div>
+                        </section>
                       )}
                     </div>
-                    </section>
-                </div>
-              )}
-            </section>
-          )}
+                    </div>
+
+{/* Sekundær CTA — Start berekning. Synleg når Tolkar-panelet har innhold. */}
+<section className="uk-card" style={{ marginTop: 16 }}>
+  <div className="uk-card__bd">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+      }}
+    >
+      <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
+        Stemmer tolkinga? Då kan du starte berekninga.
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
+          Avbryt
+        </button>
+        <button
+          onClick={handleStartCalculation}
+          disabled={!canStart}
+          className="uk-btn uk-btn--primary"
+        >
+          Start berekning →
+        </button>
+      </div>
+    </div>
+    {blockedReason && (
+      <p style={{ marginTop: 12, fontSize: 12, color: "var(--warn)" }}>
+        {blockedReason}
+      </p>
+    )}
+  </div>
+</section>
+</div>
+)}
+</section>
+)}
 
           {/* === FEIL utanfor workbench (calculating/result fase) === */}
           {phase !== "workbench" && error && (

@@ -145,6 +145,110 @@ Produser dette objektet i nøyaktig denne rekkefølga:
 
 const PROMPT_VERSION = "input_agent_v0.4";
 
+type CoreCallArgs = {
+  text: string;
+  onTextDelta?: (delta: string) => void;
+};
+
+type CoreCallResult =
+  | { ok: true; result: Record<string, unknown>; requestId: string | null }
+  | { ok: false; status: number; error: string; raw?: string };
+
+async function callTolkar(args: CoreCallArgs): Promise<CoreCallResult> {
+  const { text, onTextDelta } = args;
+
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  // Tolkar brukar ikkje extended thinking — han er klassifisering + ekstraksjon,
+  // ikkje fagleg vurdering. Max 2048 tokens er rikeleg.
+  const stream = client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    temperature: 0.3,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: text }],
+  });
+
+  if (onTextDelta) {
+    stream.on("text", onTextDelta);
+  }
+
+  const message = await stream.finalMessage();
+
+  const responseText = message.content
+    .filter((block) => block.type === "text")
+    .map((block) => (block as { type: "text"; text: string }).text)
+    .join("");
+
+  const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    return {
+      ok: false,
+      status: 500,
+      error: "Klarte ikkje parse svaret som JSON",
+      raw: responseText,
+    };
+  }
+
+  // === LAGRING I SUPABASE ===
+  let requestId: string | null = null;
+
+  try {
+    const supabase = getSupabase();
+
+    const { data: requestData, error: requestError } = await supabase
+      .from("requests")
+      .insert({
+        raw_text: text,
+        input_channel: "text",
+        user_mode: "student",
+      })
+      .select("id")
+      .single();
+
+    if (requestError) {
+      console.error("Klarte ikkje lagre request:", requestError);
+    } else if (requestData) {
+      requestId = requestData.id;
+
+      const { error: reviewError } = await supabase
+        .from("input_reviews")
+        .insert({
+          request_id: requestId,
+          input_status: parsed.status,
+          calculation_type: parsed.berekningstype,
+          discipline: parsed.fagomraade,
+          extracted_inputs: parsed.tolkte_verdiar,
+          missing_inputs: parsed.manglande_verdiar,
+          can_calculate: parsed.kan_reknast_no,
+          cannot_calculate: parsed.kan_ikkje_reknast,
+          assumptions: parsed.antakingar,
+          interpretation_summary: parsed.tolkings_oppsummering,
+          confidence: parsed.konfidens,
+          prompt_version: PROMPT_VERSION,
+        });
+
+      if (reviewError) {
+        console.error("Klarte ikkje lagre input_review:", reviewError);
+      }
+    }
+  } catch (dbError) {
+    console.error("Database-feil:", dbError);
+  }
+
+  return { ok: true, result: parsed, requestId };
+}
+
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
 export async function POST(request: Request) {
   try {
     const { text } = await request.json();
@@ -153,86 +257,78 @@ export async function POST(request: Request) {
       return Response.json({ error: "Manglar tekst-input" }, { status: 400 });
     }
 
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    const acceptHeader = request.headers.get("accept") ?? "";
+    const wantsSSE = acceptHeader.includes("text/event-stream");
 
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      temperature: 0.3,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: text }],
-    });
+    // === SSE-MODUS ===
+    if (wantsSSE) {
+      const encoder = new TextEncoder();
 
-    const responseText = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => (block as { type: "text"; text: string }).text)
-      .join("");
+      const stream = new ReadableStream({
+        async start(controller) {
+          let closed = false;
+          const send = (event: string, data: unknown) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(sseEvent(event, data)));
+            } catch {
+              closed = true;
+            }
+          };
 
-    const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
+          try {
+            let firstDeltaSeen = false;
+            const result = await callTolkar({
+              text,
+              onTextDelta: (delta) => {
+                if (!firstDeltaSeen) {
+                  firstDeltaSeen = true;
+                  send("text_start", {});
+                }
+                send("delta", { text: delta });
+              },
+            });
 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
+            if (!result.ok) {
+              send("error", { message: result.error, raw: result.raw });
+            } else {
+              // request_id går inn i result-objektet så frontend kan plukke
+              // han ut utan å endre streamAgent-helperens signatur.
+              send("complete", {
+                result: { ...result.result, request_id: result.requestId },
+              });
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Ukjent feil";
+            send("error", { message });
+          } finally {
+            closed = true;
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // === JSON-MODUS (bakoverkompatibel) ===
+    const result = await callTolkar({ text });
+
+    if (!result.ok) {
       return Response.json(
-        { error: "Klarte ikkje parse svaret som JSON", raw: responseText },
-        { status: 500 }
+        { error: result.error, raw: result.raw },
+        { status: result.status }
       );
     }
 
-    // === LAGRING I SUPABASE ===
-    // Brukaren si forespurnad blir ikkje feila sjølv om logginga skulle krasje.
-    let requestId: string | null = null;
-
-    try {
-      const supabase = getSupabase();
-
-      // Steg 1: Lagre rå brukarinput
-      const { data: requestData, error: requestError } = await supabase
-        .from("requests")
-        .insert({
-          raw_text: text,
-          input_channel: "text",
-          user_mode: "student",
-        })
-        .select("id")
-        .single();
-
-      if (requestError) {
-        console.error("Klarte ikkje lagre request:", requestError);
-      } else if (requestData) {
-        requestId = requestData.id;
-
-        // Steg 2: Lagre Tolkars vurdering, knytta til request
-        const { error: reviewError } = await supabase
-          .from("input_reviews")
-          .insert({
-            request_id: requestId,
-            input_status: parsed.status,
-            calculation_type: parsed.berekningstype,
-            discipline: parsed.fagomraade,
-            extracted_inputs: parsed.tolkte_verdiar,
-            missing_inputs: parsed.manglande_verdiar,
-            can_calculate: parsed.kan_reknast_no,
-            cannot_calculate: parsed.kan_ikkje_reknast,
-            assumptions: parsed.antakingar,
-            interpretation_summary: parsed.tolkings_oppsummering,
-            confidence: parsed.konfidens,
-            prompt_version: PROMPT_VERSION,
-          });
-
-        if (reviewError) {
-          console.error("Klarte ikkje lagre input_review:", reviewError);
-        }
-      }
-    } catch (dbError) {
-      console.error("Database-feil:", dbError);
-      // Brukaren får framleis svaret sitt
-    }
-
-    return Response.json({ result: parsed, request_id: requestId });
+    return Response.json({ result: result.result, request_id: result.requestId });
   } catch (err) {
     console.error("Tolkar error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
