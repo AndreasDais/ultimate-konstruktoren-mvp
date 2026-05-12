@@ -52,10 +52,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // === CONSUMER-AUTH-BRANCH ===
-  // /mine krev innlogging men IKKJE admin-status. Må komme FØR
-  // admin-auth-fall-through nedanfor — elles ville ein vanleg innlogga
-  // brukar bli signa ut og sendt til /admin/login.
-  if (pathname === "/mine" || pathname.startsWith("/mine/")) {
+  // Konsument-stier som krev innlogging men IKKJE admin-status.
+  // Må komme FØR admin-auth-fall-through nedanfor — elles ville ein
+  // vanleg innlogga brukar bli signa ut og sendt til /admin/login.
+  if (
+    pathname === "/mine" ||
+    pathname.startsWith("/mine/") ||
+    pathname === "/innstillingar" ||
+    pathname.startsWith("/innstillingar/")
+  ) {
     const { supabase, getResponse } = buildSupabaseAndResponse(request);
     const {
       data: { user },
@@ -132,9 +137,11 @@ export const config = {
     // Admin-auth
     "/admin/:path*",
     "/api/admin/:path*",
-    // Consumer-auth (chunk 2)
+    // Consumer-auth (dag 8 chunk 2 + dag 12)
     "/mine",
     "/mine/:path*",
+    "/innstillingar",
+    "/innstillingar/:path*",
     // Rate-limit (eksplisitt enumerert sidan path-to-regexp ikkje matchar
     // dash-prefix-pattern reint)
     "/api/input-agent",

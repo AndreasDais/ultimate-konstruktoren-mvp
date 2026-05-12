@@ -29,13 +29,11 @@ export default function Header({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Initial session-sjekk
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       setAuthLoaded(true);
     });
 
-    // Live-oppdatering ved login/logout (også frå andre fanar)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -51,8 +49,6 @@ export default function Header({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     await supabase.auth.signOut();
-    // Hard reload til framsida — sikrar at all server-rendra state
-    // (innebygde data frå server-komponentar) blir kasta.
     window.location.href = "/";
   }
 
@@ -110,18 +106,15 @@ export default function Header({
         </div>
       )}
 
-      {/* Auth-seksjon. Tailwind-klasser i staden for uk-header__-tokens for å
-          unngå CSS-tillegg i chunk 2. Polish/refaktor til design-system kan
-          komme i chunk 3 eller seinare. */}
       <div className="ml-3 flex items-center gap-2 text-sm">
-        {!authLoaded ? null : user ? (
+      {!authLoaded ? null : user ? (
           <>
-            <span
-              className="text-neutral-700 max-w-[180px] truncate"
-              title={user.email ?? ""}
-            >
+            <a href="/mine" className="text-neutral-700 hover:text-neutral-900 hover:underline px-1">
+              Mine
+            </a>
+            <a href="/innstillingar" className="text-neutral-700 max-w-[180px] truncate hover:text-neutral-900 hover:underline" title={`${user.email ?? ""} — opne innstillingar`}>
               {user.email}
-            </span>
+            </a>
             <button
               type="button"
               onClick={handleSignOut}
@@ -131,10 +124,7 @@ export default function Header({
             </button>
           </>
         ) : (
-          <a
-            href="/login"
-            className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-          >
+          <a href="/login" className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">
             Logg inn
           </a>
         )}
