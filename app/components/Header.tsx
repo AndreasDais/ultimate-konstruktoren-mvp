@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createBrowserClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 
 type Props = {
   /** Vis AI-disclaimer-chipen. Standard: true. Set false på admin-sider. */
@@ -18,6 +20,41 @@ export default function Header({
   showLocaleToggle = true,
 }: Props) {
   const [locale, setLocale] = useState<"nn" | "nb">("nn");
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // Initial session-sjekk
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setAuthLoaded(true);
+    });
+
+    // Live-oppdatering ved login/logout (også frå andre fanar)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    // Hard reload til framsida — sikrar at all server-rendra state
+    // (innebygde data frå server-komponentar) blir kasta.
+    window.location.href = "/";
+  }
 
   return (
     <header className="uk-header">
@@ -72,6 +109,36 @@ export default function Header({
           </button>
         </div>
       )}
+
+      {/* Auth-seksjon. Tailwind-klasser i staden for uk-header__-tokens for å
+          unngå CSS-tillegg i chunk 2. Polish/refaktor til design-system kan
+          komme i chunk 3 eller seinare. */}
+      <div className="ml-3 flex items-center gap-2 text-sm">
+        {!authLoaded ? null : user ? (
+          <>
+            <span
+              className="text-neutral-700 max-w-[180px] truncate"
+              title={user.email ?? ""}
+            >
+              {user.email}
+            </span>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+            >
+              Logg ut
+            </button>
+          </>
+        ) : (
+          <a
+            href="/login"
+            className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            Logg inn
+          </a>
+        )}
+      </div>
     </header>
   );
 }

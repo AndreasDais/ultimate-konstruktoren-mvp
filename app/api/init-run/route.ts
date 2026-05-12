@@ -1,4 +1,43 @@
 import { getSupabase } from "@/lib/supabase";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+/**
+ * Hent user_id frå innlogga session viss han finst. Returnerer null for
+ * anonyme køyringar — det er forventa og OK. Auth-utfall != produkt-utfall.
+ */
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              // Best-effort — session-refresh skjer i middleware.
+            }
+          },
+        },
+      }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch (err) {
+    // Auth-feil skal aldri stoppe ein calculation_run. Fall tilbake til anonym.
+    console.warn("[init-run] getCurrentUserId failed, fall tilbake til anonym:", err);
+    return null;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +50,24 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = await getCurrentUserId();
     const supabase = getSupabase();
+
+    // Best-effort: oppdater requests.user_id viss innlogga.
+    // Feil her stoppar ikkje køyringa — vi har framleis calculation_runs.user_id.
+    if (userId) {
+      const { error: reqUpdateError } = await supabase
+        .from("requests")
+        .update({ user_id: userId })
+        .eq("id", request_id);
+      if (reqUpdateError) {
+        console.warn(
+          "[init-run] kunne ikkje oppdatere requests.user_id:",
+          reqUpdateError
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from("calculation_runs")
       .insert({
@@ -20,6 +76,7 @@ export async function POST(request: Request) {
         run_status: "running",
         agent_package_version: "agents_v0.2",
         started_at: new Date().toISOString(),
+        user_id: userId,
       })
       .select("id")
       .single();
