@@ -215,7 +215,7 @@ export default function Home() {
   // Resume frå tidlegare berekning. Sett av useEffect under når ?from_request=X
   // er i URL. Viser info-banner i workbench med lenke tilbake til original-rapport.
   const [restoredFrom, setRestoredFrom] = useState<{
-    requestId: string;
+    requestId: string | null;
     runId: string | null;
     documentId: string | null;
   } | null>(null);
