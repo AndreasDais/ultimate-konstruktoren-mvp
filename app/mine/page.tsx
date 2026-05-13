@@ -6,32 +6,16 @@ import Link from "next/link";
 // Tving server-rendring per request — sessions må sjekkast på hver hit.
 export const dynamic = "force-dynamic";
 
-// === STATUS-MAPPING ===
-const DECISION_LABELS: Record<string, { label: string; color: string }> = {
-  approved: {
-    label: "Godkjent",
-    color: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  },
-  approved_with_warnings: {
-    label: "Førebels",
-    color: "bg-amber-50 text-amber-800 border-amber-200",
-  },
-  uncertain: {
-    label: "Usikker",
-    color: "bg-orange-50 text-orange-800 border-orange-200",
-  },
-  rejected: {
-    label: "Avvist",
-    color: "bg-red-50 text-red-800 border-red-200",
-  },
-};
-
-const RUN_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Ventar", color: "bg-neutral-50 text-neutral-700 border-neutral-200" },
-  running: { label: "Køyrer", color: "bg-blue-50 text-blue-800 border-blue-200" },
-  completed: { label: "Ferdig", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-  failed: { label: "Feila", color: "bg-red-50 text-red-800 border-red-200" },
-  aborted: { label: "Avbroten", color: "bg-neutral-50 text-neutral-700 border-neutral-200" },
+// === FASE-MAPPING ===
+// Vi viser kor i pipeline run-en er, ikkje engineering-verdikt:
+//   - Har rapport (document_id) → "Rapport"
+//   - Har agent_outputs men ingen rapport → "Mission Control" (agentar har køyrt,
+//     enten ferdig eller midt i — brukar ser delvis state ved klikk)
+//   - Korkje → "Workbench" (berre tolking eller orphaned før agentar starta)
+const PHASE_STYLES: Record<"workbench" | "mission_control" | "rapport", { label: string; color: string }> = {
+  workbench: { label: "Workbench", color: "bg-neutral-50 text-neutral-700 border-neutral-200" },
+  mission_control: { label: "Mission Control", color: "bg-blue-50 text-blue-800 border-blue-200" },
+  rapport: { label: "Rapport", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
 };
 
 // === FORMATERING ===
@@ -97,6 +81,7 @@ async function getCurrentUserId(): Promise<string | null> {
 
 type CalculationRow = {
   id: string;
+  request_id: string;
   run_status: string;
   started_at: string | null;
   calculation_type: string | null;
@@ -110,6 +95,9 @@ type CalculationRow = {
     | { tillit_score: number | null; document_id: string | null }
     | { tillit_score: number | null; document_id: string | null }[]
     | null;
+  // Brukt til å sjå om run-en har kome forbi workbench (har agentar køyrt?).
+  // Berre eksistens telt, ikkje innhald.
+  agent_outputs: { agent_name: string }[] | null;
 };
 
 async function getUserCalculations(userId: string): Promise<CalculationRow[]> {
@@ -118,11 +106,13 @@ async function getUserCalculations(userId: string): Promise<CalculationRow[]> {
     .from("calculation_runs")
     .select(`
       id,
+      request_id,
       run_status,
       started_at,
       calculation_type,
       controller_decisions ( decision_status ),
-      reports ( tillit_score, document_id )
+      reports ( tillit_score, document_id ),
+      agent_outputs ( agent_name )
     `)
     .eq("user_id", userId)
     .order("started_at", { ascending: false, nullsFirst: false })
@@ -202,10 +192,7 @@ function EmptyState() {
       <p className="text-sm text-neutral-500 mb-6">
         Når du startar di første berekning, dukkar ho opp her.
       </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1 rounded-md bg-neutral-900 text-white text-sm font-medium px-4 py-2 hover:bg-neutral-800 transition-colors"
-      >
+      <Link href="/" className="inline-flex items-center gap-1 rounded-md bg-neutral-900 text-white text-sm font-medium px-4 py-2 hover:bg-neutral-800 transition-colors">
         Start ei berekning →
       </Link>
     </div>
@@ -213,27 +200,35 @@ function EmptyState() {
 }
 
 function CalculationCard({ calc }: { calc: CalculationRow }) {
-    const decision = firstOrNull(calc.controller_decisions);
     const report = firstOrNull(calc.reports);
-  
     const tillit = report?.tillit_score ?? null;
     const documentId = report?.document_id ?? null;
+    // Tolkar (input_agent) skriv òg til agent_outputs, så vi må filtrere på
+    // namnet til konstruktørane. Mission Control-fasen er nådd berre når
+    // minst éin av Konstruktør A/B har køyrt.
+    const hasKonstruktørOutputs = (calc.agent_outputs ?? []).some(
+      (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
+    );
 
-  // Status: kontrollør-avgjerd har forrang. Fall tilbake til run_status for pågåande/feila.
-  const statusInfo = decision?.decision_status
-    ? DECISION_LABELS[decision.decision_status] ?? {
-        label: decision.decision_status,
-        color: "bg-neutral-50 text-neutral-700 border-neutral-200",
-      }
-    : RUN_STATUS_LABELS[calc.run_status] ?? {
-        label: calc.run_status,
-        color: "bg-neutral-50 text-neutral-700 border-neutral-200",
-      };
+  // Determine kva fase run-en kom til, og rut deretter.
+  // Same logikk styrer både badge og href slik at brukar landar der dei var.
+  let phase: "workbench" | "mission_control" | "rapport";
+  let href: string;
 
+  if (documentId) {
+    phase = "rapport";
+    href = `/rapport/${calc.id}`;
+  } else if (hasKonstruktørOutputs) {
+    phase = "mission_control";
+    href = `/?from_run=${calc.id}`;
+  } else {
+    phase = "workbench";
+    href = `/?from_request=${calc.request_id}`;
+  }
+
+  const phaseInfo = PHASE_STYLES[phase];
   const title = prettyCalculationType(calc.calculation_type);
   const date = formatDate(calc.started_at);
-  // Klikkbar berre når det finst ein rapport å lenke til.
-  const isClickable = Boolean(documentId);
 
   const inner = (
     <div className="rounded-lg border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-400 hover:shadow-sm">
@@ -254,11 +249,7 @@ function CalculationCard({ calc }: { calc: CalculationRow }) {
         <div className="flex items-center gap-3 shrink-0">
           {tillit !== null && (
             <div className="text-right">
-              <div
-                className={`text-xl font-semibold leading-none ${getTillitColor(
-                  tillit
-                )}`}
-              >
+              <div className={`text-xl font-semibold leading-none ${getTillitColor(tillit)}`}>
                 {tillit}
               </div>
               <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1">
@@ -266,27 +257,17 @@ function CalculationCard({ calc }: { calc: CalculationRow }) {
               </div>
             </div>
           )}
-          <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${statusInfo.color}`}
-          >
-            {statusInfo.label}
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${phaseInfo.color}`}>
+            {phaseInfo.label}
           </span>
         </div>
       </div>
     </div>
   );
 
-  if (isClickable) {
-    // NB: juster URL-pattern viss din rapport-route ikkje er /rapport/[run_id].
-    return (
-      <Link
-        href={`/rapport/${calc.id}`}
-        className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {inner}
-      </Link>
-    );
-  }
-
-  return inner;
+  return (
+    <Link href={href} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      {inner}
+    </Link>
+  );
 }

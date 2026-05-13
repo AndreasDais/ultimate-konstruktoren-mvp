@@ -1,126 +1,94 @@
 /**
- * Konsumerer SSE-stream frå agent-routes med typed events.
- * Resolvar når streamen er ferdig (etter complete eller error event).
- * Throwar ikkje på error-events — bruk handlers.onError.
+ * Generisk SSE-konsument for streaming agent-routes (Tolkar, Konstruktør A/B).
+ * 
+ * Støttar både JSON-payload (Record) og FormData (for fil-opplasting).
+ * Når payload er FormData, lat nettlesaren setje Content-Type sjølv (han
+ * legg på `multipart/form-data; boundary=...` automatisk).
  */
 
 export type StreamHandlers = {
-    onThinkingStart?: () => void;
     onTextStart?: () => void;
     onDelta?: (delta: string, accumulated: string) => void;
-    onComplete?: (result: Record<string, unknown>) => void;
+    onComplete?: (data: Record<string, unknown>) => void;
     onError?: (message: string) => void;
   };
   
   export async function streamAgent(
-    endpoint: string,
-    body: Record<string, unknown>,
+    url: string,
+    payload: Record<string, unknown> | FormData,
     handlers: StreamHandlers,
     signal?: AbortSignal
   ): Promise<void> {
-    let response: Response;
-    try {
-      response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-        },
-        body: JSON.stringify(body),
-        signal,
-      });
-    } catch (err) {
-      handlers.onError?.(
-        err instanceof Error ? err.message : "Nettverksfeil under stream-oppstart"
-      );
-      return;
-    }
-  
-    if (!response.ok) {
-      let msg = `HTTP ${response.status}`;
-      try {
-        const errJson = await response.json();
-        msg = (errJson as { error?: string }).error ?? msg;
-      } catch {
-        // ignore
-      }
-      handlers.onError?.(msg);
-      return;
-    }
-  
-    if (!response.body) {
-      handlers.onError?.("Ingen response body");
-      return;
-    }
-  
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
     let accumulated = "";
   
     try {
+      const isFormData = payload instanceof FormData;
+      const headers: Record<string, string> = {
+        Accept: "text/event-stream",
+      };
+      if (!isFormData) {
+        headers["Content-Type"] = "application/json";
+      }
+  
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: isFormData ? payload : JSON.stringify(payload),
+        signal,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        handlers.onError?.(errorData.error || `HTTP ${response.status}`);
+        return;
+      }
+  
+      if (!response.body) {
+        handlers.onError?.("Tom response body");
+        return;
+      }
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEvent = "";
+  
       while (true) {
-        const { value, done } = await reader.read();
+        const { done, value } = await reader.read();
         if (done) break;
   
         buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
   
-        // SSE-eventar er separerte av \n\n
-        let sepIndex: number;
-        while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
-          const eventBlock = buffer.slice(0, sepIndex);
-          buffer = buffer.slice(sepIndex + 2);
-  
-          const lines = eventBlock.split("\n");
-          let eventType = "";
-          let dataStr = "";
-          for (const line of lines) {
-            if (line.startsWith("event:")) eventType = line.slice(6).trim();
-            else if (line.startsWith("data:")) dataStr = line.slice(5).trim();
-          }
-          if (!eventType) continue;
-  
-          let data: Record<string, unknown> = {};
-          if (dataStr) {
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
             try {
-              data = JSON.parse(dataStr);
-            } catch {
-              continue;
-            }
-          }
+              const parsed = JSON.parse(data);
   
-          switch (eventType) {
-            case "thinking_start":
-              handlers.onThinkingStart?.();
-              break;
-            case "text_start":
-              handlers.onTextStart?.();
-              break;
-            case "delta":
-              if (typeof data.text === "string") {
-                accumulated += data.text;
-                handlers.onDelta?.(data.text, accumulated);
+              if (currentEvent === "text_start") {
+                handlers.onTextStart?.();
+              } else if (currentEvent === "delta") {
+                accumulated += parsed.text || "";
+                handlers.onDelta?.(parsed.text || "", accumulated);
+              } else if (currentEvent === "complete") {
+                handlers.onComplete?.(parsed.result || {});
+              } else if (currentEvent === "error") {
+                handlers.onError?.(parsed.message || "Ukjent feil");
               }
-              break;
-            case "complete":
-              if (data.result && typeof data.result === "object") {
-                handlers.onComplete?.(data.result as Record<string, unknown>);
-              }
-              break;
-            case "error":
-              handlers.onError?.(
-                typeof data.message === "string"
-                  ? data.message
-                  : "Ukjent feil frå agent"
-              );
-              break;
+            } catch {
+              // Ignorer parse-feil på enkelt-eventer
+            }
           }
         }
       }
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      handlers.onError?.(
-        err instanceof Error ? err.message : "Feil under lesing av stream"
-      );
+      if (err instanceof Error && err.name === "AbortError") {
+        return; // forventa ved Avbryt
+      }
+      handlers.onError?.(err instanceof Error ? err.message : "Ukjent feil");
     }
   }

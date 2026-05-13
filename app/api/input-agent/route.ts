@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import mammoth from "mammoth";
 import { getSupabase } from "@/lib/supabase";
 
 const SYSTEM_PROMPT = `Du er Tolkar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
@@ -145,34 +146,195 @@ Produser dette objektet i nøyaktig denne rekkefølga:
 
 const PROMPT_VERSION = "input_agent_v0.4";
 
-type CoreCallArgs = {
-  text: string;
-  onTextDelta?: (delta: string) => void;
-};
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
+
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+type ContentBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "image";
+      source: { type: "base64"; media_type: string; data: string };
+    }
+  | {
+      type: "document";
+      source: { type: "base64"; media_type: "application/pdf"; data: string };
+    };
+
+type BuildResult =
+  | { ok: true; content: ContentBlock[]; rawTextForDb: string }
+  | { ok: false; error: string; status: number };
+
+async function parseInput(
+  request: Request
+): Promise<{ text: string | null; file: File | null }> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const textValue = formData.get("text");
+    const fileValue = formData.get("file");
+    return {
+      text:
+        typeof textValue === "string" && textValue.trim()
+          ? textValue.trim()
+          : null,
+      file: fileValue instanceof File ? fileValue : null,
+    };
+  }
+
+  const body = await request.json();
+  return {
+    text:
+      typeof body.text === "string" && body.text.trim() ? body.text.trim() : null,
+    file: null,
+  };
+}
+
+async function buildContent(
+  text: string | null,
+  file: File | null
+): Promise<BuildResult> {
+  const content: ContentBlock[] = [];
+  let fileSummary = "";
+
+  if (file) {
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        ok: false,
+        error: `Fila er for stor (${(file.size / (1024 * 1024)).toFixed(
+          1
+        )} MB). Maks 4 MB.`,
+        status: 413,
+      };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const fileType = file.type;
+
+    if (SUPPORTED_IMAGE_TYPES.has(fileType)) {
+      content.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: fileType,
+          data: buffer.toString("base64"),
+        },
+      });
+      fileSummary = `[Bilete: ${file.name}, ${fileType}, ${(
+        file.size / 1024
+      ).toFixed(1)} KB]`;
+    } else if (fileType === "application/pdf") {
+      content.push({
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data: buffer.toString("base64"),
+        },
+      });
+      fileSummary = `[PDF: ${file.name}, ${(file.size / 1024).toFixed(1)} KB]`;
+    } else if (fileType === DOCX_MIME) {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        const extracted = result.value.trim();
+        if (!extracted) {
+          return {
+            ok: false,
+            error: "Word-dokumentet ser tomt ut.",
+            status: 400,
+          };
+        }
+        content.push({
+          type: "text",
+          text: `[Innhald frå Word-dokument "${file.name}"]:\n\n${extracted}`,
+        });
+        fileSummary = `[Word: ${file.name}, ${(file.size / 1024).toFixed(
+          1
+        )} KB]`;
+      } catch (err) {
+        console.error("mammoth-feil:", err);
+        return {
+          ok: false,
+          error: "Klarte ikkje lese Word-dokumentet.",
+          status: 400,
+        };
+      }
+    } else {
+      return {
+        ok: false,
+        error: `Filtype ikkje støtta: ${
+          fileType || "ukjent"
+        }. Bruk JPG/PNG/WebP, PDF eller .docx.`,
+        status: 400,
+      };
+    }
+
+    // Brukar-instruksjon når fil er sendt
+    if (text) {
+      content.push({
+        type: "text",
+        text: `Brukar har sendt vedlegg pluss tilleggstekst. Sjå begge. Hvis vedlegget inneheld fleire oppgåver, vel den hovudoppgåva som er klarast formulert og tolk berre han. Ignorer eventuell støy som ikkje er relevant.\n\nTilleggstekst frå brukar:\n${text}`,
+      });
+    } else {
+      content.push({
+        type: "text",
+        text: "Sjå det vedlagde dokumentet. Hvis det inneheld fleire oppgåver, vel den hovudoppgåva som er klarast formulert og tolk berre han. Ignorer eventuell støy som ikkje er relevant for hovudoppgåva.",
+      });
+    }
+  } else if (text) {
+    content.push({ type: "text", text });
+  }
+
+  if (content.length === 0) {
+    return {
+      ok: false,
+      error: "Manglar input — anten tekst eller fil.",
+      status: 400,
+    };
+  }
+
+  const rawTextForDb = file
+    ? text
+      ? `${fileSummary}\n\nTilleggstekst:\n${text}`
+      : fileSummary
+    : text!;
+
+  return { ok: true, content, rawTextForDb };
+}
 
 type CoreCallResult =
   | { ok: true; result: Record<string, unknown>; requestId: string | null }
   | { ok: false; status: number; error: string; raw?: string };
 
-async function callTolkar(args: CoreCallArgs): Promise<CoreCallResult> {
-  const { text, onTextDelta } = args;
+async function callTolkar(args: {
+  content: ContentBlock[];
+  rawTextForDb: string;
+  onTextDelta?: (delta: string) => void;
+}): Promise<CoreCallResult> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const messages: any = [{ role: "user", content: args.content }];
 
-  // Tolkar brukar ikkje extended thinking — han er klassifisering + ekstraksjon,
-  // ikkje fagleg vurdering. Max 2048 tokens er rikeleg.
   const stream = client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 2048,
     temperature: 0.3,
     system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: text }],
+    messages,
   });
 
-  if (onTextDelta) {
-    stream.on("text", onTextDelta);
+  if (args.onTextDelta) {
+    stream.on("text", args.onTextDelta);
   }
 
   const message = await stream.finalMessage();
@@ -196,7 +358,6 @@ async function callTolkar(args: CoreCallArgs): Promise<CoreCallResult> {
     };
   }
 
-  // === LAGRING I SUPABASE ===
   let requestId: string | null = null;
 
   try {
@@ -205,7 +366,7 @@ async function callTolkar(args: CoreCallArgs): Promise<CoreCallResult> {
     const { data: requestData, error: requestError } = await supabase
       .from("requests")
       .insert({
-        raw_text: text,
+        raw_text: args.rawTextForDb,
         input_channel: "text",
         user_mode: "student",
       })
@@ -251,19 +412,20 @@ function sseEvent(event: string, data: unknown): string {
 
 export async function POST(request: Request) {
   try {
-    const { text } = await request.json();
+    const parsed = await parseInput(request);
+    const built = await buildContent(parsed.text, parsed.file);
 
-    if (!text || typeof text !== "string" || !text.trim()) {
-      return Response.json({ error: "Manglar tekst-input" }, { status: 400 });
+    if (!built.ok) {
+      return Response.json({ error: built.error }, { status: built.status });
     }
+
+    const { content, rawTextForDb } = built;
 
     const acceptHeader = request.headers.get("accept") ?? "";
     const wantsSSE = acceptHeader.includes("text/event-stream");
 
-    // === SSE-MODUS ===
     if (wantsSSE) {
       const encoder = new TextEncoder();
-
       const stream = new ReadableStream({
         async start(controller) {
           let closed = false;
@@ -279,7 +441,8 @@ export async function POST(request: Request) {
           try {
             let firstDeltaSeen = false;
             const result = await callTolkar({
-              text,
+              content,
+              rawTextForDb,
               onTextDelta: (delta) => {
                 if (!firstDeltaSeen) {
                   firstDeltaSeen = true;
@@ -292,8 +455,6 @@ export async function POST(request: Request) {
             if (!result.ok) {
               send("error", { message: result.error, raw: result.raw });
             } else {
-              // request_id går inn i result-objektet så frontend kan plukke
-              // han ut utan å endre streamAgent-helperens signatur.
               send("complete", {
                 result: { ...result.result, request_id: result.requestId },
               });
@@ -318,8 +479,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // === JSON-MODUS (bakoverkompatibel) ===
-    const result = await callTolkar({ text });
+    // JSON-modus (bakoverkompatibel)
+    const result = await callTolkar({ content, rawTextForDb });
 
     if (!result.ok) {
       return Response.json(
@@ -328,7 +489,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return Response.json({ result: result.result, request_id: result.requestId });
+    return Response.json({
+      result: result.result,
+      request_id: result.requestId,
+    });
   } catch (err) {
     console.error("Tolkar error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";

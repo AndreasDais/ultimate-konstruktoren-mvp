@@ -70,7 +70,7 @@ type Report = {
 type FullReportResponse = {
   report: Report;
   cached: boolean;
-  run: { request: { raw_text: string } };
+  run: { request_id: string; request: { raw_text: string } };
   inputReview: InputReview | null;
   agentA: AgentOutput;
   agentB: AgentOutput;
@@ -602,6 +602,14 @@ export default function RapportPage() {
           </button>
           <a href={wordUrl} className="uk-btn" download={wordFilename}>
             Last ned Word
+          </a>
+          {data.run.request_id && (
+            <a href={`/?from_request=${data.run.request_id}`} className="uk-btn">
+              Lag ny berekning frå denne →
+            </a>
+          )}
+          <a href={`/?from_run=${runId}`} className="uk-btn">
+            Sjå Mission Control →
           </a>
           <button
             onClick={() => setFeedbackOpen(true)}

@@ -379,52 +379,47 @@
       font-size: 1.25rem;
     }
   }
+/* === Scroll-hint for "Start berekning"-CTA (dag 14) ===
+   Flytande knapp som dukkar opp når Tolkar er ferdig men CTA-en er
+   under viewport. Klikkbar — scrollar til CTA. Subtil bounce-animasjon
+   for å trekke merksemd utan å vere intrusiv. */
+.uk-scroll-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg, #1a1a1a);
+  color: var(--surface, #fff);
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: mc-scroll-hint-bounce 1.8s ease-in-out infinite;
+  z-index: 50;
+  transition: opacity 0.2s, transform 0.2s;
+}
 
-  /* === Chunk 3: streaming-polish ===
-   Fade-in for nye steg som dukkar opp under streaming. Animasjon utløysast
-   berre når elementet mountar — eksisterande element re-animerast ikkje på
-   re-render (sikra av stabile keys i React).
-   :not(.mc-step--result) for å unngå dobbel-animasjon på resultat-rader
-   som allereie har eigen fade-in. */
-.mc-step--utført:not(.mc-step--result) {
-    animation: mc-fade-in 0.35s ease-out;
-  }
-  
-  /* Error-state for agent-kort */
-  .mc-error {
-    padding: 12px 14px;
-    background: rgba(139, 35, 49, 0.06);
-    border: 1px solid rgba(139, 35, 49, 0.2);
-    border-left: 3px solid #8B2331;
-    border-radius: 8px;
-    font-size: 0.8125rem;
-    color: #8B2331;
-    line-height: 1.5;
-    animation: mc-fade-in 0.3s ease-out;
-  }
-  
-  .mc-error strong {
-    font-weight: 600;
-  }
+.uk-scroll-hint:hover {
+  background: var(--fg-2, #475569);
+  animation-play-state: paused;
+}
 
-  /* === Tolkar-panel streaming animasjon (dag 10) ===
-   Reuser mc-fade-in @keyframes definert ovanfor (sidan denne fila er
-   globalt lasta uansett om MissionControl rendrar eller ikkje).
-   Animasjon utløysast når elementet mountar — eksisterande element
-   re-animerast IKKJE på re-render. Resultat: cascade-effekt der nye
-   streamande element (li, blokk, card) kjem inn ein om gangen utan
-   å re-animere det som allereie er der. */
+@keyframes mc-scroll-hint-bounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-6px);
+  }
+}
 
-.tolkar-stream .uk-card {
-    animation: mc-fade-in 0.4s ease-out;
-  }
-  
-  .tolkar-stream .uk-card__bd > div,
-  .tolkar-stream .uk-card__bd > p {
-    animation: mc-fade-in 0.4s ease-out;
-  }
-  
-  .tolkar-stream li,
-  .tolkar-stream .uk-checkitem {
-    animation: mc-fade-in 0.3s ease-out;
-  }
+/* Fade-in når hinten dukkar opp */
+.uk-scroll-hint {
+  animation: mc-scroll-hint-bounce 1.8s ease-in-out infinite, mc-fade-in 0.3s ease-out;
+}

@@ -11,6 +11,10 @@ import {
 import MissionControl, { type AgentStreamingState } from "@/app/components/MissionControl";
 import { streamAgent } from "@/lib/stream-agent";
 import { extractStreamingState, extractTolkarState, type PartialTolkarState } from "@/lib/partial-json";
+// Fil-opplasting (chunk 2 dag 14-feature)
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB — Vercel Hobby body limit
+const ACCEPTED_FILE_TYPES =
+  "image/jpeg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 type AgentResult = {
   status: string;
@@ -177,6 +181,166 @@ export default function Home() {
   };
   const [streamingTolkar, setStreamingTolkar] = useState<TolkarStreamingState>(INITIAL_TOLKAR);
 
+  // Fil-opplasting (chunk 2 dag 14)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(
+        `Fila er for stor (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maks 4 MB.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setSelectedFile(file);
+    setFileError(null);
+  }
+
+  function clearFile() {
+    setSelectedFile(null);
+    setFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  // Scroll-hint for "Start berekning"-CTA-en. Når Tolkar er ferdig men CTA-en
+  // er under viewport, vis ein flytande hint som scrollar dit ved klikk.
+  // IntersectionObserver sporer om CTA er synleg.
+  const startBerekningRef = useRef<HTMLElement | null>(null);
+  const [ctaInView, setCtaInView] = useState(false);
+
+  // Resume frå tidlegare berekning. Sett av useEffect under når ?from_request=X
+  // er i URL. Viser info-banner i workbench med lenke tilbake til original-rapport.
+  const [restoredFrom, setRestoredFrom] = useState<{
+    requestId: string;
+    runId: string | null;
+    documentId: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!result || !startBerekningRef.current) {
+      setCtaInView(false);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setCtaInView(entry.isIntersecting),
+      { threshold: 0.3 }
+    );
+    observer.observe(startBerekningRef.current);
+    return () => observer.disconnect();
+  }, [result, phase]);
+
+  const showScrollHint = phase === "workbench" && result !== null && !ctaInView;
+
+  // Resume frå tidlegare berekning: les ?from_request=X eller ?from_run=X
+  // frå URL ved mount, hent data frå API, og pre-fyll state.
+  //  - ?from_request=X → berre workbench-state (input + tolking). Bruker
+  //    klikkar Start berekning for å køyre på nytt.
+  //  - ?from_run=X     → FULL state inkl. Mission Control-resultat. Hopper
+  //    rett til calculation_result-fasen viss agentar har køyrt.
+  // Køyrer berre ein gong.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const fromRequest = params.get("from_request");
+    const fromRun = params.get("from_run");
+    if (!fromRequest && !fromRun) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        // from_run har forrang (gir meir data) hvis begge er sett
+        if (fromRun) {
+          const res = await fetch(`/api/runs/${fromRun}`);
+          if (!res.ok) {
+            console.error("Klarte ikkje hente run:", res.status);
+            return;
+          }
+          const data = await res.json();
+          if (cancelled) return;
+
+          // Pre-fyll input + tolking (som workbench-resume)
+          if (data.request?.raw_text) {
+            setInput(data.request.raw_text);
+          }
+          if (data.tolking) {
+            setResult(data.tolking as AgentResult);
+          }
+          // Set requestId så handleStartCalculation finn han når brukar
+          // trykker Start berekning frå resume-state.
+          if (data.run?.request_id) {
+            setRequestId(data.run.request_id);
+          }
+
+          // Pre-fyll Mission Control-state hvis agentar har køyrt
+          if (data.calculationA) {
+            setCalculationA(data.calculationA as CalculationResult);
+          }
+          if (data.calculationB) {
+            setCalculationB(data.calculationB as CalculationResult);
+          }
+          if (data.comparison) {
+            setComparison(data.comparison as ComparisonResult);
+          }
+          if (data.controllerDecision) {
+            setControllerDecision(data.controllerDecision as ControllerDecision);
+          }
+          if (data.run?.id) {
+            setCurrentRunId(data.run.id);
+          }
+
+          // Hopp til calculation_result-fasen hvis vi har resultat frå minst
+          // ein konstruktør. Elles bli i workbench (orphaned/krasja run).
+          if (data.calculationA || data.calculationB) {
+            setPhase("calculation_result");
+          }
+
+          setRestoredFrom({
+            requestId: data.run?.request_id ?? null,
+            runId: data.run?.id ?? null,
+            documentId: data.report?.document_id ?? null,
+          });
+          return;
+        }
+
+        // from_request — berre workbench-state
+        const res = await fetch(`/api/requests/${fromRequest}`);
+        if (!res.ok) {
+          console.error("Klarte ikkje hente request:", res.status);
+          return;
+        }
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.request?.raw_text) {
+          setInput(data.request.raw_text);
+        }
+        if (data.tolking) {
+          setResult(data.tolking as AgentResult);
+        }
+        // Set requestId så handleStartCalculation finn han når brukar
+        // trykker Start berekning frå resume-state.
+        setRequestId(fromRequest);
+
+        setRestoredFrom({
+          requestId: fromRequest,
+          runId: data.run?.id ?? null,
+          documentId: data.report?.document_id ?? null,
+        });
+      } catch (err) {
+        console.error("Klarte ikkje hente tidlegare berekning:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Konstruerer ein AgentResult-shape frå partial-state for å kunne dele
   // render-koden mellom streaming og complete. Manglar fyllast med tomme
   // arrays/strenger så eksisterande conditional-renderar i panelet skjuler dei.
@@ -199,8 +363,20 @@ export default function Home() {
 
   // Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport.
   // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
+  //
+  // VIKTIG: hopp over sessionStorage-restore når URL har ?from_run= eller
+  // ?from_request= — då er URL autoritativ kjelde og my resume-useEffect
+  // (over) lastar API-data. Utan denne sjekken vinn sessionStorage racet
+  // og overskriv state med tidlegare workbench-session.
   useEffect(() => {
     try {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("from_run") || params.has("from_request")) {
+          return;
+        }
+      }
+
       const saved = sessionStorage.getItem("uk-state");
       if (!saved) return;
       const state = JSON.parse(saved);
@@ -271,26 +447,26 @@ useEffect(() => {
   };
 }, []);
 
-// Auto-scroll for Tolkar-panelet (dag 10):
-// Berre éin scroll når streaming startar — panel-overskriftene kjem til
-// topps og blir ståande der. Innhaldet veks UNDER overskriftene, og
-// brukar les i sitt eige tempo. Hvis panelet veks forbi viewport-en
-// (sjeldan — krev veldig lang antakingar-liste), kan brukar scrolle
-// manuelt for å sjå botnen.
-//
-// NB: padding-bottom på workbench-seksjonen gir document nok scroll-rom
-// til at scrollIntoView faktisk kan plassere panel-toppen ved viewport-
-// toppen sjølv om sida elles er kort.
-useEffect(() => {
-  if (streamingTolkar.phase !== "streaming") return;
-  const panel = tolkingPanelRef.current;
-  if (!panel) return;
+  // Auto-scroll for Tolkar-panelet (dag 10):
+  // Berre éin scroll når streaming startar — panel-overskriftene kjem til
+  // topps og blir ståande der. Innhaldet veks UNDER overskriftene, og
+  // brukar les i sitt eige tempo. Hvis panelet veks forbi viewport-en
+  // (sjeldan — krev veldig lang antakingar-liste), kan brukar scrolle
+  // manuelt for å sjå botnen.
+  //
+  // NB: padding-bottom på workbench-seksjonen gir document nok scroll-rom
+  // til at scrollIntoView faktisk kan plassere panel-toppen ved viewport-
+  // toppen sjølv om sida elles er kort.
+  useEffect(() => {
+    if (streamingTolkar.phase !== "streaming") return;
+    const panel = tolkingPanelRef.current;
+    if (!panel) return;
 
-  const timer = setTimeout(() => {
-    panel.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 100);
-  return () => clearTimeout(timer);
-}, [streamingTolkar.phase]);
+    const timer = setTimeout(() => {
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [streamingTolkar.phase]);
 
   // Tolk forespurnaden via SSE-streaming. Panelet dukkar opp så snart første
   // delta kjem og fyllest progressivt. Når streamen er komplett, blir result
@@ -306,10 +482,21 @@ useEffect(() => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    // Bygg payload basert på om brukar har valt ei fil
+    let payload: Record<string, unknown> | FormData;
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      if (input.trim()) formData.append("text", input);
+      payload = formData;
+    } else {
+      payload = { text: input };
+    }
+
     try {
       await streamAgent(
         "/api/input-agent",
-        { text: input },
+        payload,
         {
           onTextStart: () =>
             setStreamingTolkar((s) => ({ ...s, phase: "streaming" })),
@@ -363,7 +550,16 @@ useEffect(() => {
   };
 
   const handleStartCalculation = async () => {
-    if (!result || !requestId) return;
+    console.log("[handleStartCalculation] state:", {
+      result: result !== null,
+      requestId,
+      calculationA: calculationA !== null,
+      currentRunId,
+    });
+    if (!result || !requestId) {
+      console.warn("[handleStartCalculation] EXITED EARLY — result eller requestId manglar");
+      return;
+    }
 
     // Hopp rett til resultatet viss berekninga allereie er gjort
     // (skjer når brukar kjem tilbake frå calc_result til workbench og trykker Start igjen)
@@ -584,6 +780,23 @@ useEffect(() => {
             </header>
           )}
 
+          {/* Resume-banner — viser når brukar held fram frå tidlegare berekning.
+              Plassert OVER alle phase-conditionals så han er synleg uansett fase
+              (workbench, calculating, calculation_result). Lenke tilbake til
+              original-rapport hvis han finst. Klargjer at redigering opprettar
+              ein NY berekning (fork-model). */}
+          {restoredFrom && (
+            <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <span>
+                <strong style={{ color: "var(--fg, #1a1a1a)" }}>Held fram frå tidlegare berekning.</strong>{" "}
+                Endringar opprettar ein ny berekning — originalen blir uendra.
+              </span>
+              {restoredFrom.documentId && restoredFrom.runId && (
+                <a href={`/rapport/${restoredFrom.runId}`} style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline", whiteSpace: "nowrap" }}>{restoredFrom.documentId} ↗</a>
+              )}
+            </div>
+          )}
+
           {/* === FASE: WORKBENCH === */}
           {/* Slått saman skjerm 1 (input) + skjerm 2 (Tolkar-resultat) til éin side.
               Input-felt øvst, suggestion-chips, "Tolk oppgåva →"-knapp som fyller
@@ -614,6 +827,23 @@ useEffect(() => {
                 className="uk-textarea"
               />
 
+              {/* Fil-opplasting rett under textarea — +-knapp + chip + fileError */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+                <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} title="Last opp bilete, PDF eller Word" aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-alt, #F8FAFC)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--rule, #E2E8F0)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
+                {selectedFile && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8 }}>
+                    <span aria-hidden="true">📎</span>
+                    <span style={{ fontWeight: 500 }}>{selectedFile.name}</span>
+                    <span style={{ color: "var(--fg-muted, #94A3B8)" }}>({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    <button type="button" onClick={clearFile} aria-label="Fjern fil" style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
+                  </div>
+                )}
+              </div>
+              {fileError && (
+                <p style={{ marginTop: 8, fontSize: 12, color: "var(--warn, #C2410C)" }}>{fileError}</p>
+              )}
+
               <div style={{ marginTop: 20 }}>
                 <div className="uk-eyebrow" style={{ marginBottom: 10 }}>Eksempel</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
@@ -630,19 +860,21 @@ useEffect(() => {
                 </div>
               </div>
 
-              <button
-                onClick={handleTolk}
-                disabled={!input.trim() || loading}
-                aria-busy={loading}
-                className={`uk-btn uk-btn--primary${loading ? " uk-btn--loading" : ""}`}
-                style={{ marginTop: 20 }}
-              >
-                {loading
-                  ? "Tolkar..."
-                  : hasTolket
-                    ? "Tolk på nytt →"
-                    : "Tolk oppgåva →"}
-              </button>
+              {/* Tolk-knapp åleine, høgre-justert, under eksempla */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+                <button
+                  onClick={handleTolk}
+                  disabled={(!input.trim() && !selectedFile) || loading}
+                  aria-busy={loading}
+                  className={`uk-btn uk-btn--primary${loading ? " uk-btn--loading" : ""}`}
+                >
+                  {loading
+                    ? "Tolkar..."
+                    : hasTolket
+                      ? "Tolk på nytt →"
+                      : "Tolk oppgåva →"}
+                </button>
+              </div>
 
               {/* === Feil-stripe — gjeld både tolk-feil og berekning-feil === */}
               {error && (
@@ -807,7 +1039,7 @@ useEffect(() => {
                     </div>
 
 {/* Sekundær CTA — Start berekning. Synleg når Tolkar-panelet har innhold. */}
-<section className="uk-card" style={{ marginTop: 16 }}>
+<section ref={startBerekningRef} className="uk-card" style={{ marginTop: 16 }}>
   <div className="uk-card__bd">
     <div
       style={{
@@ -1352,6 +1584,15 @@ useEffect(() => {
             </>
           )}
         </div>
+
+        {/* Flytande scroll-hint — viser når Tolkar er ferdig men "Start berekning"-
+            CTA-en er under viewport. Klikk for smooth-scroll til CTA. */}
+        {showScrollHint && (
+          <button type="button" onClick={() => startBerekningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} className="uk-scroll-hint" aria-label="Scroll til Start berekning">
+            <span>Klar til å starte berekninga</span>
+            <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
+          </button>
+        )}
       </main>
     </div>
   );
