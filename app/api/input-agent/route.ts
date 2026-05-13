@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import mammoth from "mammoth";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 
 const SYSTEM_PROMPT = `Du er Tolkar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
@@ -363,12 +365,39 @@ async function callTolkar(args: {
   try {
     const supabase = getSupabase();
 
+    // Hent innlogga brukar (hvis nokon). Anonyme tolkingar har user_id=null.
+    // Vi bruker @supabase/ssr for å lese auth-cookies — same pattern som /mine.
+    let userId: string | null = null;
+    try {
+      const cookieStore = await cookies();
+      const authClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll();
+            },
+            setAll() {
+              // No-op — vi les berre.
+            },
+          },
+        }
+      );
+      const { data: { user } } = await authClient.auth.getUser();
+      userId = user?.id ?? null;
+    } catch (authErr) {
+      console.warn("[input-agent] kunne ikkje hente bruker:", authErr);
+      // Fall gjennom som anonym — ikkje fatal.
+    }
+
     const { data: requestData, error: requestError } = await supabase
       .from("requests")
       .insert({
         raw_text: args.rawTextForDb,
         input_channel: "text",
         user_mode: "student",
+        user_id: userId,
       })
       .select("id")
       .single();

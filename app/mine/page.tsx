@@ -2,52 +2,19 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 import Link from "next/link";
+import { MineList, type MineRow } from "./MineList";
 
 // Tving server-rendring per request — sessions må sjekkast på hver hit.
 export const dynamic = "force-dynamic";
 
-// === FASE-MAPPING ===
-// Vi viser kor i pipeline run-en er, ikkje engineering-verdikt:
-//   - Har rapport (document_id) → "Rapport"
-//   - Har agent_outputs men ingen rapport → "Mission Control" (agentar har køyrt,
-//     enten ferdig eller midt i — brukar ser delvis state ved klikk)
-//   - Korkje → "Workbench" (berre tolking eller orphaned før agentar starta)
-const PHASE_STYLES: Record<"workbench" | "mission_control" | "rapport", { label: string; color: string }> = {
-  workbench: { label: "Workbench", color: "bg-neutral-50 text-neutral-700 border-neutral-200" },
-  mission_control: { label: "Mission Control", color: "bg-blue-50 text-blue-800 border-blue-200" },
-  rapport: { label: "Rapport", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-};
-
-// === FORMATERING ===
+// === FORMATERING (server-only — brukt for å bygge MineRow.title) ===
 function prettyCalculationType(type: string | null | undefined): string {
   if (!type) return "Berekning";
   // snake_case → "Bjelke lastverknad" (første ord stor bokstav)
   const words = type.split("_");
   return words
-    .map((w, i) =>
-      i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w
-    )
+    .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(" ");
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return new Intl.DateTimeFormat("nn-NO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-}
-
-function getTillitColor(score: number): string {
-  // Speilar fargane i tokens.css frå spec (90+ mørk grøn, 75+ grøn, 50+ okrer, <50 raud).
-  if (score >= 90) return "text-emerald-800";
-  if (score >= 75) return "text-emerald-600";
-  if (score >= 50) return "text-amber-600";
-  return "text-red-600";
 }
 
 // === DATA ===
@@ -79,30 +46,61 @@ async function getCurrentUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
-type CalculationRow = {
+type RawRunRow = {
   id: string;
   request_id: string;
   run_status: string;
   started_at: string | null;
   calculation_type: string | null;
-  // Embedded resources kjem som array frå PostgREST sjølv ved unique constraint —
-  // vi handterer det ved å ta første element.
   controller_decisions:
     | { decision_status: string }
     | { decision_status: string }[]
     | null;
-    reports:
+  reports:
     | { tillit_score: number | null; document_id: string | null }
     | { tillit_score: number | null; document_id: string | null }[]
     | null;
-  // Brukt til å sjå om run-en har kome forbi workbench (har agentar køyrt?).
-  // Berre eksistens telt, ikkje innhald.
   agent_outputs: { agent_name: string }[] | null;
 };
 
-async function getUserCalculations(userId: string): Promise<CalculationRow[]> {
+type RawRequestRow = {
+  id: string;
+  created_at: string;
+  input_reviews:
+    | { calculation_type: string | null }
+    | { calculation_type: string | null }[]
+    | null;
+};
+
+function firstOrNull<T>(x: T | T[] | null | undefined): T | null {
+  if (!x) return null;
+  if (Array.isArray(x)) return x[0] ?? null;
+  return x;
+}
+
+async function getUserCalculations(userId: string): Promise<MineRow[]> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
+
+  // === LAZY CLEANUP ===
+  // Marker orphaned "running"-runs eldre enn 30 min som "aborted". Skjer på
+  // kvar /mine-visit — billigare enn cron-jobb for pilot-skala. Typisk
+  // Pilar-berekning fullførar på 3-4 min, så 30 min er trygt: aktive runs
+  // vil aldri bli markert som krasja ved feil.
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { error: cleanupError } = await supabase
+    .from("calculation_runs")
+    .update({ run_status: "aborted" })
+    .eq("user_id", userId)
+    .eq("run_status", "running")
+    .lt("started_at", thirtyMinAgo);
+
+  if (cleanupError) {
+    // Ikkje fatal — fall gjennom til vanleg lasting.
+    console.warn("[/mine] cleanup failed:", cleanupError.message);
+  }
+
+  // Query 1: alle calculation_runs for brukar
+  const { data: runs, error: runsError } = await supabase
     .from("calculation_runs")
     .select(`
       id,
@@ -114,43 +112,115 @@ async function getUserCalculations(userId: string): Promise<CalculationRow[]> {
       reports ( tillit_score, document_id ),
       agent_outputs ( agent_name )
     `)
-    .eq("user_id", userId)
-    .order("started_at", { ascending: false, nullsFirst: false })
-    .limit(50);
+    .eq("user_id", userId);
 
-    if (error) {
-        console.error("[/mine] fetch failed:", {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        return [];
-      }
-  return (data ?? []) as unknown as CalculationRow[];
-}
+  if (runsError) {
+    console.error("[/mine] runs query failed:", {
+      message: runsError.message,
+      code: runsError.code,
+      details: runsError.details,
+      hint: runsError.hint,
+    });
+  }
 
-// === HELPER FOR EMBEDDED-RESOURCES ===
-function firstOrNull<T>(x: T | T[] | null | undefined): T | null {
-  if (!x) return null;
-  if (Array.isArray(x)) return x[0] ?? null;
-  return x;
+  // Query 2: alle requests for brukar (vi filtrerer ut dei med run i JS)
+  const { data: requests, error: requestsError } = await supabase
+    .from("requests")
+    .select(`
+      id,
+      created_at,
+      input_reviews ( calculation_type )
+    `)
+    .eq("user_id", userId);
+
+  if (requestsError) {
+    console.error("[/mine] requests query failed:", {
+      message: requestsError.message,
+      code: requestsError.code,
+    });
+  }
+
+  // Map calculation_runs → MineRow
+  const runRows: MineRow[] = (runs ?? []).map((run: RawRunRow) => {
+    const report = firstOrNull(run.reports);
+    const tillit = report?.tillit_score ?? null;
+    const documentId = report?.document_id ?? null;
+    const hasKonstruktørOutputs = (run.agent_outputs ?? []).some(
+      (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
+    );
+    const isKrasja =
+      run.run_status === "aborted" || run.run_status === "failed";
+
+    let phase: MineRow["phase"];
+    let href: string;
+    if (documentId) {
+      // Rapport finst — uansett status, vis han.
+      phase = "rapport";
+      href = `/rapport/${run.id}`;
+    } else if (isKrasja) {
+      // Krasja før rapport — send brukar til workbench for å prøve på nytt.
+      phase = "krasja";
+      href = `/?from_request=${run.request_id}`;
+    } else if (hasKonstruktørOutputs) {
+      phase = "mission_control";
+      href = `/?from_run=${run.id}`;
+    } else {
+      phase = "workbench";
+      href = `/?from_request=${run.request_id}`;
+    }
+
+    return {
+      key: `run-${run.id}`,
+      title: prettyCalculationType(run.calculation_type),
+      date: run.started_at,
+      phase,
+      href,
+      tillit,
+      documentId,
+    };
+  });
+
+  // Map requests UTAN run → workbench-only MineRow
+  const requestIdsWithRuns = new Set(
+    (runs ?? []).map((r: RawRunRow) => r.request_id)
+  );
+
+  const workbenchRows: MineRow[] = (requests ?? [])
+    .filter((r: RawRequestRow) => !requestIdsWithRuns.has(r.id))
+    .map((r: RawRequestRow) => {
+      const review = firstOrNull(r.input_reviews);
+      return {
+        key: `req-${r.id}`,
+        title: prettyCalculationType(review?.calculation_type),
+        date: r.created_at,
+        phase: "workbench" as const,
+        href: `/?from_request=${r.id}`,
+        tillit: null,
+        documentId: null,
+      };
+    });
+
+  // Merge + sorter (nyaste først)
+  return [...runRows, ...workbenchRows].sort((a, b) =>
+    (b.date ?? "").localeCompare(a.date ?? "")
+  );
 }
 
 // === SIDE ===
 export default async function MinePage() {
   const userId = await getCurrentUserId();
 
-  // Middleware skal allereie ha kasta utlogga brukarar til /login. Dette er belt-and-suspenders.
   if (!userId) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <p className="text-neutral-600">Du må vere innlogga for å sjå denne sida.</p>
+        <p className="text-neutral-600">
+          Du må vere innlogga for å sjå denne sida.
+        </p>
       </main>
     );
   }
 
-  const calculations = await getUserCalculations(userId);
+  const rows = await getUserCalculations(userId);
 
   return (
     <main className="flex-1 px-4 py-8 md:py-12">
@@ -167,17 +237,7 @@ export default async function MinePage() {
           </p>
         </div>
 
-        {calculations.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <ul className="space-y-3">
-            {calculations.map((calc) => (
-              <li key={calc.id}>
-                <CalculationCard calc={calc} />
-              </li>
-            ))}
-          </ul>
-        )}
+        {rows.length === 0 ? <EmptyState /> : <MineList rows={rows} />}
       </div>
     </main>
   );
@@ -196,78 +256,5 @@ function EmptyState() {
         Start ei berekning →
       </Link>
     </div>
-  );
-}
-
-function CalculationCard({ calc }: { calc: CalculationRow }) {
-    const report = firstOrNull(calc.reports);
-    const tillit = report?.tillit_score ?? null;
-    const documentId = report?.document_id ?? null;
-    // Tolkar (input_agent) skriv òg til agent_outputs, så vi må filtrere på
-    // namnet til konstruktørane. Mission Control-fasen er nådd berre når
-    // minst éin av Konstruktør A/B har køyrt.
-    const hasKonstruktørOutputs = (calc.agent_outputs ?? []).some(
-      (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
-    );
-
-  // Determine kva fase run-en kom til, og rut deretter.
-  // Same logikk styrer både badge og href slik at brukar landar der dei var.
-  let phase: "workbench" | "mission_control" | "rapport";
-  let href: string;
-
-  if (documentId) {
-    phase = "rapport";
-    href = `/rapport/${calc.id}`;
-  } else if (hasKonstruktørOutputs) {
-    phase = "mission_control";
-    href = `/?from_run=${calc.id}`;
-  } else {
-    phase = "workbench";
-    href = `/?from_request=${calc.request_id}`;
-  }
-
-  const phaseInfo = PHASE_STYLES[phase];
-  const title = prettyCalculationType(calc.calculation_type);
-  const date = formatDate(calc.started_at);
-
-  const inner = (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-400 hover:shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-medium text-neutral-900 truncate">{title}</h2>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-            <span>{date}</span>
-            {documentId && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="font-mono">{documentId}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          {tillit !== null && (
-            <div className="text-right">
-              <div className={`text-xl font-semibold leading-none ${getTillitColor(tillit)}`}>
-                {tillit}
-              </div>
-              <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1">
-                Tillit
-              </div>
-            </div>
-          )}
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${phaseInfo.color}`}>
-            {phaseInfo.label}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <Link href={href} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      {inner}
-    </Link>
   );
 }
