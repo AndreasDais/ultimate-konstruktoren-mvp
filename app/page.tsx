@@ -617,8 +617,6 @@ useEffect(() => {
 
       await Promise.all([
         streamAgent("/api/agent-a", agentBody, {
-          onThinkingStart: () =>
-            setStreamingA((s) => ({ ...s, phase: "thinking" })),
           onTextStart: () =>
             setStreamingA((s) => ({ ...s, phase: "streaming" })),
           onDelta: (_delta, accumulated) => {
@@ -641,8 +639,6 @@ useEffect(() => {
           },
         }, controller.signal),
         streamAgent("/api/agent-b", agentBody, {
-          onThinkingStart: () =>
-            setStreamingB((s) => ({ ...s, phase: "thinking" })),
           onTextStart: () =>
             setStreamingB((s) => ({ ...s, phase: "streaming" })),
           onDelta: (_delta, accumulated) => {
