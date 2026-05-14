@@ -8,8 +8,12 @@
  * Total = ab_agreement + controller_verdict + completeness
  *         (0-35)        (0-35)               (0-30)
  *
- * Formelen er pilot-hypotese og kalibrerast mot 20-30 reelle rapportar
- * i v0.2.
+ * v0.3-rekalibrering (dag 16): begge kart speglar kvarandre med
+ * verdiar 35 / 28 / 22 / 0. Tidlegare brukte vi 35/26/14/0 og
+ * 35/26/12/0, som var for punitivt for mellomverdiane —
+ * "significant_differences" og "uncertain" trekte 60-65 % av max
+ * sjølv når avviket var lokalisert til eitt delresultat. Den nye
+ * skalaen er framleis monoton men mindre brutal i mellomrommet.
  *
  * Brukargrenseflate-mapping:
  *   90-100  Høg      mørk grøn (#1F5945)
@@ -18,7 +22,7 @@
  *   0-49    Låg      raud      (#8B2331)
  */
 
-export const FORMULA_VERSION = "v0.2-no-fagperson";
+export const FORMULA_VERSION = "v0.3-recalibrated";
 
 export type ComparisonStatus =
   | "match"
@@ -67,15 +71,15 @@ export interface TillitBreakdown {
 
 const AB_AGREEMENT_MAP: Record<ComparisonStatus, number> = {
   match: 35,
-  minor_differences: 26,
-  significant_differences: 14,
+  minor_differences: 28,
+  significant_differences: 22,
   critical_disagreement: 0,
 };
 
 const CONTROLLER_VERDICT_MAP: Record<ControllerStatus, number> = {
   approved: 35,
-  approved_with_warnings: 26,
-  uncertain: 12,
+  approved_with_warnings: 28,
+  uncertain: 22,
   rejected: 0,
 };
 
@@ -127,19 +131,12 @@ export function tillitVisuals(score: number): {
 }
 
 /**
- * Eksempel-utrekning for sanity-check.
+ * Eksempel-utrekningar (v0.3) for sanity-check.
  *
- * Armering-runet du køyrde tidlegare:
- *   comparison_status: 'minor_differences'    → 26
- *   controller_verdict: 'approved_with_warnings'  → 26
- *   rekna: 4 av 4 spurde                       → 30
- *   ─────────────────────────────────────────────
- *   total: 82 → "God" (grøn)
- *
- * Stål-runet (test 4):
- *   comparison_status: 'match'                 → 35
- *   controller_verdict: 'approved'             → 35
- *   rekna: 2 av 5 spurde                       → 12
- *   ─────────────────────────────────────────────
- *   total: 82 → "God" (grøn)
+ *   match + approved + 4/4              → 35 + 35 + 30 = 100 ("Høg")
+ *   minor + approved_with_warnings + 4/4 → 28 + 28 + 30 = 86  ("God")
+ *   match + approved + 2/5               → 35 + 35 + 12 = 82  ("God")
+ *   significant + uncertain + 4/4        → 22 + 22 + 30 = 74  ("Middels")
+ *   significant + uncertain + 2/5        → 22 + 22 + 12 = 56  ("Middels")
+ *   critical + rejected + 0/5            →  0 +  0 +  0 = 0   ("Låg")
  */
