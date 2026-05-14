@@ -107,7 +107,13 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+      system: [
+        {
+          type: "text",
+          text: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userMessage }],
     });
 

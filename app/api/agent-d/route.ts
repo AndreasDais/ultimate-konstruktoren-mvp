@@ -160,7 +160,13 @@ const client = new Anthropic({
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
       temperature: 0.3,
-      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+      system: [
+        {
+          type: "text",
+          text: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userMessage }],
     });
 

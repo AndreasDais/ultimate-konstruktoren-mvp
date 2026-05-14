@@ -326,7 +326,13 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
         type: "enabled",
         budget_tokens: 2000,
       },
-      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+      system: [
+        {
+          type: "text",
+          text: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userMessage }],
     });
 
