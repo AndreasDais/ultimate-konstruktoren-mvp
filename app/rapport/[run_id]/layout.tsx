@@ -11,7 +11,6 @@ export default function RapportLayout({
 }>) {
   return (
     <div
-      data-palette="stone"
       style={{
         flex: 1,
         background: "var(--bg)",

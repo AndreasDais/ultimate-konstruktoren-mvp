@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Safety-net: heile sida følgjer aktiv palette.
+   Komponentar som bruker uk-*-klasser (med var(--fg) osv.) overstyrer
+   sine eigne fargar. Tailwind-utility som `bg-white text-black` vil
+   overstyre per-element — dette er kjent og vert handsama i v0.2-audit. */
+html {
+  background: var(--bg);
+  color: var(--fg);
+}
+
 body {
   font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--fg);
 }

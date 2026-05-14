@@ -783,7 +783,7 @@ useEffect(() => {
               original-rapport hvis han finst. Klargjer at redigering opprettar
               ein NY berekning (fork-model). */}
           {restoredFrom && (
-            <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span>
                 <strong style={{ color: "var(--fg, #1a1a1a)" }}>Held fram frå tidlegare berekning.</strong>{" "}
                 Endringar opprettar ein ny berekning — originalen blir uendra.
@@ -827,7 +827,7 @@ useEffect(() => {
               {/* Fil-opplasting rett under textarea — +-knapp + chip + fileError */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                 <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-alt, #F8FAFC)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--rule, #E2E8F0)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
                 <InfoPopover label="Filopplasting"><p>Last opp eit bilete (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgåva.</p><p>Maks filstorleik: <strong>4 MB</strong>. Tolkar les fila og hentar ut tekst, tal og kontekst.</p></InfoPopover>
                 {selectedFile && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8 }}>

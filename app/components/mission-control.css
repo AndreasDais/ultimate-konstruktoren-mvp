@@ -16,27 +16,27 @@
   }
   
   .mc-eyebrow {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     margin: 0 0 0.625rem;
   }
   
   .mc-title {
-    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-family: var(--font-serif);
     font-size: 1.875rem;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     margin: 0 0 0.5rem;
     line-height: 1.2;
   }
   
   .mc-subtitle {
     font-size: 0.9375rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     line-height: 1.55;
     margin: 0;
     max-width: 640px;
@@ -50,15 +50,15 @@
   }
   
   .mc-agent-card {
-    background: var(--surface, #FFFFFF);
-    border: 1px solid var(--border, #E2E8F0);
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
     transition: border-color 0.3s ease;
   }
   
   .mc-agent-card--complete {
-    border-color: var(--fg, #0F172A);
+    border-color: var(--fg);
   }
   
   /* Agent-header med wrap-vennleg tag */
@@ -73,22 +73,22 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--surface-alt, #F8FAFC);
-    border: 1px solid var(--border, #E2E8F0);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     display: grid;
     place-items: center;
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     flex-shrink: 0;
   }
   
   .mc-agent-name {
-    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-family: var(--font-serif);
     font-size: 1rem;
     font-weight: 600;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     flex: 1;
     line-height: 1.4;
     min-width: 0; /* la flex-item krympe under content-width */
@@ -98,10 +98,10 @@
      pressar namnet til null-bredde, og text-wrap: balance gir penare
      linjebryt enn standard. */
   .mc-agent-tag {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     text-align: right;
     line-height: 1.4;
     max-width: 140px;
@@ -122,13 +122,13 @@
     align-items: flex-start;
     gap: 0.875rem;
     padding: 0.75rem 0;
-    border-top: 1px dashed var(--rule, #E2E8F0);
+    border-top: 1px dashed var(--border);
     font-size: 0.875rem;
     transition: color 0.3s ease;
   }
   
   .mc-step:first-child {
-    border-top: 1px solid var(--rule, #E2E8F0);
+    border-top: 1px solid var(--border);
   }
   
   .mc-step-icon {
@@ -145,19 +145,19 @@
   }
   
   .mc-step--ventar {
-    color: var(--muted, #94A3B8);
+    color: var(--fg-faint);
   }
   
   .mc-step--ventar .mc-step-icon {
-    color: var(--muted, #94A3B8);
+    color: var(--fg-faint);
   }
   
   .mc-step--pågår {
-    color: var(--fg, #0F172A);
+    color: var(--fg);
   }
   
   .mc-step--pågår .mc-step-icon {
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     animation: mc-pulse 1.5s ease-in-out infinite;
   }
   
@@ -167,7 +167,7 @@
   }
   
   .mc-step--utført {
-    color: var(--fg, #0F172A);
+    color: var(--fg);
   }
   
   .mc-step--utført .mc-step-icon {
@@ -178,13 +178,13 @@
   /* === Resultat-steg (dei siste 2 radene) === */
   /* Først resultat-steg har tjukk skiljelinje over (matchar mockup) */
   .mc-step--result {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     animation: mc-fade-in 0.4s ease-out;
   }
   
   .mc-step--result-first {
-    border-top: 2px solid var(--fg, #0F172A) !important;
+    border-top: 2px solid var(--fg) !important;
     margin-top: 0.5rem;
     padding-top: 1rem;
   }
@@ -196,17 +196,17 @@
   }
   
   .mc-result-key {
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     min-width: 90px;
   }
   
   .mc-result-equals {
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
   }
   
   .mc-result-value {
     font-weight: 600;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
   }
   
   @keyframes mc-fade-in {
@@ -217,8 +217,8 @@
   /* === Samanliknar-panel === */
   .mc-compare {
     margin-top: 1.5rem;
-    background: var(--surface, #FFFFFF);
-    border: 1px solid var(--border, #E2E8F0);
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 1.25rem 1.75rem;
     transition: opacity 0.4s ease;
@@ -254,41 +254,41 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--surface-alt, #F8FAFC);
-    border: 1px solid var(--border, #E2E8F0);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     display: grid;
     place-items: center;
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     flex-shrink: 0;
   }
   
   .mc-compare-name {
-    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-family: var(--font-serif);
     font-size: 1rem;
     font-weight: 600;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     flex: 1;
   }
   
   .mc-compare-pill {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     padding: 0.25rem 0.75rem;
-    border: 1px solid var(--rule, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 999px;
-    background: var(--surface-alt, #F8FAFC);
+    background: var(--surface-2);
     white-space: nowrap;
   }
   
   .mc-compare-pill--active {
-    color: var(--fg, #0F172A);
-    border-color: var(--fg, #0F172A);
+    color: var(--fg);
+    border-color: var(--fg);
     animation: mc-pulse 1.5s ease-in-out infinite;
   }
   
@@ -318,23 +318,23 @@
   }
   
   .mc-compare-cell-label {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     margin-bottom: 0.5rem;
   }
   
   .mc-compare-cell-value {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 1.5rem;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     line-height: 1.1;
   }
   
   .mc-compare-cell-value--prose {
-    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-family: var(--font-serif);
     font-style: italic;
     font-size: 1.25rem;
   }
@@ -342,7 +342,7 @@
   .mc-compare-cell-note {
     margin-top: 0.5rem;
     font-size: 0.8125rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     line-height: 1.4;
   }
   
@@ -388,7 +388,7 @@
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--fg, #1a1a1a);
+  background: var(--fg);
   color: var(--surface, #fff);
   border: none;
   border-radius: 999px;
@@ -406,7 +406,7 @@
 }
 
 .uk-scroll-hint:hover {
-  background: var(--fg-2, #475569);
+  background: var(--fg-2);
   animation-play-state: paused;
 }
 

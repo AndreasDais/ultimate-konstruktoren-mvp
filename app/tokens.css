@@ -751,3 +751,221 @@
   color: var(--surface);
   border-color: var(--fg);
 }
+
+/* =========================================================
+   Theme picker — dropdown med swatch + label + caret
+   Trigger lever i .uk-header, popover lever i body (Portal).
+   ========================================================= */
+
+   .uk-theme-trigger {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 10px 0 8px;
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--fg);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  
+  .uk-theme-trigger:hover {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+  }
+  
+  .uk-theme-trigger[aria-expanded="true"] {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+  }
+  
+  .uk-theme-trigger__label {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--fg-2);
+  }
+  
+  .uk-theme-trigger__caret {
+    font-size: 10px;
+    color: var(--fg-muted);
+    margin-left: -2px;
+  }
+  
+  /* =========================================================
+     Theme popover (dropdown-lista som spretter opp)
+     ========================================================= */
+  
+  .uk-theme-popover {
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px -8px rgba(15, 17, 21, 0.18);
+    padding: 4px;
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .uk-theme-option {
+    appearance: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-ui);
+    transition: background 120ms;
+  }
+  
+  .uk-theme-option:hover {
+    background: var(--surface-2);
+  }
+  
+  .uk-theme-option--active {
+    background: var(--surface-2);
+  }
+  
+  .uk-theme-option__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .uk-theme-option__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg);
+  }
+  
+  .uk-theme-option__desc {
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+  
+  .uk-theme-option__check {
+    color: var(--ok);
+    font-size: 14px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  
+  /* =========================================================
+     Swatch — sirkel med palett-bg. Brukast både i trigger (14px)
+     og som .uk-theme-option__swatch i lista (18px).
+     Fargane er KONSTANTE — dei skal vise kva palette du byter til,
+     ikkje følgje aktiv palette.
+     ========================================================= */
+  
+  .uk-theme-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+  }
+  
+  .uk-theme-option__swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+  
+  /* Faste fargar — matchar dei tre paletters --bg */
+  .uk-theme-swatch--slate    { background: #fafafa; border-color: #a1a1aa; }
+  .uk-theme-swatch--stone    { background: #f6f4ef; border-color: #9b9685; }
+  .uk-theme-swatch--graphite { background: #0e0f12; border-color: #5a5f69; }
+  
+  /* =========================================================
+     Auth-område i header — navlinks + container
+     Erstattar hardkoda Tailwind (text-neutral-700, bg-white osv.)
+     slik at det følgjer aktiv palette.
+     ========================================================= */
+  
+  .uk-header__auth {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    margin-left: 8px;
+  }
+  
+  .uk-header__authlink {
+    color: var(--fg-2);
+    text-decoration: none;
+    transition: color 120ms;
+    padding: 4px 4px;
+  }
+  
+  .uk-header__authlink:hover {
+    color: var(--fg);
+    text-decoration: underline;
+  }
+  
+  .uk-header__authlink--truncate {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Anchor med uk-btn-klasse skal ikkje ha browser-default underline */
+  a.uk-btn,
+  a.uk-btn:hover {
+    text-decoration: none;
+  }
+  
+  /* =========================================================
+     Responsiv + print
+     ========================================================= */
+  
+  @media (max-width: 768px) {
+    .uk-theme-trigger {
+      padding: 0 8px 0 6px;
+      height: 28px;
+      gap: 6px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .uk-theme-trigger__label {
+      display: none; /* Berre swatch + caret på smale mobilar */
+    }
+    .uk-theme-popover {
+      min-width: 200px;
+    }
+    .uk-header__auth {
+      gap: 6px;
+      font-size: 12px;
+    }
+    .uk-header__authlink--truncate {
+      max-width: 120px;
+    }
+  }
+  
+  @media print {
+    .uk-theme-trigger,
+    .uk-theme-popover,
+    .uk-header__auth {
+      display: none !important;
+    }
+  }

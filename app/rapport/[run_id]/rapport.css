@@ -885,13 +885,13 @@
   
   .tillit-gauge--idle {
     padding: 1.5rem 2rem;
-    border: 1px dashed var(--rule, #E2E8F0);
+    border: 1px dashed var(--border);
     border-radius: 8px;
-    background: var(--surface, #F8FAFC);
+    background: var(--surface-2);
   }
   
   .tillit-gauge__placeholder {
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     font-size: 0.875rem;
     text-align: center;
   }
@@ -916,7 +916,7 @@
   }
   
   .tillit-gauge__button:focus-visible {
-    outline: 2px solid var(--fg, #0F172A);
+    outline: 2px solid var(--fg);
     outline-offset: 6px;
     border-radius: 50%;
   }
@@ -942,17 +942,17 @@
   }
   
   .tillit-gauge__score {
-    font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+    font-family: var(--font-serif);
     font-size: 2.5rem;
     font-weight: 600;
     line-height: 1;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
   }
   
   .tillit-gauge__max {
-    font-family: var(--font-ui, "Inter", sans-serif);
+    font-family: var(--font-ui);
     font-size: 0.875rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     font-weight: 400;
   }
   
@@ -962,7 +962,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, 65%);
-    font-family: var(--font-ui, "Inter", sans-serif);
+    font-family: var(--font-ui);
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -975,9 +975,9 @@
     width: 100%;
     max-width: 360px;
     padding: 1rem 1.25rem;
-    background: var(--surface, #F8FAFC);
+    background: var(--surface-2);
     border-radius: 8px;
-    border: 1px solid var(--rule, #E2E8F0);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 0.875rem;
@@ -1002,40 +1002,40 @@
   
   .tillit-gauge__row-label {
     font-size: 0.875rem;
-    color: var(--fg, #0F172A);
+    color: var(--fg);
     font-weight: 500;
   }
   
   .tillit-gauge__row-value {
-    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
   }
   
   .tillit-gauge__row-bar {
     height: 3px;
-    background: var(--rule, #E2E8F0);
+    background: var(--border);
     border-radius: 1.5px;
     overflow: hidden;
   }
   
   .tillit-gauge__row-bar-fill {
     height: 100%;
-    background: var(--fg, #0F172A);
+    background: var(--fg);
     transition: width 0.4s ease;
   }
   
   .tillit-gauge__row-detail {
     font-size: 0.75rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
   }
   
   .tillit-gauge__formula-note {
     margin: 0;
     padding-top: 0.75rem;
-    border-top: 1px solid var(--rule, #E2E8F0);
+    border-top: 1px solid var(--border);
     font-size: 0.7rem;
-    color: var(--muted, #475569);
+    color: var(--fg-muted);
     line-height: 1.5;
     font-style: italic;
   }
@@ -1241,7 +1241,7 @@
 }
 
 .feilrapport-modal {
-  background: var(--surface, #FFFFFF);
+  background: var(--surface);
   border-radius: 12px;
   width: 100%;
   max-width: 560px;
@@ -1277,30 +1277,30 @@
   border: none;
   font-size: 1.75rem;
   line-height: 1;
-  color: var(--muted, #475569);
+  color: var(--fg-muted);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  font-family: var(--font-ui, "Inter", sans-serif);
+  font-family: var(--font-ui);
 }
 
 .feilrapport-modal__close:hover {
-  background: var(--rule, #F1F5F9);
-  color: var(--fg, #0F172A);
+  background: var(--border);
+  color: var(--fg);
 }
 
 .feilrapport-modal__title {
-  font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+  font-family: var(--font-serif);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
   margin: 0 0 0.5rem;
   letter-spacing: -0.015em;
 }
 
 .feilrapport-modal__subtitle {
   font-size: 0.875rem;
-  color: var(--muted, #475569);
+  color: var(--fg-muted);
   margin: 0 0 1.5rem;
   line-height: 1.5;
 }
@@ -1313,13 +1313,13 @@
   display: block;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
   margin-bottom: 0.5rem;
 }
 
 .feilrapport-modal__label-hint {
   font-weight: 400;
-  color: var(--muted, #475569);
+  color: var(--fg-muted);
 }
 
 .feilrapport-modal__chips {
@@ -1332,9 +1332,9 @@
   font: inherit;
   font-size: 0.8125rem;
   padding: 0.5rem 0.875rem;
-  border: 1px solid var(--rule, #E2E8F0);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
   border-radius: 999px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1342,17 +1342,17 @@
 }
 
 .feilrapport-modal__chip:hover {
-  border-color: var(--fg, #0F172A);
+  border-color: var(--fg);
 }
 
 .feilrapport-modal__chip--active {
-  background: var(--fg, #0F172A);
-  border-color: var(--fg, #0F172A);
-  color: var(--surface, #FFFFFF);
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--surface);
 }
 
 .feilrapport-modal__chip:focus-visible {
-  outline: 2px solid var(--fg, #0F172A);
+  outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
 
@@ -1362,11 +1362,11 @@
   font: inherit;
   font-size: 0.875rem;
   padding: 0.625rem 0.75rem;
-  border: 1px solid var(--rule, #E2E8F0);
-  background: var(--surface, #FFFFFF);
-  color: var(--fg, #0F172A);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
   border-radius: 6px;
-  font-family: var(--font-ui, "Inter", sans-serif);
+  font-family: var(--font-ui);
 }
 
 .feilrapport-modal__textarea {
@@ -1377,8 +1377,8 @@
 .feilrapport-modal__select:focus,
 .feilrapport-modal__textarea:focus {
   outline: none;
-  border-color: var(--fg, #0F172A);
-  box-shadow: 0 0 0 1px var(--fg, #0F172A);
+  border-color: var(--fg);
+  box-shadow: 0 0 0 1px var(--fg);
 }
 
 .feilrapport-modal__severity {
@@ -1392,12 +1392,12 @@
   gap: 0.375rem;
   font-size: 0.875rem;
   cursor: pointer;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
 }
 
 .feilrapport-modal__attachment {
-  background: var(--surface-alt, #F8FAFC);
-  border: 1px solid var(--rule, #E2E8F0);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   margin-bottom: 1.5rem;
@@ -1408,14 +1408,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--muted, #475569);
+  color: var(--fg-muted);
   margin-bottom: 0.5rem;
 }
 
 .feilrapport-modal__attachment-data {
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
   margin: 0;
   white-space: pre;
   line-height: 1.6;
@@ -1438,17 +1438,17 @@
 }
 
 .feilrapport-modal__success h2 {
-  font-family: var(--font-serif, "Source Serif 4", Georgia, serif);
+  font-family: var(--font-serif);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--fg, #0F172A);
+  color: var(--fg);
   margin: 0 0 0.75rem;
   letter-spacing: -0.015em;
 }
 
 .feilrapport-modal__success p {
   font-size: 0.9375rem;
-  color: var(--fg-2, #1E293B);
+  color: var(--fg-2);
   margin: 0 0 1.5rem;
   line-height: 1.6;
 }

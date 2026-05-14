@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { InfoPopover } from "./InfoPopover";
+import ThemeToggle from "./ThemeToggle";
 
 type Props = {
   /** Vis AI-disclaimer-chipen. Standard: true. Set false på admin-sider. */
@@ -50,12 +52,13 @@ export default function Header({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     await supabase.auth.signOut();
+    // Hard navigering med vilje — clearer all React-state etter logout
     window.location.href = "/";
   }
 
   return (
     <header className="uk-header">
-      <a href="/" className="uk-header__brand" aria-label="Pilar — til framsida">
+      <Link href="/" className="uk-header__brand" aria-label="Pilar — til framsida">
         <span className="uk-header__logo" aria-hidden="true">
           <span className="uk-header__logo-bar" />
           <span className="uk-header__logo-bar" />
@@ -64,7 +67,7 @@ export default function Header({
           <span className="uk-header__wordmark">Pilar</span>
           <span className="uk-header__tagline">AI-KONSTRUKSJONSASSISTENT</span>
         </span>
-      </a>
+      </Link>
 
       <div className="uk-header__spacer" />
 
@@ -75,6 +78,8 @@ export default function Header({
           <InfoPopover label="AI-generert innhald"><p>{AI_DISCLAIMER_TEXT}</p></InfoPopover>
         </div>
       )}
+
+      <ThemeToggle />
 
       {showLocaleToggle && (
         <div className="uk-header__locale" role="group" aria-label="Målform">
@@ -102,27 +107,31 @@ export default function Header({
         </div>
       )}
 
-      <div className="ml-3 flex items-center gap-2 text-sm">
-      {!authLoaded ? null : user ? (
+      <div className="uk-header__auth">
+        {!authLoaded ? null : user ? (
           <>
-            <a href="/mine" className="text-neutral-700 hover:text-neutral-900 hover:underline px-1">
+            <Link href="/mine" className="uk-header__authlink">
               Mine
-            </a>
-            <a href="/innstillingar" className="text-neutral-700 max-w-[180px] truncate hover:text-neutral-900 hover:underline" title={`${user.email ?? ""} — opne innstillingar`}>
+            </Link>
+            <Link
+              href="/innstillingar"
+              className="uk-header__authlink uk-header__authlink--truncate"
+              title={`${user.email ?? ""} — opne innstillingar`}
+            >
               {user.email}
-            </a>
+            </Link>
             <button
               type="button"
               onClick={handleSignOut}
-              className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="uk-btn uk-btn--sm uk-btn--ghost"
             >
               Logg ut
             </button>
           </>
         ) : (
-          <a href="/login" className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">
+          <Link href="/login" className="uk-btn uk-btn--sm">
             Logg inn
-          </a>
+          </Link>
         )}
       </div>
     </header>

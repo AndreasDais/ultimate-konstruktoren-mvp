@@ -1,0 +1,188 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+type Palette = "slate" | "stone" | "graphite";
+
+const STORAGE_KEY = "pilar-theme";
+
+const OPTIONS: { value: Palette; label: string; description: string }[] = [
+    { value: "slate", label: "Slate", description: "Lyst, kjølig" },
+    { value: "stone", label: "Stone", description: "Lyst, varmt" },
+    // V0.2-TODO: Graphite (mørk modus) er på vent til hardkoda Tailwind-fargar
+    // i app/page.tsx + rapport-sida er rydda til CSS-variablar. Palette står
+    // framleis i tokens.css — berre fjern denne kommentaren for å re-aktivere.
+  ];
+
+export default function ThemeToggle() {
+  const [palette, setPalette] = useState<Palette>("slate");
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Initial sync med <html data-palette>
+  useEffect(() => {
+    const current = document.documentElement.dataset.palette as Palette | undefined;
+    if (current === "slate" || current === "stone") {
+      setPalette(current);
+    }
+    setMounted(true);
+  }, []);
+
+  const apply = (next: Palette) => {
+    setPalette(next);
+    document.documentElement.dataset.palette = next;
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // localStorage kan vere blokkert (privacy-modus); ignorer
+    }
+    setOpen(false);
+  };
+
+  const calcPosition = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPosition({
+      top: rect.bottom + 6,
+      right: window.innerWidth - rect.right,
+    });
+  };
+
+  const toggleOpen = () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    calcPosition();
+    setOpen(true);
+    // Lukk andre popovers (gjenbrukar InfoPopover si event)
+    window.dispatchEvent(new CustomEvent("info-popover-open"));
+  };
+
+  // Outside-click + ESC + scroll/resize reposition + lytt etter andre popovers
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        popoverRef.current?.contains(target) ||
+        triggerRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+
+    const handleOther = () => setOpen(false);
+    const handleReposition = () => calcPosition();
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleEsc);
+    window.addEventListener("info-popover-open", handleOther);
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEsc);
+      window.removeEventListener("info-popover-open", handleOther);
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [open]);
+
+  // Hold plass i layout under hydration for å unngå hopp
+  if (!mounted) {
+    return (
+      <div
+        className="uk-theme-trigger"
+        style={{ visibility: "hidden" }}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="uk-theme-trigger"
+        onClick={toggleOpen}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Vel tema"
+        title="Vel tema"
+      >
+        <span
+          className={`uk-theme-swatch uk-theme-swatch--${palette}`}
+          aria-hidden="true"
+        />
+        <span className="uk-theme-trigger__label">Tema</span>
+        <span className="uk-theme-trigger__caret" aria-hidden="true">
+          ▾
+        </span>
+      </button>
+
+      {open && position &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            className="uk-theme-popover"
+            role="listbox"
+            aria-label="Tema"
+            style={{
+              position: "fixed",
+              top: `${position.top}px`,
+              right: `${position.right}px`,
+            }}
+          >
+            {OPTIONS.map((opt) => {
+              const isActive = palette === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  className={`uk-theme-option ${
+                    isActive ? "uk-theme-option--active" : ""
+                  }`}
+                  onClick={() => apply(opt.value)}
+                >
+                  <span
+                    className={`uk-theme-option__swatch uk-theme-swatch--${opt.value}`}
+                    aria-hidden="true"
+                  />
+                  <span className="uk-theme-option__text">
+                    <span className="uk-theme-option__label">{opt.label}</span>
+                    <span className="uk-theme-option__desc">
+                      {opt.description}
+                    </span>
+                  </span>
+                  {isActive && (
+                    <span
+                      className="uk-theme-option__check"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
