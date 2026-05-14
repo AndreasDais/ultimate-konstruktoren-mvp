@@ -13,25 +13,18 @@ import {
   ShadingType,
   convertInchesToTwip,
 } from "docx";
+import {
+  DECISION_STATUS_LABELS,
+  DECISION_STATUS_SHORT,
+  MATCH_PHRASES,
+  MATCH_STATUS_SHORT,
+  INPUT_STATUS_LABELS,
+  CONFIDENCE_LABELS,
+  formatPromptVersion,
+} from "@/lib/format";
+import { tillitVisuals, type TillitBreakdown } from "@/lib/tillit-score";
 
-// — Konstantar (duplisert frå page.tsx for no; flytt til lib/ seinare) —
-
-const DECISION_LABELS: Record<string, string> = {
-  approved: "Førebels godkjent",
-  approved_with_warnings: "Godkjent med åtvaringar",
-  rejected: "Avvist — må kontrollerast",
-  uncertain: "Usikker",
-  needs_more_input: "Treng meir informasjon",
-};
-
-const MATCH_PHRASES: Record<string, string> = {
-  match: " Dei kom fram til same resultat.",
-  minor_disagreement:
-    " Det er små forskjellar mellom svara, hovudsakleg avrunding.",
-  significant_disagreement:
-    " Det er betydelege forskjellar mellom svara — sjå Agent D-vurderinga nedanfor.",
-  critical_disagreement: " Det er kritiske forskjellar mellom svara.",
-};
+// — Lokale konstantar (Word-spesifikke; resten kjem frå lib/format) —
 
 const DISCLAIMER_TEXT =
   "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. " +
@@ -66,6 +59,8 @@ type FullReportResponse = {
     conclusion: string;
     prompt_version: string;
     created_at: string;
+    tillit_score: number | null;
+    tillit_breakdown: TillitBreakdown | null;
   };
   cached: boolean;
   run: { request: { raw_text: string } };
@@ -145,6 +140,21 @@ function monoBox(text: string): Paragraph {
   });
 }
 
+function smallEyebrow(text: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({
+        text,
+        font: "Calibri",
+        size: 16,
+        color: "666666",
+        bold: true,
+      }),
+    ],
+    spacing: { after: 80 },
+  });
+}
+
 // — Tabell-helpers —
 
 function disclaimerBox(): Table {
@@ -192,6 +202,152 @@ function disclaimerBox(): Table {
         ],
       }),
     ],
+  });
+}
+
+function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
+  const { label, color } = tillitVisuals(score);
+  const colorHex = color.replace("#", "");
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({
+            shading: {
+              type: ShadingType.SOLID,
+              color: "F8FAFC",
+              fill: "F8FAFC",
+            },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.SINGLE, size: 24, color: colorHex },
+            },
+            margins: { top: 240, bottom: 240, left: 280, right: 280 },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "TILLIT-SKÅR",
+                    font: "Calibri",
+                    size: 16,
+                    color: "666666",
+                    bold: true,
+                  }),
+                ],
+                spacing: { after: 80 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${score}/100`,
+                    font: "Calibri",
+                    size: 40,
+                    bold: true,
+                    color: colorHex,
+                  }),
+                  new TextRun({
+                    text: `   ${label}`,
+                    font: "Calibri",
+                    size: 24,
+                    color: colorHex,
+                  }),
+                ],
+                spacing: { after: 120 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `Konstruktør-semje ${breakdown.ab_agreement}/35   ·   Kontrollør-verdict ${breakdown.controller_verdict}/35   ·   Fullstendigheit ${String(breakdown.completeness).replace(".", ",")}/30`,
+                    font: "Calibri",
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 80 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Måler AI-pipeline-tillit. Fagperson-kontroll vises separat i Kontrollstatus nedanfor.",
+                    font: "Calibri",
+                    size: 18,
+                    color: "888888",
+                    italics: true,
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+function kontrollstatusTable(data: FullReportResponse): Table {
+  const inputStatus = data.inputReview?.input_status ?? "";
+  const inputLabel = INPUT_STATUS_LABELS[inputStatus] ?? inputStatus ?? "—";
+
+  const aConf = data.agentA.structured_output.confidence ?? "";
+  const aLabel = CONFIDENCE_LABELS[aConf] ?? aConf ?? "—";
+  const bConf = data.agentB.structured_output.confidence ?? "";
+  const bLabel = CONFIDENCE_LABELS[bConf] ?? bConf ?? "—";
+
+  const matchStatus = data.comparison?.match_status ?? "";
+  const matchLabel = MATCH_STATUS_SHORT[matchStatus] ?? matchStatus ?? "—";
+
+  const decisionStatus = data.controllerDecision?.decision_status ?? "";
+  const decisionLabel =
+    DECISION_STATUS_SHORT[decisionStatus] ?? decisionStatus ?? "—";
+
+  const rows: [string, string][] = [
+    ["Input-tolking", inputLabel],
+    ["Konstruktør A", aLabel],
+    ["Konstruktør B", bLabel],
+    ["Samanlikning", matchLabel],
+    ["Kontrollør", decisionLabel],
+    ["Fagperson", "Ikkje kontrollert"],
+  ];
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: rows.map(
+      ([label, value]) =>
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              margins: { top: 80, bottom: 80, left: 120, right: 120 },
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: label,
+                      font: "Calibri",
+                      size: 20,
+                      color: "555555",
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              margins: { top: 80, bottom: 80, left: 120, right: 120 },
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: value, font: "Calibri", size: 20 }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        })
+    ),
   });
 }
 
@@ -258,7 +414,7 @@ function decisionBox(label: string, message: string): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "Agent D-avgjerd: ",
+                    text: "Kontrollør si avgjerd: ",
                     font: "Calibri",
                     size: 22,
                     bold: true,
@@ -295,7 +451,8 @@ function buildDocument(data: FullReportResponse): Document {
   );
 
   const decisionLabel =
-    DECISION_LABELS[data.controllerDecision?.decision_status ?? ""] ?? "Ukjent";
+    DECISION_STATUS_LABELS[data.controllerDecision?.decision_status ?? ""] ??
+    "Ukjent";
   const matchPhrase =
     MATCH_PHRASES[data.comparison?.match_status ?? ""] ?? "";
 
@@ -323,7 +480,7 @@ function buildDocument(data: FullReportResponse): Document {
     new Paragraph({
       children: [
         new TextRun({
-          text: "Ultimate Konstruktøren",
+          text: "Pilar",
           font: "Calibri",
           size: 40,
           bold: true,
@@ -337,10 +494,31 @@ function buildDocument(data: FullReportResponse): Document {
   children.push(metadataLine("Dokument-ID:", data.report.document_id));
   children.push(metadataLine("Dato:", reportDate));
   children.push(metadataLine("Status:", decisionLabel));
-  children.push(metadataLine("Rapport-versjon:", data.report.prompt_version));
+  children.push(
+    metadataLine(
+      "Rapport-versjon:",
+      formatPromptVersion(data.report.prompt_version)
+    )
+  );
+
+  // Tillit-skår-blokk (Fase 2) — vises berre når tillit er rekna
+  if (
+    data.report.tillit_score !== null &&
+    data.report.tillit_breakdown !== null
+  ) {
+    children.push(new Paragraph({ children: [], spacing: { after: 200 } }));
+    children.push(
+      tillitBlock(data.report.tillit_score, data.report.tillit_breakdown)
+    );
+  }
+
+  // Kontrollstatus-tabell (Fase 2)
+  children.push(new Paragraph({ children: [], spacing: { after: 200 } }));
+  children.push(smallEyebrow("KONTROLLSTATUS"));
+  children.push(kontrollstatusTable(data));
 
   // Disclaimer
-  children.push(new Paragraph({ children: [], spacing: { after: 120 } }));
+  children.push(new Paragraph({ children: [], spacing: { after: 240 } }));
   children.push(disclaimerBox());
 
   // Samandrag
@@ -353,13 +531,15 @@ function buildDocument(data: FullReportResponse): Document {
 
   // Input-tolking
   if (data.inputReview) {
+    const rawStatus = data.inputReview.input_status;
+    const prettyStatus = INPUT_STATUS_LABELS[rawStatus] ?? rawStatus;
     children.push(heading2("Input-tolking"));
     children.push(
       new Paragraph({
         children: [
           new TextRun({ text: "Status: ", font: "Calibri", size: 22 }),
           new TextRun({
-            text: data.inputReview.input_status,
+            text: prettyStatus,
             font: "Calibri",
             size: 22,
             bold: true,
@@ -412,11 +592,11 @@ function buildDocument(data: FullReportResponse): Document {
     for (const w of warnings) children.push(bullet(w));
   }
 
-  // Agentkontroll
-  children.push(heading2("Agentkontroll"));
+  // Konstruktørkontroll (tidlegare "Agentkontroll")
+  children.push(heading2("Konstruktørkontroll"));
   children.push(
     body(
-      `Berekninga er løyst uavhengig av to AI-agentar (Agent A og Agent B).${matchPhrase}`
+      `Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør A og Konstruktør B).${matchPhrase}`
     )
   );
   if (data.controllerDecision) {
@@ -434,7 +614,7 @@ function buildDocument(data: FullReportResponse): Document {
     new Paragraph({
       children: [
         new TextRun({
-          text: `Generert av Ultimate Konstruktøren • ${data.report.document_id}`,
+          text: `Generert av Pilar • ${data.report.document_id}`,
           font: "Calibri",
           size: 18,
           color: "888888",
@@ -444,24 +624,9 @@ function buildDocument(data: FullReportResponse): Document {
       spacing: { before: 720, after: 60 },
     })
   );
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text:
-            "Resultatet er førebels og må kontrollerast av fagperson før bruk i prosjektering.",
-          font: "Calibri",
-          size: 18,
-          color: "888888",
-          italics: true,
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-    })
-  );
 
   return new Document({
-    creator: "Ultimate Konstruktøren",
+    creator: "Pilar",
     title: `Berekningsnotat ${data.report.document_id}`,
     description: "AI-generert berekningsnotat — må kontrollerast av fagperson",
     sections: [
