@@ -239,7 +239,14 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
   let parsed;
   try {
     parsed = JSON.parse(cleaned);
-  } catch {
+  } catch (parseErr) {
+    console.error("[agent-a] JSON.parse feila:", {
+      stop_reason: message.stop_reason,
+      raw_length: responseText.length,
+      first_500_chars: responseText.slice(0, 500),
+      last_500_chars: responseText.slice(-500),
+      parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
+    });
     const wasTruncated = message.stop_reason === "max_tokens";
     return {
       ok: false,
