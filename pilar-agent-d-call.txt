@@ -1,0 +1,91 @@
+
+      if (errA) {
+        setError(errA || "Konstruktør A klarte ikkje løyse oppgåva");
+        setPhase("workbench");
+        return;
+      }
+
+      if (errB || !resB) {
+        console.error("Konstruktør B feila:", errB);
+        setError(`Konstruktør B feila: ${errB}. Hoppar over samanlikning.`);
+        setPhase("calculation_result");
+        return;
+      }
+
+      // Lokale resA/resB blir brukt i Samanliknar/Kontrollør-kalla nedanfor
+      // (i staden for dataA.result/dataB.result frå før). Sjekkar at dei ikkje
+      // er null sjølv om TS-typing skulle tilseie det.
+      if (!resA) {
+        setError("Uventa: Konstruktør A returnerte tomt resultat");
+        setPhase("workbench");
+        return;
+      }
+
+      // === STEG 2: Samanliknar ===
+      const responseC = await fetch("/api/agent-c", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          run_id: runId,
+          agent_a_output: resA,
+          agent_b_output: resB,
+          locale,
+        }),
+      });
+
+      const dataC = await responseC.json();
+
+      if (!responseC.ok) {
+        console.error("Samanliknar feila:", dataC.error);
+        setError(`Samanliknar feila: ${dataC.error}. Viser A og B utan samanlikning.`);
+        setPhase("calculation_result");
+        return;
+      }
+      setComparison(dataC.result);
+
+      // === STEG 3: Kontrolløren ===
+      const responseD = await fetch("/api/agent-d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          run_id: runId,
+          input_review: result,
+          agent_a_output: resA,
+          agent_b_output: resB,
+          comparison_result: dataC.result,
+          locale,
+        }),
+      });
+
+      const dataD = await responseD.json();
+
+      if (!responseD.ok) {
+        console.error("Kontrollør feila:", dataD.error);
+        setPhase("calculation_result");
+        return;
+      }
+
+      setControllerDecision(dataD.result);
+      setPhase("calculation_result");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ukjent feil");
+      setPhase("workbench");
+    }
+  };
+
+  const pageHeader = PHASE_HEADERS[locale][phase];
+
+  const isBlocked = (key: string): boolean =>
+    !!controllerDecision?.blocked_outputs?.includes(key);
+
+  const blockedReason = getBlockedReason(result, locale);
+  const canStart = result !== null && blockedReason === null;
+  const hasTolket = result !== null;
+
+  return (
+    <div className="uk-shell">
+      <main>
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+          {phase !== "calculating" && <StepIndicator phase={phase} />}
+
+          {phase !== "calculating" && (

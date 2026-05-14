@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
+import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -119,13 +120,15 @@ const PROMPT_VERSION = "agent_d_v0.3";
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json();
     const {
       run_id,
       input_review,
       agent_a_output,
       agent_b_output,
       comparison_result,
-    } = await request.json();
+    } = body;
+    const locale = coerceLocale(body.locale);
 
     if (!run_id || !agent_a_output || !comparison_result) {
       return Response.json(
@@ -156,7 +159,7 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
       temperature: 0.3,
-      system: SYSTEM_PROMPT,
+      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
       messages: [{ role: "user", content: userMessage }],
     });
 

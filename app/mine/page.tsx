@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import type { Locale } from "@/lib/locale";
+import { getLocaleFromCookies } from "@/lib/locale";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -7,9 +9,25 @@ import { MineList, type MineRow } from "./MineList";
 // Tving server-rendring per request — sessions må sjekkast på hver hit.
 export const dynamic = "force-dynamic";
 
+const MINE_LABELS: Record<string, Record<Locale, string>> = {
+  // Default fallback for prettyCalculationType
+  defaultBerekning: { nb: "Beregning", nn: "Berekning" },
+  // Auth-gate
+  maVereInnlogga: { nb: "Du må være innlogget for å se denne siden.", nn: "Du må vere innlogga for å sjå denne sida." },
+  // Header
+  mineEyebrow: { nb: "Mine", nn: "Mine" },
+  berekningarH1: { nb: "Beregninger", nn: "Berekningar" },
+  oversiktDescription: { nb: "Oversikt over beregninger du har startet, nyeste først.", nn: "Oversikt over berekningar du har starta, nyaste først." },
+  // EmptyState
+  ingenBerekningar: { nb: "Ingen beregninger ennå", nn: "Ingen berekningar enno" },
+  narDuStartar: { nb: "Når du starter din første beregning, dukker den opp her.", nn: "Når du startar di første berekning, dukkar ho opp her." },
+  startEiBerekning: { nb: "Start en beregning →", nn: "Start ei berekning →" },
+};
+
+
 // === FORMATERING (server-only — brukt for å bygge MineRow.title) ===
-function prettyCalculationType(type: string | null | undefined): string {
-  if (!type) return "Berekning";
+function prettyCalculationType(type: string | null | undefined, locale: Locale): string {
+  if (!type) return MINE_LABELS.defaultBerekning[locale];
   // snake_case → "Bjelke lastverknad" (første ord stor bokstav)
   const words = type.split("_");
   return words
@@ -78,7 +96,7 @@ function firstOrNull<T>(x: T | T[] | null | undefined): T | null {
   return x;
 }
 
-async function getUserCalculations(userId: string): Promise<MineRow[]> {
+async function getUserCalculations(userId: string, locale: Locale): Promise<MineRow[]> {
   const supabase = getSupabase();
 
   // === LAZY CLEANUP ===
@@ -171,7 +189,7 @@ async function getUserCalculations(userId: string): Promise<MineRow[]> {
 
     return {
       key: `run-${run.id}`,
-      title: prettyCalculationType(run.calculation_type),
+      title: prettyCalculationType(run.calculation_type, locale),
       date: run.started_at,
       phase,
       href,
@@ -191,7 +209,7 @@ async function getUserCalculations(userId: string): Promise<MineRow[]> {
       const review = firstOrNull(r.input_reviews);
       return {
         key: `req-${r.id}`,
-        title: prettyCalculationType(review?.calculation_type),
+        title: prettyCalculationType(review?.calculation_type, locale),
         date: r.created_at,
         phase: "workbench" as const,
         href: `/?from_request=${r.id}`,
@@ -208,52 +226,53 @@ async function getUserCalculations(userId: string): Promise<MineRow[]> {
 
 // === SIDE ===
 export default async function MinePage() {
+  const locale = getLocaleFromCookies(await cookies());
   const userId = await getCurrentUserId();
 
   if (!userId) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <p className="text-neutral-600">
-          Du må vere innlogga for å sjå denne sida.
+          {MINE_LABELS.maVereInnlogga[locale]}
         </p>
       </main>
     );
   }
 
-  const rows = await getUserCalculations(userId);
+  const rows = await getUserCalculations(userId, locale);
 
   return (
     <main className="flex-1 px-4 py-8 md:py-12">
       <div className="mx-auto max-w-3xl">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
-            Mine
+            {MINE_LABELS.mineEyebrow[locale]}
           </p>
           <h1 className="text-3xl font-semibold text-neutral-900">
-            Berekningar
+            {MINE_LABELS.berekningarH1[locale]}
           </h1>
           <p className="text-sm text-neutral-600 mt-1">
-            Oversikt over berekningar du har starta, nyaste først.
+            {MINE_LABELS.oversiktDescription[locale]}
           </p>
         </div>
 
-        {rows.length === 0 ? <EmptyState /> : <MineList rows={rows} />}
+        {rows.length === 0 ? <EmptyState locale={locale} /> : <MineList rows={rows} />}
       </div>
     </main>
   );
 }
 
-function EmptyState() {
+function EmptyState({ locale }: { locale: Locale }) {
   return (
     <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
       <p className="text-neutral-700 font-medium mb-1">
-        Ingen berekningar enno
+        {MINE_LABELS.ingenBerekningar[locale]}
       </p>
       <p className="text-sm text-neutral-500 mb-6">
-        Når du startar di første berekning, dukkar ho opp her.
+        {MINE_LABELS.narDuStartar[locale]}
       </p>
       <Link href="/" className="inline-flex items-center gap-1 rounded-md bg-neutral-900 text-white text-sm font-medium px-4 py-2 hover:bg-neutral-800 transition-colors">
-        Start ei berekning →
+        {MINE_LABELS.startEiBerekning[locale]}
       </Link>
     </div>
   );

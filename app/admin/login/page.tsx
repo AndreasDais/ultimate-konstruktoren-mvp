@@ -3,8 +3,22 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
+import type { Locale } from "@/lib/locale";
+import { useLocale } from "@/lib/locale-context";
+
+
+const ADMIN_LOGIN_LABELS: Record<string, Record<Locale, string>> = {
+  errorNotAdmin: { nb: "Innlogging vellykket, men brukeren har ikke admin-tilgang. Du er logget ut.", nn: "Innlogging vellukka, men brukaren har ikkje admin-tilgang. Du er logga ut." },
+  errorLookupFailed: { nb: "Klarte ikke verifisere admin-tilgang. Prøv igjen.", nn: "Klarte ikkje verifisere admin-tilgang. Prøv igjen." },
+  adminInnlogging: { nb: "Admin-innlogging", nn: "Admin-innlogging" },
+  loggInn: { nb: "Logg inn", nn: "Logg inn" },
+  epost: { nb: "E-post", nn: "E-post" },
+  passord: { nb: "Passord", nn: "Passord" },
+  loggarInn: { nb: "Logger inn...", nn: "Loggar inn..." },
+};
 
 function LoginForm() {
+  const { locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo =
@@ -15,9 +29,9 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     errorParam === "not_admin"
-      ? "Innlogging vellukka, men brukaren har ikkje admin-tilgang. Du er logga ut."
+      ? ADMIN_LOGIN_LABELS.errorNotAdmin[locale]
       : errorParam === "lookup_failed"
-      ? "Klarte ikkje verifisere admin-tilgang. Prøv igjen."
+      ? ADMIN_LOGIN_LABELS.errorLookupFailed[locale]
       : null
   );
   const [loading, setLoading] = useState(false);
@@ -63,7 +77,7 @@ function LoginForm() {
             <div className="uk-card__hd">
               <div>
                 <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
-                  Admin-innlogging
+                  {ADMIN_LOGIN_LABELS.adminInnlogging[locale]}
                 </div>
                 <h1
                   style={{
@@ -72,7 +86,7 @@ function LoginForm() {
                     margin: 0,
                   }}
                 >
-                  Logg inn
+                  {ADMIN_LOGIN_LABELS.loggInn[locale]}
                 </h1>
               </div>
             </div>
@@ -91,7 +105,7 @@ function LoginForm() {
 
                 <div>
                   <label htmlFor="email" className="uk-label">
-                    E-post
+                    {ADMIN_LOGIN_LABELS.epost[locale]}
                   </label>
                   <input
                     id="email"
@@ -107,7 +121,7 @@ function LoginForm() {
 
                 <div>
                   <label htmlFor="password" className="uk-label">
-                    Passord
+                    {ADMIN_LOGIN_LABELS.passord[locale]}
                   </label>
                   <input
                     id="password"
@@ -125,7 +139,7 @@ function LoginForm() {
                   disabled={loading}
                   className="uk-btn uk-btn--primary"
                 >
-                  {loading ? "Loggar inn..." : "Logg inn"}
+                  {loading ? ADMIN_LOGIN_LABELS.loggarInn[locale] : ADMIN_LOGIN_LABELS.loggInn[locale]}
                 </button>
               </div>
             </form>

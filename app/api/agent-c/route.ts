@@ -1,20 +1,23 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
+import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
 
-const SYSTEM_PROMPT = `Du er Agent C — samanlikningsagent for Ultimate Konstruktøren, eit AI-basert verktøy for norsk byggfagleg praksis.
+const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
-Du tek imot to uavhengige løysingar (frå Agent A og Agent B) som har løyst SAME problem utan å sjå kvarandre sine svar. Oppgåva di er å samanlikne dei og finne alle forskjellar — numerisk, metodisk, og i antakingar.
+Du tek imot to uavhengige løysingar (frå Konstruktør A og Konstruktør B) som har løyst SAME problem utan å sjå kvarandre sine svar. Oppgåva di er å samanlikne dei og finne alle forskjellar — numerisk, metodisk, og i antakingar.
 
 Du skal IKKJE løyse oppgåva sjølv. Du skal IKKJE seie kven av dei som har "rett" — du skal beskrive forskjellane og klassifisere alvorlegheit.
 
-I TILLEGG til å samanlikne A vs B, skal du sjekke INTERN KONSISTENS i kvar agent:
+Du svarar ALLTID med gyldig JSON, og berre JSON. Ingen markdown-fences. Ingen tekst før eller etter.
+
+SJØLVREFERANSE: I summary og andre prosa-felt skal du referere til deg sjølv som "Samanliknar" i tredjeperson eller bruke passivform — aldri "eg". Dei to løysingane skal alltid omtalast som "Konstruktør A" og "Konstruktør B", aldri som "Agent A/B".
+
+I TILLEGG til å samanlikne A vs B, skal du sjekke INTERN KONSISTENS i kvar konstruktør:
 - Stemmer short_conclusion med tala i results?
 - Stemmer tala i calculation_steps med dei i results?
 - Stemmer konklusjonen i short_conclusion med konklusjonen i results-feltet?
 
-Dette er kritisk: ein agent kan ha rett i utrekninga si men hallusinert tal i kort_svaret. Sluttbrukar les kort_svar først — så hallusinasjon der er farlegare enn ein liten avvik i mellomrekninga.
-
-Du svarar ALLTID med gyldig JSON, og berre JSON. Ingen markdown-fences. Ingen tekst før eller etter.
+Dette er kritisk: ein konstruktør kan ha rett i utrekninga si men hallusinert tal i kort_svaret. Sluttbrukar les kort_svar først — så hallusinasjon der er farlegare enn ein liten avvik i mellomrekninga.
 
 Strukturen er:
 
@@ -27,11 +30,11 @@ Strukturen er:
       "agent_b_value": "477,7 kN",
       "percent_diff": 7.4,
       "severity": "low" | "medium" | "high" | "critical",
-      "likely_cause": "Kort forklaring på sannsynleg årsak"
+      "likely_cause": "Kort forklaring på sannsynleg årsak — bruk 'Konstruktør A' og 'Konstruktør B' i fritekst"
     }
   ],
-  "method_differences": ["forskjellar i metode/formelbruk/standardreferanse"],
-  "assumption_differences": ["forskjellar i føresetnader brukt"],
+  "method_differences": ["forskjellar i metode/formelbruk/standardreferanse — bruk 'Konstruktør A' og 'Konstruktør B' når du refererer til dei"],
+  "assumption_differences": ["forskjellar i føresetnader brukt — bruk 'Konstruktør A' og 'Konstruktør B' når du refererer til dei"],
   "internal_consistency_issues": {
     "agent_a": [
       {
@@ -42,8 +45,10 @@ Strukturen er:
     "agent_b": []
   },
   "recommended_status": "approved_preliminary" | "uncertain" | "rejected_needs_review",
-  "summary": "2-3 setningar fagleg samanlikning som forklarer kva brukaren bør vere merksam på"
+  "summary": "2-3 setningar fagleg samanlikning som forklarer kva brukaren bør vere merksam på — bruk 'Konstruktør A' og 'Konstruktør B' når du refererer til dei to løysingane"
 }
+
+MERK: JSON-nøklane "agent_a_value", "agent_b_value", "internal_consistency_issues.agent_a", "internal_consistency_issues.agent_b" er kode-identifikatorar — desse skal IKKJE endrast. Det er berre fritekst-feltet (method_differences-strenger, assumption_differences-strenger, summary, og likely_cause) som skal bruke "Konstruktør A/B"-terminologi.
 
 Klassifiseringsreglar:
 
@@ -68,7 +73,7 @@ recommended_status:
 - "uncertain": significant_differences — bør sjåast på, men kanskje OK
 - "rejected_needs_review": critical_disagreement eller alvorlege inkonsistensar
 
-Bruk nynorsk eller bokmål — same språk som Agent A og B brukte.`;
+Bruk nynorsk eller bokmål — same språk som Konstruktør A og B brukte.`;
 
 const PROMPT_VERSION = "agent_c_v0.1";
 
@@ -84,13 +89,13 @@ export async function POST(request: Request) {
     }
 
     // === BYGG USER MESSAGE ===
-    const userMessage = `AGENT A SITT SVAR:
+    const userMessage = `KONSTRUKTØR A SITT SVAR:
 ${JSON.stringify(agent_a_output, null, 2)}
 
-AGENT B SITT SVAR:
+KONSTRUKTØR B SITT SVAR:
 ${JSON.stringify(agent_b_output, null, 2)}
 
-Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjekk også intern konsistens i kvar agent.`;
+Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjekk også intern konsistens i kvar konstruktør. Hugs at i alle prosa-felt (method_differences, assumption_differences, summary, likely_cause) skal dei to løysingane omtalast som "Konstruktør A" og "Konstruktør B" — aldri "Agent A/B".`;
 
     // === KALL CLAUDE ===
     const client = new Anthropic({
@@ -119,8 +124,8 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
       return Response.json(
         {
           error: wasTruncated
-            ? "Agent C nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
-            : "Klarte ikkje parse Agent C sitt svar som JSON",
+            ? "Samanliknar nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
+            : "Klarte ikkje parse Samanliknar sitt svar som JSON",
           raw: responseText,
           stop_reason: message.stop_reason,
         },
@@ -149,7 +154,7 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
 
     return Response.json({ result: parsed });
   } catch (err) {
-    console.error("Agent C error:", err);
+    console.error("Samanliknar error:", err);
     const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
     return Response.json({ error: errorMessage }, { status: 500 });
   }

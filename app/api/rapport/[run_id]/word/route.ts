@@ -14,25 +14,82 @@ import {
   convertInchesToTwip,
 } from "docx";
 import {
-  DECISION_STATUS_LABELS,
-  DECISION_STATUS_SHORT,
-  MATCH_PHRASES,
-  MATCH_STATUS_SHORT,
-  INPUT_STATUS_LABELS,
+  decisionStatusLabel,
+  decisionStatusShort,
+  matchPhrase,
+  matchStatusShort,
+  inputStatusLabel,
   CONFIDENCE_LABELS,
   formatPromptVersion,
 } from "@/lib/format";
 import { tillitVisuals, type TillitBreakdown } from "@/lib/tillit-score";
+import { cookies } from "next/headers";
+import type { Locale } from "@/lib/locale";
+import { getLocaleFromCookies } from "@/lib/locale";
 
 // — Lokale konstantar (Word-spesifikke; resten kjem frå lib/format) —
 
-const DISCLAIMER_TEXT =
-  "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. " +
-  "Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. " +
-  "Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, " +
-  "ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, føresetnader, " +
-  "standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent " +
-  "byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring.";
+const WORD_LABELS: Record<string, Record<Locale, string>> = {
+  // Disclaimer
+  disclaimer: {
+    nb: "Dette dokumentet er generert av et AI-basert beregnings- og dokumentasjonsverktøy. Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Dokumentet er ikke en erstatning for kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, forutsetninger, standardreferanser, materialdata og konklusjoner må kontrolleres av en kompetent byggingeniør før de blir brukt i reelle prosjekter, byggesøknader, produksjon eller utføring.",
+    nn: "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, føresetnader, standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring.",
+  },
+  viktigMerknad: { nb: "VIKTIG MERKNAD", nn: "VIKTIG MERKNAD" },
+  // Tillit-blokk
+  tillitSkar: { nb: "TILLIT-SKÅR", nn: "TILLIT-SKÅR" },
+  konstruktorSemje: { nb: "Konstruktør-enighet", nn: "Konstruktør-semje" },
+  kontrollorVerdict: { nb: "Kontrollør-verdict", nn: "Kontrollør-verdict" },
+  fullstendigheit: { nb: "Fullstendighet", nn: "Fullstendigheit" },
+  tillitMaler: {
+    nb: "Måler AI-pipeline-tillit. Fagperson-kontroll vises separat i Kontrollstatus nedenfor.",
+    nn: "Måler AI-pipeline-tillit. Fagperson-kontroll vises separat i Kontrollstatus nedanfor.",
+  },
+  // Kontrollstatus-tabell
+  kontrollstatus: { nb: "KONTROLLSTATUS", nn: "KONTROLLSTATUS" },
+  inputTolking: { nb: "Input-tolkning", nn: "Input-tolking" },
+  konstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  konstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  samanlikning: { nb: "Sammenligning", nn: "Samanlikning" },
+  kontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+  fagperson: { nb: "Fagperson", nn: "Fagperson" },
+  ikkjeKontrollert: { nb: "Ikke kontrollert", nn: "Ikkje kontrollert" },
+  // Forside / cover
+  berekningsnotatEyebrow: { nb: "BEREGNINGSNOTAT", nn: "BEREKNINGSNOTAT" },
+  pilarTitle: { nb: "Pilar", nn: "Pilar" },
+  metaDokumentID: { nb: "Dokument-ID:", nn: "Dokument-ID:" },
+  metaDato: { nb: "Dato:", nn: "Dato:" },
+  metaStatus: { nb: "Status:", nn: "Status:" },
+  metaRapportVersjon: { nb: "Rapport-versjon:", nn: "Rapport-versjon:" },
+  // Seksjon-headers
+  samandrag: { nb: "Sammendrag", nn: "Samandrag" },
+  forespurnad: { nb: "Forespørsel", nn: "Forespurnad" },
+  inputTolkingH2: { nb: "Input-tolkning", nn: "Input-tolking" },
+  statusPrefix: { nb: "Status: ", nn: "Status: " },
+  foresetnader: { nb: "Forutsetninger", nn: "Føresetnader" },
+  resultat: { nb: "Resultat", nn: "Resultat" },
+  stegvisUtrekning: { nb: "Stegvis utregning", nn: "Stegvis utrekning" },
+  fagleVurdering: { nb: "Faglig vurdering", nn: "Fagleg vurdering" },
+  kvaErIkkjeRekna: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna" },
+  atvaringar: { nb: "Advarsler", nn: "Åtvaringar" },
+  konstruktorkontroll: { nb: "Konstruktørkontroll", nn: "Konstruktørkontroll" },
+  berekningaLoyst: {
+    nb: "Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B).",
+    nn: "Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør A og Konstruktør B).",
+  },
+  konklusjon: { nb: "Konklusjon", nn: "Konklusjon" },
+  // Footer + meta
+  generertAvPilar: { nb: "Generert av Pilar", nn: "Generert av Pilar" },
+  docTitle: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
+  docDescription: {
+    nb: "AI-generert beregningsnotat — må kontrolleres av fagperson",
+    nn: "AI-generert berekningsnotat — må kontrollerast av fagperson",
+  },
+  // Fallback
+  ukjent: { nb: "Ukjent", nn: "Ukjent" },
+  ukjendFeil: { nb: "Ukjent feil", nn: "Ukjend feil" },
+  kunneIkkjeHente: { nb: "Kunne ikke hente rapport-data", nn: "Kunne ikkje hente rapport-data" },
+};
 
 // — Typar (matcher det /api/agent-e returnerer) —
 
@@ -157,7 +214,7 @@ function smallEyebrow(text: string): Paragraph {
 
 // — Tabell-helpers —
 
-function disclaimerBox(): Table {
+function disclaimerBox(locale: Locale): Table {
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
@@ -180,7 +237,7 @@ function disclaimerBox(): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "VIKTIG MERKNAD",
+                    text: WORD_LABELS.viktigMerknad[locale],
                     font: "Calibri",
                     size: 20,
                     bold: true,
@@ -191,7 +248,7 @@ function disclaimerBox(): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: DISCLAIMER_TEXT,
+                    text: WORD_LABELS.disclaimer[locale],
                     font: "Calibri",
                     size: 20,
                   }),
@@ -205,8 +262,8 @@ function disclaimerBox(): Table {
   });
 }
 
-function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
-  const { label, color } = tillitVisuals(score);
+function tillitBlock(score: number, breakdown: TillitBreakdown, locale: Locale): Table {
+  const { label, color } = tillitVisuals(score, locale);
   const colorHex = color.replace("#", "");
 
   return new Table({
@@ -231,7 +288,7 @@ function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "TILLIT-SKÅR",
+                    text: WORD_LABELS.tillitSkar[locale],
                     font: "Calibri",
                     size: 16,
                     color: "666666",
@@ -261,7 +318,7 @@ function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `Konstruktør-semje ${breakdown.ab_agreement}/35   ·   Kontrollør-verdict ${breakdown.controller_verdict}/35   ·   Fullstendigheit ${String(breakdown.completeness).replace(".", ",")}/30`,
+                    text: `${WORD_LABELS.konstruktorSemje[locale]} ${breakdown.ab_agreement}/35   ·   ${WORD_LABELS.kontrollorVerdict[locale]} ${breakdown.controller_verdict}/35   ·   ${WORD_LABELS.fullstendigheit[locale]} ${String(breakdown.completeness).replace(".", ",")}/30`,
                     font: "Calibri",
                     size: 20,
                   }),
@@ -271,7 +328,7 @@ function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "Måler AI-pipeline-tillit. Fagperson-kontroll vises separat i Kontrollstatus nedanfor.",
+                    text: WORD_LABELS.tillitMaler[locale],
                     font: "Calibri",
                     size: 18,
                     color: "888888",
@@ -287,29 +344,28 @@ function tillitBlock(score: number, breakdown: TillitBreakdown): Table {
   });
 }
 
-function kontrollstatusTable(data: FullReportResponse): Table {
+function kontrollstatusTable(data: FullReportResponse, locale: Locale): Table {
   const inputStatus = data.inputReview?.input_status ?? "";
-  const inputLabel = INPUT_STATUS_LABELS[inputStatus] ?? inputStatus ?? "—";
+  const inputLabel = inputStatusLabel(inputStatus, locale);
 
   const aConf = data.agentA.structured_output.confidence ?? "";
   const aLabel = CONFIDENCE_LABELS[aConf] ?? aConf ?? "—";
   const bConf = data.agentB.structured_output.confidence ?? "";
   const bLabel = CONFIDENCE_LABELS[bConf] ?? bConf ?? "—";
 
-  const matchStatus = data.comparison?.match_status ?? "";
-  const matchLabel = MATCH_STATUS_SHORT[matchStatus] ?? matchStatus ?? "—";
+  const matchStatusKey = data.comparison?.match_status ?? "";
+  const matchLabel = matchStatusShort(matchStatusKey, locale);
 
-  const decisionStatus = data.controllerDecision?.decision_status ?? "";
-  const decisionLabel =
-    DECISION_STATUS_SHORT[decisionStatus] ?? decisionStatus ?? "—";
+  const decisionStatusKey = data.controllerDecision?.decision_status ?? "";
+  const decisionLabel = decisionStatusShort(decisionStatusKey, locale);
 
   const rows: [string, string][] = [
-    ["Input-tolking", inputLabel],
-    ["Konstruktør A", aLabel],
-    ["Konstruktør B", bLabel],
-    ["Samanlikning", matchLabel],
-    ["Kontrollør", decisionLabel],
-    ["Fagperson", "Ikkje kontrollert"],
+    [WORD_LABELS.inputTolking[locale], inputLabel],
+    [WORD_LABELS.konstruktorA[locale], aLabel],
+    [WORD_LABELS.konstruktorB[locale], bLabel],
+    [WORD_LABELS.samanlikning[locale], matchLabel],
+    [WORD_LABELS.kontrollor[locale], decisionLabel],
+    [WORD_LABELS.fagperson[locale], WORD_LABELS.ikkjeKontrollert[locale]],
   ];
 
   return new Table({
@@ -444,17 +500,18 @@ function decisionBox(label: string, message: string): Table {
 
 // — Hovuddokument-byggjar —
 
-function buildDocument(data: FullReportResponse): Document {
+function buildDocument(data: FullReportResponse, locale: Locale): Document {
+  const dateTag = locale === "nb" ? "nb-NO" : "nn-NO";
   const reportDate = new Date(data.report.created_at).toLocaleDateString(
-    "nn-NO",
+    dateTag,
     { year: "numeric", month: "long", day: "numeric" }
   );
 
   const decisionLabel =
-    DECISION_STATUS_LABELS[data.controllerDecision?.decision_status ?? ""] ??
-    "Ukjent";
-  const matchPhrase =
-    MATCH_PHRASES[data.comparison?.match_status ?? ""] ?? "";
+    decisionStatusLabel(data.controllerDecision?.decision_status ?? "", locale) ??
+    WORD_LABELS.ukjent[locale];
+  const matchPhraseText =
+    matchPhrase(data.comparison?.match_status ?? "", locale) ?? "";
 
   const blocked = data.controllerDecision?.blocked_outputs ?? [];
   const isBlocked = (field: string) => blocked.includes(field);
@@ -467,7 +524,7 @@ function buildDocument(data: FullReportResponse): Document {
     new Paragraph({
       children: [
         new TextRun({
-          text: "BEREKNINGSNOTAT",
+          text: WORD_LABELS.berekningsnotatEyebrow[locale],
           font: "Calibri",
           size: 16,
           color: "888888",
@@ -491,12 +548,12 @@ function buildDocument(data: FullReportResponse): Document {
   );
 
   // Metadata
-  children.push(metadataLine("Dokument-ID:", data.report.document_id));
-  children.push(metadataLine("Dato:", reportDate));
-  children.push(metadataLine("Status:", decisionLabel));
+  children.push(metadataLine(WORD_LABELS.metaDokumentID[locale], data.report.document_id));
+  children.push(metadataLine(WORD_LABELS.metaDato[locale], reportDate));
+  children.push(metadataLine(WORD_LABELS.metaStatus[locale], decisionLabel));
   children.push(
     metadataLine(
-      "Rapport-versjon:",
+      WORD_LABELS.metaRapportVersjon[locale],
       formatPromptVersion(data.report.prompt_version)
     )
   );
@@ -508,36 +565,36 @@ function buildDocument(data: FullReportResponse): Document {
   ) {
     children.push(new Paragraph({ children: [], spacing: { after: 200 } }));
     children.push(
-      tillitBlock(data.report.tillit_score, data.report.tillit_breakdown)
+      tillitBlock(data.report.tillit_score, data.report.tillit_breakdown, locale)
     );
   }
 
   // Kontrollstatus-tabell (Fase 2)
   children.push(new Paragraph({ children: [], spacing: { after: 200 } }));
-  children.push(smallEyebrow("KONTROLLSTATUS"));
-  children.push(kontrollstatusTable(data));
+  children.push(smallEyebrow(WORD_LABELS.kontrollstatus[locale]));
+  children.push(kontrollstatusTable(data, locale));
 
   // Disclaimer
   children.push(new Paragraph({ children: [], spacing: { after: 240 } }));
-  children.push(disclaimerBox());
+  children.push(disclaimerBox(locale));
 
   // Samandrag
-  children.push(heading2("Samandrag"));
+  children.push(heading2(WORD_LABELS.samandrag[locale]));
   children.push(body(data.report.executive_summary));
 
   // Forespurnad
-  children.push(heading2("Forespurnad"));
+  children.push(heading2(WORD_LABELS.forespurnad[locale]));
   children.push(monoBox(data.run.request.raw_text));
 
   // Input-tolking
   if (data.inputReview) {
     const rawStatus = data.inputReview.input_status;
-    const prettyStatus = INPUT_STATUS_LABELS[rawStatus] ?? rawStatus;
-    children.push(heading2("Input-tolking"));
+    const prettyStatus = inputStatusLabel(rawStatus, locale);
+    children.push(heading2(WORD_LABELS.inputTolkingH2[locale]));
     children.push(
       new Paragraph({
         children: [
-          new TextRun({ text: "Status: ", font: "Calibri", size: 22 }),
+          new TextRun({ text: WORD_LABELS.statusPrefix[locale], font: "Calibri", size: 22 }),
           new TextRun({
             text: prettyStatus,
             font: "Calibri",
@@ -553,21 +610,21 @@ function buildDocument(data: FullReportResponse): Document {
   // Føresetnader
   const assumptions = primary.structured_output.assumptions;
   if (assumptions && assumptions.length > 0) {
-    children.push(heading2("Føresetnader"));
+    children.push(heading2(WORD_LABELS.foresetnader[locale]));
     for (const a of assumptions) children.push(bullet(a));
   }
 
   // Resultat
   const results = primary.structured_output.results;
   if (results && !isBlocked("results_a")) {
-    children.push(heading2("Resultat"));
+    children.push(heading2(WORD_LABELS.resultat[locale]));
     children.push(resultsTable(results));
   }
 
   // Stegvis utrekning
   const steps = primary.structured_output.calculation_steps;
   if (steps && !isBlocked("calculation_steps_a")) {
-    children.push(heading2("Stegvis utrekning"));
+    children.push(heading2(WORD_LABELS.stegvisUtrekning[locale]));
     steps.forEach((step, i) => {
       children.push(heading3(`${i + 1}. ${step.title}`));
       children.push(monoBox(step.text));
@@ -575,28 +632,28 @@ function buildDocument(data: FullReportResponse): Document {
   }
 
   // Fagleg vurdering
-  children.push(heading2("Fagleg vurdering"));
+  children.push(heading2(WORD_LABELS.fagleVurdering[locale]));
   children.push(body(data.report.technical_assessment));
 
   // Kva er ikkje rekna
   const limitations = primary.structured_output.limitations;
   if (limitations && limitations.length > 0) {
-    children.push(heading2("Kva er ikkje rekna"));
+    children.push(heading2(WORD_LABELS.kvaErIkkjeRekna[locale]));
     for (const l of limitations) children.push(bullet(l));
   }
 
   // Åtvaringar
   const warnings = primary.structured_output.warnings;
   if (warnings && warnings.length > 0) {
-    children.push(heading2("Åtvaringar"));
+    children.push(heading2(WORD_LABELS.atvaringar[locale]));
     for (const w of warnings) children.push(bullet(w));
   }
 
   // Konstruktørkontroll (tidlegare "Agentkontroll")
-  children.push(heading2("Konstruktørkontroll"));
+  children.push(heading2(WORD_LABELS.konstruktorkontroll[locale]));
   children.push(
     body(
-      `Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør A og Konstruktør B).${matchPhrase}`
+      `${WORD_LABELS.berekningaLoyst[locale]}${matchPhraseText}`
     )
   );
   if (data.controllerDecision) {
@@ -606,7 +663,7 @@ function buildDocument(data: FullReportResponse): Document {
   }
 
   // Konklusjon
-  children.push(heading2("Konklusjon"));
+  children.push(heading2(WORD_LABELS.konklusjon[locale]));
   children.push(body(data.report.conclusion));
 
   // Footer
@@ -614,7 +671,7 @@ function buildDocument(data: FullReportResponse): Document {
     new Paragraph({
       children: [
         new TextRun({
-          text: `Generert av Pilar • ${data.report.document_id}`,
+          text: `${WORD_LABELS.generertAvPilar[locale]} • ${data.report.document_id}`,
           font: "Calibri",
           size: 18,
           color: "888888",
@@ -627,8 +684,8 @@ function buildDocument(data: FullReportResponse): Document {
 
   return new Document({
     creator: "Pilar",
-    title: `Berekningsnotat ${data.report.document_id}`,
-    description: "AI-generert berekningsnotat — må kontrollerast av fagperson",
+    title: `${WORD_LABELS.docTitle[locale]} ${data.report.document_id}`,
+    description: WORD_LABELS.docDescription[locale],
     sections: [
       {
         properties: {
@@ -656,6 +713,9 @@ export async function GET(
   const requestStart = Date.now();
   let stage = "init";
 
+  // Les locale frå cookie så Word-eksporten matchar valt språk i UI
+  const locale = getLocaleFromCookies(await cookies());
+
   try {
     stage = "params";
     const { run_id } = await context.params;
@@ -679,7 +739,7 @@ export async function GET(
         "Content-Type": "application/json",
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
-      body: JSON.stringify({ run_id }),
+      body: JSON.stringify({ run_id, locale }),
     });
 
     if (!agentERes.ok) {
@@ -692,7 +752,7 @@ export async function GET(
       });
       return NextResponse.json(
         {
-          error: errBody.error || "Kunne ikkje hente rapport-data",
+          error: errBody.error || WORD_LABELS.kunneIkkjeHente[locale],
           stage,
         },
         { status: agentERes.status }
@@ -703,7 +763,7 @@ export async function GET(
     const data: FullReportResponse = await agentERes.json();
 
     stage = "build_docx";
-    const doc = buildDocument(data);
+    const doc = buildDocument(data, locale);
 
     stage = "pack_docx";
     const buffer = await Packer.toBuffer(doc);
@@ -729,7 +789,7 @@ export async function GET(
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Ukjend feil";
+    const message = error instanceof Error ? error.message : WORD_LABELS.ukjendFeil[locale];
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("Word export error:", { stage, message, stack });
     return NextResponse.json(

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { tillitVisuals } from "@/lib/tillit-score";
 import { InfoPopover } from "@/app/components/InfoPopover";
+import type { Locale } from "@/lib/locale";
+import { useLocale } from "@/lib/locale-context";
 
 /**
  * TillitGauge — sirkulær gauge-komponent for AI-pipeline-tillit (0-100).
@@ -18,6 +20,49 @@ import { InfoPopover } from "@/app/components/InfoPopover";
  *
  * Print-mode: breakdown alltid utvida (CSS-styrt via @media print).
  */
+
+const TG_LABELS: Record<string, Record<Locale, string>> = {
+  // Idle-state
+  ikkjeRekna: { nb: "Tillit-score ikke beregnet", nn: "Tillit-score ikkje rekna" },
+  // Aria-label
+  ariaPre: { nb: "Tillit-score ", nn: "Tillit-score " },
+  ariaMid: { nb: " av 100 (", nn: " av 100 (" },
+  ariaPost: { nb: "). Klikk for å se breakdown.", nn: "). Klikk for å sjå breakdown." },
+  // Komponent-rader
+  konstruktorSemje: { nb: "Konstruktør-enighet", nn: "Konstruktør-semje" },
+  konstruktorSemjeExpl: { nb: "Speiler Sammenligner sin vurdering av om Konstruktør A og B kom frem til samme svar. Full enighet gir høyeste verdi; metodiske eller numeriske avvik trekker ned.", nn: "Speglar Samanliknar si vurdering av om Konstruktør A og B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned." },
+  kontrollorVerdict: { nb: "Kontrollør-verdict", nn: "Kontrollør-verdict" },
+  kontrollorVerdictExpl: { nb: "Speiler Kontrollørens endelige avgjørelse. Godkjent gir høyeste verdi; godkjent med advarsler litt lavere; usikker mye lavere; avvist nuller ut.", nn: "Speglar Kontrollør si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut." },
+  fullstendigheit: { nb: "Fullstendighet", nn: "Fullstendigheit" },
+  fullstendigheitExpl: { nb: "Måler hvor mange av de forespurte størrelsene som faktisk ble beregnet i pipeline. Full pott når alle er dekket.", nn: "Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt." },
+  formulaNote: { nb: "Gauge'en måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2." },
+  storleikarRekna: { nb: "størrelser beregnet", nn: "storleikar rekna" },
+  avInfix: { nb: "av", nn: "av" },
+};
+
+// Enum-mapping for prettifyEnum — locale-aware
+const ENUM_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
+  nb: {
+    match: "Full enighet",
+    minor_differences: "Mindre avvik",
+    significant_differences: "Betydelige avvik",
+    critical_disagreement: "Kritisk uenighet",
+    approved: "Godkjent",
+    approved_with_warnings: "Godkjent med advarsler",
+    uncertain: "Usikker",
+    rejected: "Avvist",
+  },
+  nn: {
+    match: "Full semje",
+    minor_differences: "Mindre avvik",
+    significant_differences: "Betydelege avvik",
+    critical_disagreement: "Kritisk usemje",
+    approved: "Godkjent",
+    approved_with_warnings: "Godkjent med åtvaringar",
+    uncertain: "Usikker",
+    rejected: "Avvist",
+  },
+};
 
 interface TillitBreakdown {
   ab_agreement: number;
@@ -46,19 +91,20 @@ const STROKE = 10;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
+  const { locale } = useLocale();
   const [expanded, setExpanded] = useState(false);
 
   if (score === null || score === undefined) {
     return (
       <div className="tillit-gauge tillit-gauge--idle">
         <span className="tillit-gauge__placeholder">
-          Tillit-score ikkje rekna
+          {TG_LABELS.ikkjeRekna[locale]}
         </span>
       </div>
     );
   }
 
-  const { label, color } = tillitVisuals(score);
+  const { label, color } = tillitVisuals(score, locale);
   const dashOffset = CIRCUMFERENCE * (1 - score / 100);
 
   return (
@@ -68,7 +114,7 @@ export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
         className="tillit-gauge__button"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        aria-label={`Tillit-score ${score} av 100 (${label}). Klikk for å sjå breakdown.`}
+        aria-label={`${TG_LABELS.ariaPre[locale]}${score}${TG_LABELS.ariaMid[locale]}${label}${TG_LABELS.ariaPost[locale]}`}
       >
         <svg
           width={SVG_SIZE}
@@ -116,32 +162,32 @@ export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
           data-expanded={expanded ? "true" : "false"}
         >
           <ComponentRow
-            label="Konstruktør-semje"
+            label={TG_LABELS.konstruktorSemje[locale]}
             value={breakdown.ab_agreement}
             max={35}
-            detail={prettifyEnum(breakdown.components?.comparison_status)}
-            explanation="Speglar Samanliknar si vurdering av om Konstruktør A og B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned."
+            detail={prettifyEnum(breakdown.components?.comparison_status, locale)}
+            explanation={TG_LABELS.konstruktorSemjeExpl[locale]}
           />
           <ComponentRow
-            label="Kontrollør-verdict"
+            label={TG_LABELS.kontrollorVerdict[locale]}
             value={breakdown.controller_verdict}
             max={35}
-            detail={prettifyEnum(breakdown.components?.controller_verdict_raw)}
-            explanation="Speglar Kontrollør si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut."
+            detail={prettifyEnum(breakdown.components?.controller_verdict_raw, locale)}
+            explanation={TG_LABELS.kontrollorVerdictExpl[locale]}
           />
           <ComponentRow
-            label="Fullstendigheit"
+            label={TG_LABELS.fullstendigheit[locale]}
             value={breakdown.completeness}
             max={30}
             detail={
               breakdown.components
-                ? `${breakdown.components.rekna_storleikar} av ${breakdown.components.spurde_storleikar} storleikar rekna`
+                ? `${breakdown.components.rekna_storleikar} ${TG_LABELS.avInfix[locale]} ${breakdown.components.spurde_storleikar} ${TG_LABELS.storleikarRekna[locale]}`
                 : undefined
             }
-            explanation="Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt."
+            explanation={TG_LABELS.fullstendigheitExpl[locale]}
           />
           <p className="tillit-gauge__formula-note">
-            Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2.
+            {TG_LABELS.formulaNote[locale]}
           </p>
         </div>
       )}
@@ -187,17 +233,8 @@ function ComponentRow({ label, value, max, detail, explanation }: ComponentRowPr
  * Mappar snake_case enum-verdiar til lesbare etikettar.
  * Returnerer undefined viss input er undefined/tom.
  */
-function prettifyEnum(raw: string | undefined): string | undefined {
+function prettifyEnum(raw: string | undefined, locale: Locale): string | undefined {
   if (!raw) return undefined;
-  const map: Record<string, string> = {
-    match: "Full semje",
-    minor_differences: "Mindre avvik",
-    significant_differences: "Betydelege avvik",
-    critical_disagreement: "Kritisk usemje",
-    approved: "Godkjent",
-    approved_with_warnings: "Godkjent med åtvaringar",
-    uncertain: "Usikker",
-    rejected: "Avvist",
-  };
+  const map = ENUM_LABELS_BY_LOCALE[locale];
   return map[raw] ?? raw;
 }

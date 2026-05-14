@@ -9,6 +9,7 @@ import {
   type ControllerStatus,
 } from "@/lib/tillit-score";
 
+import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
 const PROMPT_VERSION = "agent_e_v0.3";
 const MODEL = "claude-sonnet-4-6";
 
@@ -191,7 +192,9 @@ function isBreakdownStale(breakdown: unknown): boolean {
 
 export async function POST(request: Request) {
   try {
-    const { run_id } = await request.json();
+    const body = await request.json();
+    const { run_id } = body;
+    const locale = coerceLocale(body.locale);
 
     if (!run_id) {
       return NextResponse.json(
@@ -323,7 +326,7 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
         type: "enabled",
         budget_tokens: 2000,
       },
-      system: SYSTEM_PROMPT,
+      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
       messages: [{ role: "user", content: userMessage }],
     });
 

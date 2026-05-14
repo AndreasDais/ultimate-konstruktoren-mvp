@@ -1,0 +1,90 @@
+app/api/agent-a/route.ts:12:Du jobbar i ein pipeline der eit anna agent-lag (Samanliknar og Kontrollør) seinare vil verifisere arbeidet ditt mot Konstruktør B sitt uavhengige svar. Det er ditt ansvar å levere RIKTIG arbeid, ikkje berre LIKANDE arbeid. Faglege feil her får konsekvensar nedstrøms.
+app/api/agent-e/route.ts:19:Rolla di er å skrive prosa-felta i ein berekningsrapport som vert lest av ingeniørar. Du syntetiserer arbeid som allereie er gjort av tidlegare agentar (Tolkar, Konstruktør A og B, Samanliknar, Kontrollør) til lesbar prosa. Du sjølv reknar IKKJE — ingen tal, formlar eller standardreferansar skal stamme frå deg.
+app/api/agent-e/route.ts:23:Du er siste ledd i pipelinen før rapport-rendering. Kontrollør har allereie gjort den endelege fagvurderinga (approved / approved_with_warnings / uncertain / rejected). Det er IKKJE di oppgåve å overstyre eller mjuke opp Kontrollør si avgjerd — det er di oppgåve å TRANSMITTERE ho fagleg riktig til lesaren.
+app/api/agent-e/route.ts:28:- Samanliknar-blokk og Kontrollør-avgjerd (rendrast direkte frå DB)
+app/api/agent-e/route.ts:40:1. Kva er Kontrollør si avgjerd? (approved / approved_with_warnings / uncertain / rejected) Den styrer tonen.
+app/api/agent-e/route.ts:61:GOD: "Berekninga gjeld dimensjonering av strekkarmering i ein enkeltarmert betongbjelke (b = 250 mm, d = 450 mm, C25/30) for eit dimensjonerande bøyemoment M_Ed = 120 kNm. Konstruktør A og B er fullt einige om at nødvendig armeringsareal er A_s,req = 751 mm² og at enkeltarmering er tilstrekkeleg. Kontrollør har godkjent berekninga som førebels grunnlag, og resultatet skal kontrollerast av ansvarleg fagperson før bruk i prosjektering."
+app/api/agent-e/route.ts:71:Praktisk vegvising. Kva skal lesaren gjere vidare? Ikkje overstyr Kontrollør — viss han har gitt "approved_with_warnings", reflekter det. Viss han har gitt "uncertain" eller "rejected", ver tydeleg om at brukaren må kontrollere på nytt eller søke fagperson FØR vidare bruk.
+app/api/agent-e/route.ts:89:   - "approved" → prosaen kan seie "Kontrollør har godkjent berekninga som førebels grunnlag"
+app/api/agent-e/route.ts:91:   - "uncertain" → prosaen MÅ seie "Kontrollør har vurdert resultatet som usikkert" og lesaren MÅ varslast om at vidare arbeid krevst
+app/api/agent-e/route.ts:92:   - "rejected" → prosaen MÅ seie "Kontrollør har avvist berekninga" — IKKJE softa det opp
+app/api/agent-e/route.ts:100:   Viss Kontrollør har blokkert enkelttall eller delkonklusjonar frå éin av Konstruktørane, presenter ikkje desse blokka verdiane som om dei vart godkjent. Skriv heller "Konstruktør X sine talverdiar er blokkerte av Kontrollør."
+app/api/agent-e/route.ts:103:   Viss Konstruktør A eller B har "low" eller "medium" konfidens og Kontrollør likevel godkjent, er det relevant kontekst som kan nemnast i technical_assessment.
+app/api/agent-e/route.ts:106:   Viss det er åtvaringar i Konstruktør- eller Kontrollør-output, må minst dei viktigaste reflekterast — særleg dei som påverkar gyldigheita av resultatet (t.d. "berre gyldig viss bjelken er sideavstiva").
+app/api/agent-e/route.ts:112:- Tredjeperson for agent-referansar: "Konstruktør A og B har funne...", "Kontrollør har vurdert..." — aldri "vi" eller "eg" eller "Rapportør".
+app/api/agent-e/route.ts:147:  controllerDecision: { decision_status?: string } | null
+app/api/agent-e/route.ts:155:  if (!controllerDecision?.decision_status) {
+app/api/agent-e/route.ts:157:      "[tillit-score] Manglar controller_decisions.decision_status — kan ikkje rekne kontrollør-verdict"
+app/api/agent-e/route.ts:173:      controller_verdict: controllerDecision.decision_status as ControllerStatus,
+app/api/agent-e/route.ts:240:    const { data: controllerDecision } = await supabase
+app/api/agent-e/route.ts:241:      .from("controller_decisions")
+app/api/agent-e/route.ts:267:          controllerDecision
+app/api/agent-e/route.ts:291:        controllerDecision,
+app/api/agent-e/route.ts:314:${JSON.stringify(controllerDecision, null, 2)}
+app/api/agent-e/route.ts:363:    const tillit = computeTillitFor(inputReview, comparison, controllerDecision);
+app/api/agent-e/route.ts:396:      controllerDecision,
+app/api/input-agent/route.ts:20:Tryggleiken ligg ikkje i deg åleine — Konstruktør A og Konstruktør B løyser uavhengig, Samanliknar finn avvik mellom dei, og Kontrollør har stoppmandat. Du er første ledd, ikkje einaste ledd.
+app/api/input-agent/route.ts:53:- 0.45-0.65: forespurnaden er på grensa av MVP eller har fleire moglege tolkingar. Kontrollør bør sjå nøye på resultatet.
+app/api/input-agent/route.ts:100:Grunngiving: Forespurnaden er fagleg gyldig sjølv om vipping ligg på grensa. Vi let agentane prøve, flaggar usikkerheit gjennom konfidens og antakingar, og lar Kontrollør ta endeleg avgjerd. Merk at "lastangrepspunkt" er antatt (tyngdepunkt) — det skal IKKJE samtidig stå i manglande_verdiar.
+app/api/rapport/[run_id]/word/route.ts:75:  controllerDecision: {
+app/api/rapport/[run_id]/word/route.ts:264:                    text: `Konstruktør-semje ${breakdown.ab_agreement}/35   ·   Kontrollør-verdict ${breakdown.controller_verdict}/35   ·   Fullstendigheit ${String(breakdown.completeness).replace(".", ",")}/30`,
+app/api/rapport/[run_id]/word/route.ts:302:  const decisionStatus = data.controllerDecision?.decision_status ?? "";
+app/api/rapport/[run_id]/word/route.ts:311:    ["Kontrollør", decisionLabel],
+app/api/rapport/[run_id]/word/route.ts:417:                    text: "Kontrollør si avgjerd: ",
+app/api/rapport/[run_id]/word/route.ts:454:    DECISION_STATUS_LABELS[data.controllerDecision?.decision_status ?? ""] ??
+app/api/rapport/[run_id]/word/route.ts:459:  const blocked = data.controllerDecision?.blocked_outputs ?? [];
+app/api/rapport/[run_id]/word/route.ts:602:  if (data.controllerDecision) {
+app/api/rapport/[run_id]/word/route.ts:604:      decisionBox(decisionLabel, data.controllerDecision.user_message)
+app/api/runs/[id]/route.ts:55:    { data: controllerDecision },
+app/api/runs/[id]/route.ts:78:      .from("controller_decisions")
+app/api/runs/[id]/route.ts:143:  // controller_decisions → ControllerDecision
+app/api/runs/[id]/route.ts:144:  const controllerDecisionMapped = controllerDecision
+app/api/runs/[id]/route.ts:146:        decision_status: controllerDecision.decision_status,
+app/api/runs/[id]/route.ts:147:        risk_level: controllerDecision.risk_level,
+app/api/runs/[id]/route.ts:148:        reason: controllerDecision.reason,
+app/api/runs/[id]/route.ts:149:        user_message: controllerDecision.user_message,
+app/api/runs/[id]/route.ts:150:        blocked_outputs: controllerDecision.blocked_outputs ?? [],
+app/api/runs/[id]/route.ts:151:        allowed_outputs: controllerDecision.allowed_outputs ?? [],
+app/api/runs/[id]/route.ts:152:        manual_review_required: controllerDecision.manual_review_required ?? false,
+app/api/runs/[id]/route.ts:153:        controller_notes: controllerDecision.controller_notes ?? "",
+app/api/runs/[id]/route.ts:164:    controllerDecision: controllerDecisionMapped,
+app/components/TillitGauge.tsx:126:            label="Kontrollør-verdict"
+app/components/TillitGauge.tsx:130:            explanation="Speglar Kontrollør si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut."
+app/mine/page.tsx:73:  controller_decisions:
+app/mine/page.tsx:129:      controller_decisions ( decision_status ),
+app/page.tsx:144:  kontrollorAvgjerd: { nb: "Kontrollør — endelig avgjørelse", nn: "Kontrollør — endeleg avgjerd" },
+app/page.tsx:145:  kontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+app/page.tsx:146:  kontrollorPopover1: { nb: "Kontrollør-agenten leser både konstruktører og Sammenligner, og avgjør om resultatet er trygt nok å vise. Erstatter", nn: "Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar" },
+app/page.tsx:149:  sluttkonklusjonUtelaten: { nb: "Sluttkonklusjon utelatt av Kontrolløren.", nn: "Sluttkonklusjon utelaten av Kontrolløren." },
+app/page.tsx:150:  hallusinasjonarTekst: { nb: "Kontrolløren identifiserte hallusinasjoner i konstruktørenes kortform-konklusjon. Se Resultat-felt og full utregning under for korrekte verdier.", nn: "Kontrolløren identifiserte hallusinasjonar i konstruktørane sin kortform-konklusjon. Sjå Resultat-felt og full utrekning under for korrekte verdiar." },
+app/page.tsx:258:  const [controllerDecision, setControllerDecision] = useState<ControllerDecision | null>(null);
+app/page.tsx:403:          if (data.controllerDecision) {
+app/page.tsx:404:            setControllerDecision(data.controllerDecision as ControllerDecision);
+app/page.tsx:506:      setControllerDecision(state.controllerDecision ?? null);
+app/page.tsx:536:          controllerDecision,
+app/page.tsx:794:      // Lokale resA/resB blir brukt i Samanliknar/Kontrollør-kalla nedanfor
+app/page.tsx:825:      // === STEG 3: Kontrolløren ===
+app/page.tsx:826:      const responseD = await fetch("/api/agent-d", {
+app/page.tsx:842:        console.error("Kontrollør feila:", dataD.error);
+app/page.tsx:858:    !!controllerDecision?.blocked_outputs?.includes(key);
+app/page.tsx:1203:              {/* Kontrolløren si avgjerd — primær banner */}
+app/page.tsx:1204:              {controllerDecision && (
+app/page.tsx:1206:                  status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
+app/page.tsx:1223:                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{decisionStatusLabel(controllerDecision.decision_status, locale)}</Badge>
+app/page.tsx:1227:                  {controllerDecision.user_message}
+app/page.tsx:1231:              {/* Fallback: Samanliknar-banner viss Kontrolløren feila */}
+app/page.tsx:1232:              {!controllerDecision && comparison && (
+app/rapport/[run_id]/page.tsx:72:  kontrollorAvgjerd: { nb: "Kontrollørens avgjørelse:", nn: "Kontrolløren si avgjerd:" },
+app/rapport/[run_id]/page.tsx:96:  statusKontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+app/rapport/[run_id]/page.tsx:97:  statusKontrollorExplanation: { nb: "Kontrollør-agenten leser både konstruktører og Sammenligner, og avgjør om resultatet er trygt nok å vise. Erstatter ikke fagperson-kontroll.", nn: "Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar ikkje fagperson-kontroll." },
+app/rapport/[run_id]/page.tsx:163:  controllerDecision: ControllerDecision | null;
+app/rapport/[run_id]/page.tsx:272:  const blocked = data.controllerDecision?.blocked_outputs ?? [];
+app/rapport/[run_id]/page.tsx:279:    decisionStatusLabel(data.controllerDecision?.decision_status ?? "", locale) ??
+app/rapport/[run_id]/page.tsx:310:  const decisionStatus = data.controllerDecision?.decision_status ?? "";
+app/rapport/[run_id]/page.tsx:604:              {data.controllerDecision && (
+app/rapport/[run_id]/page.tsx:607:                  <em>{data.controllerDecision.user_message}</em>
+lib/format.ts:57:      " Det er betydelige forskjeller mellom svarene — se Kontrollørens vurdering nedenfor.",
+lib/format.ts:65:      " Det er betydelege forskjellar mellom svara — sjå Kontrolløren si vurdering nedanfor.",
+lib/format.ts:96:// ═══ DECISION-STATUS (Kontrollør) ══════════════════════════
+lib/format.ts:97:// Verifisert mot controller_decisions.decision_status i Supabase.
+lib/tillit-score.ts:54:  /** Komponent 2 — Kontrollør-verdict, 0-35 */

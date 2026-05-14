@@ -3,6 +3,7 @@ import mammoth from "mammoth";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 
 const SYSTEM_PROMPT = `Du er Tolkar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -177,19 +178,23 @@ type BuildResult =
 
 async function parseInput(
   request: Request
-): Promise<{ text: string | null; file: File | null }> {
+): Promise<{ text: string | null; file: File | null; locale: Locale }> {
   const contentType = request.headers.get("content-type") ?? "";
 
   if (contentType.includes("multipart/form-data")) {
     const formData = await request.formData();
     const textValue = formData.get("text");
     const fileValue = formData.get("file");
+    const localeValue = formData.get("locale");
     return {
       text:
         typeof textValue === "string" && textValue.trim()
           ? textValue.trim()
           : null,
       file: fileValue instanceof File ? fileValue : null,
+      locale: coerceLocale(
+        typeof localeValue === "string" ? localeValue : null
+      ),
     };
   }
 
@@ -198,6 +203,7 @@ async function parseInput(
     text:
       typeof body.text === "string" && body.text.trim() ? body.text.trim() : null,
     file: null,
+    locale: coerceLocale(body.locale),
   };
 }
 
@@ -320,6 +326,7 @@ type CoreCallResult =
 async function callTolkar(args: {
   content: ContentBlock[];
   rawTextForDb: string;
+  locale: Locale;
   onTextDelta?: (delta: string) => void;
 }): Promise<CoreCallResult> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -331,7 +338,7 @@ async function callTolkar(args: {
     model: "claude-sonnet-4-6",
     max_tokens: 2048,
     temperature: 0.3,
-    system: SYSTEM_PROMPT,
+    system: wrapPromptWithLocale(SYSTEM_PROMPT, args.locale),
     messages,
   });
 
@@ -472,6 +479,7 @@ export async function POST(request: Request) {
             const result = await callTolkar({
               content,
               rawTextForDb,
+              locale: parsed.locale,
               onTextDelta: (delta) => {
                 if (!firstDeltaSeen) {
                   firstDeltaSeen = true;
@@ -509,7 +517,7 @@ export async function POST(request: Request) {
     }
 
     // JSON-modus (bakoverkompatibel)
-    const result = await callTolkar({ content, rawTextForDb });
+    const result = await callTolkar({ content, rawTextForDb, locale: parsed.locale });
 
     if (!result.ok) {
       return Response.json(

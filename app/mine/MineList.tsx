@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { InfoPopover } from "@/app/components/InfoPopover";
+import type { Locale } from "@/lib/locale";
+import { useLocale } from "@/lib/locale-context";
 
 // === DELT TYPE — speilar serverdefinert MineRow i page.tsx ===
 export type MineRow = {
@@ -15,35 +17,77 @@ export type MineRow = {
   documentId: string | null;
 };
 
-// === FASE-MAPPING (same som server) ===
-const PHASE_STYLES: Record<
-  MineRow["phase"],
-  { label: string; color: string; explanation: string }
-> = {
-  workbench: {
-    label: "Workbench",
-    color: "bg-amber-50 text-amber-800 border-amber-200",
-    explanation:
-      "Tolkar har lese spørsmålet, men berekninga er ikkje starta enno. Klikk på rada for å halde fram derifrå.",
+// === FASE-MAPPING ===
+// PHASE_COLORS er språknøytrale Tailwind-klassar.
+// PHASE_LABELS_BY_LOCALE held label + forklaring per fase per språk.
+const PHASE_COLORS: Record<MineRow["phase"], string> = {
+  workbench: "bg-amber-50 text-amber-800 border-amber-200",
+  mission_control: "bg-blue-50 text-blue-800 border-blue-200",
+  rapport: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  krasja: "bg-red-50 text-red-800 border-red-200",
+};
+
+type PhaseLabelInfo = { label: string; explanation: string };
+
+const PHASE_LABELS_BY_LOCALE: Record<Locale, Record<MineRow["phase"], PhaseLabelInfo>> = {
+  nb: {
+    workbench: {
+      label: "Workbench",
+      explanation:
+        "Tolkeren har lest spørsmålet, men beregningen er ikke startet ennå. Klikk på raden for å fortsette derfra.",
+    },
+    mission_control: {
+      label: "Mission Control",
+      explanation:
+        "Konstruktør A og B er ferdige med utregningen. Klikk for å se sammenligning, kontrollør-vurdering og generere rapporten.",
+    },
+    rapport: {
+      label: "Rapport",
+      explanation:
+        "Ferdig beregningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
+    },
+    krasja: {
+      label: "Krasjet",
+      explanation:
+        "Beregningen ble avbrutt eller feilet. Du kan starte på nytt fra samme input ved å klikke på raden.",
+    },
   },
-  mission_control: {
-    label: "Mission Control",
-    color: "bg-blue-50 text-blue-800 border-blue-200",
-    explanation:
-      "Konstruktør A og B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
+  nn: {
+    workbench: {
+      label: "Workbench",
+      explanation:
+        "Tolkar har lese spørsmålet, men berekninga er ikkje starta enno. Klikk på rada for å halde fram derifrå.",
+    },
+    mission_control: {
+      label: "Mission Control",
+      explanation:
+        "Konstruktør A og B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
+    },
+    rapport: {
+      label: "Rapport",
+      explanation:
+        "Ferdig berekningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
+    },
+    krasja: {
+      label: "Krasja",
+      explanation:
+        "Berekninga vart avbroten eller feila. Du kan starte på nytt frå same input ved å klikke på rada.",
+    },
   },
-  rapport: {
-    label: "Rapport",
-    color: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    explanation:
-      "Ferdig berekningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
-  },
-  krasja: {
-    label: "Krasja",
-    color: "bg-red-50 text-red-800 border-red-200",
-    explanation:
-      "Berekninga vart avbroten eller feila. Du kan starte på nytt frå same input ved å klikke på rada.",
-  },
+};
+
+// === ANDRE UI-STRENGER ===
+const ML_LABELS: Record<string, Record<Locale, string>> = {
+  sokPlaceholder: { nb: "Søk i beregninger...", nn: "Søk i berekningar..." },
+  sokAriaLabel: { nb: "Søk i beregninger", nn: "Søk i berekningar" },
+  ingenTreffPre: { nb: 'Ingen treff for "', nn: 'Ingen treff for "' },
+  ingenTreffPost: { nb: '".', nn: '".' },
+  tillit: { nb: "Tillit", nn: "Tillit" },
+  tillitSkarLabel: { nb: "Tillit-skår", nn: "Tillit-skår" },
+  tillitPopover1: { nb: "AI-pipelinens interne enighet (0–100). Måler hvor godt konstruktørene og kontrolløren er enige om resultatet.", nn: "AI-pipeline si interne semje (0–100). Måler kor godt konstruktørane og kontrolløren er einige om resultatet." },
+  tillitPopover2Pre: { nb: "Erstatter", nn: "Erstattar" },
+  tillitPopover2Mid: { nb: "ikke", nn: "ikkje" },
+  tillitPopover2Post: { nb: "fagperson-kontroll. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "fagperson-kontroll. Formelen er ein pilot-hypotese og blir kalibrert i v0.2." },
 };
 
 // Vis-rekkjefølge — pipeline-orden + Krasja sist.
@@ -54,10 +98,11 @@ const PHASE_ORDER: MineRow["phase"][] = [
   "krasja",
 ];
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, locale: Locale): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return new Intl.DateTimeFormat("nn-NO", {
+  const tag = locale === "nb" ? "nb-NO" : "nn-NO";
+  return new Intl.DateTimeFormat(tag, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -74,6 +119,7 @@ function getTillitColor(score: number): string {
 }
 
 export function MineList({ rows }: { rows: MineRow[] }) {
+  const { locale } = useLocale();
   const [search, setSearch] = useState("");
   // Folde-state per fase. Default: alle opne.
   const [collapsed, setCollapsed] = useState<Record<MineRow["phase"], boolean>>(
@@ -120,17 +166,17 @@ export function MineList({ rows }: { rows: MineRow[] }) {
       <div className="mb-6">
         <input
           type="search"
-          placeholder="Søk i berekningar..."
+          placeholder={ML_LABELS.sokPlaceholder[locale]}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-          aria-label="Søk i berekningar"
+          aria-label={ML_LABELS.sokAriaLabel[locale]}
         />
       </div>
 
       {filteredRows.length === 0 ? (
         <p className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center text-sm text-neutral-500">
-          Ingen treff for &quot;{search}&quot;.
+          {ML_LABELS.ingenTreffPre[locale]}{search}{ML_LABELS.ingenTreffPost[locale]}
         </p>
       ) : (
         <div className="space-y-6">
@@ -138,7 +184,8 @@ export function MineList({ rows }: { rows: MineRow[] }) {
             const phaseRows = grouped[phase];
             if (phaseRows.length === 0) return null;
 
-            const info = PHASE_STYLES[phase];
+            const info = PHASE_LABELS_BY_LOCALE[locale][phase];
+            const color = PHASE_COLORS[phase];
             const isCollapsed = collapsed[phase];
             const sectionId = `mine-section-${phase}`;
 
@@ -161,7 +208,7 @@ export function MineList({ rows }: { rows: MineRow[] }) {
                       ▶
                     </span>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${info.color}`}
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${color}`}
                     >
                       {info.label}
                     </span>
@@ -178,7 +225,7 @@ export function MineList({ rows }: { rows: MineRow[] }) {
                   <ul id={sectionId} className="mt-2 space-y-3">
                     {phaseRows.map((row) => (
                       <li key={row.key}>
-                        <CalculationCard row={row} />
+                        <CalculationCard row={row} locale={locale} />
                       </li>
                     ))}
                   </ul>
@@ -192,9 +239,10 @@ export function MineList({ rows }: { rows: MineRow[] }) {
   );
 }
 
-function CalculationCard({ row }: { row: MineRow }) {
-  const phaseInfo = PHASE_STYLES[row.phase];
-  const date = formatDate(row.date);
+function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
+  const phaseLabel = PHASE_LABELS_BY_LOCALE[locale][row.phase];
+  const phaseColor = PHASE_COLORS[row.phase];
+  const date = formatDate(row.date, locale);
 
   return (
     <Link
@@ -229,24 +277,20 @@ function CalculationCard({ row }: { row: MineRow }) {
                   {row.tillit}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1 inline-flex items-center">
-                  <span>Tillit</span>
-                  <InfoPopover label="Tillit-skår">
+                  <span>{ML_LABELS.tillit[locale]}</span>
+                  <InfoPopover label={ML_LABELS.tillitSkarLabel[locale]}>
+                    <p>{ML_LABELS.tillitPopover1[locale]}</p>
                     <p>
-                      AI-pipeline si interne semje (0–100). Måler kor godt
-                      konstruktørane og kontrolløren er einige om resultatet.
-                    </p>
-                    <p>
-                      Erstattar <strong>ikkje</strong> fagperson-kontroll.
-                      Formelen er ein pilot-hypotese og blir kalibrert i v0.2.
+                      {ML_LABELS.tillitPopover2Pre[locale]} <strong>{ML_LABELS.tillitPopover2Mid[locale]}</strong> {ML_LABELS.tillitPopover2Post[locale]}
                     </p>
                   </InfoPopover>
                 </div>
               </div>
             )}
             <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${phaseInfo.color}`}
+              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${phaseColor}`}
             >
-              {phaseInfo.label}
+              {phaseLabel.label}
             </span>
           </div>
         </div>

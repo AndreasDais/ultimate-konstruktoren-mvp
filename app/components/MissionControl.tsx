@@ -1,6 +1,8 @@
 "use client";
 
 import "./mission-control.css";
+import type { Locale } from "@/lib/locale";
+import { useLocale } from "@/lib/locale-context";
 
 /**
  * Mission Control v2 (Dag 9) — ekte streaming.
@@ -12,6 +14,39 @@ import "./mission-control.css";
  *
  * Erstatta fake-timer frå v1 med real-tids progress.
  */
+
+const MC_LABELS: Record<string, Record<Locale, string>> = {
+  // Header
+  eyebrow: { nb: "STEG · BEREGNER", nn: "STEG · BEREKNAR" },
+  title: { nb: "To uavhengige konstruktører beregner samme problem", nn: "To uavhengige konstruktørar reknar same problem" },
+  subtitle: { nb: "Konstruktør A og B bruker ulik metode. Sammenligneren bekrefter at de er enige før resultatet presenteres.", nn: "Konstruktør A og B brukar ulik metode. Samanliknaren stadfestar at dei er einige før resultatet er presentert." },
+  // Konstruktør tags
+  konstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  konstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  tagA: { nb: "LUKKET FORMEL · EUROKODE", nn: "LUKKA FORMEL · EUROKODE" },
+  tagB: { nb: "NUMERISK · FRITT LEGEME", nn: "NUMERISK · FRI LEKAM" },
+  // AgentCard
+  feilPrefix: { nb: "Feil:", nn: "Feil:" },
+  tenkjerDjupt: { nb: "Tenker dypt på problemet", nn: "Tenkjer djupt på problemet" },
+  skrivNesteSteg: { nb: "Skriver neste steg", nn: "Skriv neste steg" },
+  // SamanliknarPanel
+  samanliknar: { nb: "Sammenligner", nn: "Samanliknar" },
+  ventar: { nb: "VENTER", nn: "VENTAR" },
+  reknarAvvik: { nb: "BEREGNER AVVIK", nn: "REKNAR AVVIK" },
+  einige: { nb: "ENIGE", nn: "EINIGE" },
+  cellResultat: { nb: "RESULTAT", nn: "RESULTAT" },
+  cellMetode: { nb: "METODE", nn: "METODE" },
+  cellKonklusjon: { nb: "KONKLUSJON", nn: "KONKLUSJON" },
+  cellAvvikSuffix: { nb: "AVVIK", nn: "AVVIK" },
+  abIdentiske: { nb: "A og B identiske", nn: "A og B identiske" },
+  beggeKonvergerer: { nb: "Begge konvergerer", nn: "Begge konvergerer" },
+  lukkaFormelSame: { nb: "Lukket formel og numerisk gir samme svar", nn: "Lukka formel og numerisk gir same svar" },
+  innanforToleranse: { nb: "Innenfor toleranse", nn: "Innanfor toleranse" },
+  vurderNarare: { nb: "Vurder nærmere", nn: "Vurder nærare" },
+  videreKontrollor: { nb: "Videre til kontrollør", nn: "Vidare til kontrollør" },
+  toAvToEinige: { nb: "2 av 2 metoder enige", nn: "2 av 2 metodar einige" },
+  avvikAVurdere: { nb: "avvik å vurdere", nn: "avvik å vurdere" },
+};
 
 type CalculationStepMin = {
   title: string;
@@ -60,39 +95,41 @@ export default function MissionControl({
   streamingA,
   streamingB,
 }: Props) {
+  const { locale } = useLocale();
   const bothComplete = calculationA !== null && calculationB !== null;
 
   return (
     <div className="mc">
       <header className="mc-header">
-        <p className="mc-eyebrow">STEG · BEREKNAR</p>
+        <p className="mc-eyebrow">{MC_LABELS.eyebrow[locale]}</p>
         <h1 className="mc-title">
-          To uavhengige konstruktørar reknar same problem
+          {MC_LABELS.title[locale]}
         </h1>
         <p className="mc-subtitle">
-          Konstruktør A og B brukar ulik metode. Samanliknaren stadfestar at
-          dei er einige før resultatet er presentert.
+          {MC_LABELS.subtitle[locale]}
         </p>
       </header>
 
       <div className="mc-grid">
         <AgentCard
           letter="A"
-          name="Konstruktør A"
-          tag="LUKKA FORMEL · EUROKODE"
+          name={MC_LABELS.konstruktorA[locale]}
+          tag={MC_LABELS.tagA[locale]}
           streaming={streamingA}
           calculation={calculationA}
+          locale={locale}
         />
         <AgentCard
           letter="B"
-          name="Konstruktør B"
-          tag="NUMERISK · FRI LEKAM"
+          name={MC_LABELS.konstruktorB[locale]}
+          tag={MC_LABELS.tagB[locale]}
           streaming={streamingB}
           calculation={calculationB}
+          locale={locale}
         />
       </div>
 
-      <SamanliknarPanel bothComplete={bothComplete} comparison={comparison} />
+      <SamanliknarPanel bothComplete={bothComplete} comparison={comparison} locale={locale} />
     </div>
   );
 }
@@ -103,12 +140,14 @@ function AgentCard({
   tag,
   streaming,
   calculation,
+  locale,
 }: {
   letter: string;
   name: string;
   tag: string;
   streaming: AgentStreamingState;
   calculation: CalculationResultMin | null;
+  locale: Locale;
 }) {
   const complete = calculation !== null;
 
@@ -124,8 +163,8 @@ function AgentCard({
 
   const inProgressText =
     streaming.phase === "thinking"
-      ? "Tenkjer djupt på problemet"
-      : "Skriv neste steg";
+      ? MC_LABELS.tenkjerDjupt[locale]
+      : MC_LABELS.skrivNesteSteg[locale];
 
   // Results: frå calculation viss complete, elles frå streaming.
   const resultsSource = complete && calculation?.results
@@ -145,7 +184,7 @@ function AgentCard({
 
       {errorMessage ? (
         <div className="mc-error" role="alert">
-          <strong>Feil:</strong> {errorMessage}
+          <strong>{MC_LABELS.feilPrefix[locale]}</strong> {errorMessage}
         </div>
       ) : (
         <ol className="mc-steps">
@@ -187,16 +226,18 @@ function AgentCard({
 function SamanliknarPanel({
   bothComplete,
   comparison,
+  locale,
 }: {
   bothComplete: boolean;
   comparison: ComparisonResultMin | null;
+  locale: Locale;
 }) {
   if (!bothComplete) {
     return (
       <div className="mc-compare mc-compare--waiting">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">Samanliknar</div>
-        <div className="mc-compare-pill">VENTAR</div>
+        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
+        <div className="mc-compare-pill">{MC_LABELS.ventar[locale]}</div>
       </div>
     );
   }
@@ -205,9 +246,9 @@ function SamanliknarPanel({
     return (
       <div className="mc-compare mc-compare--working">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">Samanliknar</div>
+        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
         <div className="mc-compare-pill mc-compare-pill--active">
-          REKNAR AVVIK
+          {MC_LABELS.reknarAvvik[locale]}
         </div>
       </div>
     );
@@ -223,49 +264,49 @@ function SamanliknarPanel({
     <div className="mc-compare mc-compare--ready">
       <header className="mc-compare-ready-header">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">Samanliknar</div>
-        <div className="mc-compare-pill mc-compare-pill--success">EINIGE</div>
+        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
+        <div className="mc-compare-pill mc-compare-pill--success">{MC_LABELS.einige[locale]}</div>
       </header>
       <div className="mc-compare-grid">
         {allIdentical ? (
           <>
             <div className="mc-compare-cell">
-              <div className="mc-compare-cell-label">RESULTAT</div>
+              <div className="mc-compare-cell-label">{MC_LABELS.cellResultat[locale]}</div>
               <div className="mc-compare-cell-value">0,0 %</div>
-              <div className="mc-compare-cell-note">A og B identiske</div>
+              <div className="mc-compare-cell-note">{MC_LABELS.abIdentiske[locale]}</div>
             </div>
             <div className="mc-compare-cell">
-              <div className="mc-compare-cell-label">METODE</div>
+              <div className="mc-compare-cell-label">{MC_LABELS.cellMetode[locale]}</div>
               <div className="mc-compare-cell-value mc-compare-cell-value--prose">
-                Begge konvergerer
+                {MC_LABELS.beggeKonvergerer[locale]}
               </div>
               <div className="mc-compare-cell-note">
-                Lukka formel og numerisk gir same svar
+                {MC_LABELS.lukkaFormelSame[locale]}
               </div>
             </div>
           </>
         ) : (
           topDiffs.map((d, i) => (
             <div key={i} className="mc-compare-cell">
-              <div className="mc-compare-cell-label">{d.field} AVVIK</div>
+              <div className="mc-compare-cell-label">{d.field} {MC_LABELS.cellAvvikSuffix[locale]}</div>
               <div className="mc-compare-cell-value">
                 {d.percent_diff?.toFixed(1) ?? "0,0"} %
               </div>
               <div className="mc-compare-cell-note">
-                {d.severity === "low" ? "Innanfor toleranse" : "Vurder nærare"}
+                {d.severity === "low" ? MC_LABELS.innanforToleranse[locale] : MC_LABELS.vurderNarare[locale]}
               </div>
             </div>
           ))
         )}
         <div className="mc-compare-cell">
-          <div className="mc-compare-cell-label">KONKLUSJON</div>
+          <div className="mc-compare-cell-label">{MC_LABELS.cellKonklusjon[locale]}</div>
           <div className="mc-compare-cell-value mc-compare-cell-value--prose">
-            Vidare til kontrollør
+            {MC_LABELS.videreKontrollor[locale]}
           </div>
           <div className="mc-compare-cell-note">
             {allIdentical
-              ? "2 av 2 metodar einige"
-              : `${numDiffs.length} avvik å vurdere`}
+              ? MC_LABELS.toAvToEinige[locale]
+              : `${numDiffs.length} ${MC_LABELS.avvikAVurdere[locale]}`}
           </div>
         </div>
       </div>

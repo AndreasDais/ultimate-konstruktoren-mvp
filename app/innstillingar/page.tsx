@@ -1,9 +1,33 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import Link from "next/link";
+import type { Locale } from "@/lib/locale";
+import { getLocaleFromCookies } from "@/lib/locale";
 
 // Tving server-rendring per request — sessions må sjekkast på kvar hit.
 export const dynamic = "force-dynamic";
+
+const INNSTILLINGAR_LABELS: Record<string, Record<Locale, string>> = {
+  maVereInnlogga: { nb: "Du må være innlogget for å se denne siden.", nn: "Du må vere innlogga for å sjå denne sida." },
+  // Top
+  innstillingar: { nb: "Innstillinger", nn: "Innstillingar" },
+  konto: { nb: "Konto", nn: "Konto" },
+  // Kontoinformasjon
+  kontoinformasjon: { nb: "Kontoinformasjon", nn: "Kontoinformasjon" },
+  epost: { nb: "E-post", nn: "E-post" },
+  kontoOppretta: { nb: "Konto opprettet", nn: "Konto oppretta" },
+  sisteInnlogging: { nb: "Siste innlogging", nn: "Siste innlogging" },
+  // Pilot-status
+  pilotStatus: { nb: "Pilot-status", nn: "Pilot-status" },
+  pilotP1: { nb: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er bruker-preferanser (målform, eksport-format, desimaltegn) begrenset — de kommer som v0.2 etter pilot-tilbakemelding.", nn: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er brukar-preferansar (målform, eksport-format, desimalteikn) avgrensa — dei kjem som v0.2 etter pilot-tilbakemelding." },
+  pilotP2: { nb: "Tilbakemelding er velkommen. Bruk «Send feilrapport» nederst på hver rapport-side, eller send e-post.", nn: "Tilbakemelding er velkomen. Bruk «Send feilrapport» nederst på kvar rapport-side, eller send e-post." },
+  // Konto-handlingar
+  kontoHandlingar: { nb: "Konto-handlinger", nn: "Konto-handlingar" },
+  saMineBerekningar: { nb: "Se mine beregninger", nn: "Sjå mine berekningar" },
+  nyBerekning: { nb: "Ny beregning →", nn: "Ny berekning →" },
+  slettKontoInfo: { nb: "Vil du slette kontoen din eller alle dine data? Send e-post til support, så ordner vi det manuelt i pilot-fasen.", nn: "Vil du slette kontoen din eller alle dine data? Send e-post til support, så ordnar vi det manuelt i pilot-fasen." },
+};
+
 
 async function getCurrentUser() {
   const cookieStore = await cookies();
@@ -33,9 +57,10 @@ async function getCurrentUser() {
   return user;
 }
 
-function formatDate(iso: string | null | undefined): string {
+function formatDate(iso: string | null | undefined, locale: Locale): string {
   if (!iso) return "—";
-  return new Intl.DateTimeFormat("nn-NO", {
+  const tag = locale === "nb" ? "nb-NO" : "nn-NO";
+  return new Intl.DateTimeFormat(tag, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -45,6 +70,7 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 export default async function InnstillingarPage() {
+  const locale = getLocaleFromCookies(await cookies());
   const user = await getCurrentUser();
 
   // Middleware skal allereie ha kasta utlogga brukarar til /login,
@@ -52,7 +78,7 @@ export default async function InnstillingarPage() {
   if (!user) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <p className="text-neutral-600">Du må vere innlogga for å sjå denne sida.</p>
+        <p className="text-neutral-600">{INNSTILLINGAR_LABELS.maVereInnlogga[locale]}</p>
       </main>
     );
   }
@@ -62,58 +88,54 @@ export default async function InnstillingarPage() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
-            Innstillingar
+            {INNSTILLINGAR_LABELS.innstillingar[locale]}
           </p>
-          <h1 className="text-3xl font-semibold text-neutral-900">Konto</h1>
+          <h1 className="text-3xl font-semibold text-neutral-900">{INNSTILLINGAR_LABELS.konto[locale]}</h1>
         </div>
 
         <section className="rounded-lg border border-neutral-200 bg-white p-6 mb-4">
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
-            Kontoinformasjon
+            {INNSTILLINGAR_LABELS.kontoinformasjon[locale]}
           </h2>
           <dl className="space-y-3">
-            <Row label="E-post" value={user.email ?? "—"} />
-            <Row label="Konto oppretta" value={formatDate(user.created_at)} />
-            <Row label="Siste innlogging" value={formatDate(user.last_sign_in_at)} />
+            <Row label={INNSTILLINGAR_LABELS.epost[locale]} value={user.email ?? "—"} />
+            <Row label={INNSTILLINGAR_LABELS.kontoOppretta[locale]} value={formatDate(user.created_at, locale)} />
+            <Row label={INNSTILLINGAR_LABELS.sisteInnlogging[locale]} value={formatDate(user.last_sign_in_at, locale)} />
           </dl>
         </section>
 
         <section className="rounded-lg border border-neutral-200 bg-white p-6 mb-4">
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
-            Pilot-status
+            {INNSTILLINGAR_LABELS.pilotStatus[locale]}
           </h2>
           <p className="text-sm text-neutral-700 leading-relaxed">
-            Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er
-            brukar-preferansar (målform, eksport-format, desimalteikn) avgrensa
-            — dei kjem som v0.2 etter pilot-tilbakemelding.
+            {INNSTILLINGAR_LABELS.pilotP1[locale]}
           </p>
           <p className="text-sm text-neutral-700 leading-relaxed mt-3">
-            Tilbakemelding er velkomen. Bruk «Send feilrapport» nederst på kvar
-            rapport-side, eller send e-post.
+            {INNSTILLINGAR_LABELS.pilotP2[locale]}
           </p>
         </section>
 
         <section className="rounded-lg border border-neutral-200 bg-white p-6">
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
-            Konto-handlingar
+            {INNSTILLINGAR_LABELS.kontoHandlingar[locale]}
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               href="/mine"
               className="inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
             >
-              Sjå mine berekningar
+              {INNSTILLINGAR_LABELS.saMineBerekningar[locale]}
             </Link>
             <Link
               href="/"
               className="inline-flex items-center justify-center rounded-md bg-neutral-900 text-white px-4 py-2 text-sm font-medium hover:bg-neutral-800 transition-colors"
             >
-              Ny berekning →
+              {INNSTILLINGAR_LABELS.nyBerekning[locale]}
             </Link>
           </div>
           <p className="text-xs text-neutral-500 mt-4">
-            Vil du slette kontoen din eller alle dine data? Send e-post til
-            support, så ordnar vi det manuelt i pilot-fasen.
+            {INNSTILLINGAR_LABELS.slettKontoInfo[locale]}
           </p>
         </section>
       </div>

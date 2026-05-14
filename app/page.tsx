@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  MATCH_STATUS_LABELS, MATCH_STATUS_TONES,
-  DECISION_STATUS_LABELS, DECISION_STATUS_TONES,
+  matchStatusLabel, MATCH_STATUS_TONES,
+  decisionStatusLabel, DECISION_STATUS_TONES,
   CONFIDENCE_TONES, SEVERITY_TONES,
-  INPUT_STATUS_LABELS, INPUT_STATUS_TONES,
+  inputStatusLabel, INPUT_STATUS_TONES,
   type Tone,
 } from "@/lib/format";
 import MissionControl, { type AgentStreamingState } from "@/app/components/MissionControl";
 import { InfoPopover } from "@/app/components/InfoPopover";
 import { streamAgent } from "@/lib/stream-agent";
 import { extractStreamingState, extractTolkarState, type PartialTolkarState } from "@/lib/partial-json";
+import type { Locale } from "@/lib/locale";
+import { useLocale } from "@/lib/locale-context";
 // Fil-opplasting (chunk 2 dag 14-feature)
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB — Vercel Hobby body limit
 const ACCEPTED_FILE_TYPES =
@@ -91,50 +93,162 @@ const EXAMPLE_PROMPTS = [
   "Armering i betongbjelke, MEd = 120 kNm, b = 250 mm, d = 450 mm",
 ];
 
-const PHASE_HEADERS: Record<Phase, { eyebrow: string; title: string; description: string }> = {
-  workbench: {
-    eyebrow: "NY BEREKNING",
-    title: "Beskriv oppgåva",
-    description: "Skriv inn forespørselen. Tolkaren les og viser tolkinga her — du kan redigere og tolke på nytt før du startar berekninga.",
+const WB_LABELS: Record<string, Record<Locale, string>> = {
+  // Resume-banner
+  fortsetterFra: { nb: "Fortsetter fra tidligere beregning.", nn: "Held fram frå tidlegare berekning." },
+  endringerOpprett: { nb: "Endringer oppretter en ny beregning — originalen forblir uendret.", nn: "Endringar opprettar ein ny berekning — originalen blir uendra." },
+  // Input-form
+  skrivInnOppgave: { nb: "Skriv inn en konstruksjonsoppgave", nn: "Skriv inn ei konstruksjonsoppgåve" },
+  placeholderEksempel: { nb: "For eksempel: Finn maksimalt moment og skjær for en fritt opplagt bjelke med L = 5 m og jevnt fordelt last q = 8 kN/m...", nn: "Til dømes: Finn maksimalt moment og skjær for ein fritt opplagd bjelke med L = 5 m og jamt fordelt last q = 8 kN/m..." },
+  // Filopplasting
+  lastOppFil: { nb: "Last opp fil", nn: "Last opp fil" },
+  filopplasting: { nb: "Filopplasting", nn: "Filopplasting" },
+  filopplastingP1: { nb: "Last opp et bilde (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgaven.", nn: "Last opp eit bilete (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgåva." },
+  filopplastingP2Pre: { nb: "Maks filstørrelse:", nn: "Maks filstorleik:" },
+  filopplastingP2Post: { nb: ". Tolkeren leser filen og henter ut tekst, tall og kontekst.", nn: ". Tolkar les fila og hentar ut tekst, tal og kontekst." },
+  fjernFil: { nb: "Fjern fil", nn: "Fjern fil" },
+  // Eksempel
+  eksempel: { nb: "Eksempel", nn: "Eksempel" },
+  // Knappar
+  tolkarLoading: { nb: "Tolker...", nn: "Tolkar..." },
+  tolkPaNytt: { nb: "Tolk på nytt →", nn: "Tolk på nytt →" },
+  tolkOppgava: { nb: "Tolk oppgaven →", nn: "Tolk oppgåva →" },
+  feil: { nb: "Feil", nn: "Feil" },
+  // Tolking-panel
+  tolking: { nb: "Tolkning", nn: "Tolking" },
+  tolkarBadge: { nb: "Tolker", nn: "Tolkar" },
+  stromer: { nb: "● STREAMER", nn: "● STRØYMER" },
+  berekningstype: { nb: "Beregningstype", nn: "Berekningstype" },
+  tolkteVerdiar: { nb: "Tolkede verdier", nn: "Tolkte verdiar" },
+  manglandeData: { nb: "Manglende data", nn: "Manglande data" },
+  antakingar: { nb: "Antakelser", nn: "Antakingar" },
+  kvaKanReknast: { nb: "Hva kan beregnes nå", nn: "Kva kan reknast no" },
+  krevMeirInput: { nb: "krever mer input", nn: "krev meir input" },
+  // Status-card
+  status: { nb: "Status", nn: "Status" },
+  inputstatus: { nb: "Inputstatus", nn: "Inputstatus" },
+  inputstatusExplanation: { nb: "Tolkerens vurdering av hvor klar oppgaven er til å beregnes. 'Klar' = all info på plass. 'Delvis klar' = Tolkeren har gjort rimelige antakelser (synlig ovenfor) som du kan justere før du starter. Andre statuser trenger mer input eller faller utenfor pilot-versjonen.", nn: "Tolkar si vurdering av kor klar oppgåva er til å reknast. 'Klar' = all info på plass. 'Delvis klar' = Tolkar har gjort rimelege antakingar (synleg ovanfor) som du kan justere før du startar. Andre statusar treng meir input eller fell utanfor pilot-versjonen." },
+  fagomraade: { nb: "Fagområde", nn: "Fagområde" },
+  stottaMVP: { nb: "Støttet i MVP", nn: "Støtta i MVP" },
+  ja: { nb: "Ja", nn: "Ja" },
+  nei: { nb: "Nei", nn: "Nei" },
+  konfidens: { nb: "Konfidens", nn: "Konfidens" },
+  konfidensExplanation: { nb: "Tolkerens egenrapporterte sikkerhet på at fortolkningen er riktig (0–1). Ikke det samme som Tillit-skåren på rapportsiden — måler bare én agents tillit til eget arbeid.", nn: "Tolkar si eigenrapporterte sikkerheit på at fortolkinga er rett (0–1). Ikkje det same som Tillit-skåren på rapportsida — målar berre éin agent sin tillit til eige arbeid." },
+  // Start-CTA
+  stemmerTolkinga: { nb: "Stemmer tolkningen? Da kan du starte beregningen.", nn: "Stemmer tolkinga? Då kan du starte berekninga." },
+  avbryt: { nb: "Avbryt", nn: "Avbryt" },
+  startBerekning: { nb: "Start beregning →", nn: "Start berekning →" },
+  scrollTilStart: { nb: "Scroll til Start beregning", nn: "Scroll til Start berekning" },
+  klarTilStart: { nb: "Klar til å starte beregningen", nn: "Klar til å starte berekninga" },
+  // Result-fase
+  kontrollorAvgjerd: { nb: "Kontrollør — endelig avgjørelse", nn: "Kontrollør — endeleg avgjerd" },
+  kontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+  kontrollorPopover1: { nb: "Kontrollør-agenten leser både konstruktører og Sammenligner, og avgjør om resultatet er trygt nok å vise. Erstatter", nn: "Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar" },
+  kontrollorPopover2: { nb: "ikke", nn: "ikkje" },
+  kontrollorPopover3: { nb: "fagperson-kontroll.", nn: "fagperson-kontroll." },
+  sluttkonklusjonUtelaten: { nb: "Sluttkonklusjon utelatt av Kontrolløren.", nn: "Sluttkonklusjon utelaten av Kontrolløren." },
+  hallusinasjonarTekst: { nb: "Kontrolløren identifiserte hallusinasjoner i konstruktørenes kortform-konklusjon. Se Resultat-felt og full utregning under for korrekte verdier.", nn: "Kontrolløren identifiserte hallusinasjonar i konstruktørane sin kortform-konklusjon. Sjå Resultat-felt og full utrekning under for korrekte verdiar." },
+  kortSvar: { nb: "Kort svar", nn: "Kort svar" },
+  resultat: { nb: "Resultat", nn: "Resultat" },
+  foresetnaderBrukt: { nb: "Forutsetninger brukt", nn: "Føresetnader brukt" },
+  stegvisUtrekning: { nb: "Stegvis utregning", nn: "Stegvis utrekning" },
+  kvaErIkkjeRekna: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna" },
+  atvaringar: { nb: "Advarsler", nn: "Åtvaringar" },
+  // Konfidens-card
+  konstruktorAKonfidens: { nb: "Konstruktør A konfidens", nn: "Konstruktør A konfidens" },
+  konstruktorBKonfidens: { nb: "Konstruktør B konfidens", nn: "Konstruktør B konfidens" },
+  konstruktorKonfidens: { nb: "Konstruktør-konfidens", nn: "Konstruktør-konfidens" },
+  konstruktorKonfidensPopover: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (high/medium/low). Ikke det samme som Tillit-skåren — måler bare én agents tillit til seg selv.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv." },
+  // Konstruktør B-panel
+  konstruktorBUavhengig: { nb: "Konstruktør B — uavhengig kontroll", nn: "Konstruktør B — uavhengig kontroll" },
+  loysteOppgavaUtan: { nb: "Løste oppgaven uten å se Konstruktør A sitt svar", nn: "Løyste oppgåva utan å sjå Konstruktør A sitt svar" },
+  konstruktorBKonklusjon: { nb: "Konstruktør B sin konklusjon", nn: "Konstruktør B sin konklusjon" },
+  konstruktorBResultat: { nb: "Konstruktør B sine resultater", nn: "Konstruktør B sine resultat" },
+  // Samanliknar
+  samanliknarSkilnader: { nb: "Sammenligner — forskjeller funnet", nn: "Samanliknar — skilnader funne" },
+  numeriskeSkilnader: { nb: "Numeriske forskjeller", nn: "Numeriske skilnader" },
+  metodiskeSkilnader: { nb: "Metodiske forskjeller", nn: "Metodiske skilnader" },
+  forskjellarForesetnader: { nb: "Forskjeller i forutsetninger", nn: "Forskjellar i føresetnader" },
+  internInkonsistens: { nb: "Intern inkonsistens", nn: "Intern inkonsistens" },
+  // Tabell-headers (Felt, Konstruktør A, Konstruktør B, Skilnad, Alvor)
+  tabellFelt: { nb: "Felt", nn: "Felt" },
+  tabellSkilnad: { nb: "Forskjell", nn: "Skilnad" },
+  tabellAlvor: { nb: "Alvor", nn: "Alvor" },
+  // Action bar
+  resultatetForebels: { nb: "Resultatet er foreløpig og må kontrolleres av fagperson.", nn: "Resultatet er førebels og må kontrollerast av fagperson." },
+  tilbake: { nb: "← Tilbake", nn: "← Tilbake" },
+  generRapport: { nb: "Generer rapport →", nn: "Generer rapport →" },
+};
+
+const PHASE_HEADERS: Record<Locale, Record<Phase, { eyebrow: string; title: string; description: string }>> = {
+  nb: {
+    workbench: {
+      eyebrow: "NY BEREGNING",
+      title: "Beskriv oppgaven",
+      description: "Skriv inn forespørselen. Tolkeren leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.",
+    },
+    calculating: {
+      eyebrow: "REGNER",
+      title: "Konstruktørene jobber",
+      description: "Dobbel-kontroll med to uavhengige konstruktører, sammenligning og kontrolløravgjørelse.",
+    },
+    calculation_result: {
+      eyebrow: "STEG 3 AV 3 · RESULTAT",
+      title: "Beregningsnotat",
+      description: "Foreløpig resultat med agentkontroll. Må kontrolleres av fagperson før bruk.",
+    },
   },
-  calculating: {
-    eyebrow: "REKNAR",
-    title: "Konstruktørane jobbar",
-    description: "Dobbel-kontroll med to uavhengige konstruktørar, samanlikning og kontrolløravgjerd.",
-  },
-  calculation_result: {
-    eyebrow: "STEG 3 AV 3 · RESULTAT",
-    title: "Berekningsnotat",
-    description: "Førebels resultat med agentkontroll. Må kontrollerast av fagperson før bruk.",
+  nn: {
+    workbench: {
+      eyebrow: "NY BEREKNING",
+      title: "Beskriv oppgåva",
+      description: "Skriv inn forespørselen. Tolkaren les og viser tolkinga her — du kan redigere og tolke på nytt før du startar berekninga.",
+    },
+    calculating: {
+      eyebrow: "REKNAR",
+      title: "Konstruktørane jobbar",
+      description: "Dobbel-kontroll med to uavhengige konstruktørar, samanlikning og kontrolløravgjerd.",
+    },
+    calculation_result: {
+      eyebrow: "STEG 3 AV 3 · RESULTAT",
+      title: "Berekningsnotat",
+      description: "Førebels resultat med agentkontroll. Må kontrollerast av fagperson før bruk.",
+    },
   },
 };
 
 // Returnerer ein menneskeleg-lesbar grunn til at "Start berekning" er deaktivert,
 // eller null viss berekning kan startast. Status-spesifikk for å unngå
 // misvisande "legg til manglar"-melding på t.d. relevant_ikkje_stotta.
-function getBlockedReason(result: AgentResult | null): string | null {
+const BLOCKED_REASONS: Record<Locale, { avvist: string; relevant_ikkje_stotta: string; uklart: string; no_kalkulator: string }> = {
+  nb: {
+    avvist: "Inputen er ikke byggfaglig. Beregning kan ikke startes.",
+    relevant_ikkje_stotta: "Forespørselen er byggfaglig relevant, men ligger utenfor det MVP-en støtter ennå (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv en annen formulering eller en annen beregningstype.",
+    uklart: "Forespørselen er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med mer konkret informasjon om geometri, last og materiale.",
+    no_kalkulator: "Ingen beregning er mulig med oppgitt informasjon. Rediger forespørselen og legg til manglende data.",
+  },
+  nn: {
+    avvist: "Inputen er ikkje byggfagleg. Berekning kan ikkje startast.",
+    relevant_ikkje_stotta: "Forespurnaden er byggfagleg relevant, men ligg utanfor det MVP-en støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.",
+    uklart: "Forespurnaden er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med meir konkret informasjon om geometri, last og materiale.",
+    no_kalkulator: "Ingen berekning er mogleg med oppgitt informasjon. Rediger forespørselen og legg til manglande data.",
+  },
+};
+
+function getBlockedReason(result: AgentResult | null, locale: Locale): string | null {
   if (!result) return null;
+  const reasons = BLOCKED_REASONS[locale];
 
-  if (result.status === "avvist") {
-    return "Inputen er ikkje byggfagleg. Berekning kan ikkje startast.";
-  }
-
-  if (result.status === "relevant_ikkje_stotta") {
-    return "Forespurnaden er byggfagleg relevant, men ligg utanfor det MVP-en støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.";
-  }
-
-  if (result.status === "uklart") {
-    return "Forespurnaden er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med meir konkret informasjon om geometri, last og materiale.";
-  }
-
-  if ((result.kan_reknast_no?.length ?? 0) === 0) {
-    return "Ingen berekning er mogleg med oppgitt informasjon. Rediger forespørselen og legg til manglande data.";
-  }
+  if (result.status === "avvist") return reasons.avvist;
+  if (result.status === "relevant_ikkje_stotta") return reasons.relevant_ikkje_stotta;
+  if (result.status === "uklart") return reasons.uklart;
+  if ((result.kan_reknast_no?.length ?? 0) === 0) return reasons.no_kalkulator;
 
   return null;
 }
 
 export default function Home() {
+  const { locale } = useLocale();
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -489,9 +603,10 @@ useEffect(() => {
       const formData = new FormData();
       formData.append("file", selectedFile);
       if (input.trim()) formData.append("text", input);
+      formData.append("locale", locale);
       payload = formData;
     } else {
-      payload = { text: input };
+      payload = { text: input, locale };
     }
 
     try {
@@ -614,7 +729,7 @@ useEffect(() => {
       let errA: string | null = null;
       let errB: string | null = null;
 
-      const agentBody = { run_id: runId, input_review: result };
+      const agentBody = { run_id: runId, input_review: result, locale };
 
       await Promise.all([
         streamAgent("/api/agent-a", agentBody, {
@@ -693,6 +808,7 @@ useEffect(() => {
           run_id: runId,
           agent_a_output: resA,
           agent_b_output: resB,
+          locale,
         }),
       });
 
@@ -716,6 +832,7 @@ useEffect(() => {
           agent_a_output: resA,
           agent_b_output: resB,
           comparison_result: dataC.result,
+          locale,
         }),
       });
 
@@ -735,12 +852,12 @@ useEffect(() => {
     }
   };
 
-  const pageHeader = PHASE_HEADERS[phase];
+  const pageHeader = PHASE_HEADERS[locale][phase];
 
   const isBlocked = (key: string): boolean =>
     !!controllerDecision?.blocked_outputs?.includes(key);
 
-  const blockedReason = getBlockedReason(result);
+  const blockedReason = getBlockedReason(result, locale);
   const canStart = result !== null && blockedReason === null;
   const hasTolket = result !== null;
 
@@ -785,8 +902,8 @@ useEffect(() => {
           {restoredFrom && (
             <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span>
-                <strong style={{ color: "var(--fg, #1a1a1a)" }}>Held fram frå tidlegare berekning.</strong>{" "}
-                Endringar opprettar ein ny berekning — originalen blir uendra.
+                <strong style={{ color: "var(--fg, #1a1a1a)" }}>{WB_LABELS.fortsetterFra[locale]}</strong>{" "}
+                {WB_LABELS.endringerOpprett[locale]}
               </span>
               {restoredFrom.documentId && restoredFrom.runId && (
                 <a href={`/rapport/${restoredFrom.runId}`} style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline", whiteSpace: "nowrap" }}>{restoredFrom.documentId} ↗</a>
@@ -813,28 +930,28 @@ useEffect(() => {
               }}
             >
               <label htmlFor="oppgave" className="uk-label">
-                Skriv inn ei konstruksjonsoppgåve
+                {WB_LABELS.skrivInnOppgave[locale]}
               </label>
               <textarea
                 id="oppgave"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 rows={6}
-                placeholder="Til dømes: Finn maksimalt moment og skjær for ein fritt opplagd bjelke med L = 5 m og jamt fordelt last q = 8 kN/m..."
+                placeholder={WB_LABELS.placeholderEksempel[locale]}
                 className="uk-textarea"
               />
 
               {/* Fil-opplasting rett under textarea — +-knapp + chip + fileError */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                 <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
-                <InfoPopover label="Filopplasting"><p>Last opp eit bilete (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgåva.</p><p>Maks filstorleik: <strong>4 MB</strong>. Tolkar les fila og hentar ut tekst, tal og kontekst.</p></InfoPopover>
+                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label={WB_LABELS.lastOppFil[locale]} style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
+                <InfoPopover label={WB_LABELS.filopplasting[locale]}><p>{WB_LABELS.filopplastingP1[locale]}</p><p>{WB_LABELS.filopplastingP2Pre[locale]} <strong>4 MB</strong>{WB_LABELS.filopplastingP2Post[locale]}</p></InfoPopover>
                 {selectedFile && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8 }}>
                     <span aria-hidden="true">📎</span>
                     <span style={{ fontWeight: 500 }}>{selectedFile.name}</span>
                     <span style={{ color: "var(--fg-muted, #94A3B8)" }}>({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                    <button type="button" onClick={clearFile} aria-label="Fjern fil" style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
+                    <button type="button" onClick={clearFile} aria-label={WB_LABELS.fjernFil[locale]} style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
                   </div>
                 )}
               </div>
@@ -843,7 +960,7 @@ useEffect(() => {
               )}
 
               <div style={{ marginTop: 20 }}>
-                <div className="uk-eyebrow" style={{ marginBottom: 10 }}>Eksempel</div>
+                <div className="uk-eyebrow" style={{ marginBottom: 10 }}>{WB_LABELS.eksempel[locale]}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
                   {EXAMPLE_PROMPTS.map((example, i) => (
                     <button
@@ -867,16 +984,16 @@ useEffect(() => {
                   className={`uk-btn uk-btn--primary${loading ? " uk-btn--loading" : ""}`}
                 >
                   {loading
-                    ? "Tolkar..."
+                    ? WB_LABELS.tolkarLoading[locale]
                     : hasTolket
-                      ? "Tolk på nytt →"
-                      : "Tolk oppgåva →"}
+                      ? WB_LABELS.tolkPaNytt[locale]
+                      : WB_LABELS.tolkOppgava[locale]}
                 </button>
               </div>
 
               {/* === Feil-stripe — gjeld både tolk-feil og berekning-feil === */}
               {error && (
-                <StatusStripe status="bad" label="Feil" className="mt-8">
+                <StatusStripe status="bad" label={WB_LABELS.feil[locale]} className="mt-8">
                   {error}
                 </StatusStripe>
               )}
@@ -891,9 +1008,9 @@ useEffect(() => {
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                       <section className="uk-card">
                         <div className="uk-card__hd">
-                          <div className="uk-card__title">Tolking</div>
+                          <div className="uk-card__title">{WB_LABELS.tolking[locale]}</div>
                           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <Badge status="neutral">Tolkar</Badge>
+                            <Badge status="neutral">{WB_LABELS.tolkarBadge[locale]}</Badge>
                             {streamingTolkar.phase === "streaming" && (
                               <span
                                 style={{
@@ -908,7 +1025,7 @@ useEffect(() => {
                                   animation: "mc-pulse 1.5s ease-in-out infinite",
                                 }}
                               >
-                                ● STRØYMER
+                                {WB_LABELS.stromer[locale]}
                               </span>
                             )}
                           </div>
@@ -921,13 +1038,13 @@ useEffect(() => {
                           )}
 
                           {tolkingView.berekningstype && (
-                            <Row label="Berekningstype" value={tolkingView.berekningstype} />
+                            <Row label={WB_LABELS.berekningstype[locale]} value={tolkingView.berekningstype} />
                           )}
 
                           {Object.keys(tolkingView.tolkte_verdiar || {}).length > 0 && (
                             <div>
                               <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                                Tolkte verdiar
+                                {WB_LABELS.tolkteVerdiar[locale]}
                               </div>
                               <ul
                                 className="uk-mono"
@@ -950,14 +1067,14 @@ useEffect(() => {
 
                           {tolkingView.manglande_verdiar?.length > 0 && (
                             <ListSection
-                              label="Manglande data"
+                              label={WB_LABELS.manglandeData[locale]}
                               items={tolkingView.manglande_verdiar}
                               tone="warn"
                             />
                           )}
 
                           {tolkingView.antakingar?.length > 0 && (
-                            <ListSection label="Antakingar" items={tolkingView.antakingar} />
+                            <ListSection label={WB_LABELS.antakingar[locale]} items={tolkingView.antakingar} />
                           )}
                         </div>
                       </section>
@@ -973,7 +1090,7 @@ useEffect(() => {
                           style={{ scrollMarginTop: 24 }}
                         >
                           <div className="uk-card__hd">
-                            <div className="uk-card__title">Kva kan reknast no</div>
+                            <div className="uk-card__title">{WB_LABELS.kvaKanReknast[locale]}</div>
                           </div>
                           <div className="uk-card__bd">
                             {tolkingView.kan_reknast_no?.map((item) => (
@@ -986,7 +1103,7 @@ useEffect(() => {
                               <div key={item} className="uk-checkitem uk-checkitem--blocked">
                                 <span className="uk-checkitem__icon">○</span>
                                 <span className="uk-checkitem__label">{item}</span>
-                                <span className="uk-checkitem__note">krev meir input</span>
+                                <span className="uk-checkitem__note">{WB_LABELS.krevMeirInput[locale]}</span>
                               </div>
                             ))}
                           </div>
@@ -1003,19 +1120,19 @@ useEffect(() => {
                           style={{ scrollMarginTop: 24 }}
                         >
                           <div className="uk-card__hd">
-                            <div className="uk-card__title">Status</div>
+                            <div className="uk-card__title">{WB_LABELS.status[locale]}</div>
                           </div>
                           <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
-                          <StatusKV label="Inputstatus" tone={INPUT_STATUS_TONES[result.status] ?? "warn"} value={INPUT_STATUS_LABELS[result.status] ?? result.status} explanation="Tolkar si vurdering av kor klar oppgåva er til å reknast. 'Klar' = all info på plass. 'Delvis klar' = Tolkar har gjort rimelege antakingar (synleg ovanfor) som du kan justere før du startar. Andre statusar treng meir input eller fell utanfor pilot-versjonen." />
+                          <StatusKV label={WB_LABELS.inputstatus[locale]} tone={INPUT_STATUS_TONES[result.status] ?? "warn"} value={inputStatusLabel(result.status, locale)} explanation={WB_LABELS.inputstatusExplanation[locale]} />
                             {result.fagomraade && (
-                              <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
+                              <StatusKV label={WB_LABELS.fagomraade[locale]} tone="info" value={result.fagomraade} />
                             )}
                             <StatusKV
-                              label="Støtta i MVP"
+                              label={WB_LABELS.stottaMVP[locale]}
                               tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
-                              value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
+                              value={result.status === "relevant_ikkje_stotta" ? WB_LABELS.nei[locale] : WB_LABELS.ja[locale]}
                             />
-                            <StatusKV label="Konfidens" tone={result.konfidens >= 0.7 ? "ok" : result.konfidens >= 0.4 ? "warn" : "bad"} value={result.konfidens?.toFixed(2) ?? "—"} explanation="Tolkar si eigenrapporterte sikkerheit på at fortolkinga er rett (0–1). Ikkje det same som Tillit-skåren på rapportsida — målar berre éin agent sin tillit til eige arbeid." />
+                            <StatusKV label={WB_LABELS.konfidens[locale]} tone={result.konfidens >= 0.7 ? "ok" : result.konfidens >= 0.4 ? "warn" : "bad"} value={result.konfidens?.toFixed(2) ?? "—"} explanation={WB_LABELS.konfidensExplanation[locale]} />
                           </div>
                         </section>
                       )}
@@ -1035,18 +1152,18 @@ useEffect(() => {
       }}
     >
       <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-        Stemmer tolkinga? Då kan du starte berekninga.
+        {WB_LABELS.stemmerTolkinga[locale]}
       </p>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={handleCancel} className="uk-btn uk-btn--ghost">
-          Avbryt
+          {WB_LABELS.avbryt[locale]}
         </button>
         <button
           onClick={handleStartCalculation}
           disabled={!canStart}
           className="uk-btn uk-btn--primary"
         >
-          Start berekning →
+          {WB_LABELS.startBerekning[locale]}
         </button>
       </div>
     </div>
@@ -1064,7 +1181,7 @@ useEffect(() => {
 
           {/* === FEIL utanfor workbench (calculating/result fase) === */}
           {phase !== "workbench" && error && (
-            <StatusStripe status="bad" label="Feil" className="mt-8">
+            <StatusStripe status="bad" label={WB_LABELS.feil[locale]} className="mt-8">
               {error}
             </StatusStripe>
           )}
@@ -1100,10 +1217,10 @@ useEffect(() => {
                       }}
                     >
                       <span className="uk-eyebrow" style={{ color: "inherit" }}>
-                        Kontrollør — endeleg avgjerd
-                        <InfoPopover label="Kontrollør"><p>Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar <strong>ikkje</strong> fagperson-kontroll.</p></InfoPopover>
+                        {WB_LABELS.kontrollorAvgjerd[locale]}
+                        <InfoPopover label={WB_LABELS.kontrollor[locale]}><p>{WB_LABELS.kontrollorPopover1[locale]} <strong>{WB_LABELS.kontrollorPopover2[locale]}</strong> {WB_LABELS.kontrollorPopover3[locale]}</p></InfoPopover>
                       </span>
-                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{DECISION_STATUS_LABELS[controllerDecision.decision_status]}</Badge>
+                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{decisionStatusLabel(controllerDecision.decision_status, locale)}</Badge>
                     </div>
                   }
                 >
@@ -1118,7 +1235,7 @@ useEffect(() => {
                   className="mb-4"
                   header={
                     <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      {MATCH_STATUS_LABELS[comparison.match_status]}
+                      {matchStatusLabel(comparison.match_status, locale)}
                     </div>
                   }
                 >
@@ -1129,17 +1246,15 @@ useEffect(() => {
               {/* Kort svar — eller blokka-varsel */}
               {(isBlocked("short_conclusion_a") || isBlocked("short_conclusion_b")) ? (
                 <StatusStripe status="warn">
-                  <strong>Sluttkonklusjon utelaten av Kontrolløren.</strong>{" "}
-                  Kontrolløren identifiserte hallusinasjonar i konstruktørane sin
-                  kortform-konklusjon. Sjå Resultat-felt og full utrekning under
-                  for korrekte verdiar.
+                  <strong>{WB_LABELS.sluttkonklusjonUtelaten[locale]}</strong>{" "}
+                  {WB_LABELS.hallusinasjonarTekst[locale]}
                 </StatusStripe>
               ) : (
                 <StatusStripe
                   status="ok"
                   header={
                     <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      Kort svar
+                      {WB_LABELS.kortSvar[locale]}
                     </div>
                   }
                 >
@@ -1153,7 +1268,7 @@ useEffect(() => {
               {!isBlocked("results_a") && Object.keys(calculationA.results || {}).length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Resultat</div>
+                    <div className="uk-card__title">{WB_LABELS.resultat[locale]}</div>
                   </div>
                   <div className="uk-card__bd">
                     {Object.entries(calculationA.results).map(([k, v], i) => (
@@ -1176,7 +1291,7 @@ useEffect(() => {
               {calculationA.assumptions?.length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Føresetnader brukt</div>
+                    <div className="uk-card__title">{WB_LABELS.foresetnaderBrukt[locale]}</div>
                   </div>
                   <div className="uk-card__bd">
                     <ul
@@ -1200,7 +1315,7 @@ useEffect(() => {
               {!isBlocked("calculation_steps_a") && calculationA.calculation_steps?.length > 0 && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Stegvis utrekning</div>
+                    <div className="uk-card__title">{WB_LABELS.stegvisUtrekning[locale]}</div>
                   </div>
                   <div className="uk-card__bd">
                     <ol style={{ margin: 0, padding: 0, listStyle: "none" }}>
@@ -1266,7 +1381,7 @@ useEffect(() => {
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
                     <div className="uk-card__title" style={{ color: "var(--warn)" }}>
-                      Kva er ikkje rekna
+                      {WB_LABELS.kvaErIkkjeRekna[locale]}
                     </div>
                   </div>
                   <div className="uk-card__bd">
@@ -1294,7 +1409,7 @@ useEffect(() => {
                   className="mt-4"
                   header={
                     <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      Åtvaringar
+                      {WB_LABELS.atvaringar[locale]}
                     </div>
                   }
                 >
@@ -1319,14 +1434,14 @@ useEffect(() => {
                 <div className="uk-card__bd" style={{ padding: 14 }}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="uk-eyebrow">Konstruktør A konfidens</span>
-                      <InfoPopover label="Konstruktør-konfidens"><p>Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv.</p></InfoPopover>
+                    <span className="uk-eyebrow">{WB_LABELS.konstruktorAKonfidens[locale]}</span>
+                      <InfoPopover label={WB_LABELS.konstruktorKonfidens[locale]}><p>{WB_LABELS.konstruktorKonfidensPopover[locale]}</p></InfoPopover>
                       <Badge status={CONFIDENCE_TONES[calculationA.confidence]}>{calculationA.confidence}</Badge>
                     </div>
                     {calculationB && (
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span className="uk-eyebrow">Konstruktør B konfidens</span>
-                        <InfoPopover label="Konstruktør-konfidens"><p>Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv.</p></InfoPopover>
+                        <span className="uk-eyebrow">{WB_LABELS.konstruktorBKonfidens[locale]}</span>
+                        <InfoPopover label={WB_LABELS.konstruktorKonfidens[locale]}><p>{WB_LABELS.konstruktorKonfidensPopover[locale]}</p></InfoPopover>
                         <Badge status={CONFIDENCE_TONES[calculationB.confidence]}>{calculationB.confidence}</Badge>
                       </div>
                     )}
@@ -1341,9 +1456,9 @@ useEffect(() => {
                   style={{ marginTop: 16, background: "var(--surface-2)" }}
                 >
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Konstruktør B — uavhengig kontroll</div>
+                    <div className="uk-card__title">{WB_LABELS.konstruktorBUavhengig[locale]}</div>
                     <span style={{ fontSize: 11, color: "var(--fg-muted)", fontStyle: "italic" }}>
-                      Løyste oppgåva utan å sjå Konstruktør A sitt svar
+                      {WB_LABELS.loysteOppgavaUtan[locale]}
                     </span>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1357,7 +1472,7 @@ useEffect(() => {
                         }}
                       >
                         <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
-                          Konstruktør B sin konklusjon
+                          {WB_LABELS.konstruktorBKonklusjon[locale]}
                         </div>
                         <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
                           {calculationB.short_conclusion}
@@ -1375,7 +1490,7 @@ useEffect(() => {
                         }}
                       >
                         <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                          Konstruktør B sine resultat
+                          {WB_LABELS.konstruktorBResultat[locale]}
                         </div>
                         {Object.entries(calculationB.results).map(([k, v], i) => (
                           <div
@@ -1399,22 +1514,22 @@ useEffect(() => {
               {comparison && (
                 <section className="uk-card" style={{ marginTop: 16 }}>
                   <div className="uk-card__hd">
-                    <div className="uk-card__title">Samanliknar — skilnader funne</div>
+                    <div className="uk-card__title">{WB_LABELS.samanliknarSkilnader[locale]}</div>
                     <Badge status={MATCH_STATUS_TONES[comparison.match_status]}>
-                      {MATCH_STATUS_LABELS[comparison.match_status]}
+                      {matchStatusLabel(comparison.match_status, locale)}
                     </Badge>
                   </div>
                   <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                     {comparison.numeric_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          Numeriske skilnader
+                          {WB_LABELS.numeriskeSkilnader[locale]}
                         </div>
                         <div style={{ overflowX: "auto" }}>
                           <table style={{ width: "100%", fontSize: 12.5, borderCollapse: "collapse" }}>
                             <thead>
                               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                                {["Felt", "Konstruktør A", "Konstruktør B", "Skilnad", "Alvor"].map((h) => (
+                                {[WB_LABELS.tabellFelt[locale], "Konstruktør A", "Konstruktør B", WB_LABELS.tabellSkilnad[locale], WB_LABELS.tabellAlvor[locale]].map((h) => (
                                   <th
                                     key={h}
                                     className="uk-eyebrow"
@@ -1461,7 +1576,7 @@ useEffect(() => {
                     {comparison.method_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          Metodiske skilnader
+                          {WB_LABELS.metodiskeSkilnader[locale]}
                         </div>
                         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                           {comparison.method_differences.map((m, i) => (
@@ -1474,7 +1589,7 @@ useEffect(() => {
                     {comparison.assumption_differences?.length > 0 && (
                       <div>
                         <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          Forskjellar i føresetnader
+                          {WB_LABELS.forskjellarForesetnader[locale]}
                         </div>
                         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
                           {comparison.assumption_differences.map((a, i) => (
@@ -1496,7 +1611,7 @@ useEffect(() => {
                         }}
                       >
                         <div className="uk-eyebrow" style={{ color: "var(--warn)", marginBottom: 10 }}>
-                          ⚠ Intern inkonsistens
+                          ⚠ {WB_LABELS.internInkonsistens[locale]}
                         </div>
                         {(comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 && (
                           <div style={{ marginBottom: 12 }}>
@@ -1547,15 +1662,15 @@ useEffect(() => {
                     }}
                   >
                     <p style={{ fontSize: 13, color: "var(--fg-muted)", margin: 0 }}>
-                      Resultatet er førebels og må kontrollerast av fagperson.
+                      {WB_LABELS.resultatetForebels[locale]}
                     </p>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => setPhase("workbench")} className="uk-btn">
-                        ← Tilbake
+                        {WB_LABELS.tilbake[locale]}
                       </button>
                       {currentRunId && calculationA && calculationB && (
                         <a href={`/rapport/${currentRunId}`} className="uk-btn uk-btn--primary" onClick={saveStateToSession}>
-                          Generer rapport →
+                          {WB_LABELS.generRapport[locale]}
                         </a>
                       )}
                     </div>
@@ -1569,8 +1684,8 @@ useEffect(() => {
         {/* Flytande scroll-hint — viser når Tolkar er ferdig men "Start berekning"-
             CTA-en er under viewport. Klikk for smooth-scroll til CTA. */}
         {showScrollHint && (
-          <button type="button" onClick={() => startBerekningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} className="uk-scroll-hint" aria-label="Scroll til Start berekning">
-            <span>Klar til å starte berekninga</span>
+          <button type="button" onClick={() => startBerekningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} className="uk-scroll-hint" aria-label={WB_LABELS.scrollTilStart[locale]}>
+            <span>{WB_LABELS.klarTilStart[locale]}</span>
             <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
           </button>
         )}
