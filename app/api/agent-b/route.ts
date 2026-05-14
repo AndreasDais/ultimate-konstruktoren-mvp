@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import { getSupabase } from "@/lib/supabase";
 import {
   extractMentionedProfiles,
@@ -241,24 +242,47 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
   let parsed;
   try {
     parsed = JSON.parse(cleaned);
-  } catch (parseErr) {
-    console.error("[agent-b] JSON.parse feila:", {
-      stop_reason: message.stop_reason,
-      raw_length: responseText.length,
-      first_500_chars: responseText.slice(0, 500),
-      last_500_chars: responseText.slice(-500),
-      parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
-    });
-    const wasTruncated = message.stop_reason === "max_tokens";
-    return {
-      ok: false,
-      status: 500,
-      error: wasTruncated
-        ? "Konstruktør B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-        : "Klarte ikkje parse Konstruktør B sitt svar som JSON",
-      raw: responseText,
-      stopReason: message.stop_reason ?? undefined,
-    };
+  } catch (initialErr) {
+    // Forsøk reparasjon med jsonrepair før vi gir opp.
+    // Vanleg årsak: LaTeX-backslash (\sigma, \cdot) som ikkje er korrekt
+    // dobbel-escapa i JSON-strings. jsonrepair fiksar denne typen automatisk.
+    try {
+      const repaired = jsonrepair(cleaned);
+      parsed = JSON.parse(repaired);
+      console.warn("[agent-b] JSON reparert via jsonrepair fallback", {
+        stop_reason: message.stop_reason,
+        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+      });
+    } catch (parseErr) {
+      console.error("[agent-b] JSON.parse feila (også etter jsonrepair):", {
+        stop_reason: message.stop_reason,
+        raw_length: responseText.length,
+        first_500_chars: responseText.slice(0, 500),
+        last_500_chars: responseText.slice(-500),
+        error_context: (() => {
+          const errMsg = initialErr instanceof Error ? initialErr.message : "";
+          const m = errMsg.match(/position (\d+)/);
+          if (!m) return null;
+          const p = parseInt(m[1], 10);
+          return {
+            position: p,
+            context_200_chars: responseText.slice(Math.max(0, p - 100), p + 100),
+          };
+        })(),
+        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+        parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
+      });
+      const wasTruncated = message.stop_reason === "max_tokens";
+      return {
+        ok: false,
+        status: 500,
+        error: wasTruncated
+          ? "Konstruktør B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+          : "Klarte ikkje parse Konstruktør B sitt svar som JSON",
+        raw: responseText,
+        stopReason: message.stop_reason ?? undefined,
+      };
+    }
   }
 
   try {
