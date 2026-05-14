@@ -18,7 +18,7 @@ import {
 } from "@/lib/format";
 import "./rapport.css";
 import FeilrapportModal from "./feilrapport-modal";
-import { getStoredLocale, type Locale } from "@/lib/locale";
+import { type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 const RP_LABELS: Record<string, Record<Locale, string>> = {
   // Loading + error
@@ -179,7 +179,6 @@ export default function RapportPage() {
     async function loadReport() {
       try {
         setLoadingMessage("Genererer rapport...");
-        const locale = getStoredLocale();
         const res = await fetch("/api/agent-e", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -200,7 +199,7 @@ export default function RapportPage() {
     }
 
     loadReport();
-  }, [runId]);
+  }, [runId, locale]);
 
   // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
   // Etter konsolidering ser observer berre på dei 4 outer-sections.

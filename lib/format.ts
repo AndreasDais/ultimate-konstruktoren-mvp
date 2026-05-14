@@ -274,6 +274,7 @@ export const formatDate = (
 
 export const formatDateShort = (
   iso: string | Date,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _locale: Locale = DEFAULT_LOCALE
 ): string => {
   const d = new Date(iso);

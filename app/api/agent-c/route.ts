@@ -79,7 +79,8 @@ const PROMPT_VERSION = "agent_c_v0.1";
 
 export async function POST(request: Request) {
   try {
-    const { run_id, agent_a_output, agent_b_output } = await request.json();
+    const { run_id, agent_a_output, agent_b_output, locale: rawLocale } = await request.json();
+    const locale = coerceLocale(rawLocale);
 
     if (!run_id || !agent_a_output || !agent_b_output) {
       return Response.json(
@@ -105,7 +106,7 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
-      system: SYSTEM_PROMPT,
+      system: wrapPromptWithLocale(SYSTEM_PROMPT, locale),
       messages: [{ role: "user", content: userMessage }],
     });
 

@@ -94,7 +94,6 @@ export async function GET() {
       : "NEXT_PUBLIC_SENTRY_DSN manglar",
   };
 
-  const allOk = Object.values(checks).every((c) => c.status === "ok");
   const anyDown = Object.values(checks).some((c) => c.status === "down");
 
   const overallStatus = anyDown ? "degraded" : "ok";
