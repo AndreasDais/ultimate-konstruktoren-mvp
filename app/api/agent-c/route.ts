@@ -101,6 +101,7 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
     // === KALL CLAUDE ===
     const client = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
+      maxRetries: 5,
     });
 
     const message = await client.messages.create({

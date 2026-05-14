@@ -151,9 +151,10 @@ ${JSON.stringify(comparison_result, null, 2)}
 
 Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruksen.`;
 
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  maxRetries: 5,
+});
 
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",

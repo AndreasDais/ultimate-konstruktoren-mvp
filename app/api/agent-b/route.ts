@@ -211,9 +211,10 @@ async function callKonstruktorB(args: CoreCallArgs): Promise<CoreCallResult> {
 
 Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist før du skriv short_conclusion.`;
 
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  maxRetries: 5,
+});
 
   const stream = client.messages.stream({
     model: "claude-sonnet-4-6",

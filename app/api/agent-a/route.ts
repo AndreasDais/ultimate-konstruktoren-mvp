@@ -206,9 +206,10 @@ async function callKonstruktorA(args: CoreCallArgs): Promise<CoreCallResult> {
 
 Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist før du skriv short_conclusion.`;
 
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  maxRetries: 5,
+});
 
   // Streaming for å unngå 10-min SDK-timeout med max_tokens=32768.
   // Tekst-deltaer går til onTextDelta viss SSE-modus. I JSON-modus ventar

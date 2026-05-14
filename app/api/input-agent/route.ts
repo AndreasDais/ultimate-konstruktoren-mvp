@@ -329,7 +329,10 @@ async function callTolkar(args: {
   locale: Locale;
   onTextDelta?: (delta: string) => void;
 }): Promise<CoreCallResult> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    maxRetries: 5,
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any = [{ role: "user", content: args.content }];
