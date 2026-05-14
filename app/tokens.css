@@ -648,7 +648,7 @@
     color: var(--disclaimer-fg);
     font-family: var(--font-mono);
     font-size: 12px;
-    cursor: help;
+    cursor: default;
     transition: background 120ms, border-color 120ms, transform 120ms;
   }
   

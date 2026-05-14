@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
+import { InfoPopover } from "./InfoPopover";
 
 type Props = {
   /** Vis AI-disclaimer-chipen. Standard: true. Set false på admin-sider. */
@@ -68,16 +69,11 @@ export default function Header({
       <div className="uk-header__spacer" />
 
       {showAIChip && (
-        <button
-          type="button"
-          className="uk-header__ai-chip"
-          title={AI_DISCLAIMER_TEXT}
-          aria-label={AI_DISCLAIMER_TEXT}
-        >
+        <div className="uk-header__ai-chip">
           <span className="uk-header__ai-chip-dot" aria-hidden="true" />
           <span>AI-generert · krev fagleg kontroll</span>
-          <span className="uk-header__ai-chip-arrow" aria-hidden="true">→</span>
-        </button>
+          <InfoPopover label="AI-generert innhald"><p>{AI_DISCLAIMER_TEXT}</p></InfoPopover>
+        </div>
       )}
 
       {showLocaleToggle && (

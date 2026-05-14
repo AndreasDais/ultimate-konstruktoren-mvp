@@ -137,6 +137,18 @@ const MONTHS = {
 
 export type DateLocale = keyof typeof MONTHS;
 
+/**
+ * Formaterer prompt_version frå DB til brukarvennleg namn.
+ * agent_e_v0.3 → Rapportør v0.3 (og likeeins for framtidige versjonar).
+ * Andre format passerer uendra som fallback.
+ */
+export function formatPromptVersion(version: string | null | undefined): string {
+  if (!version) return "ukjent";
+  const match = version.match(/^agent_e_(v\d+\.\d+)$/);
+  if (match) return `Rapportør ${match[1]}`;
+  return version;
+}
+
 export const formatDate = (
   iso: string | Date,
   locale: DateLocale = "nn"

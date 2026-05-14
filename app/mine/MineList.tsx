@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { InfoPopover } from "@/app/components/InfoPopover";
 
 // === DELT TYPE — speilar serverdefinert MineRow i page.tsx ===
 export type MineRow = {
@@ -17,23 +18,31 @@ export type MineRow = {
 // === FASE-MAPPING (same som server) ===
 const PHASE_STYLES: Record<
   MineRow["phase"],
-  { label: string; color: string }
+  { label: string; color: string; explanation: string }
 > = {
   workbench: {
     label: "Workbench",
     color: "bg-amber-50 text-amber-800 border-amber-200",
+    explanation:
+      "Tolkar har lese spørsmålet, men berekninga er ikkje starta enno. Klikk på rada for å halde fram derifrå.",
   },
   mission_control: {
     label: "Mission Control",
     color: "bg-blue-50 text-blue-800 border-blue-200",
+    explanation:
+      "Konstruktør A og B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
   },
   rapport: {
     label: "Rapport",
     color: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    explanation:
+      "Ferdig berekningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
   },
   krasja: {
     label: "Krasja",
     color: "bg-red-50 text-red-800 border-red-200",
+    explanation:
+      "Berekninga vart avbroten eller feila. Du kan starte på nytt frå same input ved å klikke på rada.",
   },
 };
 
@@ -135,14 +144,14 @@ export function MineList({ rows }: { rows: MineRow[] }) {
 
             return (
               <section key={phase}>
-                <button
-                  type="button"
-                  onClick={() => toggle(phase)}
-                  className="group flex w-full items-center justify-between gap-3 rounded-md px-1 py-2 text-left hover:bg-neutral-100 transition-colors"
-                  aria-expanded={!isCollapsed}
-                  aria-controls={sectionId}
-                >
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-1 py-2">
+                  <button
+                    type="button"
+                    onClick={() => toggle(phase)}
+                    className="group flex flex-1 items-center gap-2 rounded-md text-left hover:bg-neutral-100 transition-colors py-1 px-1 -mx-1"
+                    aria-expanded={!isCollapsed}
+                    aria-controls={sectionId}
+                  >
                     <span
                       className={`inline-block transition-transform text-neutral-400 group-hover:text-neutral-600 ${
                         isCollapsed ? "" : "rotate-90"
@@ -159,8 +168,11 @@ export function MineList({ rows }: { rows: MineRow[] }) {
                     <span className="text-xs text-neutral-500">
                       ({phaseRows.length})
                     </span>
-                  </div>
-                </button>
+                  </button>
+                  <InfoPopover label={info.label}>
+                    <p>{info.explanation}</p>
+                  </InfoPopover>
+                </div>
 
                 {!isCollapsed && (
                   <ul id={sectionId} className="mt-2 space-y-3">
@@ -216,8 +228,18 @@ function CalculationCard({ row }: { row: MineRow }) {
                 >
                   {row.tillit}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1">
-                  Tillit
+                <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1 inline-flex items-center">
+                  <span>Tillit</span>
+                  <InfoPopover label="Tillit-skår">
+                    <p>
+                      AI-pipeline si interne semje (0–100). Måler kor godt
+                      konstruktørane og kontrolløren er einige om resultatet.
+                    </p>
+                    <p>
+                      Erstattar <strong>ikkje</strong> fagperson-kontroll.
+                      Formelen er ein pilot-hypotese og blir kalibrert i v0.2.
+                    </p>
+                  </InfoPopover>
                 </div>
               </div>
             )}

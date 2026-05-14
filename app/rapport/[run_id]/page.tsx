@@ -13,6 +13,7 @@ import {
   INPUT_STATUS_TONES,
   CONFIDENCE_TONES,
   formatDate,
+  formatPromptVersion,
   type Tone,
 } from "@/lib/format";
 import "./rapport.css";
@@ -21,6 +22,7 @@ import { QRCodeSVG } from "qrcode.react";
 import Formula from "@/app/components/Formula";
 import { TillitGauge } from "@/app/components/TillitGauge";
 import type { TillitBreakdown } from "@/lib/tillit-score";
+import { InfoPopover } from "@/app/components/InfoPopover";
 
 type AgentOutput = {
   agent_name: string;
@@ -281,8 +283,8 @@ export default function RapportPage() {
             <span>{reportDate}</span>
           </div>
           <div className="rapport-meta-row">
-            <span>Versjon</span>
-            <span className="uk-mono">{data.report.prompt_version}</span>
+          <span>Versjon</span>
+          <span className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</span>
           </div>
         </div>
       </aside>
@@ -316,7 +318,7 @@ export default function RapportPage() {
                     <span>Status:</span> {decisionLabel}
                   </div>
                   <div>
-                    <span>Rapport-versjon:</span> {data.report.prompt_version}
+                  <span>Rapport-versjon:</span> {formatPromptVersion(data.report.prompt_version)}
                   </div>
                 </div>
               </div>
@@ -569,7 +571,7 @@ export default function RapportPage() {
         <span className="rapport-footer__sep">·</span>
         <span>Generert {reportDate}</span>
         <span className="rapport-footer__sep">·</span>
-        <span className="uk-mono">{data.report.prompt_version}</span>
+        <span className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</span>
       </div>
       {rapportUrl && (
         <div className="rapport-footer__url uk-mono">{rapportUrl}</div>
@@ -625,28 +627,38 @@ export default function RapportPage() {
             label="Input-tolking"
             tone={inputTone}
             value={inputLabel}
+            explanation="Tolkar si vurdering av kor klar oppgåva var til å reknast. 'Klar' = all info på plass; andre statusar = Tolkar gjorde rimelege antakingar eller mangla info."
           />
           <StatusRow
             label="Konstruktør A"
             tone={agentATone}
             value={agentAConf || "—"}
+            explanation="Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar berre éin agent sin tillit til seg sjølv, ikkje den samla rapporten."
           />
           <StatusRow
             label="Konstruktør B"
             tone={agentBTone}
             value={agentBConf || "—"}
+            explanation="Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar berre éin agent sin tillit til seg sjølv, ikkje den samla rapporten."
           />
           <StatusRow
             label="Samanlikning"
             tone={matchTone}
             value={matchLabel}
+            explanation="Samanliknar-agenten sjekkar om Konstruktør A og B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn."
           />
           <StatusRow
             label="Kontrollør"
             tone={controllerTone}
             value={controllerShort}
+            explanation="Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar ikkje fagperson-kontroll."
           />
-          <StatusRow label="Fagperson" tone="warn" value="Ikkje kontrollert" />
+          <StatusRow
+            label="Fagperson"
+            tone="warn"
+            value="Ikkje kontrollert"
+            explanation="Sjekkar om ein kvalifisert byggingeniør har signert rapporten. I pilot-versjonen er dette alltid 'Ikkje kontrollert' — du må sjølv få ein fagperson til å gjennomgå før bruk i reelle prosjekt."
+          />
         </div>
         </aside>
 
@@ -661,20 +673,15 @@ export default function RapportPage() {
 );
 }
 
-function StatusRow({
-  label,
-  tone,
-  value,
-}: {
-  label: string;
-  tone: Tone;
-  value: string;
-}) {
+function StatusRow({ label, tone, value, explanation }: { label: string; tone: Tone; value: string; explanation?: string }) {
   const variant = tone === "neutral" ? "" : `uk-badge--${tone}`;
   const fullClass = ["uk-badge", variant].filter(Boolean).join(" ");
   return (
     <div className="rapport-status-row">
-      <span>{label}</span>
+      <span>
+        {label}
+        {explanation && (<InfoPopover label={label}><p>{explanation}</p></InfoPopover>)}
+      </span>
       <span className={fullClass}>{value}</span>
     </div>
   );

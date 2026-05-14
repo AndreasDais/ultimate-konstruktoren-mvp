@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { tillitVisuals } from "@/lib/tillit-score";
+import { InfoPopover } from "@/app/components/InfoPopover";
 
 /**
  * TillitGauge — sirkulær gauge-komponent for AI-pipeline-tillit (0-100).
@@ -119,12 +120,14 @@ export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
             value={breakdown.ab_agreement}
             max={35}
             detail={prettifyEnum(breakdown.components?.comparison_status)}
+            explanation="Speglar Samanliknar si vurdering av om Konstruktør A og B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned."
           />
           <ComponentRow
             label="Kontrollør-verdict"
             value={breakdown.controller_verdict}
             max={35}
             detail={prettifyEnum(breakdown.components?.controller_verdict_raw)}
+            explanation="Speglar Kontrollør si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut."
           />
           <ComponentRow
             label="Fullstendigheit"
@@ -135,6 +138,7 @@ export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
                 ? `${breakdown.components.rekna_storleikar} av ${breakdown.components.spurde_storleikar} storleikar rekna`
                 : undefined
             }
+            explanation="Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt."
           />
           <p className="tillit-gauge__formula-note">
             Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2.
@@ -150,14 +154,20 @@ interface ComponentRowProps {
   value: number;
   max: number;
   detail?: string;
+  explanation: string;
 }
 
-function ComponentRow({ label, value, max, detail }: ComponentRowProps) {
+function ComponentRow({ label, value, max, detail, explanation }: ComponentRowProps) {
   const pct = Math.min(100, (value / max) * 100);
   return (
     <div className="tillit-gauge__row">
       <div className="tillit-gauge__row-header">
-        <span className="tillit-gauge__row-label">{label}</span>
+        <span className="tillit-gauge__row-label">
+          {label}
+          <InfoPopover label={label}>
+            <p>{explanation}</p>
+          </InfoPopover>
+        </span>
         <span className="tillit-gauge__row-value">
           {value} / {max}
         </span>

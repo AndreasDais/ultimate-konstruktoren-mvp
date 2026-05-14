@@ -9,6 +9,7 @@ import {
   type Tone,
 } from "@/lib/format";
 import MissionControl, { type AgentStreamingState } from "@/app/components/MissionControl";
+import { InfoPopover } from "@/app/components/InfoPopover";
 import { streamAgent } from "@/lib/stream-agent";
 import { extractStreamingState, extractTolkarState, type PartialTolkarState } from "@/lib/partial-json";
 // Fil-opplasting (chunk 2 dag 14-feature)
@@ -826,7 +827,8 @@ useEffect(() => {
               {/* Fil-opplasting rett under textarea — +-knapp + chip + fileError */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                 <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} title="Last opp bilete, PDF eller Word" aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-alt, #F8FAFC)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--rule, #E2E8F0)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Last opp fil" style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-alt, #F8FAFC)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--rule, #E2E8F0)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
+                <InfoPopover label="Filopplasting"><p>Last opp eit bilete (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgåva.</p><p>Maks filstorleik: <strong>4 MB</strong>. Tolkar les fila og hentar ut tekst, tal og kontekst.</p></InfoPopover>
                 {selectedFile && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8 }}>
                     <span aria-hidden="true">📎</span>
@@ -1004,11 +1006,7 @@ useEffect(() => {
                             <div className="uk-card__title">Status</div>
                           </div>
                           <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
-                            <StatusKV
-                              label="Inputstatus"
-                              tone={INPUT_STATUS_TONES[result.status] ?? "warn"}
-                              value={INPUT_STATUS_LABELS[result.status] ?? result.status}
-                            />
+                          <StatusKV label="Inputstatus" tone={INPUT_STATUS_TONES[result.status] ?? "warn"} value={INPUT_STATUS_LABELS[result.status] ?? result.status} explanation="Tolkar si vurdering av kor klar oppgåva er til å reknast. 'Klar' = all info på plass. 'Delvis klar' = Tolkar har gjort rimelege antakingar (synleg ovanfor) som du kan justere før du startar. Andre statusar treng meir input eller fell utanfor pilot-versjonen." />
                             {result.fagomraade && (
                               <StatusKV label="Fagområde" tone="info" value={result.fagomraade} />
                             )}
@@ -1017,17 +1015,7 @@ useEffect(() => {
                               tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
                               value={result.status === "relevant_ikkje_stotta" ? "Nei" : "Ja"}
                             />
-                            <StatusKV
-                              label="Konfidens"
-                              tone={
-                                result.konfidens >= 0.7
-                                  ? "ok"
-                                  : result.konfidens >= 0.4
-                                    ? "warn"
-                                    : "bad"
-                              }
-                              value={result.konfidens?.toFixed(2) ?? "—"}
-                            />
+                            <StatusKV label="Konfidens" tone={result.konfidens >= 0.7 ? "ok" : result.konfidens >= 0.4 ? "warn" : "bad"} value={result.konfidens?.toFixed(2) ?? "—"} explanation="Tolkar si eigenrapporterte sikkerheit på at fortolkinga er rett (0–1). Ikkje det same som Tillit-skåren på rapportsida — målar berre éin agent sin tillit til eige arbeid." />
                           </div>
                         </section>
                       )}
@@ -1113,10 +1101,9 @@ useEffect(() => {
                     >
                       <span className="uk-eyebrow" style={{ color: "inherit" }}>
                         Kontrollør — endeleg avgjerd
+                        <InfoPopover label="Kontrollør"><p>Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar <strong>ikkje</strong> fagperson-kontroll.</p></InfoPopover>
                       </span>
-                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
-                        {DECISION_STATUS_LABELS[controllerDecision.decision_status]}
-                      </Badge>
+                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{DECISION_STATUS_LABELS[controllerDecision.decision_status]}</Badge>
                     </div>
                   }
                 >
@@ -1332,17 +1319,15 @@ useEffect(() => {
                 <div className="uk-card__bd" style={{ padding: 14 }}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span className="uk-eyebrow">Konstruktør A konfidens</span>
-                      <Badge status={CONFIDENCE_TONES[calculationA.confidence]}>
-                        {calculationA.confidence}
-                      </Badge>
+                    <span className="uk-eyebrow">Konstruktør A konfidens</span>
+                      <InfoPopover label="Konstruktør-konfidens"><p>Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv.</p></InfoPopover>
+                      <Badge status={CONFIDENCE_TONES[calculationA.confidence]}>{calculationA.confidence}</Badge>
                     </div>
                     {calculationB && (
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span className="uk-eyebrow">Konstruktør B konfidens</span>
-                        <Badge status={CONFIDENCE_TONES[calculationB.confidence]}>
-                          {calculationB.confidence}
-                        </Badge>
+                        <InfoPopover label="Konstruktør-konfidens"><p>Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv.</p></InfoPopover>
+                        <Badge status={CONFIDENCE_TONES[calculationB.confidence]}>{calculationB.confidence}</Badge>
                       </div>
                     )}
                   </div>
@@ -1632,18 +1617,13 @@ function ListSection({
   );
 }
 
-function StatusKV({
-  label,
-  tone,
-  value,
-}: {
-  label: string;
-  tone: Tone;
-  value: string;
-}) {
+function StatusKV({ label, tone, value, explanation }: { label: string; tone: Tone; value: string; explanation?: string }) {
   return (
     <div className="uk-status-kv">
-      <span>{label}</span>
+      <span>
+        {label}
+        {explanation && (<InfoPopover label={label}><p>{explanation}</p></InfoPopover>)}
+      </span>
       <Badge status={tone}>{value}</Badge>
     </div>
   );
