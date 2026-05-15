@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { jsonrepair } from "jsonrepair";
 import { getSupabase } from "@/lib/supabase";
+import { formatAnthropicError } from "@/lib/anthropic-errors";
 import {
   extractMentionedProfiles,
   buildProfileDataPromptBlock,
@@ -305,10 +306,13 @@ function sseEvent(event: string, data: unknown): string {
 }
 
 export async function POST(request: Request) {
+  // Locale declared utanfor try slik at catch-blokka kan vise norske
+  // feilmeldingar sjølv om body-parsing feilar tidleg.
+  let locale: Locale = "nb";
   try {
     const body = await request.json();
     const { run_id, input_review, raw_text } = body;
-    const locale = coerceLocale(body.locale);
+    locale = coerceLocale(body.locale);
 
     if (!run_id || !input_review) {
       return Response.json(
@@ -363,7 +367,7 @@ export async function POST(request: Request) {
               send("complete", { result: result.result });
             }
           } catch (err) {
-            const message = err instanceof Error ? err.message : "Ukjent feil";
+            const { message } = formatAnthropicError(err, "Konstruktør B", locale);
             send("error", { message });
           } finally {
             closed = true;
@@ -394,7 +398,7 @@ export async function POST(request: Request) {
     return Response.json({ result: result.result });
   } catch (err) {
     console.error("Konstruktør B error:", err);
-    const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
-    return Response.json({ error: errorMessage }, { status: 500 });
+    const { message, status } = formatAnthropicError(err, "Konstruktør B", locale);
+    return Response.json({ error: message }, { status });
   }
 }

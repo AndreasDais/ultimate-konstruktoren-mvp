@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   matchStatusLabel, MATCH_STATUS_TONES,
   decisionStatusLabel, DECISION_STATUS_TONES,
@@ -105,7 +105,7 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
   filopplasting: { nb: "Filopplasting", nn: "Filopplasting" },
   filopplastingP1: { nb: "Last opp et bilde (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgaven.", nn: "Last opp eit bilete (JPG, PNG, GIF, WEBP), PDF eller Word-dokument med oppgåva." },
   filopplastingP2Pre: { nb: "Maks filstørrelse:", nn: "Maks filstorleik:" },
-  filopplastingP2Post: { nb: ". Tolkeren leser filen og henter ut tekst, tall og kontekst.", nn: ". Tolkar les fila og hentar ut tekst, tal og kontekst." },
+  filopplastingP2Post: { nb: ". Pilar leser filen og henter ut tekst, tall og kontekst.", nn: ". Pilar les fila og hentar ut tekst, tal og kontekst." },
   fjernFil: { nb: "Fjern fil", nn: "Fjern fil" },
   // Eksempel
   eksempel: { nb: "Eksempel", nn: "Eksempel" },
@@ -126,14 +126,36 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
   krevMeirInput: { nb: "krever mer input", nn: "krev meir input" },
   // Status-card
   status: { nb: "Status", nn: "Status" },
-  inputstatus: { nb: "Inputstatus", nn: "Inputstatus" },
-  inputstatusExplanation: { nb: "Tolkerens vurdering av hvor klar oppgaven er til å beregnes. 'Klar' = all info på plass. 'Delvis klar' = Tolkeren har gjort rimelige antakelser (synlig ovenfor) som du kan justere før du starter. Andre statuser trenger mer input eller faller utenfor pilot-versjonen.", nn: "Tolkar si vurdering av kor klar oppgåva er til å reknast. 'Klar' = all info på plass. 'Delvis klar' = Tolkar har gjort rimelege antakingar (synleg ovanfor) som du kan justere før du startar. Andre statusar treng meir input eller fell utanfor pilot-versjonen." },
+  inputstatus: { nb: "Status", nn: "Status" },
+  inputstatusExplanation: { nb: "Pilar si vurdering av hvor klar oppgaven er til å beregnes. 'Klar' = all info på plass. 'Delvis klar' = Pilar har gjort rimelige antakelser (synlig ovenfor) som du kan justere før du starter. Andre statuser trenger mer input eller faller utenfor pilot-versjonen.", nn: "Pilar si vurdering av kor klar oppgåva er til å reknast. 'Klar' = all info på plass. 'Delvis klar' = Pilar har gjort rimelege antakingar (synleg ovanfor) som du kan justere før du startar. Andre statusar treng meir input eller fell utanfor pilot-versjonen." },
   fagomraade: { nb: "Fagområde", nn: "Fagområde" },
-  stottaMVP: { nb: "Støttet i MVP", nn: "Støtta i MVP" },
-  ja: { nb: "Ja", nn: "Ja" },
-  nei: { nb: "Nei", nn: "Nei" },
-  konfidens: { nb: "Konfidens", nn: "Konfidens" },
-  konfidensExplanation: { nb: "Tolkerens egenrapporterte sikkerhet på at fortolkningen er riktig (0–1). Ikke det samme som Tillit-skåren på rapportsiden — måler bare én agents tillit til eget arbeid.", nn: "Tolkar si eigenrapporterte sikkerheit på at fortolkinga er rett (0–1). Ikkje det same som Tillit-skåren på rapportsida — målar berre éin agent sin tillit til eige arbeid." },
+  // Status-banner (#02) — detail-tekstar per status-tilstand. {n} blir erstatta med antal.
+  bannerKlarDetail: { nb: "alle {n} kontroller går", nn: "alle {n} kontrollar går" },
+  bannerDelvisDetail: { nb: "{n} element mangler input", nn: "{n} element manglar input" },
+  bannerMangelfullDetail: { nb: "{n} felt må fylles før beregning", nn: "{n} felt må fyllast før berekning" },
+  bannerIkkjeStottaDetail: { nb: "ikke støttet i pilot-versjonen", nn: "ikkje støtta i pilot-versjonen" },
+  bannerAvvistDetail: { nb: "ikke byggfaglig oppgave", nn: "ikkje byggfagleg oppgåve" },
+  bannerUklartDetail: { nb: "Pilar trenger mer kontekst", nn: "Pilar treng meir kontekst" },
+  lavTillit: { nb: "Lav tillit i tolkningen — sjekk verdiene under før du starter", nn: "Låg tillit i tolkinga — sjekk verdiane under før du startar" },
+  // Tolkning-disclosure (#01) — toggle for å vise/skjule full tolkning
+  visFullTolkning: { nb: "Vis full tolkning og tolkede verdier", nn: "Vis full tolkning og tolkede verdiar" },
+  skjulFullTolkning: { nb: "Skjul full tolkning", nn: "Skjul full tolkning" },
+  // Mangelfull-chips (#03) — chip-stripe rett under input
+  tolkarTreng: { nb: "Pilar trenger {n} felt til — klikk for å sette inn", nn: "Pilar treng {n} felt til — klikk for å setje inn" },
+  tolkarTrengAvvist: { nb: "Pilar avviste oppgaven — se forklaring under", nn: "Pilar avviste oppgåva — sjå forklaring under" },
+  startMedMangler: { nb: "Start beregning · {n} antakelser brukt", nn: "Start berekning · {n} antakingar brukte" },
+  // Fil-upload + AI-disclaimer (#06)
+  lastOppStottefil: { nb: "+ Last opp støttefil", nn: "+ Last opp støttefil" },
+  filFormatHint: { nb: "PDF, PNG, DOCX — Pilar ser oppgaven og vedlegget saman.", nn: "PDF, PNG, DOCX — Pilar ser oppgåva og vedlegget saman." },
+  aiDisclaimerKort: { nb: "AI-generert · krever faglig kontroll", nn: "AI-generert · krev fagleg kontroll" },
+  // Eksempel-kollaps (#07) — etter første Tolk vert eksempla kollapsa til lenke
+  seEksempel: { nb: "▸ Se 3 eksempel", nn: "▸ Sjå 3 eksempel" },
+  // Første-gongs-guide (#09) — éi-setnings forklaring, dismissable, persistert i localStorage
+  forsteGongGuide: {
+    nb: "Workbench er steg 1 av 3. Skriv inn hva du vil beregne — Pilar leser og viser deg hva den forstod, så du kan rette opp før beregningen starter.",
+    nn: "Workbench er steg 1 av 3. Skriv kva du vil rekne ut — Pilar les og viser kva den forstod, så du kan rette opp før berekninga startar.",
+  },
+  forsteGongDismiss: { nb: "Skjul", nn: "Skjul" },
   // Start-CTA
   stemmerTolkinga: { nb: "Stemmer tolkningen? Da kan du starte beregningen.", nn: "Stemmer tolkinga? Då kan du starte berekninga." },
   avbryt: { nb: "Avbryt", nn: "Avbryt" },
@@ -185,7 +207,7 @@ const PHASE_HEADERS: Record<Locale, Record<Phase, { eyebrow: string; title: stri
     workbench: {
       eyebrow: "NY BEREGNING",
       title: "Beskriv oppgaven",
-      description: "Skriv inn forespørselen. Tolkeren leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.",
+      description: "Skriv inn forespørselen. Pilar leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.",
     },
     calculating: {
       eyebrow: "REGNER",
@@ -202,7 +224,7 @@ const PHASE_HEADERS: Record<Locale, Record<Phase, { eyebrow: string; title: stri
     workbench: {
       eyebrow: "NY BEREKNING",
       title: "Beskriv oppgåva",
-      description: "Skriv inn forespørselen. Tolkaren les og viser tolkinga her — du kan redigere og tolke på nytt før du startar berekninga.",
+      description: "Skriv inn forespørselen. Pilar les og viser tolkinga her — du kan redigere og tolke på nytt før du startar berekninga.",
     },
     calculating: {
       eyebrow: "REKNAR",
@@ -223,13 +245,13 @@ const PHASE_HEADERS: Record<Locale, Record<Phase, { eyebrow: string; title: stri
 const BLOCKED_REASONS: Record<Locale, { avvist: string; relevant_ikkje_stotta: string; uklart: string; no_kalkulator: string }> = {
   nb: {
     avvist: "Inputen er ikke byggfaglig. Beregning kan ikke startes.",
-    relevant_ikkje_stotta: "Forespørselen er byggfaglig relevant, men ligger utenfor det MVP-en støtter ennå (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv en annen formulering eller en annen beregningstype.",
+    relevant_ikkje_stotta: "Forespørselen er byggfaglig relevant, men ligger utenfor det Pilar støtter ennå (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv en annen formulering eller en annen beregningstype.",
     uklart: "Forespørselen er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med mer konkret informasjon om geometri, last og materiale.",
     no_kalkulator: "Ingen beregning er mulig med oppgitt informasjon. Rediger forespørselen og legg til manglende data.",
   },
   nn: {
     avvist: "Inputen er ikkje byggfagleg. Berekning kan ikkje startast.",
-    relevant_ikkje_stotta: "Forespurnaden er byggfagleg relevant, men ligg utanfor det MVP-en støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.",
+    relevant_ikkje_stotta: "Forespurnaden er byggfagleg relevant, men ligg utanfor det Pilar støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.",
     uklart: "Forespurnaden er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med meir konkret informasjon om geometri, last og materiale.",
     no_kalkulator: "Ingen berekning er mogleg med oppgitt informasjon. Rediger forespørselen og legg til manglande data.",
   },
@@ -325,7 +347,25 @@ export default function Home() {
   // er under viewport, vis ein flytande hint som scrollar dit ved klikk.
   // IntersectionObserver sporer om CTA er synleg.
   const startBerekningRef = useRef<HTMLElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Eksempel-kollaps (#07): etter første gong Tolkar gir resultat,
+  // kollapsast eksempel-chips til ein liten "Sjå 3 eksempel"-lenke.
+  // Studenten har då lært input-formatet. hasAutoCollapsedRef hindrar
+  // re-kollapse om brukar manuelt utvidar igjen.
+  const [examplesCollapsed, setExamplesCollapsed] = useState(false);
+  const hasAutoCollapsedRef = useRef(false);
+
+  // Første-gongs-guide (#09): viser éi-setnings forklaring over input første
+  // gong studenten besøker Workbench. Default false så SSR-rendering ikkje
+  // mismatchar med klient (klient sjekker localStorage i useEffect).
+  // Vert dismissa via krys eller automatisk når første berekning er fullført.
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const [ctaInView, setCtaInView] = useState(false);
+
+  // Tolkning-kortet er kollapsa som default i ny single-column-layout (#01).
+  // Auto-utvidast under streaming så studenten ser Tolkar arbeide.
+  const [tolkningExpanded, setTolkningExpanded] = useState(false);
 
   // Resume frå tidlegare berekning. Sett av useEffect under når ?from_request=X
   // er i URL. Viser info-banner i workbench med lenke tilbake til original-rapport.
@@ -583,6 +623,45 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }, [streamingTolkar.phase]);
 
+  // Eksempel-kollaps (#07): når Tolkar gir første gangs resultat, kollaps
+  // eksempel-chips. Ref-flagg hindrar at vi re-kollapsar om brukar manuelt
+  // utvidar igjen og deretter Tolk-ar på nytt (respekterer brukar-val).
+  useEffect(() => {
+    if (result !== null && !hasAutoCollapsedRef.current) {
+      setExamplesCollapsed(true);
+      hasAutoCollapsedRef.current = true;
+    }
+  }, [result]);
+
+  // Første-gongs-guide (#09): på mount, sjekk om brukar har sett guiden før.
+  // Om ikkje, vis han. Vi gjer dette i useEffect (ikkje initial state) for å
+  // unngå SSR-mismatch — localStorage er klient-berre.
+  useEffect(() => {
+    try {
+      const onboarded = window.localStorage.getItem("pilar-onboarded-v1");
+      if (onboarded !== "true") {
+        setShowFirstTimeGuide(true);
+      }
+    } catch {
+      // localStorage kan vere blokkert (private modus, cookies-block) — då
+      // viser vi guiden kvar gong, som er det tryggaste fallback-et.
+      setShowFirstTimeGuide(true);
+    }
+  }, []);
+
+  // Når studenten kjem til calculation_result-fasen første gong, marker
+  // som onboarded — dei har då sett heile flyten og treng ikkje guiden meir.
+  useEffect(() => {
+    if (phase === "calculation_result" && showFirstTimeGuide) {
+      try {
+        window.localStorage.setItem("pilar-onboarded-v1", "true");
+      } catch {
+        // Ignorer — neste mount vil vise guiden igjen om localStorage feila
+      }
+      setShowFirstTimeGuide(false);
+    }
+  }, [phase, showFirstTimeGuide]);
+
   // Tolk forespurnaden via SSE-streaming. Panelet dukkar opp så snart første
   // delta kjem og fyllest progressivt. Når streamen er komplett, blir result
   // sett som vanleg og "Start berekning →" enablar.
@@ -663,6 +742,35 @@ useEffect(() => {
     setStreamingA(INITIAL_STREAMING);
     setStreamingB(INITIAL_STREAMING);
     setStreamingTolkar(INITIAL_TOLKAR);
+    // Reset eksempel-kollaps slik at neste sesjon ser eksempla igjen
+    setExamplesCollapsed(false);
+    hasAutoCollapsedRef.current = false;
+  };
+
+  // Mangelfull-chips (#03): set inn ein mal-tekst i textarea-en når brukar
+  // klikkar på ein chip. Studenten må sjølv erstatte [verdi?] før Tolk køyrer.
+  // Vi tek berre "nøkkelen" frå Tolkar sitt manglande-felt (alt før første "(")
+  // — Tolkar sine strenger kan vere lange ("last (qEd eller punktlast PEd)"),
+  // og vi vil ha kort, redigerbart mal-format.
+  const insertMissingFieldTemplate = (fieldText: string) => {
+    const parenIdx = fieldText.indexOf("(");
+    const key = (parenIdx > 0 ? fieldText.slice(0, parenIdx) : fieldText).trim();
+    const template = `${key}: [verdi?]`;
+    setInput((prev) => {
+      const trimmed = prev.trimEnd();
+      // Om input er tom, start med malen. Elles legg til på ny linje.
+      return trimmed.length === 0 ? template : `${trimmed}\n${template}`;
+    });
+    // Focus textarea etter setState (mikro-delay for å la React rendre).
+    setTimeout(() => {
+      const ta = textareaRef.current;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        // Scroll input inn i view om den er off-screen
+        ta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }, 0);
   };
 
   const handleStartCalculation = async () => {
@@ -863,7 +971,7 @@ useEffect(() => {
 
   return (
     <div className="uk-shell">
-      <main>
+      <main style={{ paddingBottom: showScrollHint ? 80 : undefined }}>
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
           {phase !== "calculating" && <StepIndicator phase={phase} />}
 
@@ -929,11 +1037,63 @@ useEffect(() => {
                     : undefined,
               }}
             >
+              {/* Første-gongs-guide (#09) — éi-setnings forklaring av kva
+                  Workbench er. Synleg berre første gong studenten besøker
+                  sida, persistert i localStorage. Auto-skjult når dei har
+                  fullført ein berekning. */}
+              {showFirstTimeGuide && (
+                <div
+                  role="region"
+                  aria-label="Velkomstmelding"
+                  style={{
+                    marginBottom: 16,
+                    padding: "12px 16px",
+                    background: "var(--surface-alt, #FAFAFA)",
+                    border: "1px solid var(--rule, #E2E8F0)",
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    color: "var(--fg-2, #475569)",
+                  }}
+                >
+                  <span style={{ flex: 1 }}>{WB_LABELS.forsteGongGuide[locale]}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        window.localStorage.setItem("pilar-onboarded-v1", "true");
+                      } catch {
+                        // Ignorer — neste mount vil vise guiden igjen
+                      }
+                      setShowFirstTimeGuide(false);
+                    }}
+                    aria-label={WB_LABELS.forsteGongDismiss[locale]}
+                    style={{
+                      flexShrink: 0,
+                      background: "none",
+                      border: "none",
+                      padding: "0 4px",
+                      fontSize: 18,
+                      lineHeight: 1,
+                      color: "var(--fg-muted, #94A3B8)",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
               <label htmlFor="oppgave" className="uk-label">
                 {WB_LABELS.skrivInnOppgave[locale]}
               </label>
               <textarea
                 id="oppgave"
+                ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 rows={6}
@@ -941,11 +1101,43 @@ useEffect(() => {
                 className="uk-textarea"
               />
 
-              {/* Fil-opplasting rett under textarea — +-knapp + chip + fileError */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+              {/* Fil-opplasting rett under textarea (#06) — labeled knapp + format-hint */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
                 <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} aria-label={WB_LABELS.lastOppFil[locale]} style={{ width: 42, height: 42, borderRadius: 10, border: "1px solid var(--rule, #E2E8F0)", background: "var(--surface, #fff)", color: "var(--fg-2, #475569)", fontSize: 24, lineHeight: 1, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "border-color 0.15s, background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fg-2, #475569)"; e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface, #fff)"; }}>+</button>
-                <InfoPopover label={WB_LABELS.filopplasting[locale]}><p>{WB_LABELS.filopplastingP1[locale]}</p><p>{WB_LABELS.filopplastingP2Pre[locale]} <strong>4 MB</strong>{WB_LABELS.filopplastingP2Post[locale]}</p></InfoPopover>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label={WB_LABELS.lastOppFil[locale]}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: "1px solid var(--rule, #E2E8F0)",
+                    background: "var(--surface, #fff)",
+                    color: "var(--fg, #1F2937)",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.2,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontFamily: "inherit",
+                    transition: "border-color 0.15s, background 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--fg-2, #475569)";
+                    e.currentTarget.style.background = "var(--surface-2, #F8FAFC)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--rule, #E2E8F0)";
+                    e.currentTarget.style.background = "var(--surface, #fff)";
+                  }}
+                >
+                  {WB_LABELS.lastOppStottefil[locale]}
+                </button>
+                <span style={{ fontSize: 12, color: "var(--fg-muted, #94A3B8)" }}>
+                  {WB_LABELS.filFormatHint[locale]}
+                </span>
                 {selectedFile && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, background: "var(--surface-alt, #F8FAFC)", border: "1px solid var(--rule, #E2E8F0)", borderRadius: 8 }}>
                     <span aria-hidden="true">📎</span>
@@ -954,26 +1146,96 @@ useEffect(() => {
                     <button type="button" onClick={clearFile} aria-label={WB_LABELS.fjernFil[locale]} style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
                   </div>
                 )}
+                {/* Eksempel-kollaps-lenke (#07) — synleg når eksempla er kollapsa */}
+                {examplesCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => setExamplesCollapsed(false)}
+                    style={{
+                      marginLeft: "auto",
+                      background: "none",
+                      border: "none",
+                      padding: "4px 0",
+                      fontSize: 13,
+                      color: "var(--fg-2, #475569)",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {WB_LABELS.seEksempel[locale]}
+                  </button>
+                )}
               </div>
               {fileError && (
                 <p style={{ marginTop: 8, fontSize: 12, color: "var(--warn, #C2410C)" }}>{fileError}</p>
               )}
 
-              <div style={{ marginTop: 20 }}>
-                <div className="uk-eyebrow" style={{ marginBottom: 10 }}>{WB_LABELS.eksempel[locale]}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
-                  {EXAMPLE_PROMPTS.map((example, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="uk-chip"
-                      onClick={() => setInput(example)}
-                    >
-                      {example}
+              {/* === Mangelfull-chips (#03) ===
+                  Synleg når Tolkar har funne manglande verdiar. Studenten kan
+                  klikke ein chip for å sette inn ein mal i tekstfeltet
+                  ("last: [verdi?]") og bli fokusert på textarea-en.
+                  Synleg både for MANGELFULL og DELVIS_KLAR. */}
+              {result && (result.manglande_verdiar?.length ?? 0) > 0 &&
+                result.status !== "avvist" && (
+                <MissingChipStrip
+                  fields={result.manglande_verdiar}
+                  locale={locale}
+                  onChipClick={(fieldText) => insertMissingFieldTemplate(fieldText)}
+                />
+              )}
+
+              {/* === AI-disclaimer (#06) — rolig stripe nær input ===
+                  Flytta frå header til der studenten faktisk tek faglege
+                  avgjerder. Lågmæl visuell intensitet — ein påminning, ikkje
+                  ein åtvaring. width: fit-content slik at stripa ikkje
+                  oppfattast som ein full-bredde-banner. */}
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "8px 14px",
+                  background: "var(--surface-alt, #FAFAFA)",
+                  border: "1px solid var(--rule, #E2E8F0)",
+                  borderRadius: 999,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "fit-content",
+                  fontSize: 12.5,
+                  color: "var(--fg-2, #475569)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--accent, #D97706)",
+                    flexShrink: 0,
+                  }}
+                />
+                <strong style={{ fontWeight: 600 }}>
+                  {WB_LABELS.aiDisclaimerKort[locale]}
+                </strong>
+              </div>
+
+              {!examplesCollapsed && (
+                <div style={{ marginTop: 20 }}>
+                  <div className="uk-eyebrow" style={{ marginBottom: 10 }}>{WB_LABELS.eksempel[locale]}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                    {EXAMPLE_PROMPTS.map((example, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className="uk-chip"
+                        onClick={() => setInput(example)}
+                      >
+                        {example}
                     </button>
                   ))}
                 </div>
-              </div>
+                </div>
+              )}
 
               {/* Tolk-knapp åleine, høgre-justert, under eksempla */}
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
@@ -1003,141 +1265,217 @@ useEffect(() => {
                   tolkar-stream-klassen aktiverer fade-in-animasjon for streamande innhald. */}
               {tolkingView && (
                 <div ref={tolkingPanelRef} className="tolkar-stream" style={{ scrollMarginTop: "24px" }}>
-                  <div className="uk-confirm-grid" style={{ marginTop: 32 }}>
-                    {/* === Venstre kolonne: forespurnad + tolking === */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      <section className="uk-card">
-                        <div className="uk-card__hd">
-                          <div className="uk-card__title">{WB_LABELS.tolking[locale]}</div>
-                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <Badge status="neutral">{WB_LABELS.tolkarBadge[locale]}</Badge>
-                            {streamingTolkar.phase === "streaming" && (
-                              <span
-                                style={{
-                                  fontFamily: "var(--font-mono, monospace)",
-                                  fontSize: 11,
-                                  letterSpacing: "0.08em",
-                                  color: "var(--fg-2)",
-                                  padding: "2px 8px",
-                                  border: "1px solid var(--rule, #E2E8F0)",
-                                  borderRadius: 999,
-                                  background: "var(--surface-alt, #F8FAFC)",
-                                  animation: "mc-pulse 1.5s ease-in-out infinite",
-                                }}
-                              >
-                                {WB_LABELS.stromer[locale]}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
+
+                    {/* === 1. Status-banner (#02 + #01) — øvst i ny single-column-layout ===
+                        Banner er "primær informasjon" — studenten skal sjå dette FØRST før
+                        dei dykker i detaljer. Berre synleg når Tolkar har fullført (result sett). */}
+                    {result && (
+                      <div ref={statusCardRef} style={{ scrollMarginTop: 24 }}>
+                        <StatusStripe
+                          status={INPUT_STATUS_TONES[result.status] ?? "warn"}
+                          header={
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: 12,
+                                flexWrap: "wrap",
+                                marginBottom: 8,
+                              }}
+                            >
+                              <span className="uk-eyebrow" style={{ color: "inherit" }}>
+                                {WB_LABELS.status[locale]}
+                                <InfoPopover label={WB_LABELS.inputstatus[locale]}>
+                                  <p>{WB_LABELS.inputstatusExplanation[locale]}</p>
+                                </InfoPopover>
                               </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          {tolkingView.tolkings_oppsummering && (
-                            <p style={{ margin: 0, color: "var(--fg-2)", lineHeight: 1.55, fontSize: 13 }}>
-                              {tolkingView.tolkings_oppsummering}
-                            </p>
-                          )}
-
-                          {tolkingView.berekningstype && (
-                            <Row label={WB_LABELS.berekningstype[locale]} value={tolkingView.berekningstype} />
-                          )}
-
-                          {Object.keys(tolkingView.tolkte_verdiar || {}).length > 0 && (
-                            <div>
-                              <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                                {WB_LABELS.tolkteVerdiar[locale]}
-                              </div>
-                              <ul
-                                className="uk-mono"
-                                style={{
-                                  fontSize: 12.5,
-                                  color: "var(--fg)",
-                                  margin: 0,
-                                  paddingLeft: 0,
-                                  listStyle: "none",
-                                }}
-                              >
-                                {Object.entries(tolkingView.tolkte_verdiar).map(([k, v]) => (
-                                  <li key={k} style={{ padding: "2px 0" }}>
-                                    {k} = {v}
-                                  </li>
-                                ))}
-                              </ul>
+                              <Badge status={INPUT_STATUS_TONES[result.status] ?? "warn"}>
+                                {inputStatusLabel(result.status, locale)}
+                              </Badge>
                             </div>
-                          )}
+                          }
+                        >
+                          {getBannerDetail(result, locale)}
+                        </StatusStripe>
+                        {typeof result.konfidens === "number" && result.konfidens < 0.7 && (
+                          <p
+                            style={{
+                              marginTop: 8,
+                              fontSize: "0.875rem",
+                              color: "var(--fg-2)",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            {WB_LABELS.lavTillit[locale]}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
-                          {tolkingView.manglande_verdiar?.length > 0 && (
-                            <ListSection
-                              label={WB_LABELS.manglandeData[locale]}
-                              items={tolkingView.manglande_verdiar}
-                              tone="warn"
-                            />
-                          )}
-
-                          {tolkingView.antakingar?.length > 0 && (
-                            <ListSection label={WB_LABELS.antakingar[locale]} items={tolkingView.antakingar} />
-                          )}
+                    {/* === 2. Hva kan beregnes nå (#01) — løfta opp frå høgre kolonne ===
+                        Dette er det studenten faktisk ventar svar på: "kan Pilar løyse mi
+                        oppgåve, og kva blir då rekna?". Difor andre i hierarkiet, etter status. */}
+                    {((tolkingView.kan_reknast_no?.length ?? 0) > 0 ||
+                      (tolkingView.kan_ikkje_reknast?.length ?? 0) > 0) && (
+                      <section
+                        ref={reknastCardRef}
+                        className="uk-card"
+                        style={{ scrollMarginTop: 24 }}
+                      >
+                        <div className="uk-card__hd">
+                          <div className="uk-card__title">{WB_LABELS.kvaKanReknast[locale]}</div>
+                        </div>
+                        <div className="uk-card__bd">
+                          {tolkingView.kan_reknast_no?.map((item) => (
+                            <div key={item} className="uk-checkitem uk-checkitem--active">
+                              <span className="uk-checkitem__icon">●</span>
+                              <span className="uk-checkitem__label">{item}</span>
+                            </div>
+                          ))}
+                          {tolkingView.kan_ikkje_reknast?.map((item) => (
+                            <div key={item} className="uk-checkitem uk-checkitem--blocked">
+                              <span className="uk-checkitem__icon">○</span>
+                              <span className="uk-checkitem__label">{item}</span>
+                              <span className="uk-checkitem__note">{WB_LABELS.krevMeirInput[locale]}</span>
+                            </div>
+                          ))}
                         </div>
                       </section>
-                    </div>
+                    )}
 
-                    {/* === Høgre kolonne: kva kan reknast + status === */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {((tolkingView.kan_reknast_no?.length ?? 0) > 0 ||
-                        (tolkingView.kan_ikkje_reknast?.length ?? 0) > 0) && (
-                        <section
-                          ref={reknastCardRef}
-                          className="uk-card"
-                          style={{ scrollMarginTop: 24 }}
-                        >
-                          <div className="uk-card__hd">
-                            <div className="uk-card__title">{WB_LABELS.kvaKanReknast[locale]}</div>
-                          </div>
-                          <div className="uk-card__bd">
-                            {tolkingView.kan_reknast_no?.map((item) => (
-                              <div key={item} className="uk-checkitem uk-checkitem--active">
-                                <span className="uk-checkitem__icon">●</span>
-                                <span className="uk-checkitem__label">{item}</span>
-                              </div>
-                            ))}
-                            {tolkingView.kan_ikkje_reknast?.map((item) => (
-                              <div key={item} className="uk-checkitem uk-checkitem--blocked">
-                                <span className="uk-checkitem__icon">○</span>
-                                <span className="uk-checkitem__label">{item}</span>
-                                <span className="uk-checkitem__note">{WB_LABELS.krevMeirInput[locale]}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
+                    {/* === 3. Tolkning (#01) — samanfatta + utvidbar ===
+                        Tidlegare: full prose + alle tolkede verdiar i venstre kolonne.
+                        No: oppsummering alltid synleg, resten bak "Vis full tolkning"-toggle.
+                        Under streaming auto-utvidast så studenten ser Tolkar arbeide.
+                        IIFE for å samle derived state lokalt. */}
+                    {(() => {
+                      const tolkteCount = Object.keys(tolkingView.tolkte_verdiar || {}).length;
+                      const isStreaming = streamingTolkar.phase === "streaming";
+                      const showFull = tolkningExpanded || isStreaming;
+                      const hasMoreContent =
+                        Boolean(tolkingView.berekningstype) ||
+                        tolkteCount > 0 ||
+                        (tolkingView.manglande_verdiar?.length ?? 0) > 0 ||
+                        (tolkingView.antakingar?.length ?? 0) > 0;
 
-                      {/* Status-card vises berre når Tolkar er ferdig — Status og Konfidens
-                          kjem som dei siste felta i streamen, så det er den naturlege overgangen
-                          frå "streamar" til "klar". */}
-                      {result && (
-                        <section
-                          ref={statusCardRef}
-                          className="uk-card"
-                          style={{ scrollMarginTop: 24 }}
-                        >
+                      return (
+                        <section className="uk-card">
                           <div className="uk-card__hd">
-                            <div className="uk-card__title">{WB_LABELS.status[locale]}</div>
+                            <div className="uk-card__title">{WB_LABELS.tolking[locale]}</div>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <Badge status="neutral">{WB_LABELS.tolkarBadge[locale]}</Badge>
+                              {isStreaming && (
+                                <span
+                                  style={{
+                                    fontFamily: "var(--font-mono, monospace)",
+                                    fontSize: 11,
+                                    letterSpacing: "0.08em",
+                                    color: "var(--fg-2)",
+                                    padding: "2px 8px",
+                                    border: "1px solid var(--rule, #E2E8F0)",
+                                    borderRadius: 999,
+                                    background: "var(--surface-alt, #F8FAFC)",
+                                    animation: "mc-pulse 1.5s ease-in-out infinite",
+                                  }}
+                                >
+                                  {WB_LABELS.stromer[locale]}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column" }}>
-                          <StatusKV label={WB_LABELS.inputstatus[locale]} tone={INPUT_STATUS_TONES[result.status] ?? "warn"} value={inputStatusLabel(result.status, locale)} explanation={WB_LABELS.inputstatusExplanation[locale]} />
-                            {result.fagomraade && (
-                              <StatusKV label={WB_LABELS.fagomraade[locale]} tone="info" value={result.fagomraade} />
+                          <div
+                            className="uk-card__bd"
+                            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                          >
+                            {/* Oppsummering — alltid synleg (bevis ligg under) */}
+                            {tolkingView.tolkings_oppsummering && (
+                              <p
+                                style={{
+                                  margin: 0,
+                                  color: "var(--fg-2)",
+                                  lineHeight: 1.55,
+                                  fontSize: 13,
+                                }}
+                              >
+                                {tolkingView.tolkings_oppsummering}
+                              </p>
                             )}
-                            <StatusKV
-                              label={WB_LABELS.stottaMVP[locale]}
-                              tone={result.status === "relevant_ikkje_stotta" ? "bad" : "ok"}
-                              value={result.status === "relevant_ikkje_stotta" ? WB_LABELS.nei[locale] : WB_LABELS.ja[locale]}
-                            />
-                            <StatusKV label={WB_LABELS.konfidens[locale]} tone={result.konfidens >= 0.7 ? "ok" : result.konfidens >= 0.4 ? "warn" : "bad"} value={result.konfidens?.toFixed(2) ?? "—"} explanation={WB_LABELS.konfidensExplanation[locale]} />
+
+                            {/* Utvidbar innhald: detaljar bak toggle (eller alltid under streaming) */}
+                            {showFull && (
+                              <>
+                                {tolkingView.berekningstype && (
+                                  <Row
+                                    label={WB_LABELS.berekningstype[locale]}
+                                    value={tolkingView.berekningstype}
+                                  />
+                                )}
+
+                                {tolkteCount > 0 && (
+                                  <div>
+                                    <div className="uk-eyebrow" style={{ marginBottom: 10 }}>
+                                      {WB_LABELS.tolkteVerdiar[locale]}
+                                    </div>
+                                    <TolkteVerdiarGrid
+                                      values={tolkingView.tolkte_verdiar}
+                                      locale={locale}
+                                    />
+                                  </div>
+                                )}
+
+                                {tolkingView.manglande_verdiar?.length > 0 && (
+                                  <ListSection
+                                    label={WB_LABELS.manglandeData[locale]}
+                                    items={tolkingView.manglande_verdiar}
+                                    tone="warn"
+                                  />
+                                )}
+
+                                {tolkingView.antakingar?.length > 0 && (
+                                  <ListSection
+                                    label={WB_LABELS.antakingar[locale]}
+                                    items={tolkingView.antakingar}
+                                  />
+                                )}
+                              </>
+                            )}
+
+                            {/* Toggle — synleg når Tolkar er ferdig OG det finst meir å vise */}
+                            {!isStreaming && hasMoreContent && (
+                              <button
+                                type="button"
+                                onClick={() => setTolkningExpanded(!tolkningExpanded)}
+                                aria-expanded={tolkningExpanded}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  padding: "8px 0",
+                                  color: "var(--fg-2)",
+                                  fontSize: 13,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  textAlign: "left",
+                                  alignSelf: "flex-start",
+                                }}
+                              >
+                                <span aria-hidden style={{ fontSize: 10 }}>
+                                  {tolkningExpanded ? "▼" : "▶"}
+                                </span>
+                                {tolkningExpanded
+                                  ? WB_LABELS.skjulFullTolkning[locale]
+                                  : `${WB_LABELS.visFullTolkning[locale]} (${tolkteCount})`}
+                              </button>
+                            )}
                           </div>
                         </section>
-                      )}
-                    </div>
-                    </div>
+                      );
+                    })()}
+
+                  </div>
 
 {/* Sekundær CTA — Start berekning. Synleg når Tolkar-panelet har innhold. */}
 <section ref={startBerekningRef} className="uk-card" style={{ marginTop: 16 }}>
@@ -1162,8 +1500,15 @@ useEffect(() => {
           onClick={handleStartCalculation}
           disabled={!canStart}
           className="uk-btn uk-btn--primary"
+          title={
+            result && (result.manglande_verdiar?.length ?? 0) > 0
+              ? result.manglande_verdiar.join(", ")
+              : undefined
+          }
         >
-          {WB_LABELS.startBerekning[locale]}
+          {result && (result.manglande_verdiar?.length ?? 0) > 0
+            ? WB_LABELS.startMedMangler[locale].replace("{n}", String(result.manglande_verdiar.length))
+            : WB_LABELS.startBerekning[locale]}
         </button>
       </div>
     </div>
@@ -1681,13 +2026,60 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Flytande scroll-hint — viser når Tolkar er ferdig men "Start berekning"-
-            CTA-en er under viewport. Klikk for smooth-scroll til CTA. */}
+        {/* Sticky CTA-bar (#05) — synleg når Start beregning-CTA er under
+            viewport. Inneheld den faktiske Start beregning-knappen, slik at
+            studenten ikkje må scrolle for å handle. Erstattar tidlegare
+            flytande "Klar"-pille som berre var ein scroll-hint. */}
         {showScrollHint && (
-          <button type="button" onClick={() => startBerekningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })} className="uk-scroll-hint" aria-label={WB_LABELS.scrollTilStart[locale]}>
-            <span>{WB_LABELS.klarTilStart[locale]}</span>
-            <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
-          </button>
+          <div
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: "var(--surface, #fff)",
+              borderTop: "1px solid var(--rule, #E2E8F0)",
+              boxShadow: "0 -4px 16px rgba(0, 0, 0, 0.04)",
+              padding: "12px 20px",
+              zIndex: 100,
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 1200,
+                margin: "0 auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  color: "var(--fg-2, #475569)",
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                {WB_LABELS.klarTilStart[locale]}
+              </span>
+              <button
+                onClick={handleStartCalculation}
+                disabled={!canStart}
+                className="uk-btn uk-btn--primary"
+                title={
+                  result && (result.manglande_verdiar?.length ?? 0) > 0
+                    ? result.manglande_verdiar.join(", ")
+                    : undefined
+                }
+              >
+                {result && (result.manglande_verdiar?.length ?? 0) > 0
+                  ? WB_LABELS.startMedMangler[locale].replace("{n}", String(result.manglande_verdiar.length))
+                  : WB_LABELS.startBerekning[locale]}
+              </button>
+            </div>
+          </div>
         )}
       </main>
     </div>
@@ -1728,6 +2120,279 @@ function ListSection({
           <li key={i}>{item}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// Bygg detail-tekst for status-banneret (#02) basert på Tolkar-resultat.
+// Returnerer ein streng som vises i banner-body, t.d.:
+//   "Stål · alle 13 kontroller går"
+//   "Stål · 2 element mangler input"
+//   "6 felt må fylles før beregning"
+function getBannerDetail(result: AgentResult, locale: Locale): string {
+  const nMangler = result.manglande_verdiar?.length ?? 0;
+  const nKanReknast = result.kan_reknast_no?.length ?? 0;
+  // Capitaliser fagområde-første-bokstav slik at "stål" → "Stål" i banner.
+  // Tolkar emittar lowercase, men i UI vil vi ha proper case.
+  const fag = result.fagomraade
+    ? result.fagomraade.charAt(0).toUpperCase() + result.fagomraade.slice(1)
+    : undefined;
+  const parts: string[] = [];
+  if (fag) parts.push(fag);
+
+  switch (result.status) {
+    case "klar":
+      parts.push(WB_LABELS.bannerKlarDetail[locale].replace("{n}", String(nKanReknast)));
+      break;
+    case "delvis_klar":
+      parts.push(WB_LABELS.bannerDelvisDetail[locale].replace("{n}", String(nMangler)));
+      break;
+    case "mangelfull":
+      // Hopp over fag — for mangelfull har vi lite info, tal er hovudsaken
+      return WB_LABELS.bannerMangelfullDetail[locale].replace("{n}", String(nMangler));
+    case "relevant_ikkje_stotta":
+      parts.push(WB_LABELS.bannerIkkjeStottaDetail[locale]);
+      break;
+    case "avvist":
+      return WB_LABELS.bannerAvvistDetail[locale];
+    case "uklart":
+    case "uklar":
+      return WB_LABELS.bannerUklartDetail[locale];
+  }
+
+  return parts.join(" · ");
+}
+
+// === Tolkede verdiar grid (#04) ===
+// Kategoriserer Tolkar sine tolka verdiar etter byggfagleg konsept og
+// rendrar dei i grupperte sub-grids i staden for ein flat mono-liste.
+// Visuell mål: studenten skal kunne SKANNE for å bekrefte at Tolkar
+// forstod rett, i staden for å lese 20 linjer monospace.
+
+type ValueCategory =
+  | "profile_material"
+  | "geometry"
+  | "loads"
+  | "load_combinations"
+  | "material_props"
+  | "section_props"
+  | "stability"
+  | "serviceability"
+  | "other";
+
+const CATEGORY_ORDER: ValueCategory[] = [
+  "profile_material",
+  "geometry",
+  "loads",
+  "load_combinations",
+  "material_props",
+  "section_props",
+  "stability",
+  "serviceability",
+  "other",
+];
+
+const CATEGORY_LABELS: Record<ValueCategory, Record<Locale, string>> = {
+  profile_material: { nb: "Profil & material", nn: "Profil & material" },
+  geometry: { nb: "Geometri & opplegg", nn: "Geometri & opplegg" },
+  loads: { nb: "Laster", nn: "Laster" },
+  load_combinations: { nb: "Lastkombinasjoner", nn: "Lastkombinasjonar" },
+  material_props: { nb: "Materialkonstanter", nn: "Materialkonstantar" },
+  section_props: { nb: "Tverrsnittsdata", nn: "Tverrsnittsdata" },
+  stability: { nb: "Knekk-parametre", nn: "Knekk-parametrar" },
+  serviceability: { nb: "Bruksgrense (SLS)", nn: "Bruksgrense (SLS)" },
+  other: { nb: "Andre", nn: "Andre" },
+};
+
+// Plasserer ein tolka verdi i ein kategori basert på nøkkel-mønster.
+// Rekkjefølga matterar: meir spesifikke mønster må kome før breiare.
+// Robust mot både norsk/engelsk variantar og symbol-baserte nøklar.
+function categorizeKey(key: string): ValueCategory {
+  const k = key.toLowerCase().trim();
+
+  // 1. Profil & material — eksplisitte ordmønster
+  if (/^(profil|stålkvalitet|stalkvalitet|betongkvalitet|treklasse|tverrsnittklasse|materiale?|armering|fagomr[aå]de)/.test(k)) {
+    return "profile_material";
+  }
+
+  // 2. Stabilitet / knekking — spesifikke LTB-symbol (må komme før geometri pga L_LT)
+  if (/^(alpha_lt|α_lt|chi_lt|χ_lt|lambda_lt|λ_lt|phi_lt|φ_lt|vippekurve|k_lt|k_w|knekkurve|eulerlast|imperfeksjon)/.test(k)) {
+    return "stability";
+  }
+
+  // 3. Tverrsnittsdata — treghetsmoment, motstandsmoment, areal
+  if (/^(w_pl|w_el|i_y|i_z|i_t|i_w|a_v|a_s|i_min|i_max|s_pl|t_w|t_f|h_w|b_f)/.test(k) || k === "a") {
+    return "section_props";
+  }
+
+  // 4. Materialkonstantar — fastleik, stivleik, partial-faktorar
+  if (/^(f_y|f_c|f_ct|gamma_m|gamma_c|gamma_s|alpha_cc|alpha_e|epsilon)/.test(k) || k === "e" || k === "g") {
+    return "material_props";
+  }
+
+  // 5. Lastkombinasjonar
+  if (/kombinasjon|kombo|psi_|ψ_|gamma_g|gamma_q|γ_g|γ_q/.test(k)) {
+    return "load_combinations";
+  }
+
+  // 6. Laster
+  if (/^(g_|q_|p_|w_k)/.test(k) || /^(last|sn[øo]last|vindlast|nyttelast|egenlast)/.test(k) || /^[gqp]$/.test(k)) {
+    return "loads";
+  }
+
+  // 7. Bruksgrense
+  if (/nedb[oø]ying|w_max|w_lim|w_kar|w_hyppig|w_perm|tillatt_nedb/.test(k)) {
+    return "serviceability";
+  }
+
+  // 8. Geometri — lengder, dimensjonar, opplegg
+  if (/^(l$|l_|h$|b$|d$|h_|b_|d_|span|spennvidde|knekklengde|oppleggs|sideavstiving|geometri|skive)/.test(k)) {
+    return "geometry";
+  }
+
+  return "other";
+}
+
+// Tekniske symbol-namn (med underscore) skal behaldast som-er — det er
+// fagleg konvensjon at f_y, g_k, alpha_LT, ULS_kombinasjon skrivast med
+// liten første-bokstav. Reint deskriptive ord (bygningstype, oppleggstilhøve)
+// får stor første-bokstav for lesbarheit.
+function formatKey(key: string): string {
+  if (key.includes("_")) return key;
+  return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function TolkteVerdiarGrid({
+  values,
+  locale,
+}: {
+  values: Record<string, string>;
+  locale: Locale;
+}) {
+  if (!values || Object.keys(values).length === 0) return null;
+
+  // Gruppér etter kategori, behaldande original innsetjings-rekkjefølge per gruppe
+  const grouped = new Map<ValueCategory, Array<[string, string]>>();
+  for (const cat of CATEGORY_ORDER) grouped.set(cat, []);
+  for (const [k, v] of Object.entries(values)) {
+    const cat = categorizeKey(k);
+    grouped.get(cat)!.push([k, v]);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {CATEGORY_ORDER.map((cat) => {
+        const items = grouped.get(cat)!;
+        if (items.length === 0) return null;
+
+        return (
+          <div key={cat}>
+            <div
+              className="uk-eyebrow"
+              style={{ marginBottom: 6, fontSize: 10, opacity: 0.75 }}
+            >
+              {CATEGORY_LABELS[cat][locale]}
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(100px, max-content) 1fr",
+                gap: "3px 16px",
+                fontSize: 12.5,
+                alignItems: "baseline",
+              }}
+            >
+              {items.map(([k, v]) => (
+                <Fragment key={k}>
+                  <span className="uk-mono" style={{ color: "var(--fg-2)" }}>
+                    {formatKey(k)}
+                  </span>
+                  <span className="uk-mono">{v}</span>
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// MissingChipStrip (#03) — synleg under input når Tolkar har funne
+// manglande verdiar. Klikk → mal blir lagt til i textarea via callback.
+// Visuell tone: gulaktig "Tolkar treng meir input"-stripe (warn-tone).
+function MissingChipStrip({
+  fields,
+  locale,
+  onChipClick,
+}: {
+  fields: string[];
+  locale: Locale;
+  onChipClick: (fieldText: string) => void;
+}) {
+  if (!fields || fields.length === 0) return null;
+
+  return (
+    <div
+      role="region"
+      aria-label={WB_LABELS.tolkarTreng[locale].replace("{n}", String(fields.length))}
+      style={{
+        marginTop: 12,
+        padding: "12px 14px",
+        background: "var(--tone-warn-bg, rgba(202, 138, 4, 0.06))",
+        border: "1px solid var(--tone-warn-border, rgba(202, 138, 4, 0.25))",
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: 12.5,
+          color: "var(--tone-warn-fg, #92400E)",
+          fontWeight: 500,
+        }}
+      >
+        {WB_LABELS.tolkarTreng[locale].replace("{n}", String(fields.length))}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {fields.map((field) => {
+          // Vis berre nøkkel-delen før "(...)" som chip-label for kompakthet
+          const parenIdx = field.indexOf("(");
+          const label = (parenIdx > 0 ? field.slice(0, parenIdx) : field).trim();
+          return (
+            <button
+              key={field}
+              type="button"
+              onClick={() => onChipClick(field)}
+              title={field}
+              style={{
+                padding: "6px 12px",
+                fontSize: 12.5,
+                background: "var(--surface, #fff)",
+                border: "1px solid var(--tone-warn-border, rgba(202, 138, 4, 0.3))",
+                borderRadius: 999,
+                cursor: "pointer",
+                color: "var(--fg, #1F2937)",
+                fontFamily: "var(--font-sans, inherit)",
+                transition: "background 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--tone-warn-bg, rgba(202, 138, 4, 0.1))";
+                e.currentTarget.style.borderColor = "var(--tone-warn-fg, #92400E)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--surface, #fff)";
+                e.currentTarget.style.borderColor = "var(--tone-warn-border, rgba(202, 138, 4, 0.3))";
+              }}
+            >
+              + {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
