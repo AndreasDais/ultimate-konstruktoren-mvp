@@ -156,6 +156,10 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Workbench er steg 1 av 3. Skriv kva du vil rekne ut — Pilar les og viser kva den forstod, så du kan rette opp før berekninga startar.",
   },
   forsteGongDismiss: { nb: "Skjul", nn: "Skjul" },
+  // Mobil-tabs (#08) — vises berre under 720px viewport
+  tabResultat: { nb: "Resultat", nn: "Resultat" },
+  tabTolkning: { nb: "Tolkning", nn: "Tolkning" },
+  tabStatus: { nb: "Status", nn: "Status" },
   // Start-CTA
   stemmerTolkinga: { nb: "Stemmer tolkningen? Da kan du starte beregningen.", nn: "Stemmer tolkinga? Då kan du starte berekninga." },
   avbryt: { nb: "Avbryt", nn: "Avbryt" },
@@ -361,6 +365,12 @@ export default function Home() {
   // mismatchar med klient (klient sjekker localStorage i useEffect).
   // Vert dismissa via krys eller automatisk når første berekning er fullført.
   const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
+
+  // Mobil-tabs (#08): på viewport < 720px viser vi dei tre seksjonane
+  // (Status, Hva kan beregnes, Tolkning) i ein tab-kontroll i staden for
+  // stabla. Default isMobile=false for SSR-safety, oppdaterast på mount.
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<"resultat" | "tolkning" | "status">("status");
   const [ctaInView, setCtaInView] = useState(false);
 
   // Tolkning-kortet er kollapsa som default i ny single-column-layout (#01).
@@ -661,6 +671,33 @@ useEffect(() => {
       setShowFirstTimeGuide(false);
     }
   }, [phase, showFirstTimeGuide]);
+
+  // Mobil-detect (#08): matchMedia på 720px-breakpoint.
+  // Lytt på resize/orientering slik at tab-layouten kjem og forsvinn
+  // ved bytte mellom mobil/landskap/desktop.
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 720px)");
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
+  // Auto-switch tab basert på Tolkar-status (#08):
+  // - MANGELFULL → "resultat" så studenten ser kva som kan/ikkje kan
+  //   beregnes (sjølv om chips er over tab-en, gir det kontekst)
+  // - AVVIST / UKLART → "status" så feilmeldinga er synleg
+  // - KLAR / DELVIS_KLAR → "status" som default (men brukar kan bytte)
+  useEffect(() => {
+    if (!result) return;
+    if (result.status === "mangelfull") {
+      setActiveTab("resultat");
+    } else if (result.status === "avvist" || result.status === "uklart" || result.status === "uklar") {
+      setActiveTab("status");
+    } else {
+      setActiveTab("status");
+    }
+  }, [result]);
 
   // Tolk forespurnaden via SSE-streaming. Panelet dukkar opp så snart første
   // delta kjem og fyllest progressivt. Når streamen er komplett, blir result
@@ -1267,9 +1304,106 @@ useEffect(() => {
                 <div ref={tolkingPanelRef} className="tolkar-stream" style={{ scrollMarginTop: "24px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
 
+                    {/* === Mobil-tabs (#08) — viste berre på viewport < 720px ===
+                        Segmentert tab-kontroll med count/state-badges.
+                        Klikk byter aktiv tab; auto-switch basert på status. */}
+                    {isMobile && result && (() => {
+                      const nKanReknast = result.kan_reknast_no?.length ?? 0;
+                      const nKanIkkje = result.kan_ikkje_reknast?.length ?? 0;
+                      const nResultat = nKanReknast + nKanIkkje;
+                      const nTolkte = Object.keys(result.tolkte_verdiar || {}).length;
+                      const statusBadge = inputStatusLabel(result.status, locale);
+                      const statusTone = INPUT_STATUS_TONES[result.status] ?? "warn";
+
+                      const tabs: Array<{
+                        id: "resultat" | "tolkning" | "status";
+                        label: string;
+                        badge: string | number;
+                        badgeTone?: "ok" | "warn" | "bad";
+                      }> = [
+                        { id: "resultat", label: WB_LABELS.tabResultat[locale], badge: nResultat },
+                        { id: "tolkning", label: WB_LABELS.tabTolkning[locale], badge: nTolkte },
+                        { id: "status", label: WB_LABELS.tabStatus[locale], badge: statusBadge, badgeTone: statusTone === "ok" ? "ok" : statusTone === "bad" ? "bad" : "warn" },
+                      ];
+
+                      return (
+                        <div
+                          role="tablist"
+                          aria-label="Workbench-seksjonar"
+                          style={{
+                            display: "flex",
+                            gap: 4,
+                            padding: 4,
+                            background: "var(--surface-alt, #F8FAFC)",
+                            border: "1px solid var(--rule, #E2E8F0)",
+                            borderRadius: 10,
+                          }}
+                        >
+                          {tabs.map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                role="tab"
+                                aria-selected={isActive}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                  flex: 1,
+                                  padding: "8px 6px",
+                                  background: isActive ? "var(--surface, #fff)" : "transparent",
+                                  border: "none",
+                                  borderRadius: 6,
+                                  fontSize: 12.5,
+                                  fontWeight: isActive ? 600 : 500,
+                                  color: isActive ? "var(--fg, #1F2937)" : "var(--fg-2, #475569)",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  gap: 3,
+                                  fontFamily: "inherit",
+                                  boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.05)" : undefined,
+                                  transition: "background 0.15s",
+                                }}
+                              >
+                                <span>{tab.label}</span>
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    padding: "1px 6px",
+                                    borderRadius: 4,
+                                    background: tab.badgeTone === "ok"
+                                      ? "var(--tone-ok-bg, rgba(34, 139, 34, 0.1))"
+                                      : tab.badgeTone === "bad"
+                                      ? "var(--tone-bad-bg, rgba(194, 65, 12, 0.1))"
+                                      : tab.badgeTone === "warn"
+                                      ? "var(--tone-warn-bg, rgba(202, 138, 4, 0.1))"
+                                      : "var(--surface-2, #F1F5F9)",
+                                    color: tab.badgeTone === "ok"
+                                      ? "var(--tone-ok-fg, #166534)"
+                                      : tab.badgeTone === "bad"
+                                      ? "var(--tone-bad-fg, #C2410C)"
+                                      : tab.badgeTone === "warn"
+                                      ? "var(--tone-warn-fg, #92400E)"
+                                      : "var(--fg-2, #475569)",
+                                    letterSpacing: typeof tab.badge === "string" ? "0.04em" : 0,
+                                  }}
+                                >
+                                  {tab.badge}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
                     {/* === 1. Status-banner (#02 + #01) — øvst i ny single-column-layout ===
                         Banner er "primær informasjon" — studenten skal sjå dette FØRST før
-                        dei dykker i detaljer. Berre synleg når Tolkar har fullført (result sett). */}
+                        dei dykker i detaljer. Berre synleg når Tolkar har fullført (result sett).
+                        På mobil: gøymd om aktiv tab ikkje er "status". */}
+                    <div style={{ display: isMobile && activeTab !== "status" ? "none" : "contents" }}>
                     {result && (
                       <div ref={statusCardRef} style={{ scrollMarginTop: 24 }}>
                         <StatusStripe
@@ -1313,10 +1447,13 @@ useEffect(() => {
                         )}
                       </div>
                     )}
+                    </div>
 
                     {/* === 2. Hva kan beregnes nå (#01) — løfta opp frå høgre kolonne ===
                         Dette er det studenten faktisk ventar svar på: "kan Pilar løyse mi
-                        oppgåve, og kva blir då rekna?". Difor andre i hierarkiet, etter status. */}
+                        oppgåve, og kva blir då rekna?". Difor andre i hierarkiet, etter status.
+                        På mobil: gøymd om aktiv tab ikkje er "resultat". */}
+                    <div style={{ display: isMobile && activeTab !== "resultat" ? "none" : "contents" }}>
                     {((tolkingView.kan_reknast_no?.length ?? 0) > 0 ||
                       (tolkingView.kan_ikkje_reknast?.length ?? 0) > 0) && (
                       <section
@@ -1344,12 +1481,15 @@ useEffect(() => {
                         </div>
                       </section>
                     )}
+                    </div>
 
                     {/* === 3. Tolkning (#01) — samanfatta + utvidbar ===
                         Tidlegare: full prose + alle tolkede verdiar i venstre kolonne.
                         No: oppsummering alltid synleg, resten bak "Vis full tolkning"-toggle.
                         Under streaming auto-utvidast så studenten ser Tolkar arbeide.
-                        IIFE for å samle derived state lokalt. */}
+                        IIFE for å samle derived state lokalt.
+                        På mobil: gøymd om aktiv tab ikkje er "tolkning". */}
+                    <div style={{ display: isMobile && activeTab !== "tolkning" ? "none" : "contents" }}>
                     {(() => {
                       const tolkteCount = Object.keys(tolkingView.tolkte_verdiar || {}).length;
                       const isStreaming = streamingTolkar.phase === "streaming";
@@ -1474,6 +1614,7 @@ useEffect(() => {
                         </section>
                       );
                     })()}
+                    </div>
 
                   </div>
 
