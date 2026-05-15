@@ -1008,6 +1008,92 @@ useEffect(() => {
 
   return (
     <div className="uk-shell">
+      {/* Tolking-koreografi (Animasjon-pakke):
+          (a) Skeleton-shimmer i Tolkning-panelet før første delta
+          (b) Blinkande markør på slutten av streamande prosa
+          (c) Bullets i "Hva kan beregnes nå" hoppar inn med fade-in.
+          Respekterer prefers-reduced-motion. */}
+      <style>{`
+        @keyframes pilar-shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes pilar-cursor-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+        @keyframes pilar-item-appear {
+          0% {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pilar-icon-pulse {
+          0% { transform: scale(1); }
+          35% { transform: scale(1.45); }
+          100% { transform: scale(1); }
+        }
+        @keyframes pilar-block-appear {
+          0% {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .pilar-skeleton-bar {
+          height: 12px;
+          border-radius: 4px;
+          background: linear-gradient(
+            90deg,
+            var(--surface-alt, #F1F5F9) 0%,
+            var(--rule, #E2E8F0) 50%,
+            var(--surface-alt, #F1F5F9) 100%
+          );
+          background-size: 200% 100%;
+          animation: pilar-shimmer 1.8s ease-in-out infinite;
+          will-change: background-position;
+        }
+        .pilar-cursor {
+          display: inline-block;
+          width: 2px;
+          height: 1em;
+          background: currentColor;
+          margin-left: 2px;
+          vertical-align: text-bottom;
+          animation: pilar-cursor-blink 1s steps(2, end) infinite;
+          will-change: opacity;
+        }
+        .pilar-stream-item {
+          animation: pilar-item-appear 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+          will-change: opacity, transform;
+        }
+        .pilar-stream-item .uk-checkitem__icon {
+          display: inline-block;
+          transform-origin: center;
+          animation: pilar-icon-pulse 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+          will-change: transform;
+        }
+        .pilar-block-appear {
+          animation: pilar-block-appear 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+          will-change: opacity, transform;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pilar-skeleton-bar,
+          .pilar-cursor,
+          .pilar-stream-item,
+          .pilar-stream-item .uk-checkitem__icon,
+          .pilar-block-appear {
+            animation: none !important;
+          }
+        }
+      `}</style>
       <main style={{ paddingBottom: showScrollHint ? 80 : undefined }}>
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
           {phase !== "calculating" && <StepIndicator phase={phase} />}
@@ -1301,7 +1387,7 @@ useEffect(() => {
                   som er enten fullt result eller streaming.partial coerca til AgentResult-shape.
                   tolkar-stream-klassen aktiverer fade-in-animasjon for streamande innhald. */}
               {tolkingView && (
-                <div ref={tolkingPanelRef} className="tolkar-stream" style={{ scrollMarginTop: "24px" }}>
+                <div ref={tolkingPanelRef} className="tolkar-stream pilar-block-appear" style={{ scrollMarginTop: "24px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
 
                     {/* === Mobil-tabs (#08) — viste berre på viewport < 720px ===
@@ -1405,7 +1491,7 @@ useEffect(() => {
                         På mobil: gøymd om aktiv tab ikkje er "status". */}
                     <div style={{ display: isMobile && activeTab !== "status" ? "none" : "contents" }}>
                     {result && (
-                      <div ref={statusCardRef} style={{ scrollMarginTop: 24 }}>
+                      <div ref={statusCardRef} className="pilar-block-appear" style={{ scrollMarginTop: 24 }}>
                         <StatusStripe
                           status={INPUT_STATUS_TONES[result.status] ?? "warn"}
                           header={
@@ -1458,26 +1544,37 @@ useEffect(() => {
                       (tolkingView.kan_ikkje_reknast?.length ?? 0) > 0) && (
                       <section
                         ref={reknastCardRef}
-                        className="uk-card"
+                        className="uk-card pilar-block-appear"
                         style={{ scrollMarginTop: 24 }}
                       >
                         <div className="uk-card__hd">
                           <div className="uk-card__title">{WB_LABELS.kvaKanReknast[locale]}</div>
                         </div>
                         <div className="uk-card__bd">
-                          {tolkingView.kan_reknast_no?.map((item) => (
-                            <div key={item} className="uk-checkitem uk-checkitem--active">
+                          {tolkingView.kan_reknast_no?.map((item, i) => (
+                            <div
+                              key={item}
+                              className="uk-checkitem uk-checkitem--active pilar-stream-item"
+                              style={{ animationDelay: `${i * 60}ms` }}
+                            >
                               <span className="uk-checkitem__icon">●</span>
                               <span className="uk-checkitem__label">{item}</span>
                             </div>
                           ))}
-                          {tolkingView.kan_ikkje_reknast?.map((item) => (
-                            <div key={item} className="uk-checkitem uk-checkitem--blocked">
-                              <span className="uk-checkitem__icon">○</span>
-                              <span className="uk-checkitem__label">{item}</span>
-                              <span className="uk-checkitem__note">{WB_LABELS.krevMeirInput[locale]}</span>
-                            </div>
-                          ))}
+                          {tolkingView.kan_ikkje_reknast?.map((item, i) => {
+                            const offset = (tolkingView.kan_reknast_no?.length ?? 0) + i;
+                            return (
+                              <div
+                                key={item}
+                                className="uk-checkitem uk-checkitem--blocked pilar-stream-item"
+                                style={{ animationDelay: `${offset * 60}ms` }}
+                              >
+                                <span className="uk-checkitem__icon">○</span>
+                                <span className="uk-checkitem__label">{item}</span>
+                                <span className="uk-checkitem__note">{WB_LABELS.krevMeirInput[locale]}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </section>
                     )}
@@ -1501,7 +1598,7 @@ useEffect(() => {
                         (tolkingView.antakingar?.length ?? 0) > 0;
 
                       return (
-                        <section className="uk-card">
+                        <section className="uk-card pilar-block-appear">
                           <div className="uk-card__hd">
                             <div className="uk-card__title">{WB_LABELS.tolking[locale]}</div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1529,18 +1626,25 @@ useEffect(() => {
                             className="uk-card__bd"
                             style={{ display: "flex", flexDirection: "column", gap: 16 }}
                           >
-                            {/* Oppsummering — alltid synleg (bevis ligg under) */}
+                            {/* Skeleton-shimmer (animasjon a): synleg første sekund
+                                medan vi ventar på første delta frå Tolkar. */}
+                            {isStreaming && !tolkingView.tolkings_oppsummering && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                <div className="pilar-skeleton-bar" style={{ width: "92%" }} />
+                                <div className="pilar-skeleton-bar" style={{ width: "78%" }} />
+                                <div className="pilar-skeleton-bar" style={{ width: "85%" }} />
+                              </div>
+                            )}
+
+                            {/* Oppsummering — typewriter-effekt via StreamingProse.
+                                partial-JSON-parser leverer felt-verdien som heilskap, så
+                                vi gradvis avslører teksten på frontend i 20ms-tikk.
+                                Blinkande markør (animasjon b) på slutten medan typing/streaming. */}
                             {tolkingView.tolkings_oppsummering && (
-                              <p
-                                style={{
-                                  margin: 0,
-                                  color: "var(--fg-2)",
-                                  lineHeight: 1.55,
-                                  fontSize: 13,
-                                }}
-                              >
-                                {tolkingView.tolkings_oppsummering}
-                              </p>
+                              <StreamingProse
+                                text={tolkingView.tolkings_oppsummering}
+                                isStreaming={isStreaming}
+                              />
                             )}
 
                             {/* Utvidbar innhald: detaljar bak toggle (eller alltid under streaming) */}
@@ -2173,6 +2277,7 @@ useEffect(() => {
             flytande "Klar"-pille som berre var ein scroll-hint. */}
         {showScrollHint && (
           <div
+            className="pilar-block-appear"
             style={{
               position: "fixed",
               bottom: 0,
@@ -2462,6 +2567,64 @@ function TolkteVerdiarGrid({
 // MissingChipStrip (#03) — synleg under input når Tolkar har funne
 // manglande verdiar. Klikk → mal blir lagt til i textarea via callback.
 // Visuell tone: gulaktig "Tolkar treng meir input"-stripe (warn-tone).
+// StreamingProse — typewriter-effekt for Tolkar si oppsummering.
+// partial-JSON-parser oppdaterer felt-verdien som heilskap når den er
+// "complete" i strømmen, så frontend gradvis avslører teksten i tikk
+// av ~2 teikn per 20ms (≈100 chars/sec) for å skape "AI skriv"-kjensla.
+//
+// Når isStreaming = false, viser full tekst med ein gong (catch-up).
+// Når tekst-len < displayed.len, antar vi ny stream og resettar.
+function StreamingProse({ text, isStreaming }: { text: string; isStreaming: boolean }) {
+  const [displayed, setDisplayed] = useState("");
+
+  useEffect(() => {
+    // Ny stream eller reset: tekst kortare enn det vi viser
+    if (text.length < displayed.length) {
+      setDisplayed("");
+      return;
+    }
+
+    // Initial mount med ferdig-strøm (resume-flyt): vis alt umiddelbart
+    // utan typewriter. Sjekk på displayed.length === 0 sikrar at vi berre
+    // hopper når komponenten nettopp er mounta — ikkje når strømmen
+    // avsluttar mid-typewriter (då skal animasjonen køyre ferdig).
+    if (displayed.length === 0 && !isStreaming) {
+      setDisplayed(text);
+      return;
+    }
+
+    // Innhenta: vent på meir frå strømmen (eller idle om strøm ferdig)
+    if (displayed.length >= text.length) {
+      return;
+    }
+
+    // Type-tikk: avslør 1 teikn til. 14ms gir ~71 chars/sec og glatt
+    // visuell rørsle (mindre sprell per frame enn 2 teikn). Køyrer
+    // uavhengig av isStreaming — typewriter blir aldri kutta mid-skriving.
+    const timer = setTimeout(() => {
+      setDisplayed(text.slice(0, Math.min(displayed.length + 1, text.length)));
+    }, 14);
+    return () => clearTimeout(timer);
+  }, [text, displayed, isStreaming]);
+
+  const isTyping = displayed.length < text.length;
+  const showCursor = isStreaming || isTyping;
+
+  return (
+    <p
+      style={{
+        margin: 0,
+        color: "var(--fg-2)",
+        lineHeight: 1.55,
+        fontSize: 13,
+      }}
+    >
+      {displayed}
+      {showCursor && <span className="pilar-cursor" aria-hidden />}
+    </p>
+  );
+}
+
 function MissingChipStrip({
   fields,
   locale,
@@ -2477,6 +2640,7 @@ function MissingChipStrip({
     <div
       role="region"
       aria-label={WB_LABELS.tolkarTreng[locale].replace("{n}", String(fields.length))}
+      className="pilar-block-appear"
       style={{
         marginTop: 12,
         padding: "12px 14px",
