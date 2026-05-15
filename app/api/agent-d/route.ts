@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
-import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
+import { formatAnthropicError } from "@/lib/anthropic-errors";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -119,6 +120,7 @@ OUTPUT-FORMAT:
 const PROMPT_VERSION = "agent_d_v0.3";
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const body = await request.json();
     const {
@@ -128,7 +130,7 @@ export async function POST(request: Request) {
       agent_b_output,
       comparison_result,
     } = body;
-    const locale = coerceLocale(body.locale);
+ locale = coerceLocale(body.locale);
 
     if (!run_id || !agent_a_output || !comparison_result) {
       return Response.json(

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
-import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
+import { formatAnthropicError } from "@/lib/anthropic-errors";
 
 const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -78,9 +79,10 @@ Bruk nynorsk eller bokmål — same språk som Konstruktør A og B brukte.`;
 const PROMPT_VERSION = "agent_c_v0.1";
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const { run_id, agent_a_output, agent_b_output, locale: rawLocale } = await request.json();
-    const locale = coerceLocale(rawLocale);
+    locale = coerceLocale(rawLocale);
 
     if (!run_id || !agent_a_output || !agent_b_output) {
       return Response.json(

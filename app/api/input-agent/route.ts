@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
+import { formatAnthropicError } from "@/lib/anthropic-errors";
 
 const SYSTEM_PROMPT = `Du er Tolkar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -450,6 +451,7 @@ function sseEvent(event: string, data: unknown): string {
 }
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const parsed = await parseInput(request);
     const built = await buildContent(parsed.text, parsed.file);
@@ -500,7 +502,7 @@ export async function POST(request: Request) {
               });
             }
           } catch (err) {
-            const message = err instanceof Error ? err.message : "Ukjent feil";
+            const { message } = formatAnthropicError(err, "AGENT-NAMN", locale);
             send("error", { message });
           } finally {
             closed = true;
@@ -535,7 +537,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Tolkar error:", err);
-    const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
-    return Response.json({ error: errorMessage }, { status: 500 });
+    const { message, status } = formatAnthropicError(err, "Tolkar", locale);
+    return Response.json({ error: message }, { status });
   }
 }

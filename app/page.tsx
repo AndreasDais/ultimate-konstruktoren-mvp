@@ -598,7 +598,7 @@ const tolkingPanelRef = useRef<HTMLDivElement | null>(null);
 
 // Refs til milestone-cardene for auto-scroll under Tolkar-streaming.
 const reknastCardRef = useRef<HTMLElement | null>(null);
-const statusCardRef = useRef<HTMLElement | null>(null);
+const statusCardRef = useRef<HTMLDivElement | null>(null);
 
 // AbortController for å avbryte aktive SSE-streams ved cancel/unmount.
 // Hindrar zombie-streams som held fram å bruke Anthropic-tokens etter

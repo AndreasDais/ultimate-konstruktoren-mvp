@@ -9,7 +9,9 @@ import {
   type ControllerStatus,
 } from "@/lib/tillit-score";
 
-import { coerceLocale, wrapPromptWithLocale } from "@/lib/locale";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
+import { formatAnthropicError } from "@/lib/anthropic-errors";
+
 const PROMPT_VERSION = "agent_e_v0.3";
 const MODEL = "claude-sonnet-4-6";
 
@@ -191,10 +193,11 @@ function isBreakdownStale(breakdown: unknown): boolean {
 }
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const body = await request.json();
     const { run_id } = body;
-    const locale = coerceLocale(body.locale);
+     locale = coerceLocale(body.locale);
 
     if (!run_id) {
       return NextResponse.json(
