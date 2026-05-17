@@ -1,6 +1,41 @@
 "use client";
 
+import { Fragment, useEffect, useRef, useState } from "react";
 import "./mission-control.css";
+import { InfoPopover } from "@/app/components/InfoPopover";
+
+// Greske bokstavar (norsk byggfagleg konvensjon — alpha_cc → α_cc, rho_min → ρ_min)
+const GREEK_MAP: Record<string, string> = {
+  alpha: "α", beta: "β", gamma: "γ", delta: "δ",
+  epsilon: "ε", zeta: "ζ", eta: "η", theta: "θ",
+  iota: "ι", kappa: "κ", lambda: "λ", mu: "μ",
+  nu: "ν", xi: "ξ", omicron: "ο", pi: "π",
+  rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ",
+  phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
+};
+
+// Render math-notasjon for results-keys (#5):
+//  "alpha_cc"           → α_cc        (Greek + sub)
+//  "f_cd"               → f_cd        (Latin italic + sub)
+//  "Ed_ULS_kombinert"   → Ed_{ULS,kombinert}
+//  "psi_1_kategori_B"   → ψ_{1,kategori,B}
+//  "M_Ed"               → M_{Ed}
+function formatFieldKey(key: string): React.ReactNode {
+  const parts = key.split("_");
+  const firstRaw = parts[0];
+  const first = GREEK_MAP[firstRaw.toLowerCase()] ?? firstRaw;
+  if (parts.length === 1) {
+    return <em>{first}</em>;
+  }
+  // Resten blir subscript med komma som separator (mattefag-konvensjon)
+  const subscript = parts.slice(1).join(",");
+  return (
+    <>
+      <em>{first}</em>
+      <sub style={{ fontSize: "0.75em", marginLeft: 1 }}>{subscript}</sub>
+    </>
+  );
+}
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 
@@ -20,20 +55,53 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   eyebrow: { nb: "STEG · BEREGNER", nn: "STEG · BEREKNAR" },
   title: { nb: "To uavhengige konstruktører beregner samme problem", nn: "To uavhengige konstruktørar reknar same problem" },
   subtitle: { nb: "Konstruktør A og B bruker ulik metode. Sammenligneren bekrefter at de er enige før resultatet presenteres.", nn: "Konstruktør A og B brukar ulik metode. Samanliknaren stadfestar at dei er einige før resultatet er presentert." },
+  // Pair-bar (#1) — felles overskrift over A+B som signaliserer arkitekturen
+  toLoysningar: { nb: "TO LØSNINGER, ETT SVAR", nn: "TO LØYSINGAR, EITT SVAR" },
+  samanliknast: { nb: "samanliknast", nn: "samanliknast" },
   // Konstruktør tags
-  konstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
-  konstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  konstruktorA: { nb: "Konstruktør", nn: "Konstruktør" },
+  konstruktorB: { nb: "Konstruktør", nn: "Konstruktør" },
   tagA: { nb: "LUKKET FORMEL · EUROKODE", nn: "LUKKA FORMEL · EUROKODE" },
   tagB: { nb: "NUMERISK · FRITT LEGEME", nn: "NUMERISK · FRI LEKAM" },
-  // AgentCard
+  // Tooltip-tekstar (#7) — forklar metode-tags på hover/long-press
+  tagATooltip: { nb: "Bruker etablerte Eurokode-formler direkte.", nn: "Bruker etablerte Eurokode-formlar direkte." },
+  tagBTooltip: { nb: "Setter opp likevektsekvasjonar frå null.", nn: "Set opp likevektsekvasjonar frå null." },
+  // Roterande status-tekstar (#8) — erstattar generisk "Tenker dypt".
+  // Backend-uavhengig fallback (Claude Design sin "80% effekt"-variant):
+  // statisk liste som syklar uavhengig av faktisk modell-aktivitet.
+  // V0.2: backend kan tag'e thinking-tokens med kategori og mappe presist.
+  fagligVenting: {
+    nb: "Leser forespørsel · Setter opp likninger · Beregner verdier · Verifiserer resultat · Skriver neste steg",
+    nn: "Les forespurnaden · Set opp likningane · Reknar verdiar · Verifiserer resultat · Skriv neste steg",
+  },
+  // Feiltilstand + retry (#2)
   feilPrefix: { nb: "Feil:", nn: "Feil:" },
+  provPaNytt: { nb: "Prøv på nytt", nn: "Prøv på nytt" },
+  forsokAv: { nb: "forsøk {n} av 3", nn: "forsøk {n} av 3" },
+  ventarPaPartner: { nb: "Ventar på partner — kan ikkje samanliknast åleine", nn: "Ventar på partner — kan ikkje samanliknast åleine" },
+  blokkertARetry: { nb: "BLOKKERT · A TRENG RETRY", nn: "BLOKKERT · A TRENG RETRY" },
+  blokkertBRetry: { nb: "BLOKKERT · B TRENG RETRY", nn: "BLOKKERT · B TRENG RETRY" },
+  blokkertForklaring: { nb: "Begge konstruktørar må fullføre før samanlikning kan starte.", nn: "Begge konstruktørar må fullføre før samanlikning kan starte." },
   tenkjerDjupt: { nb: "Tenker dypt på problemet", nn: "Tenkjer djupt på problemet" },
   skrivNesteSteg: { nb: "Skriver neste steg", nn: "Skriv neste steg" },
   // SamanliknarPanel
   samanliknar: { nb: "Sammenligner", nn: "Samanliknar" },
   ventar: { nb: "VENTER", nn: "VENTAR" },
   reknarAvvik: { nb: "BEREGNER AVVIK", nn: "REKNAR AVVIK" },
+  // Placeholder-stripe (#4): synleg medan A+B streamar — slank tekst i staden
+  // for full kort som ser ut som han "ventar".
+  ventarPaBegge: { nb: "Ventar på at begge løsninger fullføres", nn: "Ventar på at begge løysingar fullførast" },
   einige: { nb: "ENIGE", nn: "EINIGE" },
+  // Klassifisering (#6) — basert på maks avvik blant alle resultat-felt
+  nestenEinige: { nb: "NESTEN ENIGE", nn: "NESTEN EINIGE" },
+  avvikBadge: { nb: "AVVIK", nn: "AVVIK" },
+  terskelEnige: { nb: "Alle avvik under 5 %", nn: "Alle avvik under 5 %" },
+  terskelNestenEnige: { nb: "Alle avvik under 15 %, nokre over 5 %", nn: "Alle avvik under 15 %, nokre over 5 %" },
+  terskelAvvik: { nb: "Eitt eller fleire avvik over 15 %", nn: "Eitt eller fleire avvik over 15 %" },
+  // Tilstand-spesifikke avvik-labels (erstattar repeterande "Vurder nærmere")
+  avvikInnanforTerskel: { nb: "Innan terskel", nn: "Innan terskel" },
+  avvikSjekkNaerare: { nb: "Sjekk nærare", nn: "Sjekk nærare" },
+  avvikStorDiskrepans: { nb: "Stor diskrepans", nn: "Stor diskrepans" },
   cellResultat: { nb: "RESULTAT", nn: "RESULTAT" },
   cellMetode: { nb: "METODE", nn: "METODE" },
   cellKonklusjon: { nb: "KONKLUSJON", nn: "KONKLUSJON" },
@@ -44,6 +112,9 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   innanforToleranse: { nb: "Innenfor toleranse", nn: "Innanfor toleranse" },
   vurderNarare: { nb: "Vurder nærmere", nn: "Vurder nærare" },
   videreKontrollor: { nb: "Videre til kontrollør", nn: "Vidare til kontrollør" },
+  // Samanlikningstabell (#5)
+  tabellVerdi: { nb: "VERDI", nn: "VERDI" },
+  tabellAvvik: { nb: "AVVIK", nn: "AVVIK" },
   toAvToEinige: { nb: "2 av 2 metoder enige", nn: "2 av 2 metodar einige" },
   avvikAVurdere: { nb: "avvik å vurdere", nn: "avvik å vurdere" },
 };
@@ -86,6 +157,11 @@ type Props = {
   comparison: ComparisonResultMin | null;
   streamingA: AgentStreamingState;
   streamingB: AgentStreamingState;
+  // Retry-handler (#2). Optional for graceful fallback om page.tsx ikkje
+  // sender han enno. Når satt, viser kvart feila kort ein "Prøv på nytt"-knapp.
+  onRetry?: (letter: "A" | "B") => void;
+  retryCountA?: number;
+  retryCountB?: number;
 };
 
 export default function MissionControl({
@@ -94,9 +170,43 @@ export default function MissionControl({
   comparison,
   streamingA,
   streamingB,
+  onRetry,
+  retryCountA = 0,
+  retryCountB = 0,
 }: Props) {
   const { locale } = useLocale();
   const bothComplete = calculationA !== null && calculationB !== null;
+  const aErrored = streamingA.phase === "error";
+  const bErrored = streamingB.phase === "error";
+
+  // Auto-scroll til Sammenligner i to fasar (#5):
+  //  Fase 1: når begge konstruktørar er ferdige → vis "BEREGNER AVVIK"-kortet.
+  //  Fase 2: når comparison-data kjem inn → tabell ekspanderer, scroll på nytt
+  //          slik at konklusjon-blokka (botn av tabellen) er synleg.
+  // Begge med 400ms delay så slide-in/ekspansjon-animasjonen får starte først.
+  const sammenlignerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (bothComplete) {
+      const timer = setTimeout(() => {
+        sammenlignerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [bothComplete]);
+  useEffect(() => {
+    if (comparison !== null) {
+      const timer = setTimeout(() => {
+        sammenlignerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [comparison]);
 
   return (
     <div className="mc">
@@ -110,26 +220,131 @@ export default function MissionControl({
         </p>
       </header>
 
-      <div className="mc-grid">
-        <AgentCard
-          letter="A"
-          name={MC_LABELS.konstruktorA[locale]}
-          tag={MC_LABELS.tagA[locale]}
-          streaming={streamingA}
-          calculation={calculationA}
-          locale={locale}
-        />
-        <AgentCard
-          letter="B"
-          name={MC_LABELS.konstruktorB[locale]}
-          tag={MC_LABELS.tagB[locale]}
-          streaming={streamingB}
-          calculation={calculationB}
-          locale={locale}
-        />
+      {/* Pair-frame (#1): felles topp-bar + ↔-element mellom A og B.
+          Signaliserer arkitekturen visuelt — A og B er to halvdelar av
+          ein dobbel-løysing, ikkje to separate berekningar. */}
+      <style>{`
+        .mc-pair-bar {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 16px;
+        }
+        .mc-pair-bar-line {
+          flex: 1;
+          height: 1px;
+          background: var(--rule, #E2E8F0);
+        }
+        .mc-pair-bar-text {
+          font-size: 11px;
+          letter-spacing: 0.14em;
+          font-weight: 600;
+          color: var(--fg-muted, #94A3B8);
+          white-space: nowrap;
+        }
+        .mc-pair-wrap {
+          position: relative;
+        }
+        .mc-pair-wrap .mc-grid {
+          gap: 56px !important;
+        }
+        .mc-pair-connector {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: var(--surface, #fff);
+          border: 1px solid var(--rule, #E2E8F0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+          pointer-events: none;
+        }
+        .mc-pair-connector-icon {
+          font-size: 14px;
+          line-height: 1;
+          color: var(--fg-2, #475569);
+        }
+        @media (max-width: 720px) {
+          .mc-pair-wrap .mc-grid { gap: 16px !important; }
+          .mc-pair-connector { display: none; }
+        }
+        @keyframes mc-compare-slide-down {
+          0% {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 80px;
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 600px;
+          }
+        }
+        .mc-compare-slide-in {
+          animation: mc-compare-slide-down 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+          will-change: opacity, transform;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .mc-compare-slide-in { animation: none !important; }
+        }
+      `}</style>
+
+      <div className="mc-pair-bar" aria-hidden>
+        <div className="mc-pair-bar-line" />
+        <div className="mc-pair-bar-text">{MC_LABELS.toLoysningar[locale]}</div>
+        <div className="mc-pair-bar-line" />
       </div>
 
-      <SamanliknarPanel bothComplete={bothComplete} comparison={comparison} locale={locale} />
+      <div className="mc-pair-wrap">
+        <div className="mc-grid">
+          <AgentCard
+            letter="A"
+            name={MC_LABELS.konstruktorA[locale]}
+            tag={MC_LABELS.tagA[locale]}
+            tagTooltip={MC_LABELS.tagATooltip[locale]}
+            streaming={streamingA}
+            calculation={calculationA}
+            locale={locale}
+            partnerErrored={bErrored}
+            onRetry={onRetry ? () => onRetry("A") : undefined}
+            retryCount={retryCountA}
+          />
+          <AgentCard
+            letter="B"
+            name={MC_LABELS.konstruktorB[locale]}
+            tag={MC_LABELS.tagB[locale]}
+            tagTooltip={MC_LABELS.tagBTooltip[locale]}
+            streaming={streamingB}
+            calculation={calculationB}
+            locale={locale}
+            partnerErrored={aErrored}
+            onRetry={onRetry ? () => onRetry("B") : undefined}
+            retryCount={retryCountB}
+          />
+        </div>
+        <div className="mc-pair-connector" aria-label={MC_LABELS.samanliknast[locale]}>
+          <span className="mc-pair-connector-icon">↔</span>
+        </div>
+      </div>
+
+      <div ref={sammenlignerRef}>
+        <SamanliknarPanel
+          bothComplete={bothComplete}
+          comparison={comparison}
+          locale={locale}
+          aErrored={aErrored}
+          bErrored={bErrored}
+          calculationA={calculationA}
+          calculationB={calculationB}
+          streamingA={streamingA}
+          streamingB={streamingB}
+        />
+      </div>
     </div>
   );
 }
@@ -138,53 +353,127 @@ function AgentCard({
   letter,
   name,
   tag,
+  tagTooltip,
   streaming,
   calculation,
   locale,
+  partnerErrored,
+  onRetry,
+  retryCount,
 }: {
   letter: string;
   name: string;
   tag: string;
+  tagTooltip: string;
   streaming: AgentStreamingState;
   calculation: CalculationResultMin | null;
   locale: Locale;
+  partnerErrored: boolean;
+  onRetry?: () => void;
+  retryCount: number;
 }) {
   const complete = calculation !== null;
 
+  // Strip "Steg N — " / "Steg N - " / "Steg N: " prefiks frå step-titlar (#3).
+  // Konstruktør A si prompt har generert numererte steg, men dei to konstruktørane
+  // er likeverdige — stegnummer er meta-støy. Stripping i rendering held backend
+  // uendra og lar oss reversere om vi ombestemmer oss. Robust mot ulike dash-typar
+  // og kollon, og lar uberørte titlar (utan prefiks) gå gjennom uendra.
+  const stripStepPrefix = (title: string): string =>
+    title.replace(/^Steg\s+\d+\s*[—\-:]\s*/i, "").trim();
+
   // Step-liste: frå calculation viss complete, elles frå streaming.stepTitles.
-  const stepList: string[] = complete && calculation?.calculation_steps
+  const stepList: string[] = (complete && calculation?.calculation_steps
     ? calculation.calculation_steps.map((s) => s.title).slice(0, 8)
-    : streaming.stepTitles;
+    : streaming.stepTitles
+  ).map(stripStepPrefix);
 
   // Vis pulsing "i gang"-line viss ikkje complete og ikkje error.
   const showInProgress =
     !complete &&
     (streaming.phase === "thinking" || streaming.phase === "streaming");
 
-  const inProgressText =
-    streaming.phase === "thinking"
-      ? MC_LABELS.tenkjerDjupt[locale]
-      : MC_LABELS.skrivNesteSteg[locale];
+  // Roterande fagleg status (#8) — syklar gjennom 5 fag-spesifikke setningar
+  // medan streaming pågår. 3 sek per fase = naturleg lese-tempo.
+  const phases = MC_LABELS.fagligVenting[locale].split(" · ");
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  useEffect(() => {
+    if (!showInProgress) return;
+    const interval = setInterval(() => {
+      setPhaseIdx((i) => (i + 1) % phases.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [showInProgress, phases.length]);
 
-  // Results: frå calculation viss complete, elles frå streaming.
-  const resultsSource = complete && calculation?.results
-    ? calculation.results
-    : streaming.results;
-  const resultEntries = Object.entries(resultsSource).slice(0, 2);
+  const inProgressText = phases[phaseIdx];
+
+  // Resultat-verdiar (q_Ed osv.) er flytta til Sammenligner-kortet (#5),
+  // så vi treng ikkje lenger ekstrahere dei her i AgentCard.
 
   const errorMessage = streaming.phase === "error" ? streaming.error : null;
 
   return (
-    <div className={`mc-agent-card${complete ? " mc-agent-card--complete" : ""}`}>
+    <div
+      className={`mc-agent-card${complete ? " mc-agent-card--complete" : ""}`}
+      style={{ position: "relative", overflow: "hidden" }}
+    >
       <header className="mc-agent-header">
         <div className="mc-agent-avatar">{letter}</div>
         <div className="mc-agent-name">{name}</div>
-        <div className="mc-agent-tag">{tag}</div>
+        <div className="mc-agent-tag" style={{ display: "inline-flex", alignItems: "center" }}>
+          {tag}
+          <InfoPopover label={tag} ariaLabel={`Forklaring for ${tag}`}>
+            <p>{tagTooltip}</p>
+          </InfoPopover>
+        </div>
       </header>
 
       {errorMessage ? (
         <div className="mc-error" role="alert">
           <strong>{MC_LABELS.feilPrefix[locale]}</strong> {errorMessage}
+          {onRetry && (
+            <div
+              style={{
+                marginTop: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={onRetry}
+                style={{
+                  padding: "8px 14px",
+                  background: "var(--fg, #1F2937)",
+                  color: "var(--surface, #fff)",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span aria-hidden>↻</span>
+                {MC_LABELS.provPaNytt[locale]}
+              </button>
+              {retryCount > 0 && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--fg-muted, #94A3B8)",
+                  }}
+                >
+                  {MC_LABELS.forsokAv[locale].replace("{n}", String(retryCount + 1))}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <ol className="mc-steps">
@@ -202,22 +491,77 @@ function AgentCard({
             </li>
           )}
 
-          {resultEntries.map(([key, value], i) => (
+          {/* Resultat-verdiar (q_Ed osv.) er flytta til Sammenligner-kortet
+              som ein samanlikningstabell (#5). Steg-lista her viser berre
+              kva som blei gjort, ikkje siste-steg-output. Ferdig-markør i
+              staden — signaliserer at kortet leverer til Sammenligner. */}
+          {complete && (
             <li
-              key={`result-${i}`}
-              className={`mc-step mc-step--utført mc-step--result${
-                i === 0 ? " mc-step--result-first" : ""
-              }`}
+              key="ferdig"
+              className="mc-step mc-step--utført mc-step--result mc-step--result-first"
             >
               <span className="mc-step-icon">✓</span>
-              <span className="mc-step-text mc-result-text">
-                <span className="mc-result-key">{key}</span>
-                <span className="mc-result-equals"> = </span>
-                <span className="mc-result-value">{value}</span>
+              <span className="mc-step-text" style={{ fontStyle: "italic", color: "var(--fg-muted, #94A3B8)" }}>
+                Ferdig — leverer resultat til Sammenligner
               </span>
             </li>
-          ))}
+          )}
         </ol>
+      )}
+
+      {/* Ventar-på-partner-stripe (#2): synleg når dette kortet er ferdig
+          men partner har feila — signaliserer at samanlikning ikkje kan
+          gjerast åleine, så studenten forstår kvifor pipeline-en har stoppa. */}
+      {complete && partnerErrored && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "8px 12px",
+            background: "var(--surface-alt, #FAFAFA)",
+            border: "1px solid var(--rule, #E2E8F0)",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "var(--fg-muted, #94A3B8)",
+            fontStyle: "italic",
+          }}
+        >
+          {MC_LABELS.ventarPaPartner[locale]}
+        </div>
+      )}
+
+      {/* Sweep-puls (#8) — subtil 1px lys-gradient som glir frå venstre til
+          høgre nedst i kortet medan streaming pågår. Erstattar "spinner"-
+          aktige UI som signaliserer "noko skjer" utan å vere generisk
+          progress-bar. Berre synleg når agenten faktisk produserer output. */}
+      {showInProgress && (
+        <>
+          <style>{`
+            @keyframes mc-thinking-sweep {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(200%); }
+            }
+            .mc-thinking-sweep {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              width: 50%;
+              height: 1px;
+              background: linear-gradient(
+                90deg,
+                transparent 0%,
+                var(--fg-2, #475569) 50%,
+                transparent 100%
+              );
+              animation: mc-thinking-sweep 2.2s ease-in-out infinite;
+              pointer-events: none;
+              will-change: transform;
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .mc-thinking-sweep { animation: none !important; opacity: 0.3; }
+            }
+          `}</style>
+          <div className="mc-thinking-sweep" aria-hidden />
+        </>
       )}
     </div>
   );
@@ -227,24 +571,102 @@ function SamanliknarPanel({
   bothComplete,
   comparison,
   locale,
+  aErrored,
+  bErrored,
+  calculationA,
+  calculationB,
+  streamingA,
+  streamingB,
 }: {
   bothComplete: boolean;
   comparison: ComparisonResultMin | null;
   locale: Locale;
+  aErrored: boolean;
+  bErrored: boolean;
+  calculationA: CalculationResultMin | null;
+  calculationB: CalculationResultMin | null;
+  streamingA: AgentStreamingState;
+  streamingB: AgentStreamingState;
 }) {
-  if (!bothComplete) {
+  // BLOKKERT-tilstand (#2): éin agent har feila — Sammenligner kan ikkje
+  // køyre før retry har fullført. Erstattar stille "VENTER" som ville
+  // implisere "alt OK, berre vent".
+  if (aErrored || bErrored) {
     return (
-      <div className="mc-compare mc-compare--waiting">
+      <div className="mc-compare mc-compare--blocked">
         <div className="mc-compare-avatar">S</div>
         <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
-        <div className="mc-compare-pill">{MC_LABELS.ventar[locale]}</div>
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 12px",
+            background: "var(--tone-bad-bg, rgba(194, 65, 12, 0.08))",
+            border: "1px solid var(--tone-bad-border, rgba(194, 65, 12, 0.25))",
+            borderRadius: 999,
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            fontWeight: 600,
+            color: "var(--tone-bad-fg, #C2410C)",
+            textTransform: "uppercase",
+          }}
+        >
+          {aErrored ? MC_LABELS.blokkertARetry[locale] : MC_LABELS.blokkertBRetry[locale]}
+        </div>
+      </div>
+    );
+  }
+
+  if (!bothComplete) {
+    // Placeholder-stripe (#4): slank, dimma linje som signaliserer at
+    // Sammenligner finst i pipelinen men ventar på A+B. Erstattar tidlegare
+    // fullt "VENTER"-kort som tok plass og kjente seg som "stuck".
+    return (
+      <div
+        style={{
+          marginTop: 24,
+          padding: "10px 16px",
+          background: "var(--surface-alt, #FAFAFA)",
+          border: "1px dashed var(--rule, #E2E8F0)",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          fontSize: 12.5,
+          color: "var(--fg-muted, #94A3B8)",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 24,
+            height: 24,
+            borderRadius: "50%",
+            background: "var(--surface, #fff)",
+            border: "1px solid var(--rule, #E2E8F0)",
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--fg-muted, #94A3B8)",
+            flexShrink: 0,
+          }}
+        >
+          S
+        </span>
+        <span>{MC_LABELS.samanliknar[locale]}</span>
+        <span style={{ marginLeft: "auto", fontStyle: "italic" }}>
+          {MC_LABELS.ventarPaBegge[locale]}
+        </span>
       </div>
     );
   }
 
   if (!comparison) {
     return (
-      <div className="mc-compare mc-compare--working">
+      <div className="mc-compare mc-compare--working mc-compare-slide-in">
         <div className="mc-compare-avatar">S</div>
         <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
         <div className="mc-compare-pill mc-compare-pill--active">
@@ -255,58 +677,166 @@ function SamanliknarPanel({
   }
 
   const numDiffs = comparison.numeric_differences || [];
-  const topDiffs = numDiffs.slice(0, 2);
   const allIdentical =
     numDiffs.length === 0 ||
     numDiffs.every((d) => (d.percent_diff || 0) === 0);
 
+  // Klassifisering (#6) — vi tek maks avvik blant alle felt. Tersklane (5%, 15%)
+  // er pre-launch-defaults; bør validerast mot fag for ulike variable-typar i V0.2.
+  const maxAvvik = Math.max(0, ...numDiffs.map((d) => d.percent_diff || 0));
+  const classification: "enige" | "nesten" | "avvik" =
+    maxAvvik < 5 ? "enige" : maxAvvik < 15 ? "nesten" : "avvik";
+  const badgeLabel =
+    classification === "enige"
+      ? MC_LABELS.einige[locale]
+      : classification === "nesten"
+      ? MC_LABELS.nestenEinige[locale]
+      : MC_LABELS.avvikBadge[locale];
+  const terskelLabel =
+    classification === "enige"
+      ? MC_LABELS.terskelEnige[locale]
+      : classification === "nesten"
+      ? MC_LABELS.terskelNestenEnige[locale]
+      : MC_LABELS.terskelAvvik[locale];
+
+  // Bygg verdi-rader (#5): kombiner A og B sine results-objekt til ein
+  // tabell der kvar rad er VERDI | A | B | AVVIK. Source-of-truth for
+  // talverdiar er calculation.results; comparison.numeric_differences gir
+  // oss percent_diff + severity per felt.
+  type TableRow = {
+    field: string;
+    valueA: string;
+    valueB: string;
+    percentDiff: number;
+    severity: "low" | "medium" | "high" | "critical";
+  };
+
+  const resultsA = calculationA?.results ?? {};
+  const resultsB = calculationB?.results ?? {};
+  // Streaming-results som fallback (#5-fix): final calculation.results frå
+  // agenten kan vere kortare enn det den faktisk berekna under streaming.
+  // Vi tek alle keys frå begge kjelder + brukar streaming.results om
+  // calculation.results manglar verdi.
+  const streamResultsA = streamingA.results ?? {};
+  const streamResultsB = streamingB.results ?? {};
+  const diffsByField = new Map(numDiffs.map((d) => [d.field, d]));
+  const allFieldsOrdered = Array.from(
+    new Set([
+      ...Object.keys(resultsA),
+      ...Object.keys(resultsB),
+      ...Object.keys(streamResultsA),
+      ...Object.keys(streamResultsB),
+    ])
+  );
+  const tableRows: TableRow[] = allFieldsOrdered.slice(0, 6).map((field) => {
+    const d = diffsByField.get(field);
+    return {
+      field,
+      valueA: resultsA[field] ?? streamResultsA[field] ?? "—",
+      valueB: resultsB[field] ?? streamResultsB[field] ?? "—",
+      percentDiff: d?.percent_diff ?? 0,
+      severity: d?.severity ?? "low",
+    };
+  });
+
   return (
-    <div className="mc-compare mc-compare--ready">
+    <div className="mc-compare mc-compare--ready mc-compare-slide-in">
       <header className="mc-compare-ready-header">
         <div className="mc-compare-avatar">S</div>
         <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
-        <div className="mc-compare-pill mc-compare-pill--success">{MC_LABELS.einige[locale]}</div>
+        <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <div
+            className="mc-compare-pill"
+            style={{
+              background:
+                classification === "enige"
+                  ? "var(--tone-ok-bg, rgba(22, 101, 52, 0.08))"
+                  : classification === "nesten"
+                  ? "var(--tone-warn-bg, rgba(202, 138, 4, 0.08))"
+                  : "var(--tone-bad-bg, rgba(194, 65, 12, 0.08))",
+              borderColor:
+                classification === "enige"
+                  ? "var(--tone-ok-border, rgba(22, 101, 52, 0.25))"
+                  : classification === "nesten"
+                  ? "var(--tone-warn-border, rgba(202, 138, 4, 0.25))"
+                  : "var(--tone-bad-border, rgba(194, 65, 12, 0.25))",
+              color:
+                classification === "enige"
+                  ? "var(--tone-ok-fg, #166534)"
+                  : classification === "nesten"
+                  ? "var(--tone-warn-fg, #92400E)"
+                  : "var(--tone-bad-fg, #C2410C)",
+            }}
+          >
+            {badgeLabel}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--fg-muted, #94A3B8)", fontStyle: "italic" }}>
+            {terskelLabel}
+          </div>
+        </div>
       </header>
+
+      {/* Samanlikningstabell (#5): VERDI | A | B | AVVIK */}
+      {tableRows.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(80px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr) minmax(70px, auto)",
+            gap: "4px 16px",
+            padding: "16px 0",
+            fontSize: 13,
+            borderBottom: "1px solid var(--rule, #E2E8F0)",
+            marginBottom: 16,
+          }}
+        >
+          {/* Header-rad */}
+          <div className="uk-eyebrow" style={{ fontSize: 10 }}>{MC_LABELS.tabellVerdi[locale]}</div>
+          <div className="uk-eyebrow" style={{ fontSize: 10 }}>A</div>
+          <div className="uk-eyebrow" style={{ fontSize: 10 }}>B</div>
+          <div className="uk-eyebrow" style={{ fontSize: 10, textAlign: "right" }}>{MC_LABELS.tabellAvvik[locale]}</div>
+
+          {/* Data-rader */}
+          {tableRows.map((row) => {
+            const avvikColor =
+              row.percentDiff === 0
+                ? "var(--tone-ok-fg, #166534)"
+                : row.severity === "low"
+                ? "var(--fg-2, #475569)"
+                : row.severity === "medium"
+                ? "var(--tone-warn-fg, #92400E)"
+                : "var(--tone-bad-fg, #C2410C)";
+            return (
+              <Fragment key={row.field}>
+                <span style={{ color: "var(--fg-2, #475569)", fontSize: 14 }}>{formatFieldKey(row.field)}</span>
+                <span className="uk-mono">{row.valueA}</span>
+                <span className="uk-mono">{row.valueB}</span>
+                <span
+                  className="uk-mono"
+                  style={{ color: avvikColor, textAlign: "right", fontWeight: 500 }}
+                >
+                  {row.percentDiff.toFixed(1)} %
+                </span>
+              </Fragment>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Konklusjon-blokk */}
       <div className="mc-compare-grid">
-        {allIdentical ? (
-          <>
-            <div className="mc-compare-cell">
-              <div className="mc-compare-cell-label">{MC_LABELS.cellResultat[locale]}</div>
-              <div className="mc-compare-cell-value">0,0 %</div>
-              <div className="mc-compare-cell-note">{MC_LABELS.abIdentiske[locale]}</div>
-            </div>
-            <div className="mc-compare-cell">
-              <div className="mc-compare-cell-label">{MC_LABELS.cellMetode[locale]}</div>
-              <div className="mc-compare-cell-value mc-compare-cell-value--prose">
-                {MC_LABELS.beggeKonvergerer[locale]}
-              </div>
-              <div className="mc-compare-cell-note">
-                {MC_LABELS.lukkaFormelSame[locale]}
-              </div>
-            </div>
-          </>
-        ) : (
-          topDiffs.map((d, i) => (
-            <div key={i} className="mc-compare-cell">
-              <div className="mc-compare-cell-label">{d.field} {MC_LABELS.cellAvvikSuffix[locale]}</div>
-              <div className="mc-compare-cell-value">
-                {d.percent_diff?.toFixed(1) ?? "0,0"} %
-              </div>
-              <div className="mc-compare-cell-note">
-                {d.severity === "low" ? MC_LABELS.innanforToleranse[locale] : MC_LABELS.vurderNarare[locale]}
-              </div>
-            </div>
-          ))
-        )}
         <div className="mc-compare-cell">
           <div className="mc-compare-cell-label">{MC_LABELS.cellKonklusjon[locale]}</div>
           <div className="mc-compare-cell-value mc-compare-cell-value--prose">
             {MC_LABELS.videreKontrollor[locale]}
           </div>
           <div className="mc-compare-cell-note">
-            {allIdentical
-              ? MC_LABELS.toAvToEinige[locale]
-              : `${numDiffs.length} ${MC_LABELS.avvikAVurdere[locale]}`}
+            {(() => {
+              const total = numDiffs.length;
+              const utanfor = numDiffs.filter((d) => (d.percent_diff || 0) >= 5).length;
+              if (allIdentical) return MC_LABELS.toAvToEinige[locale];
+              if (utanfor === 0) return `${total} ${locale === "nn" ? "verdiar jamført" : "verdier jamført"}`;
+              return `${total} ${locale === "nn" ? "jamført · " : "jamført · "}${utanfor} ${locale === "nn" ? "utanfor terskel" : "utenfor terskel"}`;
+            })()}
           </div>
         </div>
       </div>

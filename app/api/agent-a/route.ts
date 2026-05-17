@@ -53,6 +53,21 @@ Generer felta i NØYAKTIG rekkefølga under. For kvart calculation_step: skriv p
 }
 </output_format>
 
+<results_completeness>
+results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktørane. Inkluder ALLE dimensjonerande verdier du rekna gjennom oppgåva — ikkje berre hovudsvaret:
+
+- Lastkombinasjonar (alle variantar du sette opp, t.d. Ed_ULS_kombinert, Ed_ULS_kun_permanent)
+- Dimensjonerande krefter per lasttilfelle (M_Ed, V_Ed, N_Ed, ...)
+- Materialfaktorar og lastfaktorar brukt (gamma_M0, psi_1_kategori_B, ...)
+- Geometriske verdier (A, I_y, W_pl, ...)
+- Kapasitetar (M_Rd osv.) og utnytting (eta)
+- Sluttverdier (deformasjon, vippeknekking-faktor, ...)
+
+Bruk EKSAKT same nøkkel-namn som ein annan konstruktør ville bruka for SAME fysiske storleik — fagleg konvensjon, SNAKE_CASE. T.d. "M_Ed", "Ed_SLS_karakteristisk", "rho_min". IKKJE "M.Ed", "Med", "result_main".
+
+results skal IKKJE filtrere ned til berre "hovudsvaret". Samanliknar treng kvart namngitt mellomledd for å gjere uavhengig sjekk.
+</results_completeness>
+
 <verification_checklist>
 FØR short_conclusion, gå gjennom og dokumenter i verification_notes:
 

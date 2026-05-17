@@ -298,6 +298,11 @@ export default function Home() {
   const [streamingA, setStreamingA] = useState<AgentStreamingState>(INITIAL_STREAMING);
   const [streamingB, setStreamingB] = useState<AgentStreamingState>(INITIAL_STREAMING);
 
+  // Retry-teljarar for Mission Control (#2). Per-agent retry-count som vises
+  // i feilkortet ("forsøk N av 3"). Resettast i handleCancel og ved ny berekning.
+  const [retryCountA, setRetryCountA] = useState(0);
+  const [retryCountB, setRetryCountB] = useState(0);
+
   // Streaming-state for Tolkar (dag 10). Phase går "idle" → "streaming"
   // → "complete" eller "error". Partial blir populert progressivt frå SSE.
   type TolkarStreamingState = {
@@ -779,9 +784,24 @@ useEffect(() => {
     setStreamingA(INITIAL_STREAMING);
     setStreamingB(INITIAL_STREAMING);
     setStreamingTolkar(INITIAL_TOLKAR);
+    setRetryCountA(0);
+    setRetryCountB(0);
+    pipelineRunningRef.current = false;
     // Reset eksempel-kollaps slik at neste sesjon ser eksempla igjen
     setExamplesCollapsed(false);
     hasAutoCollapsedRef.current = false;
+  };
+
+  // Tilbake til workbench frå calculation_result-fasen. Behaldar ALT state
+  // (input, result, calculationA/B, comparison, controllerDecision, currentRunId)
+  // — handleStartCalculation samanliknar med lastCompletedRef og avgjer om
+  // ny beregning skal startast eller om vi skal hoppe tilbake til eksisterande
+  // resultat. Slik unngår vi spell av tokens når brukar berre vil sjå rapport
+  // på nytt, men startar fersk når input/Tolkar-resultat har endra seg.
+  const handleBackToWorkbench = () => {
+    setRestoredFrom(null);
+    setError(null);
+    setPhase("workbench");
   };
 
   // Mangelfull-chips (#03): set inn ein mal-tekst i textarea-en når brukar
@@ -822,9 +842,19 @@ useEffect(() => {
       return;
     }
 
-    // Hopp rett til resultatet viss berekninga allereie er gjort
-    // (skjer når brukar kjem tilbake frå calc_result til workbench og trykker Start igjen)
-    if (calculationA && currentRunId) {
+    // Hopp rett til resultatet viss berekninga allereie er gjort OG verken
+    // input eller Tolkar-resultatet har endra seg sidan sist. Bug-fiks:
+    // tidlegare sjekk var berre `calculationA && currentRunId`, som førte til
+    // at modifisert input + Tolk-på-nytt likevel viste original beregning.
+    // No samanliknar vi mot snapshot lagra i pipelinen ved fullført beregning.
+    if (
+      calculationA &&
+      currentRunId &&
+      lastCompletedRef.current &&
+      lastCompletedRef.current.input === input &&
+      lastCompletedRef.current.resultHash === JSON.stringify(result) &&
+      lastCompletedRef.current.runId === currentRunId
+    ) {
       setPhase("calculation_result");
       return;
     }
@@ -842,6 +872,9 @@ useEffect(() => {
     setControllerDecision(null);
     setStreamingA({ ...INITIAL_STREAMING, phase: "thinking" });
     setStreamingB({ ...INITIAL_STREAMING, phase: "thinking" });
+    setRetryCountA(0);
+    setRetryCountB(0);
+    pipelineRunningRef.current = false;
 
     try {
       // === STEG 0: Init run ===
@@ -866,14 +899,10 @@ useEffect(() => {
       setCurrentRunId(runId);
 
       // === STEG 1: Konstruktør A og B parallelt via SSE-streaming ===
-      // Begge agentar streamar samtidig. Vi held lokale variablar for
-      // sluttresultata, og setter calculationA/B i onComplete så
-      // MissionControl-komponenten kan vise progress real-time.
-      let resA: CalculationResult | null = null;
-      let resB: CalculationResult | null = null;
-      let errA: string | null = null;
-      let errB: string | null = null;
-
+      // Begge agentar streamar samtidig. onComplete setter calculationA/B
+      // i state — useEffect under Promise.all triggar deretter Sammenligner+
+      // Kontrollør-pipeline. Om éin agent feilar, viser MissionControl
+      // retry-UI og brukar kan re-prøve den agenten åleine.
       const agentBody = { run_id: runId, input_review: result, locale };
 
       await Promise.all([
@@ -890,12 +919,10 @@ useEffect(() => {
             }));
           },
           onComplete: (r) => {
-            resA = r as unknown as CalculationResult;
-            setCalculationA(resA);
+            setCalculationA(r as unknown as CalculationResult);
             setStreamingA((s) => ({ ...s, phase: "complete" }));
           },
           onError: (msg) => {
-            errA = msg;
             setStreamingA((s) => ({ ...s, phase: "error", error: msg }));
           },
         }, controller.signal),
@@ -912,89 +939,200 @@ useEffect(() => {
             }));
           },
           onComplete: (r) => {
-            resB = r as unknown as CalculationResult;
-            setCalculationB(resB);
+            setCalculationB(r as unknown as CalculationResult);
             setStreamingB((s) => ({ ...s, phase: "complete" }));
           },
           onError: (msg) => {
-            errB = msg;
             setStreamingB((s) => ({ ...s, phase: "error", error: msg }));
           },
         }, controller.signal),
       ]);
 
-      if (errA) {
-        setError(errA || "Konstruktør A klarte ikkje løyse oppgåva");
-        setPhase("workbench");
-        return;
-      }
-
-      if (errB || !resB) {
-        console.error("Konstruktør B feila:", errB);
-        setError(`Konstruktør B feila: ${errB}. Hoppar over samanlikning.`);
-        setPhase("calculation_result");
-        return;
-      }
-
-      // Lokale resA/resB blir brukt i Samanliknar/Kontrollør-kalla nedanfor
-      // (i staden for dataA.result/dataB.result frå før). Sjekkar at dei ikkje
-      // er null sjølv om TS-typing skulle tilseie det.
-      if (!resA) {
-        setError("Uventa: Konstruktør A returnerte tomt resultat");
-        setPhase("workbench");
-        return;
-      }
-
-      // === STEG 2: Samanliknar ===
-      const responseC = await fetch("/api/agent-c", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          run_id: runId,
-          agent_a_output: resA,
-          agent_b_output: resB,
-          locale,
-        }),
-      });
-
-      const dataC = await responseC.json();
-
-      if (!responseC.ok) {
-        console.error("Samanliknar feila:", dataC.error);
-        setError(`Samanliknar feila: ${dataC.error}. Viser A og B utan samanlikning.`);
-        setPhase("calculation_result");
-        return;
-      }
-      setComparison(dataC.result);
-
-      // === STEG 3: Kontrolløren ===
-      const responseD = await fetch("/api/agent-d", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          run_id: runId,
-          input_review: result,
-          agent_a_output: resA,
-          agent_b_output: resB,
-          comparison_result: dataC.result,
-          locale,
-        }),
-      });
-
-      const dataD = await responseD.json();
-
-      if (!responseD.ok) {
-        console.error("Kontrollør feila:", dataD.error);
-        setPhase("calculation_result");
-        return;
-      }
-
-      setControllerDecision(dataD.result);
-      setPhase("calculation_result");
+      // === Etter Promise.all (#2): ===
+      // Tidlegare hadde vi early returns her som ville:
+      // - errA → setError + setPhase("workbench")  (kastar bort B sitt arbeid)
+      // - errB → setError + setPhase("calculation_result") (hoppar over samanlikning)
+      //
+      // No: vi let begge agentar etterlate seg state — om éin har feila,
+      // viser MissionControl retry-UI og brukar kan re-prøve. Sammenligner +
+      // Kontrollør-pipeline blir trigga av useEffect under når BÅDE
+      // calculationA OG calculationB er sett (anten frå original køyring
+      // eller etter retry).
+      //
+      // Om begge feilar samtidig: ingen useEffect-trigger, brukar kan retry
+      // begge separat. Om begge OK: useEffect triggar automatisk.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
       setPhase("workbench");
     }
+  };
+
+  // Pipeline-running-flagg (#2): hindrar at useEffect-en startar pipelinen
+  // fleire gonger. Ref i staden for state — endringar trigger ikkje re-render
+  // og inngår ikkje i deps. Reset ved cancel og start av ny berekning.
+  const pipelineRunningRef = useRef(false);
+
+  // Snapshot av siste fullførte beregning (bug-fiks: "Tilbake"-flyt).
+  // Når brukar går tilbake til Workbench og klikkar Start beregning UTAN
+  // å endre input eller Tolkar-resultat, skal vi hoppe rett til rapport-
+  // visning av den eksisterande beregninga i staden for å bruke tokens på
+  // ein identisk re-køyring. Sjekkast i handleStartCalculation før init-run.
+  const lastCompletedRef = useRef<{
+    input: string;
+    resultHash: string;
+    runId: string;
+  } | null>(null);
+
+  // Sammenligner + Kontrollør-pipeline (#2): trigga automatisk når begge
+  // konstruktørar har levert resultat. Dette gjer retry-flyten transparent
+  // — brukar klikkar "Prøv på nytt" → den agenten re-køyrer → setCalculation
+  // når den fullfører → useEffect triggar → pipeline fullfører.
+  useEffect(() => {
+    if (
+      phase !== "calculating" ||
+      !calculationA ||
+      !calculationB ||
+      comparison !== null ||
+      pipelineRunningRef.current ||
+      !currentRunId ||
+      !result
+    ) {
+      return;
+    }
+
+    pipelineRunningRef.current = true;
+    (async () => {
+      try {
+        // STEG 2: Samanliknar
+        const responseC = await fetch("/api/agent-c", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            run_id: currentRunId,
+            agent_a_output: calculationA,
+            agent_b_output: calculationB,
+            locale,
+          }),
+        });
+        const dataC = await responseC.json();
+        if (!responseC.ok) {
+          console.error("Samanliknar feila:", dataC.error);
+          setError(`Samanliknar feila: ${dataC.error}. Viser A og B utan samanlikning.`);
+          setPhase("calculation_result");
+          return;
+        }
+        setComparison(dataC.result);
+
+        // STEG 3: Kontrolløren
+        const responseD = await fetch("/api/agent-d", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            run_id: currentRunId,
+            input_review: result,
+            agent_a_output: calculationA,
+            agent_b_output: calculationB,
+            comparison_result: dataC.result,
+            locale,
+          }),
+        });
+        const dataD = await responseD.json();
+        if (!responseD.ok) {
+          console.error("Kontrollør feila:", dataD.error);
+          setPhase("calculation_result");
+          return;
+        }
+        setControllerDecision(dataD.result);
+        // Lagre snapshot av denne fullførte beregninga slik at "Tilbake"-flyt
+        // utan endring kan hoppe rett tilbake i staden for å starte ny.
+        if (currentRunId && result) {
+          lastCompletedRef.current = {
+            input,
+            resultHash: JSON.stringify(result),
+            runId: currentRunId,
+          };
+        }
+        setPhase("calculation_result");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ukjent feil");
+        setPhase("workbench");
+      } finally {
+        pipelineRunningRef.current = false;
+      }
+    })();
+  }, [phase, calculationA, calculationB, comparison, currentRunId, result, locale]);
+
+  // Retry-handler (#2): re-køyrer berre den feila agenten utan å røre den
+  // andre. Når retry fullfører OG partner er complete, vil useEffect-en
+  // over automatisk trigge Sammenligner+Kontrollør-pipeline.
+  const handleRetryAgent = async (letter: "A" | "B") => {
+    if (!currentRunId || !result) {
+      console.warn("handleRetryAgent: manglar runId eller result");
+      return;
+    }
+
+    // Auk forsøk-teljar
+    if (letter === "A") setRetryCountA((c) => c + 1);
+    else setRetryCountB((c) => c + 1);
+
+    // Reset streaming-state + calculation for den agenten
+    if (letter === "A") {
+      setStreamingA({ ...INITIAL_STREAMING, phase: "thinking" });
+      setCalculationA(null);
+    } else {
+      setStreamingB({ ...INITIAL_STREAMING, phase: "thinking" });
+      setCalculationB(null);
+    }
+    setError(null);
+
+    const endpoint = letter === "A" ? "/api/agent-a" : "/api/agent-b";
+    const body = { run_id: currentRunId, input_review: result, locale };
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    streamAgent(
+      endpoint,
+      body,
+      {
+        onTextStart: () => {
+          if (letter === "A") setStreamingA((s) => ({ ...s, phase: "streaming" }));
+          else setStreamingB((s) => ({ ...s, phase: "streaming" }));
+        },
+        onDelta: (_delta, accumulated) => {
+          const extracted = extractStreamingState(accumulated);
+          if (letter === "A") {
+            setStreamingA((s) => ({
+              ...s,
+              phase: "streaming",
+              stepTitles: extracted.stepTitles,
+              results: extracted.results,
+            }));
+          } else {
+            setStreamingB((s) => ({
+              ...s,
+              phase: "streaming",
+              stepTitles: extracted.stepTitles,
+              results: extracted.results,
+            }));
+          }
+        },
+        onComplete: (r) => {
+          const res = r as unknown as CalculationResult;
+          if (letter === "A") {
+            setCalculationA(res);
+            setStreamingA((s) => ({ ...s, phase: "complete" }));
+          } else {
+            setCalculationB(res);
+            setStreamingB((s) => ({ ...s, phase: "complete" }));
+          }
+        },
+        onError: (msg) => {
+          if (letter === "A") setStreamingA((s) => ({ ...s, phase: "error", error: msg }));
+          else setStreamingB((s) => ({ ...s, phase: "error", error: msg }));
+        },
+      },
+      controller.signal,
+    );
   };
 
   const pageHeader = PHASE_HEADERS[locale][phase];
@@ -1784,6 +1922,9 @@ useEffect(() => {
               comparison={comparison}
               streamingA={streamingA}
               streamingB={streamingB}
+              onRetry={handleRetryAgent}
+              retryCountA={retryCountA}
+              retryCountB={retryCountB}
             />
           )}
 
@@ -2255,7 +2396,7 @@ useEffect(() => {
                       {WB_LABELS.resultatetForebels[locale]}
                     </p>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => setPhase("workbench")} className="uk-btn">
+                      <button onClick={handleBackToWorkbench} className="uk-btn">
                         {WB_LABELS.tilbake[locale]}
                       </button>
                       {currentRunId && calculationA && calculationB && (
