@@ -706,11 +706,34 @@ function getFirstSentence(text: string): string {
 // klient-side frå method_differences, assumption_differences, warnings
 // og manual_review_required-flagget.
 type KontrollorChip = {
-  text: string;
+  text: string;     // Kort overskrift som vises i pillen når kollapsa
+  body?: string;    // Lang forklaring som vises som prosa når utvida
   tone: "info" | "warn" | "neutral";
-  prefix?: string; // visuell prefix t.d. "+", "⚠", "✓"
-  tooltip?: string; // hover-tekst med full forklaring
+  prefix?: string;  // visuell prefix t.d. "+", "⚠", "✓"
 };
+
+// Splitt rå chip-tekst på første kolon. Det som står før blir til overskrift
+// (synleg når kollapsa), det som står etter blir til prosa-body (synleg når
+// utvida). Om ingen kolon finst, eller om kolonen kjem for seint i strengen
+// (>80 teikn — sannsynlegvis ikkje ein faktisk overskrift), behaldast heile
+// som body og overskrifta vert ein truncate av starten.
+function splitChipText(raw: string): { text: string; body?: string } {
+  const s = raw.trim();
+  if (!s) return { text: "" };
+  // Sjå etter ": " (kolon + mellomrom — typisk for "Tittel: forklaring").
+  // Tillat opp til 80 teikn for tittel-delen.
+  const colonIdx = s.indexOf(": ");
+  if (colonIdx > 0 && colonIdx <= 80) {
+    const title = s.slice(0, colonIdx).trim();
+    const body = s.slice(colonIdx + 2).trim();
+    if (title && body) return { text: title, body };
+  }
+  // Ingen brukbar kolon. Truncate til kort overskrift, behald heile som body.
+  if (s.length > 70) {
+    return { text: s.slice(0, 69) + "…", body: s };
+  }
+  return { text: s };
+}
 
 function buildKontrollorChips(
   comparison: ComparisonResult | null,
@@ -745,42 +768,40 @@ function buildKontrollorChips(
   if (calculationA?.confidence) {
     chips.push({
       text: `A · ${calculationA.confidence.toUpperCase()}`,
+      body: confidenceTooltip("A", calculationA.confidence),
       tone: confidenceTone(calculationA.confidence),
-      tooltip: confidenceTooltip("A", calculationA.confidence),
     });
   }
   if (calculationB?.confidence) {
     chips.push({
       text: `B · ${calculationB.confidence.toUpperCase()}`,
+      body: confidenceTooltip("B", calculationB.confidence),
       tone: confidenceTone(calculationB.confidence),
-      tooltip: confidenceTooltip("B", calculationB.confidence),
     });
   }
 
-  // 1) Method differences → info-chip "+ B la til X"
+  // 1) Method differences → info-chip med tittel + body splitta på kolon
   if (comparison?.method_differences?.length) {
     for (const md of comparison.method_differences) {
-      const t = md.trim();
-      if (!t) continue;
+      const split = splitChipText(md);
+      if (!split.text) continue;
       chips.push({
-        text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+        ...split,
         tone: "info",
         prefix: "+",
-        tooltip: t,
       });
     }
   }
 
-  // 2) Assumption differences → warn-chip "⚠ ulik forutsetning"
+  // 2) Assumption differences → warn-chip med tittel + body
   if (comparison?.assumption_differences?.length) {
     for (const ad of comparison.assumption_differences) {
-      const t = ad.trim();
-      if (!t) continue;
+      const split = splitChipText(ad);
+      if (!split.text) continue;
       chips.push({
-        text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+        ...split,
         tone: "warn",
         prefix: "⚠",
-        tooltip: t,
       });
     }
   }
@@ -795,20 +816,21 @@ function buildKontrollorChips(
     const norm = t.toLowerCase().replace(/\s+/g, " ");
     if (seenWarnings.has(norm)) continue;
     seenWarnings.add(norm);
+    const split = splitChipText(w);
+    if (!split.text) continue;
     chips.push({
-      text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+      ...split,
       tone: "warn",
       prefix: "⚠",
-      tooltip: t,
     });
   }
 
-  // 4) Manual review required → neutral-chip "Krev fagleg gjennomgang"
+  // 4) Manual review required → neutral-chip
   if (decision?.manual_review_required) {
     chips.push({
       text: WB_LABELS.krevFagligGjennomgang[locale],
+      body: decision.controller_notes || undefined,
       tone: "neutral",
-      tooltip: decision.controller_notes || WB_LABELS.krevFagligGjennomgang[locale],
     });
   }
 
@@ -2099,7 +2121,9 @@ useEffect(() => {
           content: "";
           position: absolute;
           inset: -3px;
-          border-radius: 999px;
+          /* Match den nye fag-chip-forma (rounded-rect, radius 8 + 3px inset
+             = 11). Tidlegare 999 (pille) som var for gamle pille-format. */
+          border-radius: 11px;
           border: 1.5px solid rgba(125, 95, 50, 0.55);
           pointer-events: none;
           opacity: 0;
@@ -3077,14 +3101,19 @@ useEffect(() => {
                             </div>
                           )}
 
-                          {/* Fag-flagg-chips — eigen rad under konfidens */}
+                          {/* Fag-flagg-chips — vertikal liste, ein per line.
+                              Tidlegare flex-wrap-grid klumpa korte chips saman
+                              i samme rad — brukar vil ha listevisning slik at
+                              kvar merknad er tydeleg avgrensa. Konfidens-rada
+                              over held fram med flex-wrap (sidan A/B-pillar
+                              er korte og naturleg på same line). */}
                           {fagChips.length > 0 && (
                             <div
                               style={{
                                 display: "flex",
-                                flexWrap: "wrap",
+                                flexDirection: "column",
+                                alignItems: "stretch",
                                 gap: 6,
-                                alignItems: "flex-start",
                               }}
                             >
                               {fagChips.map((chip, i) => (
@@ -3093,6 +3122,7 @@ useEffect(() => {
                                   chip={chip}
                                   index={konfidensChips.length + i}
                                   enableAura
+                                  fullWidth
                                 />
                               ))}
                             </div>
@@ -3109,10 +3139,12 @@ useEffect(() => {
                       const issuesA = comparison.internal_consistency_issues?.agent_a ?? [];
                       const issuesB = comparison.internal_consistency_issues?.agent_b ?? [];
                       const totalIssues = issuesA.length + issuesB.length;
-                      // null = auto-mode: utvida om issues, kollapsa elles
+                      // null = default kollapsa. Brukar må klikke for å opne.
+                      // Tidligare auto-opna ved >0 issues, men brukar har bedt
+                      // om å sjølv kontrollere når det vises.
                       const isExpanded =
                         selvkontrollExpanded === null
-                          ? totalIssues > 0
+                          ? false
                           : selvkontrollExpanded;
                       const hasCritical =
                         [...issuesA, ...issuesB].some(
@@ -3187,16 +3219,39 @@ useEffect(() => {
                                   <ul
                                     style={{
                                       margin: 0,
-                                      paddingLeft: 18,
-                                      fontSize: 13,
-                                      color: "var(--fg-2)",
-                                      lineHeight: 1.55,
+                                      padding: 0,
+                                      listStyle: "none",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 8,
                                     }}
                                   >
                                     {issuesA.map((issue, i) => (
-                                      <li key={i} style={{ marginBottom: 2 }}>
-                                        {issue.issue}{" "}
-                                        <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                      <li
+                                        key={i}
+                                        style={{
+                                          display: "flex",
+                                          gap: 12,
+                                          fontSize: 13.5,
+                                          color: "var(--fg-2)",
+                                          lineHeight: 1.55,
+                                        }}
+                                      >
+                                        <span
+                                          aria-hidden="true"
+                                          style={{
+                                            flexShrink: 0,
+                                            width: 5,
+                                            height: 5,
+                                            borderRadius: "50%",
+                                            background: "var(--warn)",
+                                            marginTop: 8,
+                                          }}
+                                        />
+                                        <span style={{ minWidth: 0 }}>
+                                          {issue.issue}{" "}
+                                          <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                        </span>
                                       </li>
                                     ))}
                                   </ul>
@@ -3218,16 +3273,39 @@ useEffect(() => {
                                   <ul
                                     style={{
                                       margin: 0,
-                                      paddingLeft: 18,
-                                      fontSize: 13,
-                                      color: "var(--fg-2)",
-                                      lineHeight: 1.55,
+                                      padding: 0,
+                                      listStyle: "none",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 8,
                                     }}
                                   >
                                     {issuesB.map((issue, i) => (
-                                      <li key={i} style={{ marginBottom: 2 }}>
-                                        {issue.issue}{" "}
-                                        <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                      <li
+                                        key={i}
+                                        style={{
+                                          display: "flex",
+                                          gap: 12,
+                                          fontSize: 13.5,
+                                          color: "var(--fg-2)",
+                                          lineHeight: 1.55,
+                                        }}
+                                      >
+                                        <span
+                                          aria-hidden="true"
+                                          style={{
+                                            flexShrink: 0,
+                                            width: 5,
+                                            height: 5,
+                                            borderRadius: "50%",
+                                            background: "var(--warn)",
+                                            marginTop: 8,
+                                          }}
+                                        />
+                                        <span style={{ minWidth: 0 }}>
+                                          {issue.issue}{" "}
+                                          <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                        </span>
                                       </li>
                                     ))}
                                   </ul>
@@ -3276,16 +3354,50 @@ useEffect(() => {
                             </span>
                           </button>
                           {kontrollorProsaExpanded && (
-                            <p
+                            <div
                               style={{
                                 margin: "10px 0 0",
-                                fontSize: 13,
-                                lineHeight: 1.6,
+                                padding: "14px 16px",
+                                background: "rgba(0, 0, 0, 0.025)",
+                                borderLeft: "3px solid var(--border)",
+                                borderRadius: 4,
+                                fontSize: 14,
+                                lineHeight: 1.7,
                                 color: "var(--fg-2)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 12,
                               }}
                             >
-                              {controllerDecision.user_message}
-                            </p>
+                              {/* Splitt prosaen i setningar (punktum/utropsteikn
+                                  + space + stor bokstav) for å gje lufti
+                                  paragraf-pattern. Konstruktør-namn vert markert
+                                  fed slik at lesaren kan skanne kven som gjorde
+                                  kva. Same regex som chip-body i KontrollorChipPill. */}
+                              {controllerDecision.user_message
+                                .split(/(?<=[.!?])\s+(?=[A-ZÆØÅ])/)
+                                .map((s) => s.trim())
+                                .filter(Boolean)
+                                .map((sentence, i) => {
+                                  const m = sentence.match(
+                                    /^(Konstruktør [AB]s?|Begge konstruktørar?|Begge tilnærminger?|Resultatet|Beregningen)/
+                                  );
+                                  return (
+                                    <p key={i} style={{ margin: 0 }}>
+                                      {m ? (
+                                        <>
+                                          <strong style={{ fontWeight: 600, color: "var(--fg)" }}>
+                                            {m[0]}
+                                          </strong>
+                                          {sentence.slice(m[0].length)}
+                                        </>
+                                      ) : (
+                                        sentence
+                                      )}
+                                    </p>
+                                  );
+                                })}
+                            </div>
                           )}
                         </div>
                       )}
@@ -3521,14 +3633,40 @@ useEffect(() => {
                     <ul
                       style={{
                         margin: 0,
-                        paddingLeft: 18,
-                        fontSize: 13,
-                        color: "var(--fg-2)",
-                        lineHeight: 1.6,
+                        padding: 0,
+                        listStyle: "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
                       }}
                     >
                       {calculationA.assumptions.map((a, i) => (
-                        <li key={i}>{a}</li>
+                        <li
+                          key={i}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            fontSize: 13.5,
+                            color: "var(--fg-2)",
+                            lineHeight: 1.55,
+                            paddingLeft: 0,
+                          }}
+                        >
+                          {/* Eigen bullet i staden for default list-marker
+                              for å gje tydelegare visuelt anker per item. */}
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              flexShrink: 0,
+                              width: 5,
+                              height: 5,
+                              borderRadius: "50%",
+                              background: "var(--fg-muted)",
+                              marginTop: 8,
+                            }}
+                          />
+                          <span style={{ minWidth: 0 }}>{a}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -3549,21 +3687,6 @@ useEffect(() => {
                     else next.add(i);
                     return next;
                   });
-                };
-                const scrollToStep = (i: number) => {
-                  // Sikre at steget er utvida før scroll
-                  setCollapsedSteps((prev) => {
-                    if (!prev.has(i)) return prev;
-                    const next = new Set(prev);
-                    next.delete(i);
-                    return next;
-                  });
-                  // Litt forseinking for å la rendering oppdaterast før scroll
-                  setTimeout(() => {
-                    document
-                      .getElementById(`stegvis-step-${i}`)
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }, 50);
                 };
 
                 return (
@@ -3619,60 +3742,10 @@ useEffect(() => {
                       </div>
                     </div>
                     <div className="uk-card__bd">
-                      {/* Anker-chips — klikkbar liste av steg-titlar */}
-                      {steps.length > 2 && (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: 6,
-                            marginBottom: 16,
-                            paddingBottom: 14,
-                            borderBottom: "1px dashed var(--border)",
-                          }}
-                          aria-label={WB_LABELS.stegvisGaaTilSteg[locale]}
-                        >
-                          {steps.map((step, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => scrollToStep(i)}
-                              style={{
-                                appearance: "none",
-                                font: "inherit",
-                                fontSize: 11.5,
-                                padding: "3px 10px",
-                                background: "var(--surface-2)",
-                                color: "var(--fg-2)",
-                                border: "1px solid var(--border)",
-                                borderRadius: 999,
-                                cursor: "pointer",
-                                fontFamily: "inherit",
-                                whiteSpace: "nowrap",
-                                transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = "var(--fg)";
-                                e.currentTarget.style.color = "var(--surface)";
-                                e.currentTarget.style.borderColor = "var(--fg)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "var(--surface-2)";
-                                e.currentTarget.style.color = "var(--fg-2)";
-                                e.currentTarget.style.borderColor = "var(--border)";
-                              }}
-                            >
-                              <span
-                                className="uk-mono"
-                                style={{ fontWeight: 600, marginRight: 4 }}
-                              >
-                                {i + 1}
-                              </span>
-                              <span>· {step.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {/* MERK: Anker-chips er fjerna etter brukar-feedback —
+                          dei gav for mykje UI-støy i Stegvis-blokka. Per-steg-
+                          kollaps (klikk på tittel) gir nok navigasjon, og
+                          "Bare formlene"-toggle er primær view-styring. */}
 
                       <ol style={{ margin: 0, padding: 0, listStyle: "none" }}>
                         {steps.map((step, i) => {
@@ -3806,14 +3879,37 @@ useEffect(() => {
                     <ul
                       style={{
                         margin: 0,
-                        paddingLeft: 18,
-                        fontSize: 13,
-                        color: "var(--fg-2)",
-                        lineHeight: 1.6,
+                        padding: 0,
+                        listStyle: "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
                       }}
                     >
                       {calculationA.limitations.map((l, i) => (
-                        <li key={i}>{l}</li>
+                        <li
+                          key={i}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            fontSize: 13.5,
+                            color: "var(--fg-2)",
+                            lineHeight: 1.55,
+                          }}
+                        >
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              flexShrink: 0,
+                              width: 5,
+                              height: 5,
+                              borderRadius: "50%",
+                              background: "var(--fg-muted)",
+                              marginTop: 8,
+                            }}
+                          />
+                          <span style={{ minWidth: 0 }}>{l}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -3834,14 +3930,37 @@ useEffect(() => {
                   <ul
                     style={{
                       margin: 0,
-                      paddingLeft: 18,
-                      fontSize: 13,
-                      color: "var(--fg-2)",
-                      lineHeight: 1.6,
+                      padding: 0,
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
                     }}
                   >
                     {calculationA.warnings.map((w, i) => (
-                      <li key={i}>{w}</li>
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          fontSize: 13.5,
+                          color: "var(--fg-2)",
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            flexShrink: 0,
+                            width: 5,
+                            height: 5,
+                            borderRadius: "50%",
+                            background: "var(--warn)",
+                            marginTop: 8,
+                          }}
+                        />
+                        <span style={{ minWidth: 0 }}>{w}</span>
+                      </li>
                     ))}
                   </ul>
                 </StatusStripe>
@@ -4206,9 +4325,40 @@ useEffect(() => {
                                   <div className="uk-eyebrow" style={{ marginBottom: 6, fontSize: 10 }}>
                                     {WB_LABELS.metodiskeSkilnader[locale]}
                                   </div>
-                                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
+                                  <ul
+                                    style={{
+                                      margin: 0,
+                                      padding: 0,
+                                      listStyle: "none",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 10,
+                                    }}
+                                  >
                                     {methodDiffs.map((m, i) => (
-                                      <li key={i}>{m}</li>
+                                      <li
+                                        key={i}
+                                        style={{
+                                          display: "flex",
+                                          gap: 12,
+                                          fontSize: 13.5,
+                                          color: "var(--fg-2)",
+                                          lineHeight: 1.55,
+                                        }}
+                                      >
+                                        <span
+                                          aria-hidden="true"
+                                          style={{
+                                            flexShrink: 0,
+                                            width: 5,
+                                            height: 5,
+                                            borderRadius: "50%",
+                                            background: "var(--fg-muted)",
+                                            marginTop: 8,
+                                          }}
+                                        />
+                                        <span style={{ minWidth: 0 }}>{m}</span>
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
@@ -4218,9 +4368,40 @@ useEffect(() => {
                                   <div className="uk-eyebrow" style={{ marginBottom: 6, fontSize: 10 }}>
                                     {WB_LABELS.forskjellarForesetnader[locale]}
                                   </div>
-                                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
+                                  <ul
+                                    style={{
+                                      margin: 0,
+                                      padding: 0,
+                                      listStyle: "none",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 10,
+                                    }}
+                                  >
                                     {assumptionDiffs.map((a, i) => (
-                                      <li key={i}>{a}</li>
+                                      <li
+                                        key={i}
+                                        style={{
+                                          display: "flex",
+                                          gap: 12,
+                                          fontSize: 13.5,
+                                          color: "var(--fg-2)",
+                                          lineHeight: 1.55,
+                                        }}
+                                      >
+                                        <span
+                                          aria-hidden="true"
+                                          style={{
+                                            flexShrink: 0,
+                                            width: 5,
+                                            height: 5,
+                                            borderRadius: "50%",
+                                            background: "var(--fg-muted)",
+                                            marginTop: 8,
+                                          }}
+                                        />
+                                        <span style={{ minWidth: 0 }}>{a}</span>
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
@@ -4963,10 +5144,15 @@ function KontrollorChipPill({
   chip,
   index = 0,
   enableAura = false,
+  fullWidth = false,
 }: {
   chip: KontrollorChip;
   index?: number;
   enableAura?: boolean;
+  /** True når chipen er del av ein vertikal liste — strekker til full bredde.
+   *  False (default) gir pille-form som passer innhaldet (brukt for korte
+   *  konfidens-chips i wrap-rad). */
+  fullWidth?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   // hasAppeared (#anim-02): triggrar stagger-animasjonen først når chipen
@@ -5017,11 +5203,10 @@ function KontrollorChipPill({
     },
   };
   const s = toneStyles[chip.tone];
-  // Chip er klikkbar berre om det finst meir tekst å vise — dvs.
-  // tooltip eksisterer og er forskjellig frå den synlege chip-teksten.
+  // Chip er klikkbar berre om det finst meir tekst å vise — dvs. body
+  // eksisterer og er forskjellig frå den synlege chip-teksten.
   const isExpandable =
-    !!chip.tooltip && chip.tooltip.trim() !== chip.text.trim();
-  const displayText = expanded && isExpandable ? (chip.tooltip as string) : chip.text;
+    !!chip.body && chip.body.trim() !== chip.text.trim();
 
   return (
     <button
@@ -5038,21 +5223,38 @@ function KontrollorChipPill({
         .filter(Boolean)
         .join(" ")}
       style={{
-        display: "inline-flex",
+        display: fullWidth ? "flex" : "inline-flex",
         alignItems: "flex-start", // top-align for multi-linje
         gap: 5,
-        padding: expanded ? "6px 12px" : "4px 10px",
+        // Padding: kompakt for pille (konfidens), litt meir for full-bredde
+        // fag-chips (gir luft når dei står som vertikal liste).
+        padding: expanded
+          ? "10px 14px 12px"
+          : fullWidth
+            ? "6px 12px"
+            : "4px 10px",
         background: s.bg,
         border: `1px solid ${s.border}`,
-        borderRadius: expanded ? 8 : 999, // pill kollapsa, rounded-rect utvida
-        fontSize: 12,
+        // borderRadius: pille (999) for kompakte konfidens-chips, rounded-
+        // rect (8) for full-bredde fag-chips og for alle utvida chips.
+        borderRadius: expanded || fullWidth ? 8 : 999,
+        fontSize: expanded ? 13 : fullWidth ? 12.5 : 12,
         color: s.color,
-        lineHeight: 1.5,
+        lineHeight: expanded ? 1.6 : 1.5,
         whiteSpace: expanded ? "normal" : "nowrap",
+        overflow: expanded ? "visible" : "hidden",
+        textOverflow: expanded ? "clip" : "ellipsis",
         cursor: isExpandable ? "pointer" : "default",
         fontFamily: "inherit",
         textAlign: "left",
-        maxWidth: expanded ? "min(100%, 520px)" : undefined,
+        // Full bredde berre når fullWidth-prop er sett (vertikal liste).
+        // maxWidth begrenser utvida prosa-blokk til ~720px for lesbarheit.
+        width: fullWidth ? "100%" : undefined,
+        maxWidth: expanded
+          ? "min(100%, 720px)"
+          : fullWidth
+            ? "100%"
+            : undefined,
         // transition: flytta til CSS (.pilar-chip-stagger--visible) slik at
         // hover sin transform/box-shadow får same smooth easing utan å bli
         // overskriven av inline-style.
@@ -5063,7 +5265,7 @@ function KontrollorChipPill({
         // forrige, slik at pulsen renner frå topp til bunn av lista.
         // 250ms per chip-posisjon, klampes til 4s max. Pilar-aura sin
         // animation-delay les denne custom property'n.
-        ["--aura-delay" as string]: `${1 + Math.min(index * 0.25, 4)}s`,
+        ["--aura-delay" as string]: `${1.5 + Math.min(index * 0.25, 4)}s`,
       }}
     >
       {chip.prefix && (
@@ -5072,14 +5274,68 @@ function KontrollorChipPill({
             fontWeight: 600,
             opacity: 0.85,
             flexShrink: 0,
-            // Halde prefix-baseline med første tekstlinje når utvida
             lineHeight: 1.5,
+            // Når utvida, hold prefix-en oppe på linje med overskrifta
+            marginTop: expanded ? 1 : 0,
           }}
         >
           {chip.prefix}
         </span>
       )}
-      <span style={{ minWidth: 0 }}>{displayText}</span>
+      <span style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: expanded ? 8 : 0 }}>
+        {/* Overskrift — alltid synleg. Når utvida, fed for å vise det er ein
+            tittel; når kollapsa, normal vekt. */}
+        <span
+          style={{
+            fontWeight: expanded ? 600 : 400,
+            color: expanded ? "var(--fg)" : s.color,
+          }}
+        >
+          {chip.text}
+        </span>
+        {/* Body — berre når utvida. Prosa-tekst splitta i avsnitt på
+            setningsgrenser (punktum + space + stor bokstav) for å gjere
+            lange forklaringar lettare å skanne. Konstruktør-namn vert markert
+            fed slik at lesaren raskt kan sjå kva som gjeld kva agent. */}
+        {expanded && chip.body && (
+          <span
+            style={{
+              color: "var(--fg-2)",
+              fontWeight: 400,
+              fontSize: 13,
+              lineHeight: 1.65,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {chip.body
+              // Splitt på setningsgrenser: punktum/utropsteikn/spørsmålsteikn
+              // etterfølgt av whitespace + stor bokstav. Lookbehind/lookahead
+              // sikrar at vi ikkje splittar inne i forkortingar eller tal.
+              .split(/(?<=[.!?])\s+(?=[A-ZÆØÅ])/)
+              .map((sentence) => sentence.trim())
+              .filter(Boolean)
+              .map((sentence, i) => (
+                <span key={i}>
+                  {/* Detekter konstruktør-prefix og marker fed for skanning */}
+                  {(() => {
+                    const m = sentence.match(/^(Konstruktør [AB]s?|Begge konstruktørar?|Begge tilnærminger?)/);
+                    if (!m) return sentence;
+                    return (
+                      <>
+                        <strong style={{ fontWeight: 600, color: "var(--fg)" }}>
+                          {m[0]}
+                        </strong>
+                        {sentence.slice(m[0].length)}
+                      </>
+                    );
+                  })()}
+                </span>
+              ))}
+          </span>
+        )}
+      </span>
     </button>
   );
 }
