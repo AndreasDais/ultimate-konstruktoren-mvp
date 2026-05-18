@@ -87,6 +87,48 @@ type ControllerDecision = {
 
 type Phase = "workbench" | "calculating" | "calculation_result";
 
+// === Visningsprofil (#03) ===
+// Smart default-tilstand for Resultat-sida basert på agent-output. Avgjer
+// kva blokker som er utvida/kollapsa når studenten landar på sida.
+// Pilot-bruk: tre profilar, ingen finkorna gradering — målet er at default
+// skal spegle "kva som krev merksemd", ikkje vere lik for alle oppgåver.
+type Profile = "trygg" | "standard" | "krev_gjennomgang";
+
+// Reknar ut profil frå Kontrollør sin avgjerd × Sammenligner sin match_status
+// × tal-steg × advarsler. Returnerer "standard" som trygg fallback.
+function computeProfile(
+  controllerDecision: ControllerDecision | null,
+  comparison: ComparisonResult | null,
+  calculationA: CalculationResult | null,
+): Profile {
+  // Krev gjennomgang — uakseptabelt risiko-nivå eller usemje mellom A og B
+  if (
+    comparison?.match_status === "significant_differences" ||
+    comparison?.match_status === "critical_disagreement" ||
+    controllerDecision?.decision_status === "uncertain" ||
+    controllerDecision?.decision_status === "rejected" ||
+    controllerDecision?.risk_level === "high"
+  ) {
+    return "krev_gjennomgang";
+  }
+
+  // Trygg — alt går smerteFritt, oppgåva er enkel
+  const warningsCount = calculationA?.warnings?.length ?? 0;
+  const stepsCount = calculationA?.calculation_steps?.length ?? 0;
+  if (
+    comparison?.match_status === "match" &&
+    warningsCount === 0 &&
+    stepsCount <= 4 &&
+    controllerDecision?.decision_status === "approved" &&
+    controllerDecision?.risk_level !== "medium"
+  ) {
+    return "trygg";
+  }
+
+  // Standard — alt anna (vanlegaste tilfellet)
+  return "standard";
+}
+
 const EXAMPLE_PROMPTS = [
   "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
   "Lastkombinasjon for kontorbygg, G = 4,5 kN/m², Q = 3,0 kN/m²",
@@ -176,8 +218,14 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
   hallusinasjonarTekst: { nb: "Kontrolløren identifiserte hallusinasjoner i konstruktørenes kortform-konklusjon. Se Resultat-felt og full utregning under for korrekte verdier.", nn: "Kontrolløren identifiserte hallusinasjonar i konstruktørane sin kortform-konklusjon. Sjå Resultat-felt og full utrekning under for korrekte verdiar." },
   kortSvar: { nb: "Kort svar", nn: "Kort svar" },
   resultat: { nb: "Resultat", nn: "Resultat" },
+  visMellomledd: { nb: "Vis {n} mellomledd", nn: "Sjå {n} mellomledd" },
+  skjulMellomledd: { nb: "Skjul mellomledd", nn: "Skjul mellomledd" },
   foresetnaderBrukt: { nb: "Forutsetninger brukt", nn: "Føresetnader brukt" },
   stegvisUtrekning: { nb: "Stegvis utregning", nn: "Stegvis utrekning" },
+  // Stegvis view-toggle (#08)
+  stegvisBerreFormel: { nb: "Bare formlene", nn: "Berre formlane" },
+  stegvisAlleSteg: { nb: "Alle steg", nn: "Alle steg" },
+  stegvisGaaTilSteg: { nb: "Gå til steg", nn: "Gå til steg" },
   kvaErIkkjeRekna: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna" },
   atvaringar: { nb: "Advarsler", nn: "Åtvaringar" },
   // Konfidens-card
@@ -185,11 +233,88 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
   konstruktorBKonfidens: { nb: "Konstruktør B konfidens", nn: "Konstruktør B konfidens" },
   konstruktorKonfidens: { nb: "Konstruktør-konfidens", nn: "Konstruktør-konfidens" },
   konstruktorKonfidensPopover: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (high/medium/low). Ikke det samme som Tillit-skåren — måler bare én agents tillit til seg selv.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv." },
+  // Per-nivå forklaringar for konfidens-chips (#09)
+  konfidensHighA: {
+    nb: "Konstruktør A rapporterer HIGH-konfidens: metoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen. Egenvurdering — ikke en uavhengig verifikasjon.",
+    nn: "Konstruktør A rapporterer HIGH-konfidens: metoden er etablert, alle naudsynte input er gitt, og resultatet er konsistent gjennom utrekninga. Eigenvurdering — ikkje ei uavhengig verifisering.",
+  },
+  konfidensHighB: {
+    nb: "Konstruktør B rapporterer HIGH-konfidens på sin uavhengige løsning. B løste oppgaven uten å se A sitt svar. HIGH her betyr at B er trygg på egen metode — at A og B er enige er en separat sjekk (se verdikt over).",
+    nn: "Konstruktør B rapporterer HIGH-konfidens på si uavhengige løysing. B løyste oppgåva utan å sjå A sitt svar. HIGH her tyder at B er trygg på eigen metode — at A og B er samde er ein separat sjekk (sjå verdikt over).",
+  },
+  konfidensMediumA: {
+    nb: "Konstruktør A rapporterer MEDIUM-konfidens: metoden er korrekt, men en eller flere input er antatt eller ekstrapolert. Sjekk forutsetningene før du stoler på resultatet.",
+    nn: "Konstruktør A rapporterer MEDIUM-konfidens: metoden er korrekt, men ein eller fleire input er antatt eller ekstrapolert. Sjekk føresetnadene før du stolar på resultatet.",
+  },
+  konfidensMediumB: {
+    nb: "Konstruktør B rapporterer MEDIUM-konfidens: B løste oppgaven, men minst én forutsetning er usikker. Se forutsetningene i Konstruktør B-blokka.",
+    nn: "Konstruktør B rapporterer MEDIUM-konfidens: B løyste oppgåva, men minst éin føresetnad er usikker. Sjå føresetnadene i Konstruktør B-blokka.",
+  },
+  konfidensLowA: {
+    nb: "Konstruktør A rapporterer LOW-konfidens: vesentlig usikkerhet i metode eller input. Resultatet bør ikke brukes uten manuell verifikasjon — start gjerne på nytt med mer presise inndata.",
+    nn: "Konstruktør A rapporterer LOW-konfidens: vesentleg usikkerheit i metode eller input. Resultatet bør ikkje brukast utan manuell verifisering — start gjerne på nytt med meir presise inndata.",
+  },
+  konfidensLowB: {
+    nb: "Konstruktør B rapporterer LOW-konfidens på egen løsning. B er usikker på metode eller input. Manuell faglig kontroll anbefales sterkt.",
+    nn: "Konstruktør B rapporterer LOW-konfidens på eiga løysing. B er usikker på metode eller input. Manuell fagleg kontroll vert sterkt anbefalt.",
+  },
   // Konstruktør B-panel
   konstruktorBUavhengig: { nb: "Konstruktør B — uavhengig kontroll", nn: "Konstruktør B — uavhengig kontroll" },
   loysteOppgavaUtan: { nb: "Løste oppgaven uten å se Konstruktør A sitt svar", nn: "Løyste oppgåva utan å sjå Konstruktør A sitt svar" },
   konstruktorBKonklusjon: { nb: "Konstruktør B sin konklusjon", nn: "Konstruktør B sin konklusjon" },
   konstruktorBResultat: { nb: "Konstruktør B sine resultater", nn: "Konstruktør B sine resultat" },
+  // Kontrollør-kort (#02) — verdikt-setningar per match_status og toggle-labels
+  verdiktMatch: {
+    nb: "Konstruktør A og B er fullstendig enige om alle dimensjonerende verdier.",
+    nn: "Konstruktør A og B er fullstendig samde om alle dimensjonerande verdiar.",
+  },
+  verdiktMinor: {
+    nb: "Konstruktør A og B har små forskjeller — ingen kritiske avvik.",
+    nn: "Konstruktør A og B har små skilnader — ingen kritiske avvik.",
+  },
+  verdiktSignificant: {
+    nb: "Konstruktør A og B har vesentlige avvik på dimensjonerende verdier.",
+    nn: "Konstruktør A og B har vesentlege avvik på dimensjonerande verdiar.",
+  },
+  verdiktCritical: {
+    nb: "Konstruktør A og B er ikke enige — manuell gjennomgang trengs.",
+    nn: "Konstruktør A og B er ikkje samde — manuell gjennomgang trengst.",
+  },
+  fagligMerknad: { nb: "Faglig merknad", nn: "Fagleg merknad" },
+  lesHeileVurderinga: { nb: "Les hele vurderingen fra Kontrolløren", nn: "Les heile vurderinga frå Kontrolløren" },
+  skjulVurderinga: { nb: "Skjul vurderingen", nn: "Skjul vurderinga" },
+  krevFagligGjennomgang: { nb: "Krever faglig gjennomgang", nn: "Krev fagleg gjennomgang" },
+  // Sjølvkontroll-disclosure (#09) — viser internal_consistency_issues
+  sjølvkontrollEtikett: { nb: "Selvkontroll", nn: "Sjølvkontroll" },
+  sjølvkontrollIngen: { nb: "Ingen inkonsistenser funnet", nn: "Ingen inkonsistensar funne" },
+  sjølvkontrollFunne: { nb: "{n} inkonsistens(er) funnet", nn: "{n} inkonsistens(ar) funne" },
+  sjølvkontrollSkjul: { nb: "Skjul detaljer", nn: "Skjul detaljar" },
+  // Visningsprofil-indikator (#03) — viser kva default-tilstand sida er i,
+  // basert på agent-output. Ikkje klikkbar — kommunikasjon, ikkje kontroll.
+  visningProfil: { nb: "Visning", nn: "Visning" },
+  profilTrygg: { nb: "Trygg", nn: "Trygg" },
+  profilStandard: { nb: "Standard", nn: "Standard" },
+  profilKrevGjennomgang: { nb: "Krev gjennomgang", nn: "Krev gjennomgang" },
+  profilForklaringTrygg: {
+    nb: "Enig kontroll, ingen advarsler — siden viser kort hovedsvar.",
+    nn: "Enig kontroll, ingen advarsler — sida viser kort hovudsvar.",
+  },
+  profilForklaringStandard: {
+    nb: "Godkjent med advarsler — detaljer er kollapset, klikk for å utforske.",
+    nn: "Godkjent med advarsler — detaljar er kollapsa, klikk for å utforske.",
+  },
+  profilForklaringKrev: {
+    nb: "Vesentlige avvik — avvik-rader og merknader er pre-ekspandert.",
+    nn: "Vesentlege avvik — avvik-rader og merknader er pre-ekspandert.",
+  },
+  // Konstruktør B-disclosure (#04) — éin-linjes summary i kollapsa state
+  bUavhengigKontroll: { nb: "Konstruktør B — uavhengig kontroll", nn: "Konstruktør B — uavhengig kontroll" },
+  bEnigeMedA: { nb: "ENIGE med A", nn: "ENIGE med A" },
+  bMindreSkilnader: { nb: "Mindre forskjeller fra A", nn: "Mindre skilnader frå A" },
+  bVesentlegAvvik: { nb: "Vesentlig avvik fra A", nn: "Vesentleg avvik frå A" },
+  bKritiskUsemje: { nb: "Kritisk uenighet med A", nn: "Kritisk usemje med A" },
+  bKonfidens: { nb: "konfidens", nn: "konfidens" },
+  bUtanComparison: { nb: "ingen sammenligning tilgjengelig", nn: "inga samanlikning tilgjengeleg" },
   // Samanliknar
   samanliknarSkilnader: { nb: "Sammenligner — forskjeller funnet", nn: "Samanliknar — skilnader funne" },
   numeriskeSkilnader: { nb: "Numeriske forskjeller", nn: "Numeriske skilnader" },
@@ -200,6 +325,12 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
   tabellFelt: { nb: "Felt", nn: "Felt" },
   tabellSkilnad: { nb: "Forskjell", nn: "Skilnad" },
   tabellAlvor: { nb: "Alvor", nn: "Alvor" },
+  // Sammenligner ekspander-rad (#05)
+  samanliknarKvifor: { nb: "Hvorfor:", nn: "Kvifor:" },
+  samanliknarAVerdi: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  samanliknarBVerdi: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  generelleMerknader: { nb: "Generelle merknader fra Sammenligner", nn: "Generelle merknader frå Samanliknar" },
+  skjulMerknader: { nb: "Skjul merknader", nn: "Skjul merknader" },
   // Action bar
   resultatetForebels: { nb: "Resultatet er foreløpig og må kontrolleres av fagperson.", nn: "Resultatet er førebels og må kontrollerast av fagperson." },
   tilbake: { nb: "← Tilbake", nn: "← Tilbake" },
@@ -242,6 +373,543 @@ const PHASE_HEADERS: Record<Locale, Record<Phase, { eyebrow: string; title: stri
     },
   },
 };
+
+// === Dimensjonerande tiles (#01) ===
+// Klassifiserer results-keys som "dimensjonerande" (det studenten skal
+// verifisere før rapport) vs "mellomledd" (input + delsteg). Tre-stegs
+// heuristikk: (1) per-oppgåvetype regex-allowlist, (2) universell
+// output-pattern (prefiks/suffiks-konvensjon), (3) input-filter på dei
+// første N keys, (4) fallback til dei første 3.
+//
+// MERK: Backend (Konstruktør A/B) har ikkje primary-flagg per key i
+// pilot-skjema. Dette er klient-side heuristikk. Post-pilot bør
+// structured_output utvidast med primary_keys: ["M_Ed", "V_Ed"] frå
+// konstruktør-promptane så avgjerda flyttast til backend.
+
+// Per-oppgåvetype regex-patterns. Fleire pattern matchar fleire keys, og
+// resultatet returnerast i den rekkjefølga keys finst i results-objektet
+// (slik at agenten styrer rekkefølga, men patterna styrer kva som passerar).
+// MERK: Agentane brukar As_* (ikkje A_s_*) for armering-keys.
+const DIMENSJONERANDE_PATTERNS: Record<string, RegExp[]> = {
+  // Lastkombinasjonar (EC0) — alle Ed_ULS_* og Ed_SLS_* (kombo, psi0, hyppig, kvasi…)
+  lastkombinasjon: [/^Ed_ULS/i, /^Ed_SLS/i, /^ULS_/i, /^SLS_/i],
+  // Bjelke-lastverknad — moment og skjær (+ q_Ed som design-last)
+  bjelke_lastverknad: [/^M_Ed$/, /^V_Ed$/, /^N_Ed$/, /^q_Ed$/],
+  bjelke_moment_skjar: [/^M_Ed$/, /^V_Ed$/, /^N_Ed$/, /^q_Ed$/],
+  bjelke: [/^M_Ed$/, /^V_Ed$/, /^N_Ed$/, /^q_Ed$/],
+  lastverknad: [/^M_Ed$/, /^V_Ed$/, /^N_Ed$/, /^q_Ed$/],
+  // Armering betongbjelke (EC2) — As_req er ferdig-svar, mu_Ed er utility-ratio
+  armering_betongbjelke: [
+    /^[Aa]_?s_(req|valgt|valt)$/,
+    /^[Aa]_?s_(min|max)$/,
+    /^mu_Ed$/,
+    /^(mu|xi)_lim$/,
+    /^M_Rd$/,
+  ],
+  armering_betong: [
+    /^[Aa]_?s_(req|valgt|valt)$/,
+    /^[Aa]_?s_(min|max)$/,
+    /^mu_Ed$/,
+    /^(mu|xi)_lim$/,
+    /^M_Rd$/,
+  ],
+  armering: [
+    /^[Aa]_?s_(req|valgt|valt)$/,
+    /^[Aa]_?s_(min|max)$/,
+    /^mu_Ed$/,
+    /^(mu|xi)_lim$/,
+    /^M_Rd$/,
+  ],
+  // Stålkapasitet (EC3)
+  stalkapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+  stal_kapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+  kapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+};
+
+// STYRANDE_PATTERNS: keys som matchar desse skal hoistast til posisjon 0
+// (= dark/store tile) etter at tile-keys er valde. Rekkefølga her er
+// global prioritet på tvers av berekningstypar. Dette løyser problemet at
+// agentane ikkje alltid legg det fagleg viktigaste først i results-objektet.
+const STYRANDE_PATTERNS: RegExp[] = [
+  // Lastkombinasjonar — ULS-styrende/dominerende
+  /^Ed_ULS_(styrende|styrande|dominerende|dominerande|kombo)$/i,
+  /^ULS_(styrende|styrande|dominerende|dominerande|kombo)$/i,
+  // Bjelke — moment er styrande
+  /^M_Ed$/,
+  /^M_Rd$/,
+  // Armering — kravd armering er svaret
+  /^[Aa]_?s_req$/,
+  /^[Aa]_?s_(valgt|valt)$/,
+  // Stålkapasitet — utnyttingsgrad eller motstand
+  /^utnytting/i,
+  /^N_Rd$/,
+  // Generelt: ein Ed_-prefiks kombinasjon (siste utveg)
+  /^Ed_ULS/i,
+];
+
+// Universell output-pattern: keys som anten startar med output-prefiks
+// (Ed_, Rd_, As_, A_s_) eller endar på output-suffiks (_Ed, _Rd, _req, _min …).
+// Steg 2 i heuristikken — fangar ny berekningstype som ikkje er i allowlist.
+const OUTPUT_PATTERN =
+  /^(Ed_|Rd_|[Aa]_?s_|mu_Ed)|_(Ed|Rd|req|min|max|lim|valgt|valt|net|eff|kombo|tot|brukt|krit)$/i;
+
+// Patterns for keys som er åpenbare input/intermediære: einskilde
+// geometri-bokstavar (L, b, d, h), karakteristiske laster (G_k, Q_k, q_k),
+// partial-faktorar (gamma_*, psi_*), greske faktorar (alpha, beta, xi, eta …),
+// materialkonstantar (f_y, f_c, E). Brukast som siste utveg-filter.
+const INPUT_PATTERNS: RegExp[] = [
+  /^(L|b|d|h|t|s|a|z)([_$]|$)/, // geometri og lever-arm
+  /^(G_k|Q_k|q_k|q_d|w_k|p_k|p_d)$/, // karakteristiske/design-laster
+  /^(gamma|psi|chi|xi|eta|lambda|alpha|beta|epsilon|nu|mu|zeta|phi|rho|kappa)([_$]|$)/i, // greske faktorar (mu unntak: mu_Ed = output)
+  /^(f_y|f_c|f_ct|E_|G_modulus)/, // materialkonstantar
+  /^(profil|stalkvalitet|betongkvalitet|treklasse|tverrsnittklasse)/, // profil/material
+];
+
+function isInputKey(k: string): boolean {
+  // Spesialhandsaming: mu_Ed er output sjølv om mu-prefiks ser ut som input
+  if (/^mu_Ed$/i.test(k)) return false;
+  return INPUT_PATTERNS.some((p) => p.test(k));
+}
+
+// Tile-label-mapping for dei vanlegaste keys — gir kortform-eyebrow
+// (UPPERCASE, prikkdelt). Fallback: key.toUpperCase().replace("_", " · ").
+// Inkluderer både kortform- (Ed_SLS_kvasi) og langform- (Ed_SLS_kvasi_permanent)
+// agent-variantar fordi konstruktørane brukar begge.
+const KEY_TILE_LABELS: Record<string, Record<Locale, string>> = {
+  // Lastkombinasjonar — ULS (mest styrande)
+  Ed_ULS_styrende: { nb: "ULS · STYRENDE", nn: "ULS · STYRANDE" },
+  Ed_ULS_styrande: { nb: "ULS · STYRENDE", nn: "ULS · STYRANDE" },
+  Ed_ULS_dominerende: { nb: "ULS · DOMINERENDE", nn: "ULS · DOMINERANDE" },
+  Ed_ULS_dominerande: { nb: "ULS · DOMINERENDE", nn: "ULS · DOMINERANDE" },
+  Ed_ULS_kombo: { nb: "ULS · KOMBINASJON", nn: "ULS · KOMBINASJON" },
+  Ed_ULS_psi0: { nb: "ULS · ψ₀-KOMBINASJON", nn: "ULS · ψ₀-KOMBINASJON" },
+  ULS_styrende: { nb: "ULS · STYRENDE", nn: "ULS · STYRANDE" },
+  ULS_dominerende: { nb: "ULS · DOMINERENDE", nn: "ULS · DOMINERANDE" },
+  // Lastkombinasjonar — SLS
+  Ed_SLS_karakt: { nb: "SLS · KARAKT.", nn: "SLS · KARAKT." },
+  Ed_SLS_karakteristisk: { nb: "SLS · KARAKT.", nn: "SLS · KARAKT." },
+  Ed_SLS_hyppig: { nb: "SLS · HYPPIG", nn: "SLS · HYPPIG" },
+  Ed_SLS_kvasi: { nb: "SLS · KVASI-PERM.", nn: "SLS · KVASI-PERM." },
+  Ed_SLS_kvasi_permanent: { nb: "SLS · KVASI-PERM.", nn: "SLS · KVASI-PERM." },
+  // Bjelke-lastverknad
+  M_Ed: { nb: "MOMENT · M_Ed", nn: "MOMENT · M_Ed" },
+  V_Ed: { nb: "SKJÆR · V_Ed", nn: "SKJÆR · V_Ed" },
+  N_Ed: { nb: "AKSIAL · N_Ed", nn: "AKSIAL · N_Ed" },
+  q_Ed: { nb: "DESIGN-LAST · q_Ed", nn: "DESIGN-LAST · q_Ed" },
+  // Kapasitet
+  N_Rd: { nb: "AKSIAL · N_Rd", nn: "AKSIAL · N_Rd" },
+  M_Rd: { nb: "MOMENT · M_Rd", nn: "MOMENT · M_Rd" },
+  V_Rd: { nb: "SKJÆR · V_Rd", nn: "SKJÆR · V_Rd" },
+  // Armering — agentane brukar As_* (ikkje A_s_*)
+  As_req: { nb: "ARMERING · KRAV", nn: "ARMERING · KRAV" },
+  As_min: { nb: "ARMERING · MIN", nn: "ARMERING · MIN" },
+  As_max: { nb: "ARMERING · MAX", nn: "ARMERING · MAX" },
+  As_valgt: { nb: "ARMERING · VALGT", nn: "ARMERING · VALD" },
+  As_valt: { nb: "ARMERING · VALT", nn: "ARMERING · VALT" },
+  // Alternative skrivemåtar (legacy)
+  A_s_req: { nb: "ARMERING · KRAV", nn: "ARMERING · KRAV" },
+  A_s_min: { nb: "ARMERING · MIN", nn: "ARMERING · MIN" },
+  A_s_valgt: { nb: "ARMERING · VALGT", nn: "ARMERING · VALD" },
+  // Utnyttingsgrad og grenseverdiar
+  mu_Ed: { nb: "μ · UTNYTTING", nn: "μ · UTNYTTING" },
+  mu_lim: { nb: "μ · GRENSE", nn: "μ · GRENSE" },
+  xi_lim: { nb: "ξ · GRENSE", nn: "ξ · GRENSE" },
+  zeta_Ed: { nb: "ζ · UTNYTTING", nn: "ζ · UTNYTTING" },
+};
+
+// Per-key fagleg forklaring som vert vist når studenten klikkar på ein tile.
+// Skreve som korte 2-3 setnings-forklaringar pedagogisk tilpassa NTNU-studentar
+// (byggfag-bachelor/master nivå). Når key ikkje finst i mappinga, vert tile-en
+// ikkje klikkbar (cursor default, ingen onClick-handler).
+const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
+  // === Lastkombinasjonar (EC0, NS-EN 1990) ===
+  Ed_ULS_styrende: {
+    nb: "Dimensjonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
+    nn: "Dimensjonerande ULS-last i styrande kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkeleg tryggleik. Berekna etter EC0 ekv. 6.10 eller 6.10a/b.",
+  },
+  Ed_ULS_styrande: {
+    nb: "Dimensjonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
+    nn: "Dimensjonerande ULS-last i styrande kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkeleg tryggleik. Berekna etter EC0 ekv. 6.10 eller 6.10a/b.",
+  },
+  Ed_ULS_dominerende: {
+    nb: "Dimensjonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
+    nn: "Dimensjonerande ULS-last med dominerande variabel last (kategori-Q med faktor 1,5). Andre variable laster vert reduserte med ψ₀-faktor. Samanlikning mellom ulike Ed_ULS-kombinasjonar viser kva som er styrande.",
+  },
+  Ed_ULS_dominerande: {
+    nb: "Dimensjonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
+    nn: "Dimensjonerande ULS-last med dominerande variabel last (kategori-Q med faktor 1,5). Andre variable laster vert reduserte med ψ₀-faktor. Samanlikning mellom ulike Ed_ULS-kombinasjonar viser kva som er styrande.",
+  },
+  Ed_ULS_kombo: {
+    nb: "Dimensjonerende ULS-kombinasjon etter EC0. Brukes som referanse for sammenligning med alternative kombinasjoner (6.10a/b).",
+    nn: "Dimensjonerande ULS-kombinasjon etter EC0. Brukast som referanse for samanlikning med alternative kombinasjonar (6.10a/b).",
+  },
+  Ed_ULS_psi0: {
+    nb: "ULS-kombinasjon der den variable lasten reduseres med ψ₀-faktor (kombinasjonsverdi for samtidighet). Brukes når flere uavhengige variable laster opptrer samtidig, men ikke alle på samme tid.",
+    nn: "ULS-kombinasjon der den variable lasten vert redusert med ψ₀-faktor (kombinasjonsverdi for samtidigheit). Brukast når fleire uavhengige variable laster opptrer samtidig, men ikkje alle på same tid.",
+  },
+  Ed_SLS_karakt: {
+    nb: "SLS-karakteristisk kombinasjon (sjeldne, irreversible effekter). Brukes for nedbøyings-grenseverdier som ikke må overskrides — typisk L/250 for total nedbøyning, L/300 for langtid.",
+    nn: "SLS-karakteristisk kombinasjon (sjeldne, irreversible effektar). Brukast for nedbøyings-grenseverdiar som ikkje må overskridast — typisk L/250 for total nedbøying, L/300 for langtid.",
+  },
+  Ed_SLS_karakteristisk: {
+    nb: "SLS-karakteristisk kombinasjon (sjeldne, irreversible effekter). Brukes for nedbøyings-grenseverdier som ikke må overskrides — typisk L/250 for total nedbøyning, L/300 for langtid.",
+    nn: "SLS-karakteristisk kombinasjon (sjeldne, irreversible effektar). Brukast for nedbøyings-grenseverdiar som ikkje må overskridast — typisk L/250 for total nedbøying, L/300 for langtid.",
+  },
+  Ed_SLS_hyppig: {
+    nb: "SLS-hyppig kombinasjon (reversible effekter som opptrer ofte). Brukes for nedbøyings-vurderinger i daglig drift — komfort og brukbarhet under typiske bruksforhold.",
+    nn: "SLS-hyppig kombinasjon (reversible effektar som opptrer ofte). Brukast for nedbøyings-vurderingar i dagleg drift — komfort og brukbarheit under typiske bruksforhold.",
+  },
+  Ed_SLS_kvasi: {
+    nb: "SLS-kvasipermanent kombinasjon (langtids-effekter). Brukes for kryp og langtids-nedbøyning i betong — den lasten konstruksjonen bærer lengst tid. Typisk ψ₂ = 0,3 for kontorbygg.",
+    nn: "SLS-kvasipermanent kombinasjon (langtids-effektar). Brukast for kryp og langtids-nedbøying i betong — den lasten konstruksjonen ber lengst tid. Typisk ψ₂ = 0,3 for kontorbygg.",
+  },
+  Ed_SLS_kvasi_permanent: {
+    nb: "SLS-kvasipermanent kombinasjon (langtids-effekter). Brukes for kryp og langtids-nedbøyning i betong — den lasten konstruksjonen bærer lengst tid. Typisk ψ₂ = 0,3 for kontorbygg.",
+    nn: "SLS-kvasipermanent kombinasjon (langtids-effektar). Brukast for kryp og langtids-nedbøying i betong — den lasten konstruksjonen ber lengst tid. Typisk ψ₂ = 0,3 for kontorbygg.",
+  },
+  // === Bjelke-lastverknad ===
+  M_Ed: {
+    nb: "Dimensjonerende moment i kritisk snitt etter ULS. Skal sammenlignes med kapasiteten M_Rd. For fritt opplagt bjelke med jevnt fordelt last: M_Ed = q_Ed · L²/8.",
+    nn: "Dimensjonerande moment i kritisk snitt etter ULS. Skal samanliknast med kapasiteten M_Rd. For fritt opplagd bjelke med jamt fordelt last: M_Ed = q_Ed · L²/8.",
+  },
+  V_Ed: {
+    nb: "Dimensjonerende skjær, typisk ved opplegg. Skal sammenlignes med skjærkapasitet V_Rd. For fritt opplagt bjelke: V_Ed = q_Ed · L/2.",
+    nn: "Dimensjonerande skjær, typisk ved opplegg. Skal samanliknast med skjærkapasitet V_Rd. For fritt opplagd bjelke: V_Ed = q_Ed · L/2.",
+  },
+  N_Ed: {
+    nb: "Dimensjonerende aksialkraft (trykk eller strekk). For søyler og strekkstaver. Skal sammenlignes med N_Rd. For trykkstaver inkluderer dette knekkpåvirkning via χ-faktor.",
+    nn: "Dimensjonerande aksialkraft (trykk eller strekk). For søyler og strekkstaver. Skal samanliknast med N_Rd. For trykkstaver inkluderer dette knekkpåverknad via χ-faktor.",
+  },
+  q_Ed: {
+    nb: "Dimensjonerende designlast per meter etter at karakteristiske laster er multiplisert med partialfaktorer. Forenklet: q_Ed = γ_G · g_k + γ_Q · q_k (1,35·G + 1,5·Q i ULS).",
+    nn: "Dimensjonerande designlast per meter etter at karakteristiske laster er multiplisert med partialfaktorar. Forenkla: q_Ed = γ_G · g_k + γ_Q · q_k (1,35·G + 1,5·Q i ULS).",
+  },
+  // === Kapasitet ===
+  M_Rd: {
+    nb: "Momentkapasitet i tverrsnittet. For stål: M_Rd = W_pl · f_y / γ_M0 (plastisk). For betong: avhenger av tverrsnitt, materialkvalitet og armeringsmengde. Krav: M_Rd ≥ M_Ed.",
+    nn: "Momentkapasitet i tverrsnittet. For stål: M_Rd = W_pl · f_y / γ_M0 (plastisk). For betong: avhenger av tverrsnitt, materialkvalitet og armeringsmengd. Krav: M_Rd ≥ M_Ed.",
+  },
+  V_Rd: {
+    nb: "Skjærkapasitet i tverrsnittet. For stål: V_Rd = A_v · f_y / (γ_M0 · √3). For betong uten skjærarmering: V_Rd,c etter EC2 §6.2.2. Krav: V_Rd ≥ V_Ed.",
+    nn: "Skjærkapasitet i tverrsnittet. For stål: V_Rd = A_v · f_y / (γ_M0 · √3). For betong utan skjærarmering: V_Rd,c etter EC2 §6.2.2. Krav: V_Rd ≥ V_Ed.",
+  },
+  N_Rd: {
+    nb: "Aksialkapasitet i tverrsnittet. For sentrisk trykk: N_Rd = χ · A · f_y / γ_M1 (med knekk-reduksjon χ). For strekk: N_Rd = A · f_y / γ_M0. Krav: N_Rd ≥ N_Ed.",
+    nn: "Aksialkapasitet i tverrsnittet. For sentrisk trykk: N_Rd = χ · A · f_y / γ_M1 (med knekk-reduksjon χ). For strekk: N_Rd = A · f_y / γ_M0. Krav: N_Rd ≥ N_Ed.",
+  },
+  // === Armering (EC2) ===
+  As_req: {
+    nb: "Nødvendig strekkarmering for å motstå dimensjonerende moment. Beregnet fra momentlikevekt med dimensjonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+    nn: "Naudsynt strekkarmering for å motstå dimensjonerande moment. Berekna frå momentlikevekt med dimensjonerande materialdata. Skal vere ≥ A_s,min og ≤ A_s,max. Vel standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+  },
+  A_s_req: {
+    nb: "Nødvendig strekkarmering for å motstå dimensjonerende moment. Beregnet fra momentlikevekt med dimensjonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+    nn: "Naudsynt strekkarmering for å motstå dimensjonerande moment. Berekna frå momentlikevekt med dimensjonerande materialdata. Skal vere ≥ A_s,min og ≤ A_s,max. Vel standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+  },
+  As_min: {
+    nb: "Minimumsarmering etter EC2 §9.2.1.1: A_s,min = max(0,26 · f_ctm/f_yk · b_t · d, 0,0013 · b_t · d). Sikrer duktil oppførsel ved rissdanning og hindrer sprø brudd.",
+    nn: "Minimumsarmering etter EC2 §9.2.1.1: A_s,min = max(0,26 · f_ctm/f_yk · b_t · d, 0,0013 · b_t · d). Sikrar duktil oppførsel ved rissdanning og hindrar sprøtt brudd.",
+  },
+  A_s_min: {
+    nb: "Minimumsarmering etter EC2 §9.2.1.1: A_s,min = max(0,26 · f_ctm/f_yk · b_t · d, 0,0013 · b_t · d). Sikrer duktil oppførsel ved rissdanning og hindrer sprø brudd.",
+    nn: "Minimumsarmering etter EC2 §9.2.1.1: A_s,min = max(0,26 · f_ctm/f_yk · b_t · d, 0,0013 · b_t · d). Sikrar duktil oppførsel ved rissdanning og hindrar sprøtt brudd.",
+  },
+  As_max: {
+    nb: "Maksimumsarmering etter EC2 §9.2.1.1: A_s,max = 0,04 · A_c. Hindrer at tverrsnittet blir over-armert — over denne grensen er det fare for sprø trykkbrudd i betongen før stålet flytter seg plastisk.",
+    nn: "Maksimumsarmering etter EC2 §9.2.1.1: A_s,max = 0,04 · A_c. Hindrar at tverrsnittet blir over-armert — over denne grensa er det fare for sprøtt trykkbrudd i betongen før stålet flyttar seg plastisk.",
+  },
+  As_valgt: {
+    nb: "Faktisk valgt armeringsmengde basert på standardprogram. Skal være ≥ A_s,req og innenfor [A_s,min, A_s,max]. Velg et helt antall stenger med kjente diametre (ø10, ø12, ø16, ø20, ø25, ø32).",
+    nn: "Faktisk vald armeringsmengd basert på standardprogram. Skal vere ≥ A_s,req og innanfor [A_s,min, A_s,max]. Vel eit heilt tal stenger med kjende diametrar (ø10, ø12, ø16, ø20, ø25, ø32).",
+  },
+  As_valt: {
+    nb: "Faktisk valgt armeringsmengde basert på standardprogram. Skal være ≥ A_s,req og innenfor [A_s,min, A_s,max]. Velg et helt antall stenger med kjente diametre (ø10, ø12, ø16, ø20, ø25, ø32).",
+    nn: "Faktisk vald armeringsmengd basert på standardprogram. Skal vere ≥ A_s,req og innanfor [A_s,min, A_s,max]. Vel eit heilt tal stenger med kjende diametrar (ø10, ø12, ø16, ø20, ø25, ø32).",
+  },
+  A_s_valgt: {
+    nb: "Faktisk valgt armeringsmengde basert på standardprogram. Skal være ≥ A_s,req og innenfor [A_s,min, A_s,max]. Velg et helt antall stenger med kjente diametre (ø10, ø12, ø16, ø20, ø25, ø32).",
+    nn: "Faktisk vald armeringsmengd basert på standardprogram. Skal vere ≥ A_s,req og innanfor [A_s,min, A_s,max]. Vel eit heilt tal stenger med kjende diametrar (ø10, ø12, ø16, ø20, ø25, ø32).",
+  },
+  // === Utnytting og grenseverdiar ===
+  mu_Ed: {
+    nb: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonsløs parameter brukt i armeringsdesign — bestemmer om bjelken er underarmert (μ_Ed < μ_lim) eller om du trenger trykkarmering. Lavere er bedre fra utnyttings-perspektiv.",
+    nn: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonslaus parameter brukt i armeringsdesign — avgjer om bjelken er underarmert (μ_Ed < μ_lim) eller om du treng trykkarmering. Lågare er betre frå utnyttings-perspektiv.",
+  },
+  mu_lim: {
+    nb: "Grensen for μ_Ed der enkel-armert tverrsnitt (kun strekkarmering) er tilstrekkelig. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller øke tverrsnittsdimensjoner.",
+    nn: "Grensa for μ_Ed der enkelt-armert tverrsnitt (berre strekkarmering) er tilstrekkeleg. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller auke tverrsnittsdimensjonar.",
+  },
+  xi_lim: {
+    nb: "Grensen for relativ trykksone-høyde ξ = x/d, der x er nøytralaksens dybde. Sikrer duktilitetskrav etter EC2 §5.6.3 (vanligvis ξ_lim ≈ 0,45–0,5). Lavere ξ gir mer duktil oppførsel og varsel før brudd.",
+    nn: "Grensa for relativ trykksone-høgd ξ = x/d, der x er nøytralaksens djupne. Sikrar duktilitetskrav etter EC2 §5.6.3 (vanlegvis ξ_lim ≈ 0,45–0,5). Lågare ξ gir meir duktil oppførsel og varsel før brudd.",
+  },
+  zeta_Ed: {
+    nb: "Dimensjonerende utnyttingsgrad — forholdet mellom dimensjonerende påkjenning og kapasitet. Verdier < 1,0 indikerer at tverrsnittet har tilstrekkelig kapasitet. Lavere er bedre, men for lav verdi (< 0,5) kan indikere overdesign.",
+    nn: "Dimensjonerande utnyttingsgrad — forholdet mellom dimensjonerande påkjenning og kapasitet. Verdiar < 1,0 indikerer at tverrsnittet har tilstrekkeleg kapasitet. Lågare er betre, men for låg verdi (< 0,5) kan indikere overdesign.",
+  },
+};
+
+// Hoistar key som matchar STYRANDE_PATTERNS til posisjon 0. Brukast etter
+// at tile-keys er valde for å sikre at det fagleg viktigaste (= det
+// studenten skal stole på) er den mørke styrande tilen. Stoppar ved
+// første match (i agentens rekkefølge) for å vere deterministisk.
+function hoistStyrande(keys: string[]): string[] {
+  const styrandeIdx = keys.findIndex((k) =>
+    STYRANDE_PATTERNS.some((p) => p.test(k)),
+  );
+  if (styrandeIdx <= 0) return keys; // allereie først, eller ingen match
+  return [keys[styrandeIdx], ...keys.slice(0, styrandeIdx), ...keys.slice(styrandeIdx + 1)];
+}
+
+// Fjerner keys som har same verdi som ein tidlegare key. Sikkerheits-net
+// mot agent-redundans (t.d. Ed_ULS_styrende og Ed_ULS_dominerende med
+// identisk tal). Behaldar første førekomst i rekkjefølga.
+function dedupeByValue(keys: string[], results: Record<string, string>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const k of keys) {
+    const v = (results[k] ?? "").trim();
+    if (!v) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(k);
+  }
+  return out;
+}
+
+// === Kontrollør-kort helpers (#02) ===
+
+// Eitt-linjers verdikt frå comparison.match_status. Når comparison manglar
+// (Samanliknar feila), fallbackar kallaren til getFirstSentence på
+// controllerDecision.user_message.
+function getVerdiktForMatchStatus(
+  matchStatus: "match" | "minor_differences" | "significant_differences" | "critical_disagreement",
+  locale: Locale,
+): string {
+  if (matchStatus === "match") return WB_LABELS.verdiktMatch[locale];
+  if (matchStatus === "minor_differences") return WB_LABELS.verdiktMinor[locale];
+  if (matchStatus === "significant_differences") return WB_LABELS.verdiktSignificant[locale];
+  return WB_LABELS.verdiktCritical[locale];
+}
+
+// Hentar første setning frå ein prosa-blokk. Splittar på første ., !, ?.
+// Fallback: første 140 teikn om ingen setningsavslutning finst.
+function getFirstSentence(text: string): string {
+  if (!text) return "";
+  const trimmed = text.trim();
+  const m = trimmed.match(/^[^.!?]+[.!?]/);
+  return m ? m[0].trim() : trimmed.slice(0, 140);
+}
+
+// Strukturen for chips frontend genererer frå strukturert agent-output.
+// Backend leverer ikkje chips direkte i pilot-skjema — vi byggjer dei
+// klient-side frå method_differences, assumption_differences, warnings
+// og manual_review_required-flagget.
+type KontrollorChip = {
+  text: string;
+  tone: "info" | "warn" | "neutral";
+  prefix?: string; // visuell prefix t.d. "+", "⚠", "✓"
+  tooltip?: string; // hover-tekst med full forklaring
+};
+
+function buildKontrollorChips(
+  comparison: ComparisonResult | null,
+  calculationA: CalculationResult | null,
+  calculationB: CalculationResult | null,
+  decision: ControllerDecision | null,
+  locale: Locale,
+  maxChars: number = 60,
+): KontrollorChip[] {
+  const chips: KontrollorChip[] = [];
+
+  // 0) Konfidens-chips (#09) — agent-metadata først i chip-rada.
+  // Tone-mapping: high → info (grøn), medium → warn, low → warn.
+  // Per-nivå tooltip (klikk for å utvide) forklarer kva konfidens-verdien tyder.
+  const confidenceTone = (c: "high" | "medium" | "low"): "info" | "warn" | "neutral" => {
+    if (c === "high") return "info";
+    return "warn"; // medium og low begge warn-tona
+  };
+  const confidenceTooltip = (
+    agent: "A" | "B",
+    c: "high" | "medium" | "low",
+  ): string => {
+    if (agent === "A") {
+      if (c === "high") return WB_LABELS.konfidensHighA[locale];
+      if (c === "medium") return WB_LABELS.konfidensMediumA[locale];
+      return WB_LABELS.konfidensLowA[locale];
+    }
+    if (c === "high") return WB_LABELS.konfidensHighB[locale];
+    if (c === "medium") return WB_LABELS.konfidensMediumB[locale];
+    return WB_LABELS.konfidensLowB[locale];
+  };
+  if (calculationA?.confidence) {
+    chips.push({
+      text: `A · ${calculationA.confidence.toUpperCase()}`,
+      tone: confidenceTone(calculationA.confidence),
+      tooltip: confidenceTooltip("A", calculationA.confidence),
+    });
+  }
+  if (calculationB?.confidence) {
+    chips.push({
+      text: `B · ${calculationB.confidence.toUpperCase()}`,
+      tone: confidenceTone(calculationB.confidence),
+      tooltip: confidenceTooltip("B", calculationB.confidence),
+    });
+  }
+
+  // 1) Method differences → info-chip "+ B la til X"
+  if (comparison?.method_differences?.length) {
+    for (const md of comparison.method_differences) {
+      const t = md.trim();
+      if (!t) continue;
+      chips.push({
+        text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+        tone: "info",
+        prefix: "+",
+        tooltip: t,
+      });
+    }
+  }
+
+  // 2) Assumption differences → warn-chip "⚠ ulik forutsetning"
+  if (comparison?.assumption_differences?.length) {
+    for (const ad of comparison.assumption_differences) {
+      const t = ad.trim();
+      if (!t) continue;
+      chips.push({
+        text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+        tone: "warn",
+        prefix: "⚠",
+        tooltip: t,
+      });
+    }
+  }
+
+  // 3) Warnings frå begge konstruktørar → warn-chip
+  // Dedupe på trim+lowercase for å fange "Bør verifiserast" / "bør verifiserast".
+  const seenWarnings = new Set<string>();
+  const allWarnings = [...(calculationA?.warnings ?? []), ...(calculationB?.warnings ?? [])];
+  for (const w of allWarnings) {
+    const t = w.trim();
+    if (!t) continue;
+    const norm = t.toLowerCase().replace(/\s+/g, " ");
+    if (seenWarnings.has(norm)) continue;
+    seenWarnings.add(norm);
+    chips.push({
+      text: t.length > maxChars ? t.slice(0, maxChars - 1) + "…" : t,
+      tone: "warn",
+      prefix: "⚠",
+      tooltip: t,
+    });
+  }
+
+  // 4) Manual review required → neutral-chip "Krev fagleg gjennomgang"
+  if (decision?.manual_review_required) {
+    chips.push({
+      text: WB_LABELS.krevFagligGjennomgang[locale],
+      tone: "neutral",
+      tooltip: decision.controller_notes || WB_LABELS.krevFagligGjennomgang[locale],
+    });
+  }
+
+  return chips;
+}
+
+// Avgjer kva for keys som skal visast som tiles. Returnerer 0-5 keys i
+// den rekkjefølga dei finst i results-objektet (agenten styrer rekkefølga),
+// med STYRANDE_PATTERNS-match hoista til posisjon 0 og verdi-duplikatar
+// fjerna. Tom liste betyr "ingen tiles" → kallaren fallbackar til prosa-svar.
+function getDimensjonerandeKeys(
+  results: Record<string, string> | null | undefined,
+  calculationType: string | null,
+): string[] {
+  const allKeys = Object.keys(results || {});
+  if (allKeys.length === 0) return [];
+  const resultsObj = results || {};
+
+  let candidates: string[] = [];
+
+  // Steg 1: Per-oppgåvetype patterns (mest spesifikk)
+  if (calculationType && DIMENSJONERANDE_PATTERNS[calculationType]) {
+    const patterns = DIMENSJONERANDE_PATTERNS[calculationType];
+    candidates = allKeys.filter((k) => patterns.some((p) => p.test(k)));
+  }
+
+  // Steg 2: Universell output-pattern — fangar Ed_*/Rd_*/As_* og *_Ed/*_Rd/*_req
+  if (candidates.length === 0) {
+    candidates = allKeys.filter((k) => OUTPUT_PATTERN.test(k));
+  }
+
+  // Steg 3: Filter ut åpenbare inputs frå dei første N keys
+  if (candidates.length === 0) {
+    candidates = allKeys.filter((k) => !isInputKey(k)).slice(0, 4);
+  }
+
+  // Steg 4: Last resort — første 3 keys (ingen heuristikk traff)
+  if (candidates.length === 0) {
+    candidates = allKeys.slice(0, 3);
+  }
+
+  // Etterhandsaming: hoist styrande + dedupe verdi-duplikatar + cap på 5
+  return dedupeByValue(hoistStyrande(candidates), resultsObj).slice(0, 5);
+}
+
+// Hentar tile-label for ein key. Bruker KEY_TILE_LABELS-mapping om mogleg,
+// elles UPPERCASE-konvertering med "_" → " · ".
+function tileLabel(key: string, locale: Locale): string {
+  const mapped = KEY_TILE_LABELS[key]?.[locale];
+  if (mapped) return mapped;
+  return key.toUpperCase().replace(/_/g, " · ");
+}
+
+// Splittar verdistreng i tal og eining for tile-typografi. Robust mot
+// "10,58 kN/m²", "25,0 kNm", "0,8", "1,5 × 10^-3", "≈ 4,5 kN".
+// Når regex ikkje matchar (uvanleg format), returnerer heile strengen som tal
+// utan eining — fungerer framleis, berre utan visuell hierarki.
+function splitNumberUnit(value: string): { number: string; unit: string } {
+  const trimmed = (value ?? "").toString().trim();
+  // Forventa form: leiande tal (med komma/punktum/x10^n) + valfri eining
+  const match = trimmed.match(
+    /^([≈~<>≥≤]?\s*-?[\d.,]+(?:\s*[×x·]\s*10\^?-?\d+)?)\s*(.*)$/,
+  );
+  if (match) {
+    return { number: match[1].trim(), unit: match[2].trim() };
+  }
+  return { number: trimmed, unit: "" };
+}
+
+// Hent dei "kompakte" linjene frå step.text for "Berre formlane"-mode (#08).
+// Backend-prompt ber Konstruktør A om text som ein blanding av:
+//   • prosa-linje(r) som forklarer steget
+//   • formel-linje med symbol (t.d. "MEd = qEd · L² / 8")
+//   • innsetting-linjer med verdiar (t.d. "MEd = 30,00 · 49 / 8")
+//   • resultat-linje (t.d. "MEd = 183,75 kNm")
+//
+// Heuristikk for "berre formlane":
+//   1. Plukk første linje med "=" som inneheld bokstav-symbol på venstre side
+//      (symbolsk formel, ikkje rein tal-innsetting).
+//   2. Pluss siste linje med "=" (resultatet) — om den er ulik formelen.
+//   3. Returner som array av strenger; tom array betyr "ingen formel funnen".
+function extractFormulaLines(text: string): string[] {
+  if (!text) return [];
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) return [];
+
+  // Linje med "=" og bokstav-symbol før =
+  const isSymbolicFormula = (l: string) => /^[^=]*[a-zA-Zα-ωΑ-Ω][^=]*=/.test(l);
+  // Linje med "=" og mest tal etter (sluttresultatet typisk)
+  const hasEquals = (l: string) => l.includes("=");
+
+  const formula = lines.find(isSymbolicFormula);
+  const lastEq = [...lines].reverse().find(hasEquals);
+
+  const out: string[] = [];
+  if (formula) out.push(formula);
+  if (lastEq && lastEq !== formula) out.push(lastEq);
+  // Om ingen formel funne men det er ein "="-linje, vis den
+  if (out.length === 0 && lastEq) out.push(lastEq);
+  return out;
+}
 
 // Returnerer ein menneskeleg-lesbar grunn til at "Start berekning" er deaktivert,
 // eller null viss berekning kan startast. Status-spesifikk for å unngå
@@ -364,6 +1032,47 @@ export default function Home() {
   // re-kollapse om brukar manuelt utvidar igjen.
   const [examplesCollapsed, setExamplesCollapsed] = useState(false);
   const hasAutoCollapsedRef = useRef(false);
+
+  // Mellomledd-disclosure (#06): Resultat-tabellen splittast i to —
+  // dimensjonerande verdiar (alltid synleg, fag-typografi) + mellomledd
+  // (kollapsa under "Vis X mellomledd"). Default false: studenten ser
+  // svaret først, mellomledd er eitt klikk unna for sporbarheit.
+  const [aMellomleddExpanded, setAMellomleddExpanded] = useState(false);
+
+  // Kontrollør-vurdering-toggle (#02): Lang prosa frå Kontrolløren er
+  // kollapsa bak "Les heile vurderinga ▸". Default false så studenten
+  // ser status + verdikt + chips først, prosa er eitt klikk unna.
+  const [kontrollorProsaExpanded, setKontrollorProsaExpanded] = useState(false);
+
+  // Sjølvkontroll-disclosure (#09): Intern inkonsistens-blokka flytta inn
+  // i Kontrollør-kortet. State er null = follow-auto (utvida om issues finst,
+  // kollapsa elles). Etter brukar-overstyring: true/false.
+  const [selvkontrollExpanded, setSelvkontrollExpanded] = useState<boolean | null>(null);
+
+  // Konstruktør B-disclosure (#04): Heile B-blokka kollapsast til ein-linjes
+  // disclosure med summary (ENIGE/AVVIK + konfidens). State er null = follow-
+  // auto: utvida ved significant_differences/critical_disagreement, kollapsa
+  // elles. Etter brukar-overstyring: true/false.
+  const [kontrollorBExpanded, setKontrollorBExpanded] = useState<boolean | null>(null);
+
+  // Sammenligner-rad-disclosure (#05): kvar rad i numerisk-tabellen kan
+  // utvidast for å vise "Kvifor"-detaljar (likely_cause + A/B-verdiar).
+  // Multiple rader kan vere utvida samtidig — Set<index>.
+  const [expandedComparisonRows, setExpandedComparisonRows] = useState<Set<number>>(
+    new Set(),
+  );
+  // Generelle merknader nedst i Sammenligner (#05) — method_differences +
+  // assumption_differences som ikkje knytt til ein konkret rad.
+  const [comparisonGeneralExpanded, setComparisonGeneralExpanded] = useState(false);
+
+  // Stegvis utregning view-toggle (#08): "minimal" viser tittel + formel-linje,
+  // "full" viser tittel + heile text (innsetting + prosa). Default minimal —
+  // pedagogisk best å sjå formel-uttrykk først, så utvide til innsetting når
+  // det trengst.
+  const [stegvisViewMode, setStegvisViewMode] = useState<"minimal" | "full">("minimal");
+  // Per-steg-kollaps (#08): Set<index> av kollapsa steg. Default tom = alle
+  // utvida. Klikk på steg-tittel togglar den.
+  const [collapsedSteps, setCollapsedSteps] = useState<Set<number>>(new Set());
 
   // Første-gongs-guide (#09): viser éi-setnings forklaring over input første
   // gong studenten besøker Workbench. Default false så SSR-rendering ikkje
@@ -677,6 +1386,41 @@ useEffect(() => {
     }
   }, [phase, showFirstTimeGuide]);
 
+  // Visningsprofil → default-state (#03). Ved profil-endring setter vi
+  // default for blokker som ikkje har eigen "null = auto"-state. Sida si
+  // visning følgjer alltid agent-output — ingen brukar-overstyring (det er
+  // designval: indikatoren skal kommunisere kvifor sida ser ut som den gjer).
+  useEffect(() => {
+    if (phase !== "calculation_result") return;
+    const profile = computeProfile(controllerDecision, comparison, calculationA);
+    const krev = profile === "krev_gjennomgang";
+
+    // Generelle merknader: utvida ved krev_gjennomgang, kollapsa elles
+    setComparisonGeneralExpanded(krev);
+
+    // Sammenligner-rader: ved krev_gjennomgang, auto-utvid rader med
+    // severity high/critical. Elles: ingen pre-utvida (Set tom).
+    if (krev && comparison?.numeric_differences?.length) {
+      const criticalIndices = new Set<number>();
+      comparison.numeric_differences.forEach((d, i) => {
+        if (d.severity === "high" || d.severity === "critical") {
+          criticalIndices.add(i);
+        }
+      });
+      setExpandedComparisonRows(criticalIndices);
+    } else {
+      setExpandedComparisonRows(new Set());
+    }
+  }, [phase, controllerDecision, comparison, calculationA]);
+
+  // Sticky decision-bar (#07): synleg når studenten har scrolla forbi
+  // Kontrollør-kortet men ikkje nådd Action bar nedst. Sentinel-divs vert
+  // observerte av IntersectionObserver.
+  const kontrollorSentinelRef = useRef<HTMLDivElement>(null);
+  const actionBarSentinelRef = useRef<HTMLDivElement>(null);
+  const [kontrollorBelowFold, setKontrollorBelowFold] = useState(false);
+  const [actionBarVisible, setActionBarVisible] = useState(false);
+
   // Mobil-detect (#08): matchMedia på 720px-breakpoint.
   // Lytt på resize/orientering slik at tab-layouten kjem og forsvinn
   // ved bytte mellom mobil/landskap/desktop.
@@ -687,6 +1431,44 @@ useEffect(() => {
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
   }, []);
+
+  // Sticky decision-bar synlegheit (#07). IntersectionObserver på to
+  // sentinel-divs: éin under Kontrollør-kortet, éin over Action bar.
+  // - Kontrollør-sentinel ute av view (top) → studenten har scrolla forbi
+  //   det viktigaste, og treng ein quick-reference-bar
+  // - Action-bar-sentinel i view → studenten har nådd botnen, bar'en
+  //   forsvinn fordi action bar er synleg uansett
+  // rootMargin "-1px 0px 0px 0px" på toppen sikrar at observeren registrerar
+  // "ute av view" når elementet treff topbar-grensa, ikkje når det er heilt
+  // utanfor skjermen.
+  useEffect(() => {
+    if (phase !== "calculation_result") return;
+    const kontrollorEl = kontrollorSentinelRef.current;
+    const actionBarEl = actionBarSentinelRef.current;
+    if (!kontrollorEl || !actionBarEl) return;
+
+    const kontrollorObserver = new IntersectionObserver(
+      ([entry]) => {
+        // Bar synleg når sentinel er over viewport (= scrolla forbi)
+        setKontrollorBelowFold(entry.boundingClientRect.top < 0 && !entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px 0px 0px", threshold: 0 },
+    );
+    const actionBarObserver = new IntersectionObserver(
+      ([entry]) => {
+        setActionBarVisible(entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px 0px 0px", threshold: 0 },
+    );
+
+    kontrollorObserver.observe(kontrollorEl);
+    actionBarObserver.observe(actionBarEl);
+
+    return () => {
+      kontrollorObserver.disconnect();
+      actionBarObserver.disconnect();
+    };
+  }, [phase, controllerDecision]);
 
   // Auto-switch tab basert på Tolkar-status (#08):
   // - MANGELFULL → "resultat" så studenten ser kva som kan/ikkje kan
@@ -1929,35 +2711,393 @@ useEffect(() => {
           )}
 
           {/* === FASE: CALCULATION_RESULT === */}
-          {phase === "calculation_result" && calculationA && (
+          {phase === "calculation_result" && calculationA && (() => {
+            // Visningsprofil (#03) — auto-rekna basert på agent-output.
+            // Bestemmer default-tilstand for B-blokka, generelle merknader
+            // og avvik-rader. Indikator-pille viser kva tilstand sida er i,
+            // men er ikkje klikkbar (kommunikasjon, ikkje kontroll).
+            const effectiveProfile: Profile = computeProfile(controllerDecision, comparison, calculationA);
+            const isKrevGjennomgang = effectiveProfile === "krev_gjennomgang";
+
+            // Per-profil styling for indikator-chip
+            const profileChipStyle: Record<Profile, { bg: string; color: string; label: string; forklaring: string }> = {
+              trygg: {
+                bg: "rgba(79, 139, 110, 0.12)",
+                color: "#3F6B55",
+                label: WB_LABELS.profilTrygg[locale],
+                forklaring: WB_LABELS.profilForklaringTrygg[locale],
+              },
+              standard: {
+                bg: "var(--surface-2)",
+                color: "var(--fg)",
+                label: WB_LABELS.profilStandard[locale],
+                forklaring: WB_LABELS.profilForklaringStandard[locale],
+              },
+              krev_gjennomgang: {
+                bg: "var(--warn-bg, rgba(180, 130, 30, 0.12))",
+                color: "var(--warn, #B47A1E)",
+                label: WB_LABELS.profilKrevGjennomgang[locale],
+                forklaring: WB_LABELS.profilForklaringKrev[locale],
+              },
+            };
+            const profStyle = profileChipStyle[effectiveProfile];
+
+            return (
             <>
-              {/* Kontrolløren si avgjerd — primær banner */}
-              {controllerDecision && (
-                <StatusStripe
-                  status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
-                  className="mb-4"
-                  header={
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        flexWrap: "wrap",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <span className="uk-eyebrow" style={{ color: "inherit" }}>
-                        {WB_LABELS.kontrollorAvgjerd[locale]}
-                        <InfoPopover label={WB_LABELS.kontrollor[locale]}><p>{WB_LABELS.kontrollorPopover1[locale]} <strong>{WB_LABELS.kontrollorPopover2[locale]}</strong> {WB_LABELS.kontrollorPopover3[locale]}</p></InfoPopover>
-                      </span>
-                      <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{decisionStatusLabel(controllerDecision.decision_status, locale)}</Badge>
-                    </div>
-                  }
+              {/* Profil-indikator (#03) — statisk visning av kva tilstand
+                  sida er i. Ikkje klikkbar; viser kvifor sida ser ut som
+                  den gjer for denne oppgåva. */}
+              <section style={{ marginTop: 0, marginBottom: 12 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    flexWrap: "wrap",
+                  }}
+                  role="status"
+                  aria-label={`${WB_LABELS.visningProfil[locale]}: ${profStyle.label}`}
                 >
-                  {controllerDecision.user_message}
-                </StatusStripe>
-              )}
+                  <span
+                    className="uk-eyebrow"
+                    style={{
+                      fontSize: 10,
+                      color: "var(--fg-muted)",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {WB_LABELS.visningProfil[locale]}
+                  </span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "3px 10px",
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: "0.04em",
+                      background: profStyle.bg,
+                      color: profStyle.color,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {profStyle.label}
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+                    {profStyle.forklaring}
+                  </span>
+                </div>
+              </section>
+
+              {/* Kontrolløren si avgjerd — primær banner */}
+              {/* Kontrollør-kort (#02) — fire-sleng struktur:
+                  (a) Status-badge + eyebrow
+                  (b) Eitt-linjers verdikt frå comparison.match_status
+                  (c) Fag-flagg-chips frå method/assumption_differences + warnings
+                  (d) Lang prosa frå controllerDecision.user_message bak toggle
+                  Beheld StatusStripe-shell for venstre-border + bakgrunn-tone. */}
+              {controllerDecision && (() => {
+                const chips = buildKontrollorChips(
+                  comparison,
+                  calculationA,
+                  calculationB,
+                  controllerDecision,
+                  locale,
+                );
+                const verdikt = comparison
+                  ? getVerdiktForMatchStatus(comparison.match_status, locale)
+                  : getFirstSentence(controllerDecision.user_message);
+                return (
+                  <StatusStripe
+                    status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
+                    className="mb-4"
+                    header={
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          flexWrap: "wrap",
+                          marginBottom: 10,
+                        }}
+                      >
+                        <span className="uk-eyebrow" style={{ color: "inherit" }}>
+                          {WB_LABELS.kontrollorAvgjerd[locale]}
+                          <InfoPopover label={WB_LABELS.kontrollor[locale]}><p>{WB_LABELS.kontrollorPopover1[locale]} <strong>{WB_LABELS.kontrollorPopover2[locale]}</strong> {WB_LABELS.kontrollorPopover3[locale]}</p></InfoPopover>
+                        </span>
+                        <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{decisionStatusLabel(controllerDecision.decision_status, locale)}</Badge>
+                      </div>
+                    }
+                  >
+                    {/* (b) Eitt-linjers verdikt — fag-leseleg sammendrag */}
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, fontWeight: 500, color: "var(--fg)" }}>
+                      {verdikt}
+                    </p>
+
+                    {/* (c) Konfidens-chips + Fag-flagg-chips
+                        Konfidens står i eiga rad over fag-flagga slik at
+                        utviding av eit fag-flagg ikkje strekker konfidens-
+                        chipane på same flex-line. Beggje brukar align-items
+                        flex-start på containerane som ekstra safe-guard. */}
+                    {chips.length > 0 && (() => {
+                      // Skil konfidens-chips (dei to første om dei kjem frå
+                      // calculationA/B.confidence — sjå buildKontrollorChips)
+                      // frå fag-flagg-chips. Konfidens-chips har tekst i
+                      // form "A · HIGH" / "B · HIGH".
+                      const isConfidenceChip = (c: KontrollorChip) =>
+                        /^[AB] · (HIGH|MEDIUM|LOW)$/.test(c.text);
+                      const konfidensChips = chips.filter(isConfidenceChip);
+                      const fagChips = chips.filter((c) => !isConfidenceChip(c));
+
+                      return (
+                        <div style={{ marginTop: 12 }}>
+                          <div
+                            className="uk-eyebrow"
+                            style={{
+                              marginBottom: 6,
+                              fontSize: 10,
+                              color: "var(--fg-muted)",
+                            }}
+                          >
+                            {WB_LABELS.fagligMerknad[locale]}
+                          </div>
+
+                          {/* Konfidens-chips — eiga rad */}
+                          {konfidensChips.length > 0 && (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 6,
+                                alignItems: "flex-start",
+                                marginBottom: fagChips.length > 0 ? 8 : 0,
+                              }}
+                            >
+                              {konfidensChips.map((chip, i) => (
+                                <KontrollorChipPill
+                                  key={`konf-${i}`}
+                                  chip={chip}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Fag-flagg-chips — eigen rad under konfidens */}
+                          {fagChips.length > 0 && (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 6,
+                                alignItems: "flex-start",
+                              }}
+                            >
+                              {fagChips.map((chip, i) => (
+                                <KontrollorChipPill
+                                  key={`fag-${i}`}
+                                  chip={chip}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* (d) Sjølvkontroll-disclosure (#09) — viser
+                        internal_consistency_issues frå Sammenligner.
+                        Default: kollapsa når 0 funne, auto-utvida med raud
+                        kant når >0. Brukar kan toggle manuelt. */}
+                    {comparison && (() => {
+                      const issuesA = comparison.internal_consistency_issues?.agent_a ?? [];
+                      const issuesB = comparison.internal_consistency_issues?.agent_b ?? [];
+                      const totalIssues = issuesA.length + issuesB.length;
+                      // null = auto-mode: utvida om issues, kollapsa elles
+                      const isExpanded =
+                        selvkontrollExpanded === null
+                          ? totalIssues > 0
+                          : selvkontrollExpanded;
+                      const hasCritical =
+                        [...issuesA, ...issuesB].some(
+                          (i) => i.severity === "high" || i.severity === "critical",
+                        );
+                      const labelText =
+                        totalIssues === 0
+                          ? WB_LABELS.sjølvkontrollIngen[locale]
+                          : WB_LABELS.sjølvkontrollFunne[locale].replace(
+                              "{n}",
+                              String(totalIssues),
+                            );
+
+                      return (
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelvkontrollExpanded(!isExpanded)}
+                            aria-expanded={isExpanded}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: "4px 0",
+                              color: totalIssues > 0 ? "var(--warn)" : "var(--fg-2)",
+                              fontSize: 13,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              textAlign: "left",
+                              fontFamily: "inherit",
+                              fontWeight: totalIssues > 0 ? 600 : 400,
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: "var(--fg-muted)",
+                                fontSize: 11,
+                              }}
+                            >
+                              {isExpanded ? "▾" : "▸"}
+                            </span>
+                            <span>
+                              {WB_LABELS.sjølvkontrollEtikett[locale]}: {labelText}
+                            </span>
+                          </button>
+                          {isExpanded && totalIssues > 0 && (
+                            <div
+                              style={{
+                                marginTop: 8,
+                                padding: "10px 12px",
+                                background: "var(--warn-bg)",
+                                border: "1px solid var(--warn-border)",
+                                borderLeft: `3px solid ${hasCritical ? "var(--bad, #c04848)" : "var(--warn)"}`,
+                                borderRadius: "var(--r-sm)",
+                              }}
+                            >
+                              {issuesA.length > 0 && (
+                                <div style={{ marginBottom: issuesB.length > 0 ? 10 : 0 }}>
+                                  <div
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 600,
+                                      color: "var(--fg)",
+                                      marginBottom: 4,
+                                      letterSpacing: "0.04em",
+                                    }}
+                                  >
+                                    Konstruktør A
+                                  </div>
+                                  <ul
+                                    style={{
+                                      margin: 0,
+                                      paddingLeft: 18,
+                                      fontSize: 13,
+                                      color: "var(--fg-2)",
+                                      lineHeight: 1.55,
+                                    }}
+                                  >
+                                    {issuesA.map((issue, i) => (
+                                      <li key={i} style={{ marginBottom: 2 }}>
+                                        {issue.issue}{" "}
+                                        <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {issuesB.length > 0 && (
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 600,
+                                      color: "var(--fg)",
+                                      marginBottom: 4,
+                                      letterSpacing: "0.04em",
+                                    }}
+                                  >
+                                    Konstruktør B
+                                  </div>
+                                  <ul
+                                    style={{
+                                      margin: 0,
+                                      paddingLeft: 18,
+                                      fontSize: 13,
+                                      color: "var(--fg-2)",
+                                      lineHeight: 1.55,
+                                    }}
+                                  >
+                                    {issuesB.map((issue, i) => (
+                                      <li key={i} style={{ marginBottom: 2 }}>
+                                        {issue.issue}{" "}
+                                        <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* (e) Les heile vurderinga ▸ — kollapsa lang prosa.
+                        Vis berre om user_message er meir enn éi setning
+                        (elles er verdikt-linja + chips alt brukar treng). */}
+                    {controllerDecision.user_message &&
+                      controllerDecision.user_message.trim() !== verdikt.trim() && (
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            type="button"
+                            onClick={() => setKontrollorProsaExpanded(!kontrollorProsaExpanded)}
+                            aria-expanded={kontrollorProsaExpanded}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: "4px 0",
+                              color: "var(--fg-2)",
+                              fontSize: 13,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              textAlign: "left",
+                              fontFamily: "inherit",
+                            }}
+                          >
+                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
+                              {kontrollorProsaExpanded ? "▾" : "▸"}
+                            </span>
+                            <span>
+                              {kontrollorProsaExpanded
+                                ? WB_LABELS.skjulVurderinga[locale]
+                                : WB_LABELS.lesHeileVurderinga[locale]}
+                            </span>
+                          </button>
+                          {kontrollorProsaExpanded && (
+                            <p
+                              style={{
+                                margin: "10px 0 0",
+                                fontSize: 13,
+                                lineHeight: 1.6,
+                                color: "var(--fg-2)",
+                              }}
+                            >
+                              {controllerDecision.user_message}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                  </StatusStripe>
+                );
+              })()}
+
+              {/* Sentinel for sticky decision-bar (#07) — IntersectionObserver
+                  detekterer når denne er ute av view (= studenten har scrolla
+                  forbi Kontrollør-kortet) og viser sticky-baren då. */}
+              <div ref={kontrollorSentinelRef} aria-hidden="true" style={{ height: 1 }} />
 
               {/* Fallback: Samanliknar-banner viss Kontrolløren feila */}
               {!controllerDecision && comparison && (
@@ -1974,49 +3114,200 @@ useEffect(() => {
                 </StatusStripe>
               )}
 
-              {/* Kort svar — eller blokka-varsel */}
-              {(isBlocked("short_conclusion_a") || isBlocked("short_conclusion_b")) ? (
-                <StatusStripe status="warn">
-                  <strong>{WB_LABELS.sluttkonklusjonUtelaten[locale]}</strong>{" "}
-                  {WB_LABELS.hallusinasjonarTekst[locale]}
-                </StatusStripe>
-              ) : (
-                <StatusStripe
-                  status="ok"
-                  header={
-                    <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      {WB_LABELS.kortSvar[locale]}
-                    </div>
-                  }
-                >
-                  <span style={{ fontSize: 15, color: "var(--fg)", fontWeight: 500 }}>
-                    {calculationA.short_conclusion}
-                  </span>
-                </StatusStripe>
-              )}
+              {/* Kort svar — eller blokka-varsel — eller dimensjonerande tiles (#01) */}
+              {(() => {
+                const shortConclusionBlocked =
+                  isBlocked("short_conclusion_a") || isBlocked("short_conclusion_b");
+                const resultsAvailable =
+                  !isBlocked("results_a") &&
+                  Object.keys(calculationA.results || {}).length > 0;
+                const tilesKeys = resultsAvailable
+                  ? getDimensjonerandeKeys(
+                      calculationA.results,
+                      result?.berekningstype ?? null,
+                    )
+                  : [];
+                const tilesShown = tilesKeys.length > 0;
 
-              {/* Resultat-objekt */}
-              {!isBlocked("results_a") && Object.keys(calculationA.results || {}).length > 0 && (
-                <section className="uk-card" style={{ marginTop: 16 }}>
-                  <div className="uk-card__hd">
-                    <div className="uk-card__title">{WB_LABELS.resultat[locale]}</div>
-                  </div>
-                  <div className="uk-card__bd">
-                    {Object.entries(calculationA.results).map(([k, v], i) => (
-                      <div
-                        key={k}
-                        className="uk-kv"
-                        style={{ borderTop: i === 0 ? "none" : undefined }}
+                return (
+                  <>
+                    {/* Warn-stripe når Kontrolløren har blokka sluttkonklusjon.
+                        Tiles vises framleis under viss results er OK — studenten
+                        treng eit svar å skanne sjølv om prosa er blokka. */}
+                    {shortConclusionBlocked && (
+                      <StatusStripe status="warn" className={tilesShown ? "mb-4" : undefined}>
+                        <strong>{WB_LABELS.sluttkonklusjonUtelaten[locale]}</strong>{" "}
+                        {WB_LABELS.hallusinasjonarTekst[locale]}
+                      </StatusStripe>
+                    )}
+
+                    {/* Dimensjonerande tiles — primær avlevering av svaret (#01).
+                        Erstattar "Kort svar"-prosa når results er tilgjengelege. */}
+                    {tilesShown && (
+                      <DimensjonerandeTiles
+                        results={calculationA.results}
+                        calculationType={result?.berekningstype ?? null}
+                        locale={locale}
+                      />
+                    )}
+
+                    {/* Prosa-fallback når tiles ikkje kan visast (ingen results,
+                        eller alle results-keys er blokka). */}
+                    {!shortConclusionBlocked && !tilesShown && (
+                      <StatusStripe
+                        status="ok"
+                        header={
+                          <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
+                            {WB_LABELS.kortSvar[locale]}
+                          </div>
+                        }
                       >
-                        <span className="uk-kv__k uk-mono">{k}</span>
-                        <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
-                          {v}
+                        <span style={{ fontSize: 15, color: "var(--fg)", fontWeight: 500 }}>
+                          {calculationA.short_conclusion}
                         </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                      </StatusStripe>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Resultat-objekt — splittast i Dimensjonerande + Mellomledd (#06).
+                  Dimensjonerande rader: same keys som tiles i #01, men med
+                  fag-typografi (15px tal, høgrejustert eining) for studenten
+                  som vil verifisere. Mellomledd: alle andre keys, kollapsa
+                  bak ein "Vis X mellomledd ▸"-toggle. */}
+              {!isBlocked("results_a") && Object.keys(calculationA.results || {}).length > 0 && (() => {
+                const allEntries = Object.entries(calculationA.results);
+                const dimensjonerandeKeys = getDimensjonerandeKeys(
+                  calculationA.results,
+                  result?.berekningstype ?? null,
+                );
+                const dimensjonerandeSet = new Set(dimensjonerandeKeys);
+                const dimensjonerandeEntries = dimensjonerandeKeys
+                  .map((k) => [k, calculationA.results[k]] as [string, string])
+                  .filter(([, v]) => v !== undefined);
+                const mellomleddEntries = allEntries.filter(([k]) => !dimensjonerandeSet.has(k));
+                const mellomleddCount = mellomleddEntries.length;
+
+                return (
+                  <section className="uk-card" style={{ marginTop: 16 }}>
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">{WB_LABELS.resultat[locale]}</div>
+                    </div>
+                    <div className="uk-card__bd">
+                      {/* Dimensjonerande verdiar — fag-typografi, alltid synleg */}
+                      {dimensjonerandeEntries.map(([k, v], i) => {
+                        const { number, unit } = splitNumberUnit(v);
+                        return (
+                          <div
+                            key={k}
+                            className="uk-kv"
+                            style={{
+                              borderTop: i === 0 ? "none" : undefined,
+                              padding: "10px 0",
+                            }}
+                          >
+                            <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
+                            <span
+                              className="uk-kv__v"
+                              style={{
+                                display: "flex",
+                                alignItems: "baseline",
+                                justifyContent: "flex-end",
+                                gap: 6,
+                              }}
+                            >
+                              <span
+                                className="uk-mono"
+                                style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}
+                              >
+                                {number}
+                              </span>
+                              {unit && (
+                                <span
+                                  className="uk-mono"
+                                  style={{ fontSize: 12, color: "var(--fg-muted)" }}
+                                >
+                                  {unit}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      {/* Mellomledd-disclosure — kollapsa rader for sporbarheit */}
+                      {mellomleddCount > 0 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAMellomleddExpanded(!aMellomleddExpanded)}
+                            aria-expanded={aMellomleddExpanded}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              borderTop: "1px solid var(--border)",
+                              marginTop: dimensjonerandeEntries.length > 0 ? 6 : 0,
+                              padding: "12px 0 6px",
+                              width: "100%",
+                              color: "var(--fg-2)",
+                              fontSize: 13,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              textAlign: "left",
+                              fontFamily: "inherit",
+                            }}
+                          >
+                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
+                              {aMellomleddExpanded ? "▾" : "▸"}
+                            </span>
+                            <span>
+                              {aMellomleddExpanded
+                                ? WB_LABELS.skjulMellomledd[locale]
+                                : WB_LABELS.visMellomledd[locale].replace(
+                                    "{n}",
+                                    String(mellomleddCount),
+                                  )}
+                            </span>
+                          </button>
+                          {aMellomleddExpanded && (
+                            <div
+                              style={{
+                                borderTop: "1px solid var(--border)",
+                                marginTop: 2,
+                                paddingTop: 4,
+                              }}
+                            >
+                              {mellomleddEntries.map(([k, v], i) => (
+                                <div
+                                  key={k}
+                                  className="uk-kv"
+                                  style={{ borderTop: i === 0 ? "none" : undefined }}
+                                >
+                                  <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
+                                  <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
+                                    {v}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Fallback: viss ingen dimensjonerande kunne plukkast ut
+                          (sjeldan edge case), vis flat tabell som før. */}
+                      {dimensjonerandeEntries.length === 0 && mellomleddCount === 0 && (
+                        <div style={{ color: "var(--fg-muted)", fontSize: 13, padding: "8px 0" }}>
+                          —
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                );
+              })()}
 
               {/* Føresetnader */}
               {calculationA.assumptions?.length > 0 && (
@@ -2042,70 +3333,263 @@ useEffect(() => {
                 </section>
               )}
 
-              {/* Stegvis utrekning */}
-              {!isBlocked("calculation_steps_a") && calculationA.calculation_steps?.length > 0 && (
-                <section className="uk-card" style={{ marginTop: 16 }}>
-                  <div className="uk-card__hd">
-                    <div className="uk-card__title">{WB_LABELS.stegvisUtrekning[locale]}</div>
-                  </div>
-                  <div className="uk-card__bd">
-                    <ol style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                      {calculationA.calculation_steps.map((step, i) => (
-                        <li
-                          key={i}
+              {/* Stegvis utrekning (#08) — view-toggle + anker-chips +
+                  per-steg-kollaps. Tre modus for tre flytar:
+                  - "minimal" + alle utvida: skim formel-uttrykk (rask check)
+                  - "full" + alle utvida: full innsetting + prosa (djup gjennomgang)
+                  - kollaps per steg: hoppe direkte til avvikande verdi (forskjell-vurdering) */}
+              {!isBlocked("calculation_steps_a") && calculationA.calculation_steps?.length > 0 && (() => {
+                const steps = calculationA.calculation_steps;
+                const toggleStepCollapse = (i: number) => {
+                  setCollapsedSteps((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(i)) next.delete(i);
+                    else next.add(i);
+                    return next;
+                  });
+                };
+                const scrollToStep = (i: number) => {
+                  // Sikre at steget er utvida før scroll
+                  setCollapsedSteps((prev) => {
+                    if (!prev.has(i)) return prev;
+                    const next = new Set(prev);
+                    next.delete(i);
+                    return next;
+                  });
+                  // Litt forseinking for å la rendering oppdaterast før scroll
+                  setTimeout(() => {
+                    document
+                      .getElementById(`stegvis-step-${i}`)
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 50);
+                };
+
+                return (
+                  <section className="uk-card" style={{ marginTop: 16 }}>
+                    <div className="uk-card__hd" style={{ flexWrap: "wrap", gap: 12 }}>
+                      <div className="uk-card__title">{WB_LABELS.stegvisUtrekning[locale]}</div>
+                      {/* View-toggle (#08) */}
+                      <div
+                        role="radiogroup"
+                        aria-label={WB_LABELS.stegvisUtrekning[locale]}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 2,
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 999,
+                          padding: 2,
+                          marginLeft: "auto",
+                        }}
+                      >
+                        {([
+                          { id: "minimal" as const, label: WB_LABELS.stegvisBerreFormel[locale] },
+                          { id: "full" as const, label: WB_LABELS.stegvisAlleSteg[locale] },
+                        ]).map((m) => {
+                          const isActive = stegvisViewMode === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={isActive}
+                              onClick={() => setStegvisViewMode(m.id)}
+                              style={{
+                                appearance: "none",
+                                font: "inherit",
+                                fontSize: 11,
+                                fontWeight: isActive ? 600 : 400,
+                                padding: "3px 10px",
+                                background: isActive ? "var(--fg)" : "transparent",
+                                color: isActive ? "var(--surface)" : "var(--fg-2)",
+                                border: "none",
+                                borderRadius: 999,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                transition: "background 0.15s ease, color 0.15s ease",
+                              }}
+                            >
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="uk-card__bd">
+                      {/* Anker-chips — klikkbar liste av steg-titlar */}
+                      {steps.length > 2 && (
+                        <div
                           style={{
                             display: "flex",
-                            gap: 14,
-                            paddingTop: i === 0 ? 0 : 18,
+                            flexWrap: "wrap",
+                            gap: 6,
+                            marginBottom: 16,
+                            paddingBottom: 14,
+                            borderBottom: "1px dashed var(--border)",
                           }}
+                          aria-label={WB_LABELS.stegvisGaaTilSteg[locale]}
                         >
-                          <div
-                            className="uk-mono"
-                            style={{
-                              flexShrink: 0,
-                              width: 26,
-                              height: 26,
-                              borderRadius: "50%",
-                              background: "var(--fg)",
-                              color: "var(--surface)",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              display: "grid",
-                              placeItems: "center",
-                            }}
-                          >
-                            {i + 1}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <h4
+                          {steps.map((step, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => scrollToStep(i)}
                               style={{
-                                margin: "2px 0 4px",
-                                fontSize: 14,
-                                fontWeight: 600,
-                                color: "var(--fg)",
-                              }}
-                            >
-                              {step.title}
-                            </h4>
-                            <pre
-                              style={{
-                                margin: 0,
-                                fontFamily: "var(--font-ui)",
-                                fontSize: 13,
+                                appearance: "none",
+                                font: "inherit",
+                                fontSize: 11.5,
+                                padding: "3px 10px",
+                                background: "var(--surface-2)",
                                 color: "var(--fg-2)",
-                                whiteSpace: "pre-wrap",
-                                lineHeight: 1.55,
+                                border: "1px solid var(--border)",
+                                borderRadius: 999,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                whiteSpace: "nowrap",
+                                transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "var(--fg)";
+                                e.currentTarget.style.color = "var(--surface)";
+                                e.currentTarget.style.borderColor = "var(--fg)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "var(--surface-2)";
+                                e.currentTarget.style.color = "var(--fg-2)";
+                                e.currentTarget.style.borderColor = "var(--border)";
                               }}
                             >
-                              {step.text}
-                            </pre>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                </section>
-              )}
+                              <span
+                                className="uk-mono"
+                                style={{ fontWeight: 600, marginRight: 4 }}
+                              >
+                                {i + 1}
+                              </span>
+                              <span>· {step.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <ol style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                        {steps.map((step, i) => {
+                          const isCollapsed = collapsedSteps.has(i);
+                          const formulaLines = extractFormulaLines(step.text);
+                          return (
+                            <li
+                              key={i}
+                              id={`stegvis-step-${i}`}
+                              style={{
+                                display: "flex",
+                                gap: 14,
+                                paddingTop: i === 0 ? 0 : 18,
+                                scrollMarginTop: "calc(var(--header-height, 64px) + 12px)",
+                              }}
+                            >
+                              <div
+                                className="uk-mono"
+                                style={{
+                                  flexShrink: 0,
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: "50%",
+                                  background: "var(--fg)",
+                                  color: "var(--surface)",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  display: "grid",
+                                  placeItems: "center",
+                                }}
+                              >
+                                {i + 1}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                {/* Klikkbar tittel-rad — toggle per-steg-kollaps */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleStepCollapse(i)}
+                                  aria-expanded={!isCollapsed}
+                                  style={{
+                                    appearance: "none",
+                                    font: "inherit",
+                                    textAlign: "left",
+                                    width: "100%",
+                                    background: "none",
+                                    border: "none",
+                                    padding: "2px 0 4px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    color: "var(--fg)",
+                                    fontFamily: "inherit",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: "var(--fg-muted)",
+                                      fontSize: 11,
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {isCollapsed ? "▸" : "▾"}
+                                  </span>
+                                  <h4
+                                    style={{
+                                      margin: 0,
+                                      fontSize: 14,
+                                      fontWeight: 600,
+                                      color: "var(--fg)",
+                                    }}
+                                  >
+                                    {step.title}
+                                  </h4>
+                                </button>
+
+                                {/* Innhald — varierer med view-mode + collaps */}
+                                {!isCollapsed && (
+                                  <>
+                                    {stegvisViewMode === "minimal" && formulaLines.length > 0 ? (
+                                      // Minimal: berre formel-linjer i mono
+                                      <pre
+                                        style={{
+                                          margin: 0,
+                                          fontFamily: "var(--font-mono, monospace)",
+                                          fontSize: 13,
+                                          color: "var(--fg)",
+                                          whiteSpace: "pre-wrap",
+                                          lineHeight: 1.6,
+                                        }}
+                                      >
+                                        {formulaLines.join("\n")}
+                                      </pre>
+                                    ) : (
+                                      // Full: heile text (innsetting + prosa)
+                                      <pre
+                                        style={{
+                                          margin: 0,
+                                          fontFamily: "var(--font-ui)",
+                                          fontSize: 13,
+                                          color: "var(--fg-2)",
+                                          whiteSpace: "pre-wrap",
+                                          lineHeight: 1.55,
+                                        }}
+                                      >
+                                        {step.text}
+                                      </pre>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  </section>
+                );
+              })()}
 
               {/* Avgrensingar */}
               {calculationA.limitations?.length > 0 && (
@@ -2160,106 +3644,193 @@ useEffect(() => {
                 </StatusStripe>
               )}
 
-              {/* Konfidens */}
-              <section className="uk-card" style={{ marginTop: 16 }}>
-                <div className="uk-card__bd" style={{ padding: 14 }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="uk-eyebrow">{WB_LABELS.konstruktorAKonfidens[locale]}</span>
-                      <InfoPopover label={WB_LABELS.konstruktorKonfidens[locale]}><p>{WB_LABELS.konstruktorKonfidensPopover[locale]}</p></InfoPopover>
-                      <Badge status={CONFIDENCE_TONES[calculationA.confidence]}>{calculationA.confidence}</Badge>
-                    </div>
-                    {calculationB && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span className="uk-eyebrow">{WB_LABELS.konstruktorBKonfidens[locale]}</span>
-                        <InfoPopover label={WB_LABELS.konstruktorKonfidens[locale]}><p>{WB_LABELS.konstruktorKonfidensPopover[locale]}</p></InfoPopover>
-                        <Badge status={CONFIDENCE_TONES[calculationB.confidence]}>{calculationB.confidence}</Badge>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
+              {/* Konstruktør B-resultat (#04) — disclosure-pattern.
+                  Default kollapsa når A og B er enige (vanlegaste tilfelle),
+                  auto-utvida ved significant_differences / critical_disagreement.
+                  Brukar kan toggle manuelt; kontrollorBExpanded null = auto,
+                  true/false = manuell overstyring. */}
+              {calculationB && (() => {
+                // Avgjer kollapsa/utvida-tilstand. Auto-utvida ved
+                // "krev_gjennomgang"-profilen (#03), elles kollapsa.
+                const matchStatus = comparison?.match_status;
+                const autoExpand = isKrevGjennomgang;
+                const isExpanded =
+                  kontrollorBExpanded === null ? autoExpand : kontrollorBExpanded;
 
-              {/* Konstruktør B-resultat (uavhengig kontroll) */}
-              {calculationB && (
-                <section
-                  className="uk-card"
-                  style={{ marginTop: 16, background: "var(--surface-2)" }}
-                >
-                  <div className="uk-card__hd">
-                    <div className="uk-card__title">{WB_LABELS.konstruktorBUavhengig[locale]}</div>
-                    <span style={{ fontSize: 11, color: "var(--fg-muted)", fontStyle: "italic" }}>
-                      {WB_LABELS.loysteOppgavaUtan[locale]}
-                    </span>
-                  </div>
-                  <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {!isBlocked("short_conclusion_b") && (
-                      <div
-                        style={{
-                          background: "var(--surface)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--r-sm)",
-                          padding: 12,
-                        }}
-                      >
-                        <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
-                          {WB_LABELS.konstruktorBKonklusjon[locale]}
-                        </div>
-                        <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
-                          {calculationB.short_conclusion}
-                        </p>
-                      </div>
-                    )}
+                // Summary-tekst i kollapsa state
+                const summaryLabel = (() => {
+                  if (!matchStatus) return WB_LABELS.bUtanComparison[locale];
+                  if (matchStatus === "match") return WB_LABELS.bEnigeMedA[locale];
+                  if (matchStatus === "minor_differences") return WB_LABELS.bMindreSkilnader[locale];
+                  if (matchStatus === "significant_differences") return WB_LABELS.bVesentlegAvvik[locale];
+                  return WB_LABELS.bKritiskUsemje[locale];
+                })();
+                const summaryTone = MATCH_STATUS_TONES[matchStatus ?? "match"];
 
-                    {!isBlocked("results_b") && Object.keys(calculationB.results || {}).length > 0 && (
-                      <div
-                        style={{
-                          background: "var(--surface)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--r-sm)",
-                          padding: 12,
-                        }}
-                      >
-                        <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
-                          {WB_LABELS.konstruktorBResultat[locale]}
-                        </div>
-                        {Object.entries(calculationB.results).map(([k, v], i) => (
-                          <div
-                            key={k}
-                            className="uk-kv"
-                            style={{ borderTop: i === 0 ? "none" : undefined, padding: "6px 0" }}
-                          >
-                            <span className="uk-kv__k uk-mono">{k}</span>
-                            <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
-                              {v}
+                return (
+                  <section
+                    className="uk-card"
+                    style={{
+                      marginTop: 16,
+                      background: "var(--surface-2)",
+                    }}
+                  >
+                    {/* Disclosure-header (alltid synleg, klikkbar) */}
+                    <button
+                      type="button"
+                      onClick={() => setKontrollorBExpanded(!isExpanded)}
+                      aria-expanded={isExpanded}
+                      style={{
+                        // Reset
+                        appearance: "none",
+                        font: "inherit",
+                        textAlign: "left",
+                        // Layout
+                        width: "100%",
+                        background: "none",
+                        border: "none",
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        flexWrap: "wrap",
+                        cursor: "pointer",
+                        color: "var(--fg)",
+                      }}
+                    >
+                      <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
+                        {isExpanded ? "▾" : "▸"}
+                      </span>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>
+                        {WB_LABELS.bUavhengigKontroll[locale]}
+                      </span>
+                      <span style={{ color: "var(--fg-muted)" }}>·</span>
+                      <Badge status={summaryTone}>{summaryLabel}</Badge>
+                      {calculationB.confidence && (
+                        <>
+                          <span style={{ color: "var(--fg-muted)" }}>·</span>
+                          <span style={{ fontSize: 12, color: "var(--fg-2)" }}>
+                            {WB_LABELS.bKonfidens[locale]}{" "}
+                            <span className="uk-mono" style={{ fontWeight: 600 }}>
+                              {calculationB.confidence.toUpperCase()}
                             </span>
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Innhald (kort + tabell) — berre synleg når utvida */}
+                    {isExpanded && (
+                      <div
+                        className="uk-card__bd"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                          paddingTop: 4,
+                        }}
+                      >
+                        {/* B-eyebrow-undertittel — gir kontekst til disclosure-headeren */}
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "var(--fg-muted)",
+                            fontStyle: "italic",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {WB_LABELS.loysteOppgavaUtan[locale]}
+                        </span>
+
+                        {!isBlocked("short_conclusion_b") && (
+                          <div
+                            style={{
+                              background: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "var(--r-sm)",
+                              padding: 12,
+                            }}
+                          >
+                            <div className="uk-eyebrow" style={{ marginBottom: 4 }}>
+                              {WB_LABELS.konstruktorBKonklusjon[locale]}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
+                              {calculationB.short_conclusion}
+                            </p>
                           </div>
-                        ))}
+                        )}
+
+                        {!isBlocked("results_b") && Object.keys(calculationB.results || {}).length > 0 && (
+                          <div
+                            style={{
+                              background: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "var(--r-sm)",
+                              padding: 12,
+                            }}
+                          >
+                            <div className="uk-eyebrow" style={{ marginBottom: 6 }}>
+                              {WB_LABELS.konstruktorBResultat[locale]}
+                            </div>
+                            {Object.entries(calculationB.results).map(([k, v], i) => (
+                              <div
+                                key={k}
+                                className="uk-kv"
+                                style={{ borderTop: i === 0 ? "none" : undefined, padding: "6px 0" }}
+                              >
+                                <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
+                                <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
+                                  {v}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                </section>
-              )}
+                  </section>
+                );
+              })()}
 
-              {/* Comparison details — Samanliknar */}
-              {comparison && (
-                <section className="uk-card" style={{ marginTop: 16 }}>
-                  <div className="uk-card__hd">
-                    <div className="uk-card__title">{WB_LABELS.samanliknarSkilnader[locale]}</div>
-                    <Badge status={MATCH_STATUS_TONES[comparison.match_status]}>
-                      {matchStatusLabel(comparison.match_status, locale)}
-                    </Badge>
-                  </div>
-                  <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                    {comparison.numeric_differences?.length > 0 && (
-                      <div>
-                        <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          {WB_LABELS.numeriskeSkilnader[locale]}
-                        </div>
+              {/* Comparison details — Samanliknar (#05).
+                  Éin tabell med ekspander-rader. Per-felt-prosa (likely_cause)
+                  flytta inn som "Kvifor"-detalj i rad-ekspansjon. Method- og
+                  assumption-differences kollapsa som "Generelle merknader"
+                  nedst — dei er ikkje per-rad-bundne. */}
+              {comparison && (() => {
+                const numericDiffs = comparison.numeric_differences ?? [];
+                const methodDiffs = comparison.method_differences ?? [];
+                const assumptionDiffs = comparison.assumption_differences ?? [];
+                const hasNumeric = numericDiffs.length > 0;
+                const hasGeneral = methodDiffs.length > 0 || assumptionDiffs.length > 0;
+
+                if (!hasNumeric && !hasGeneral) return null;
+
+                const toggleRow = (i: number) => {
+                  setExpandedComparisonRows((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(i)) next.delete(i);
+                    else next.add(i);
+                    return next;
+                  });
+                };
+
+                return (
+                  <section className="uk-card" style={{ marginTop: 16 }}>
+                    <div className="uk-card__hd">
+                      <div className="uk-card__title">{WB_LABELS.samanliknarSkilnader[locale]}</div>
+                      <Badge status={MATCH_STATUS_TONES[comparison.match_status]}>
+                        {matchStatusLabel(comparison.match_status, locale)}
+                      </Badge>
+                    </div>
+                    <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {hasNumeric && (
                         <div style={{ overflowX: "auto" }}>
                           <table style={{ width: "100%", fontSize: 12.5, borderCollapse: "collapse" }}>
                             <thead>
                               <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                                {/* Chevron-kolonne (24px) + dei fire info-kolonnene */}
+                                <th style={{ width: 24, padding: "8px 0" }} aria-hidden="true" />
                                 {[WB_LABELS.tabellFelt[locale], "Konstruktør A", "Konstruktør B", WB_LABELS.tabellSkilnad[locale], WB_LABELS.tabellAlvor[locale]].map((h) => (
                                   <th
                                     key={h}
@@ -2272,113 +3843,189 @@ useEffect(() => {
                               </tr>
                             </thead>
                             <tbody>
-                              {comparison.numeric_differences.map((diff, i) => (
-                                <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
-                                  <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg-2)" }}>
-                                    {diff.field}
-                                  </td>
-                                  <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
-                                    {diff.agent_a_value}
-                                  </td>
-                                  <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
-                                    {diff.agent_b_value}
-                                  </td>
-                                  <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
-                                    {diff.percent_diff?.toFixed(1)}%
-                                  </td>
-                                  <td style={{ padding: "8px 0" }}>
-                                    <Badge status={SEVERITY_TONES[diff.severity]}>{diff.severity}</Badge>
-                                  </td>
-                                </tr>
-                              ))}
+                              {numericDiffs.map((diff, i) => {
+                                const isOpen = expandedComparisonRows.has(i);
+                                const isClickable = !!diff.likely_cause?.trim();
+                                return (
+                                  <Fragment key={i}>
+                                    <tr
+                                      onClick={isClickable ? () => toggleRow(i) : undefined}
+                                      onKeyDown={
+                                        isClickable
+                                          ? (e) => {
+                                              if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                toggleRow(i);
+                                              }
+                                            }
+                                          : undefined
+                                      }
+                                      tabIndex={isClickable ? 0 : undefined}
+                                      role={isClickable ? "button" : undefined}
+                                      aria-expanded={isClickable ? isOpen : undefined}
+                                      style={{
+                                        borderBottom: isOpen
+                                          ? "none"
+                                          : "1px solid var(--border)",
+                                        cursor: isClickable ? "pointer" : "default",
+                                      }}
+                                    >
+                                      <td style={{ padding: "8px 0", color: "var(--fg-muted)", fontSize: 11 }}>
+                                        {isClickable ? (isOpen ? "▾" : "▸") : ""}
+                                      </td>
+                                      <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg-2)" }}>
+                                        {renderMathKey(diff.field)}
+                                      </td>
+                                      <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
+                                        {diff.agent_a_value}
+                                      </td>
+                                      <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
+                                        {diff.agent_b_value}
+                                      </td>
+                                      <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
+                                        {diff.percent_diff?.toFixed(1)}%
+                                      </td>
+                                      <td style={{ padding: "8px 0" }}>
+                                        <Badge status={SEVERITY_TONES[diff.severity]}>{diff.severity}</Badge>
+                                      </td>
+                                    </tr>
+                                    {isOpen && isClickable && (
+                                      <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                                        <td />
+                                        <td colSpan={5} style={{ padding: "0 0 12px" }}>
+                                          <div
+                                            style={{
+                                              background: "var(--surface-2)",
+                                              borderRadius: "var(--r-sm)",
+                                              padding: "10px 12px",
+                                              fontSize: 13,
+                                              lineHeight: 1.55,
+                                              color: "var(--fg-2)",
+                                            }}
+                                          >
+                                            <div style={{ marginBottom: 6 }}>
+                                              <span style={{ fontWeight: 600, color: "var(--fg)" }}>
+                                                {WB_LABELS.samanliknarKvifor[locale]}
+                                              </span>{" "}
+                                              {diff.likely_cause}
+                                            </div>
+                                            <div
+                                              style={{
+                                                display: "flex",
+                                                gap: 16,
+                                                flexWrap: "wrap",
+                                                fontSize: 12,
+                                                color: "var(--fg-muted)",
+                                                marginTop: 6,
+                                                paddingTop: 6,
+                                                borderTop: "1px dashed var(--border)",
+                                              }}
+                                            >
+                                              <span>
+                                                {WB_LABELS.samanliknarAVerdi[locale]}:{" "}
+                                                <span className="uk-mono" style={{ color: "var(--fg-2)", fontWeight: 500 }}>
+                                                  {diff.agent_a_value}
+                                                </span>
+                                              </span>
+                                              <span>
+                                                {WB_LABELS.samanliknarBVerdi[locale]}:{" "}
+                                                <span className="uk-mono" style={{ color: "var(--fg-2)", fontWeight: 500 }}>
+                                                  {diff.agent_b_value}
+                                                </span>
+                                              </span>
+                                              <span>
+                                                {WB_LABELS.tabellSkilnad[locale]}:{" "}
+                                                <span className="uk-mono" style={{ color: "var(--fg-2)", fontWeight: 500 }}>
+                                                  {diff.percent_diff?.toFixed(1)}%
+                                                </span>
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </Fragment>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
-                        <ul style={{ marginTop: 12, paddingLeft: 0, listStyle: "none", fontSize: 12, color: "var(--fg-muted)" }}>
-                          {comparison.numeric_differences.map((diff, i) => (
-                            <li key={i} style={{ padding: "3px 0" }}>
-                              <span className="uk-mono">{diff.field}:</span> {diff.likely_cause}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                      )}
 
-                    {comparison.method_differences?.length > 0 && (
-                      <div>
-                        <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          {WB_LABELS.metodiskeSkilnader[locale]}
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
-                          {comparison.method_differences.map((m, i) => (
-                            <li key={i}>{m}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {comparison.assumption_differences?.length > 0 && (
-                      <div>
-                        <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                          {WB_LABELS.forskjellarForesetnader[locale]}
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
-                          {comparison.assumption_differences.map((a, i) => (
-                            <li key={i}>{a}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {((comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 ||
-                      (comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0) && (
-                      <div
-                        style={{
-                          background: "var(--warn-bg)",
-                          border: "1px solid var(--warn-border)",
-                          borderLeft: "3px solid var(--warn)",
-                          borderRadius: "var(--r-sm)",
-                          padding: "12px 14px",
-                        }}
-                      >
-                        <div className="uk-eyebrow" style={{ color: "var(--warn)", marginBottom: 10 }}>
-                          ⚠ {WB_LABELS.internInkonsistens[locale]}
-                        </div>
-                        {(comparison.internal_consistency_issues?.agent_a?.length ?? 0) > 0 && (
-                          <div style={{ marginBottom: 12 }}>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
-                              Konstruktør A
+                      {/* Generelle merknader frå Samanliknar (#05) — method +
+                          assumption differences som ikkje knytt til ein rad.
+                          Disclosure, kollapsa default. */}
+                      {hasGeneral && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => setComparisonGeneralExpanded(!comparisonGeneralExpanded)}
+                            aria-expanded={comparisonGeneralExpanded}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: "4px 0",
+                              color: "var(--fg-2)",
+                              fontSize: 13,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              textAlign: "left",
+                              fontFamily: "inherit",
+                            }}
+                          >
+                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
+                              {comparisonGeneralExpanded ? "▾" : "▸"}
+                            </span>
+                            <span>
+                              {comparisonGeneralExpanded
+                                ? WB_LABELS.skjulMerknader[locale]
+                                : `${WB_LABELS.generelleMerknader[locale]} (${methodDiffs.length + assumptionDiffs.length})`}
+                            </span>
+                          </button>
+                          {comparisonGeneralExpanded && (
+                            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 12 }}>
+                              {methodDiffs.length > 0 && (
+                                <div>
+                                  <div className="uk-eyebrow" style={{ marginBottom: 6, fontSize: 10 }}>
+                                    {WB_LABELS.metodiskeSkilnader[locale]}
+                                  </div>
+                                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
+                                    {methodDiffs.map((m, i) => (
+                                      <li key={i}>{m}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {assumptionDiffs.length > 0 && (
+                                <div>
+                                  <div className="uk-eyebrow" style={{ marginBottom: 6, fontSize: 10 }}>
+                                    {WB_LABELS.forskjellarForesetnader[locale]}
+                                  </div>
+                                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
+                                    {assumptionDiffs.map((a, i) => (
+                                      <li key={i}>{a}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
-                              {comparison.internal_consistency_issues.agent_a.map((issue, i) => (
-                                <li key={i}>
-                                  {issue.issue}{" "}
-                                  <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {(comparison.internal_consistency_issues?.agent_b?.length ?? 0) > 0 && (
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
-                              Konstruktør B
-                            </div>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
-                              {comparison.internal_consistency_issues.agent_b.map((issue, i) => (
-                                <li key={i}>
-                                  {issue.issue}{" "}
-                                  <Badge status={SEVERITY_TONES[issue.severity]}>{issue.severity}</Badge>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </section>
-              )}
+                          )}
+                        </div>
+                      )}
+
+                      {/* MERK: Intern inkonsistens-blokka er flytta inn i
+                          Kontrollør-kortet som sjølvkontroll-disclosure (#09).
+                          Sjå JSX inni controllerDecision-blokka over. */}
+                    </div>
+                  </section>
+                );
+              })()}
+
+              {/* Sentinel for sticky decision-bar (#07) — når denne er i
+                  view, betyr det Action bar er synleg og sticky-baren skjules. */}
+              <div ref={actionBarSentinelRef} aria-hidden="true" style={{ height: 1 }} />
 
               {/* Action bar */}
               <section className="uk-card" style={{ marginTop: 16 }}>
@@ -2409,8 +4056,150 @@ useEffect(() => {
                 </div>
               </section>
             </>
-          )}
+            );
+          })()}
         </div>
+
+        {/* Sticky decision-bar (#07) — kompakt status-/action-bar synleg
+            når studenten har scrolla forbi Kontrollør-kortet men ikkje nådd
+            Action bar nedst. Inneheld status-badge, profil-pille, styrande
+            dimensjonerande verdi og Generer rapport-knappen, slik at
+            studenten ikkje treng scrolle tilbake for å bekrefte status og
+            handle. Mobile: erstattes med FAB-aktig knapp (kun "Generer
+            rapport"-knapp nede til høgre, kompakt). */}
+        {phase === "calculation_result" &&
+          controllerDecision &&
+          kontrollorBelowFold &&
+          !actionBarVisible &&
+          (() => {
+            // Finn styrande dimensjonerande verdi for kompakt visning
+            const dimKeys = calculationA
+              ? getDimensjonerandeKeys(
+                  calculationA.results,
+                  result?.berekningstype ?? null,
+                )
+              : [];
+            const styrendeKey = dimKeys[0];
+            const styrendeValue = styrendeKey ? calculationA?.results?.[styrendeKey] : null;
+
+            // Mobile: kun ein FAB nede til høgre med Generer rapport
+            if (isMobile) {
+              return (
+                <div
+                  style={{
+                    position: "fixed",
+                    bottom: 16,
+                    right: 16,
+                    zIndex: 90,
+                  }}
+                >
+                  {currentRunId && calculationA && calculationB && (
+                    <a
+                      href={`/rapport/${currentRunId}`}
+                      onClick={saveStateToSession}
+                      className="uk-btn uk-btn--primary"
+                      style={{
+                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
+                        padding: "10px 18px",
+                        fontSize: 14,
+                      }}
+                    >
+                      {WB_LABELS.generRapport[locale]}
+                    </a>
+                  )}
+                </div>
+              );
+            }
+
+            // Desktop: full 40 px-høg sticky-bar med status, profil, verdi, knapp
+            return (
+              <div
+                style={{
+                  position: "fixed",
+                  // Plassert under navbaren (.uk-header). Bruker CSS-variabel
+                  // med 64px fallback (matchar headerens padding 18px top/bot +
+                  // ~28px innhald = ~64px). Kan overstyrast i tokens.css om
+                  // header-høgda endrast.
+                  top: "var(--header-height, 64px)",
+                  left: 0,
+                  right: 0,
+                  background: "rgba(255, 255, 255, 0.92)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  borderBottom: "1px solid var(--border)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                  padding: "8px 20px",
+                  // z-index lågare enn navbarens 50, slik at navbaren ligg på topp
+                  zIndex: 40,
+                  animation: "mc-fade-in 0.18s ease-out",
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: 1200,
+                    margin: "0 auto",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    flexWrap: "nowrap",
+                    minHeight: 24,
+                  }}
+                >
+                  {/* Status-badge (decision_status) */}
+                  <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
+                    {decisionStatusLabel(controllerDecision.decision_status, locale)}
+                  </Badge>
+
+                  {/* Styrande dimensjonerande verdi (om tilgjengeleg) */}
+                  {styrendeKey && styrendeValue && (
+                    <>
+                      <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>·</span>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "baseline",
+                          gap: 4,
+                          fontSize: 13,
+                          color: "var(--fg)",
+                          minWidth: 0,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <span
+                          className="uk-eyebrow"
+                          style={{
+                            fontSize: 10,
+                            color: "var(--fg-muted)",
+                            letterSpacing: "0.06em",
+                          }}
+                        >
+                          {tileLabel(styrendeKey, locale)}
+                        </span>
+                        <span className="uk-mono" style={{ fontWeight: 600, fontSize: 14 }}>
+                          {styrendeValue}
+                        </span>
+                      </span>
+                    </>
+                  )}
+
+                  {/* Spacer */}
+                  <span style={{ flex: 1, minWidth: 0 }} />
+
+                  {/* Generer rapport-knapp */}
+                  {currentRunId && calculationA && calculationB && (
+                    <a
+                      href={`/rapport/${currentRunId}`}
+                      onClick={saveStateToSession}
+                      className="uk-btn uk-btn--primary"
+                      style={{ padding: "6px 14px", fontSize: 13, whiteSpace: "nowrap" }}
+                    >
+                      {WB_LABELS.generRapport[locale]}
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
         {/* Sticky CTA-bar (#05) — synleg når Start beregning-CTA er under
             viewport. Inneheld den faktiske Start beregning-knappen, slik at
@@ -2649,6 +4438,55 @@ function formatKey(key: string): string {
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
+// === Matte-rendering av results-keys (#06b) ===
+// Konverterer snake_case-keys til JSX med Greek-symbol + subscript-tags,
+// slik at "M_Ed" rendrast som M med Ed som senka tekst, og "gamma_G" som
+// γ_G. Brukast i Resultat-tabellen for å gi fag-typografi i staden for
+// rå snake_case som ser ut som kode.
+//
+// Avgrensingar (pilot):
+// - Skiljer ikkje mellom "E_d" (E med d-subscript) og "Ed" (samansett namn) —
+//   stoler på agentens underscore-plassering. Ed_ULS treff "Ed" som hovudsymbol.
+// - Subscript med fleire delar slåast saman med komma: psi_0_kategori_B →
+//   ψ med "0,kategori,B" som subscript.
+const GREEK_LETTERS: Record<string, string> = {
+  // Små bokstavar — det vanlegaste i konstruksjonsfag
+  alpha: "α", beta: "β", gamma: "γ", delta: "δ",
+  epsilon: "ε", zeta: "ζ", eta: "η", theta: "θ",
+  iota: "ι", kappa: "κ", lambda: "λ", mu: "μ",
+  nu: "ν", xi: "ξ", omicron: "ο", pi: "π",
+  rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ",
+  phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
+  // Store bokstavar (sjeldnare, men fagleg t.d. Φ, Δ, Σ)
+  Alpha: "Α", Beta: "Β", Gamma: "Γ", Delta: "Δ",
+  Epsilon: "Ε", Zeta: "Ζ", Eta: "Η", Theta: "Θ",
+  Lambda: "Λ", Mu: "Μ", Nu: "Ν", Xi: "Ξ",
+  Pi: "Π", Rho: "Ρ", Sigma: "Σ", Tau: "Τ",
+  Phi: "Φ", Chi: "Χ", Psi: "Ψ", Omega: "Ω",
+};
+
+function renderMathKey(key: string): React.ReactNode {
+  const parts = key.split("_");
+  if (parts.length === 0 || !parts[0]) return key;
+
+  // Første del: Greek-symbol om matchande, elles ordet uendra
+  const head = GREEK_LETTERS[parts[0]] ?? parts[0];
+
+  // Ingen underscore → berre hovudsymbol
+  if (parts.length === 1) return head;
+
+  // Resten: subscript, komma-separert om fleire delar
+  const subscript = parts.slice(1).join(",");
+  return (
+    <>
+      {head}
+      <sub style={{ fontSize: "0.72em", verticalAlign: "sub", marginLeft: "0.5px" }}>
+        {subscript}
+      </sub>
+    </>
+  );
+}
+
 function TolkteVerdiarGrid({
   values,
   locale,
@@ -2692,7 +4530,7 @@ function TolkteVerdiarGrid({
               {items.map(([k, v]) => (
                 <Fragment key={k}>
                   <span className="uk-mono" style={{ color: "var(--fg-2)" }}>
-                    {formatKey(k)}
+                    {renderMathKey(k)}
                   </span>
                   <span className="uk-mono">{v}</span>
                 </Fragment>
@@ -2894,6 +4732,281 @@ function Badge({
   const variant = status === "neutral" ? "" : `uk-badge--${status}`;
   const fullClass = ["uk-badge", variant].filter(Boolean).join(" ");
   return <span className={fullClass}>{children}</span>;
+}
+
+// === KontrollorChipPill (#02) ===
+// Kompakt chip for fag-flagg i Kontrollør-kortet. Klikk på chip utvidar
+// han inline til å vise full tekst (multi-linje, wrappa). Klikk igjen
+// kollapsar tilbake til truncert form. Multiple chips kan vere utvida
+// samtidig — kvar chip styrer sin eigen state.
+//
+// Designval: Inline-utviding i staden for popover gjer at studenten kan
+// samanlikne fleire faglege merknader side om side utan å miste kontekst.
+// Pille-radius vert redusert til 8px ved utviding for å handtere multi-
+// linje pent (full pill-radius ser rart ut når innhaldet wrappar).
+function KontrollorChipPill({
+  chip,
+}: {
+  chip: KontrollorChip;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const toneStyles: Record<"info" | "warn" | "neutral", { bg: string; border: string; color: string }> = {
+    info: {
+      bg: "rgba(79, 139, 110, 0.06)", // grøn-tona som matchar uk-badge--ok
+      border: "rgba(79, 139, 110, 0.4)",
+      color: "var(--fg)",
+    },
+    warn: {
+      bg: "var(--surface-2)",
+      border: "var(--border)",
+      color: "var(--fg-2)",
+    },
+    neutral: {
+      bg: "var(--surface)",
+      border: "var(--border)",
+      color: "var(--fg-2)",
+    },
+  };
+  const s = toneStyles[chip.tone];
+  // Chip er klikkbar berre om det finst meir tekst å vise — dvs.
+  // tooltip eksisterer og er forskjellig frå den synlege chip-teksten.
+  const isExpandable =
+    !!chip.tooltip && chip.tooltip.trim() !== chip.text.trim();
+  const displayText = expanded && isExpandable ? (chip.tooltip as string) : chip.text;
+
+  return (
+    <button
+      type="button"
+      onClick={() => isExpandable && setExpanded(!expanded)}
+      aria-expanded={isExpandable ? expanded : undefined}
+      disabled={!isExpandable}
+      style={{
+        display: "inline-flex",
+        alignItems: "flex-start", // top-align for multi-linje
+        gap: 5,
+        padding: expanded ? "6px 12px" : "4px 10px",
+        background: s.bg,
+        border: `1px solid ${s.border}`,
+        borderRadius: expanded ? 8 : 999, // pill kollapsa, rounded-rect utvida
+        fontSize: 12,
+        color: s.color,
+        lineHeight: 1.5,
+        whiteSpace: expanded ? "normal" : "nowrap",
+        cursor: isExpandable ? "pointer" : "default",
+        fontFamily: "inherit",
+        textAlign: "left",
+        maxWidth: expanded ? "min(100%, 520px)" : undefined,
+        transition: "border-radius 0.15s ease, padding 0.15s ease",
+      }}
+    >
+      {chip.prefix && (
+        <span
+          style={{
+            fontWeight: 600,
+            opacity: 0.85,
+            flexShrink: 0,
+            // Halde prefix-baseline med første tekstlinje når utvida
+            lineHeight: 1.5,
+          }}
+        >
+          {chip.prefix}
+        </span>
+      )}
+      <span style={{ minWidth: 0 }}>{displayText}</span>
+    </button>
+  );
+}
+
+// === DimensjonerandeTile (#01b) ===
+// Ein enkelt klikkbar tile. Klikk utvidar tile-en inline til å vise
+// fagleg forklaring av kva verdien tyder (frå KEY_TILE_DESCRIPTIONS).
+// Tile utan registrert beskrivelse er ikkje klikkbar — cursor default,
+// ingen onClick-handler. Multiple tiles kan vere utvida samtidig.
+function DimensjonerandeTile({
+  k,
+  value,
+  isStyrande,
+  span,
+  locale,
+}: {
+  k: string;
+  value: string;
+  isStyrande: boolean;
+  span: number;
+  locale: Locale;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { number, unit } = splitNumberUnit(value);
+  const description = KEY_TILE_DESCRIPTIONS[k]?.[locale];
+  const isClickable = !!description;
+
+  return (
+    <button
+      type="button"
+      onClick={isClickable ? () => setExpanded(!expanded) : undefined}
+      aria-expanded={isClickable ? expanded : undefined}
+      style={{
+        // Reset browser button-defaults
+        appearance: "none",
+        font: "inherit",
+        textAlign: "left",
+        // Layout
+        padding: expanded ? "13px 14px 14px" : "13px 14px 12px",
+        borderRadius: "var(--r-sm)",
+        background: isStyrande ? "var(--fg)" : "var(--surface)",
+        color: isStyrande ? "var(--surface)" : "var(--fg)",
+        border: isStyrande ? "1px solid transparent" : "1px solid var(--border)",
+        gridColumn: `span ${span}`,
+        minWidth: 0, // tillet grid-cella å krympe utan å sprenge wrap
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        cursor: isClickable ? "pointer" : "default",
+        transition: "padding 0.15s ease",
+      }}
+    >
+      <div
+        className="uk-eyebrow"
+        style={{
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          color: isStyrande ? "var(--surface)" : "var(--fg-muted)",
+          opacity: isStyrande ? 0.7 : 1,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={k}
+      >
+        {tileLabel(k, locale)}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 5,
+          flexWrap: "nowrap",
+          minWidth: 0,
+          lineHeight: 1,
+        }}
+      >
+        <span
+          className="uk-mono"
+          style={{
+            fontSize: isStyrande ? 26 : 22,
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {number}
+        </span>
+        {unit && (
+          <span
+            className="uk-mono"
+            style={{
+              fontSize: 11,
+              opacity: 0.7,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0,
+            }}
+          >
+            {unit}
+          </span>
+        )}
+      </div>
+      {expanded && description && (
+        <p
+          style={{
+            margin: "4px 0 0",
+            fontSize: 12,
+            lineHeight: 1.55,
+            color: isStyrande ? "var(--surface)" : "var(--fg-2)",
+            opacity: isStyrande ? 0.85 : 1,
+            whiteSpace: "normal",
+            fontFamily: "inherit",
+          }}
+        >
+          {description}
+        </p>
+      )}
+    </button>
+  );
+}
+
+// === DimensjonerandeTiles (#01) ===
+// Layout matchar Claude Design sin mock: 4-kol grid med dynamiske spans:
+//   1 tile  → spenner heile rada (full breidde)
+//   2 tiles → 2+2 (50/50)
+//   3 tiles → styrande 2 + 1 + 1 (matchar mock-rad 1)
+//   4 tiles → styrande 2 + 1 + 1 / 4 (4. tile på eiga full-breidde rad,
+//             som KVASI-PERMANENT i mock'en)
+//   5 tiles → 2+1+1 / 2+2 (rad 2 jamt fordelt)
+//   6+ tiles → vert standard 2+1+1+1+1+1 (wrap-fri)
+//
+// Styrande tile (første i lista) har mørk bakgrunn, dei andre lyse.
+// align-items: start på grid hindrar at andre tiles strekker seg når
+// éin tile vert utvida med fagleg forklaring (#01b).
+//
+// På smale viewports (mobile) reduserar minmax(0, 1fr) tiles til lågare
+// pikselbredde — innhaldet held seg lesbart fordi font-storleik er kompakt.
+function DimensjonerandeTiles({
+  results,
+  calculationType,
+  locale,
+}: {
+  results: Record<string, string>;
+  calculationType: string | null;
+  locale: Locale;
+}) {
+  const keys = getDimensjonerandeKeys(results, calculationType);
+  if (keys.length === 0) return null;
+
+  // Bereknar grid-span for kvar tile basert på totalt antall.
+  const spanForIndex = (i: number, total: number): number => {
+    if (total === 1) return 4; // full breidde
+    if (total === 2) return 2; // 2+2
+    if (total === 3) return i === 0 ? 2 : 1; // 2+1+1
+    if (total === 4) {
+      if (i === 0) return 2; // styrande
+      if (i === 3) return 4; // KVASI-aktig — full rad 2
+      return 1; // dei to mellomste
+    }
+    if (total === 5) {
+      if (i === 0) return 2; // styrande
+      if (i <= 2) return 1; // rad 1: 2+1+1
+      return 2; // rad 2: 2+2
+    }
+    // 6+ tiles: styrande span 2, resten span 1, wrap naturleg
+    return i === 0 ? 2 : 1;
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 10,
+        marginTop: 0,
+        marginBottom: 4,
+        alignItems: "start", // hindrar stretch når éin tile utvidast
+      }}
+    >
+      {keys.map((k, i) => (
+        <DimensjonerandeTile
+          key={k}
+          k={k}
+          value={results[k] ?? ""}
+          isStyrande={i === 0}
+          span={spanForIndex(i, keys.length)}
+          locale={locale}
+        />
+      ))}
+    </div>
+  );
 }
 
 function StatusStripe({
