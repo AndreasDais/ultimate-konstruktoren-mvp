@@ -281,6 +281,9 @@ const WB_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Konstruktør A og B er ikkje samde — manuell gjennomgang trengst.",
   },
   fagligMerknad: { nb: "Faglig merknad", nn: "Fagleg merknad" },
+  // Grupper-overskrifter for fag-chips (delt frå #lettlese5)
+  fagligGruppeMetode: { nb: "Metode", nn: "Metode" },
+  fagligGruppeAntakelser: { nb: "Antakelser & advarsler", nn: "Antakingar & åtvaringar" },
   lesHeileVurderinga: { nb: "Les hele vurderingen fra Kontrolløren", nn: "Les heile vurderinga frå Kontrolløren" },
   skjulVurderinga: { nb: "Skjul vurderingen", nn: "Skjul vurderinga" },
   krevFagligGjennomgang: { nb: "Krever faglig gjennomgang", nn: "Krev fagleg gjennomgang" },
@@ -3101,32 +3104,93 @@ useEffect(() => {
                             </div>
                           )}
 
-                          {/* Fag-flagg-chips — vertikal liste, ein per line.
-                              Tidlegare flex-wrap-grid klumpa korte chips saman
-                              i samme rad — brukar vil ha listevisning slik at
-                              kvar merknad er tydeleg avgrensa. Konfidens-rada
-                              over held fram med flex-wrap (sidan A/B-pillar
-                              er korte og naturleg på same line). */}
-                          {fagChips.length > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "stretch",
-                                gap: 6,
-                              }}
-                            >
-                              {fagChips.map((chip, i) => (
-                                <KontrollorChipPill
-                                  key={`fag-${i}`}
-                                  chip={chip}
-                                  index={konfidensChips.length + i}
-                                  enableAura
-                                  fullWidth
-                                />
-                              ))}
-                            </div>
-                          )}
+                          {/* Fag-flagg-chips delt i to grupper (#lettlese5):
+                              - "Metode": info-chips med prefix "+", dvs.
+                                method_differences frå Samanliknar
+                              - "Antakelser & advarsler": warn + neutral chips
+                                med prefix "⚠", dvs. assumption_differences,
+                                warnings og manual_review
+                              Tidlegare var alle i ein lang liste — den kunne
+                              bli 10-15 chips lang og uoversikteleg. Grupperinga
+                              gir studenten ein skanne-friendly struktur. */}
+                          {fagChips.length > 0 && (() => {
+                            const methodChips = fagChips.filter((c) => c.tone === "info");
+                            const warnChips = fagChips.filter((c) => c.tone !== "info");
+                            return (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 14,
+                                }}
+                              >
+                                {methodChips.length > 0 && (
+                                  <div>
+                                    <div
+                                      className="uk-eyebrow"
+                                      style={{
+                                        fontSize: 10,
+                                        color: "var(--fg-muted)",
+                                        marginBottom: 6,
+                                      }}
+                                    >
+                                      {WB_LABELS.fagligGruppeMetode[locale]}
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "stretch",
+                                        gap: 6,
+                                      }}
+                                    >
+                                      {methodChips.map((chip, i) => (
+                                        <KontrollorChipPill
+                                          key={`metode-${i}`}
+                                          chip={chip}
+                                          index={konfidensChips.length + i}
+                                          enableAura
+                                          fullWidth
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {warnChips.length > 0 && (
+                                  <div>
+                                    <div
+                                      className="uk-eyebrow"
+                                      style={{
+                                        fontSize: 10,
+                                        color: "var(--fg-muted)",
+                                        marginBottom: 6,
+                                      }}
+                                    >
+                                      {WB_LABELS.fagligGruppeAntakelser[locale]}
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "stretch",
+                                        gap: 6,
+                                      }}
+                                    >
+                                      {warnChips.map((chip, i) => (
+                                        <KontrollorChipPill
+                                          key={`warn-${i}`}
+                                          chip={chip}
+                                          index={konfidensChips.length + methodChips.length + i}
+                                          enableAura
+                                          fullWidth
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })()}
