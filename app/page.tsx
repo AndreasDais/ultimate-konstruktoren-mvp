@@ -2004,6 +2004,193 @@ useEffect(() => {
           animation: pilar-block-appear 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
           will-change: opacity, transform;
         }
+
+        /* === RESULTAT-SIDE ANIMASJONAR (#anim-01..05) ===
+           Inline-versjon (backup) — same mønster som Workbench-animasjonane
+           over. Lagt her i staden for ekstern CSS-fil sidan inline-pattern
+           er bevisleg fungerande i miljøet (sjå pilar-shimmer/cursor over). */
+
+        /* #anim-02 — Stagger-reveal for chips. To-fase pattern:
+           - Default klasse (.pilar-chip-stagger): chipen er usynleg.
+           - --visible: triggar animasjonen til synleg state.
+           IntersectionObserver i KontrollorChipPill set --visible når
+           chipen er minst 10% i view. Stagger via animation-delay (inline). */
+        @keyframes pilar-stagger-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.94);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .pilar-chip-stagger {
+          opacity: 0;
+          transform: translateY(10px) scale(0.94);
+          will-change: opacity, transform;
+        }
+        .pilar-chip-stagger.pilar-chip-stagger--visible {
+          animation: pilar-stagger-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+        }
+
+        /* #anim-03 — Pustande decision-badge */
+        @keyframes pilar-breathe-kf {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(79, 139, 110, 0);
+          }
+          50% {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 8px rgba(79, 139, 110, 0.10);
+          }
+        }
+        .pilar-breathe {
+          display: inline-block;
+          animation: pilar-breathe-kf 3.2s ease-in-out infinite;
+          will-change: transform, box-shadow;
+        }
+        .pilar-breathe[data-acknowledged="true"] {
+          animation-play-state: paused;
+        }
+
+        /* #anim-03 — Pulserande prikk synkron med breathe */
+        @keyframes pilar-puls-dot-kf {
+          0%, 100% { opacity: 0.45; }
+          50% { opacity: 1; }
+        }
+        .pilar-puls-dot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: currentColor;
+          margin-right: 6px;
+          vertical-align: 1px;
+          animation: pilar-puls-dot-kf 3.2s ease-in-out infinite;
+          will-change: opacity;
+        }
+
+        /* #anim-04 — Pulserande aura som bølger nedover chipane.
+           Implementert som ::before-pseudo-element 3px utanfor chipen så
+           aura er HEILT ISOLERT frå chipen sin egen box-shadow (hover-løft).
+           Sveip-effekt: kvar chip får eigen --aura-delay via inline custom
+           property (set i KontrollorChipPill basert på index). Det gjer at
+           pulsen "renner" frå topp til bunn av lista i staden for å vere
+           tilfeldig synkronisert. Varigheit 6s for ein roleg loop. */
+        @keyframes pilar-chip-aura-kf {
+          0%, 85% {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          90% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.08);
+          }
+        }
+        .pilar-chip-aura {
+          position: relative;
+        }
+        .pilar-chip-aura::before {
+          content: "";
+          position: absolute;
+          inset: -3px;
+          border-radius: 999px;
+          border: 1.5px solid rgba(125, 95, 50, 0.55);
+          pointer-events: none;
+          opacity: 0;
+          animation: pilar-chip-aura-kf 6s ease-in-out infinite;
+          /* Delay basert på chip-posisjon i lista (sett via inline style).
+             Fallback 1.5s om custom property ikkje er sett. */
+          animation-delay: var(--aura-delay, 1.5s);
+          will-change: opacity, transform;
+        }
+        .pilar-chip-aura:hover::before,
+        .pilar-chip-aura:focus-visible::before {
+          animation-play-state: paused;
+          opacity: 0;
+        }
+
+        /* #anim-05 — Chevron-rotasjon */
+        .pilar-chevron {
+          display: inline-block;
+          transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.25, 1);
+          transform-origin: center;
+          will-change: transform;
+        }
+        .pilar-chevron--open {
+          transform: rotate(90deg);
+        }
+
+        /* === Hover-feedback for klikkbare element (#anim-06) ===
+           Signaliserer at element er klikkbart ved å lette løfte og forsterke
+           skugge på hover. Tiles og chips bruker subtilt ulik intensitet —
+           tiles større rørsle sidan dei er større, chips litt scale så pille-
+           formen kjenner endringen. */
+        .pilar-tile-clickable {
+          transition:
+            transform 0.18s cubic-bezier(0.2, 0.9, 0.25, 1),
+            box-shadow 0.18s ease,
+            border-radius 0.15s ease,
+            padding 0.15s ease;
+        }
+        .pilar-tile-clickable:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+        .pilar-tile-clickable:focus-visible {
+          outline: 2px solid var(--fg);
+          outline-offset: 2px;
+        }
+        /* Mørke tiles (styrande) treng ein lysare skugge for at den synlege
+           "lyfte"-effekten skal vere synleg mot mørk bakgrunn. */
+        .pilar-tile-clickable.pilar-tile-dark:hover {
+          box-shadow: 0 6px 22px rgba(15, 23, 42, 0.28);
+        }
+
+        /* Hover på chips — berre når stagger er ferdig (--visible aktivert).
+           Litt scale + lyft for å vise at pille-formen er klikkbar.
+           Transition på --visible-klassen sikrar at hover-endringen får
+           smooth easing utan å konflikte med stagger-animasjonen (animation
+           er ferdig før hover skjer). */
+        .pilar-chip-stagger.pilar-chip-stagger--visible {
+          transition:
+            transform 0.18s cubic-bezier(0.2, 0.9, 0.25, 1),
+            box-shadow 0.18s ease,
+            border-radius 0.15s ease,
+            padding 0.15s ease;
+        }
+        .pilar-chip-stagger.pilar-chip-stagger--visible:hover:not(:disabled) {
+          transform: translateY(-2px) scale(1.06);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pilar-chip-stagger,
+          .pilar-breathe,
+          .pilar-puls-dot,
+          .pilar-chip-aura,
+          .pilar-chevron,
+          .pilar-tile-clickable {
+            animation: none !important;
+            transition: none !important;
+          }
+          /* Stagger startilstand er usynleg — for reduced-motion må vi
+             sette synleg tilstand direkte. */
+          .pilar-chip-stagger {
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          /* Hover-effekt utan animasjon — fortsatt visuelt skilje */
+          .pilar-tile-clickable:hover,
+          .pilar-chip-stagger.pilar-chip-stagger--visible:hover:not(:disabled) {
+            transform: none !important;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .pilar-skeleton-bar,
           .pilar-cursor,
@@ -2827,7 +3014,12 @@ useEffect(() => {
                           {WB_LABELS.kontrollorAvgjerd[locale]}
                           <InfoPopover label={WB_LABELS.kontrollor[locale]}><p>{WB_LABELS.kontrollorPopover1[locale]} <strong>{WB_LABELS.kontrollorPopover2[locale]}</strong> {WB_LABELS.kontrollorPopover3[locale]}</p></InfoPopover>
                         </span>
-                        <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>{decisionStatusLabel(controllerDecision.decision_status, locale)}</Badge>
+                        <span className="pilar-breathe">
+                          <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
+                            <span className="pilar-puls-dot" aria-hidden="true" />
+                            {decisionStatusLabel(controllerDecision.decision_status, locale)}
+                          </Badge>
+                        </span>
                       </div>
                     }
                   >
@@ -2879,6 +3071,7 @@ useEffect(() => {
                                 <KontrollorChipPill
                                   key={`konf-${i}`}
                                   chip={chip}
+                                  index={i}
                                 />
                               ))}
                             </div>
@@ -2898,6 +3091,8 @@ useEffect(() => {
                                 <KontrollorChipPill
                                   key={`fag-${i}`}
                                   chip={chip}
+                                  index={konfidensChips.length + i}
+                                  enableAura
                                 />
                               ))}
                             </div>
@@ -2953,12 +3148,13 @@ useEffect(() => {
                             }}
                           >
                             <span
+                              className={`pilar-chevron${isExpanded ? " pilar-chevron--open" : ""}`}
                               style={{
                                 color: "var(--fg-muted)",
                                 fontSize: 11,
                               }}
                             >
-                              {isExpanded ? "▾" : "▸"}
+                              ▸
                             </span>
                             <span>
                               {WB_LABELS.sjølvkontrollEtikett[locale]}: {labelText}
@@ -3067,8 +3263,11 @@ useEffect(() => {
                               fontFamily: "inherit",
                             }}
                           >
-                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
-                              {kontrollorProsaExpanded ? "▾" : "▸"}
+                            <span
+                              className={`pilar-chevron${kontrollorProsaExpanded ? " pilar-chevron--open" : ""}`}
+                              style={{ color: "var(--fg-muted)", fontSize: 11 }}
+                            >
+                              ▸
                             </span>
                             <span>
                               {kontrollorProsaExpanded
@@ -3260,8 +3459,11 @@ useEffect(() => {
                               fontFamily: "inherit",
                             }}
                           >
-                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
-                              {aMellomleddExpanded ? "▾" : "▸"}
+                            <span
+                              className={`pilar-chevron${aMellomleddExpanded ? " pilar-chevron--open" : ""}`}
+                              style={{ color: "var(--fg-muted)", fontSize: 11 }}
+                            >
+                              ▸
                             </span>
                             <span>
                               {aMellomleddExpanded
@@ -3527,13 +3729,14 @@ useEffect(() => {
                                   }}
                                 >
                                   <span
+                                    className={`pilar-chevron${!isCollapsed ? " pilar-chevron--open" : ""}`}
                                     style={{
                                       color: "var(--fg-muted)",
                                       fontSize: 11,
                                       flexShrink: 0,
                                     }}
                                   >
-                                    {isCollapsed ? "▸" : "▾"}
+                                    ▸
                                   </span>
                                   <h4
                                     style={{
@@ -3698,8 +3901,11 @@ useEffect(() => {
                         color: "var(--fg)",
                       }}
                     >
-                      <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
-                        {isExpanded ? "▾" : "▸"}
+                      <span
+                        className={`pilar-chevron${isExpanded ? " pilar-chevron--open" : ""}`}
+                        style={{ color: "var(--fg-muted)", fontSize: 11 }}
+                      >
+                        ▸
                       </span>
                       <span style={{ fontWeight: 600, fontSize: 14 }}>
                         {WB_LABELS.bUavhengigKontroll[locale]}
@@ -3871,7 +4077,13 @@ useEffect(() => {
                                       }}
                                     >
                                       <td style={{ padding: "8px 0", color: "var(--fg-muted)", fontSize: 11 }}>
-                                        {isClickable ? (isOpen ? "▾" : "▸") : ""}
+                                        {isClickable && (
+                                          <span
+                                            className={`pilar-chevron${isOpen ? " pilar-chevron--open" : ""}`}
+                                          >
+                                            ▸
+                                          </span>
+                                        )}
                                       </td>
                                       <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg-2)" }}>
                                         {renderMathKey(diff.field)}
@@ -3975,8 +4187,11 @@ useEffect(() => {
                               fontFamily: "inherit",
                             }}
                           >
-                            <span style={{ color: "var(--fg-muted)", fontSize: 11 }}>
-                              {comparisonGeneralExpanded ? "▾" : "▸"}
+                            <span
+                              className={`pilar-chevron${comparisonGeneralExpanded ? " pilar-chevron--open" : ""}`}
+                              style={{ color: "var(--fg-muted)", fontSize: 11 }}
+                            >
+                              ▸
                             </span>
                             <span>
                               {comparisonGeneralExpanded
@@ -4746,10 +4961,43 @@ function Badge({
 // linje pent (full pill-radius ser rart ut når innhaldet wrappar).
 function KontrollorChipPill({
   chip,
+  index = 0,
+  enableAura = false,
 }: {
   chip: KontrollorChip;
+  index?: number;
+  enableAura?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  // hasAppeared (#anim-02): triggrar stagger-animasjonen først når chipen
+  // er minst 10% synleg i viewporten. Brukar sin auga er på Kontrollør-
+  // kortet øvst først, så animasjonen må vente til dei faktisk ser raden.
+  const [hasAppeared, setHasAppeared] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (hasAppeared) return;
+    const el = buttonRef.current;
+    if (!el) return;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      setHasAppeared(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasAppeared(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasAppeared]);
 
   const toneStyles: Record<"info" | "warn" | "neutral", { bg: string; border: string; color: string }> = {
     info: {
@@ -4777,10 +5025,18 @@ function KontrollorChipPill({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={() => isExpandable && setExpanded(!expanded)}
       aria-expanded={isExpandable ? expanded : undefined}
       disabled={!isExpandable}
+      className={[
+        "pilar-chip-stagger",
+        hasAppeared ? "pilar-chip-stagger--visible" : "",
+        enableAura && isExpandable && !expanded && hasAppeared ? "pilar-chip-aura" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={{
         display: "inline-flex",
         alignItems: "flex-start", // top-align for multi-linje
@@ -4797,7 +5053,17 @@ function KontrollorChipPill({
         fontFamily: "inherit",
         textAlign: "left",
         maxWidth: expanded ? "min(100%, 520px)" : undefined,
-        transition: "border-radius 0.15s ease, padding 0.15s ease",
+        // transition: flytta til CSS (.pilar-chip-stagger--visible) slik at
+        // hover sin transform/box-shadow får same smooth easing utan å bli
+        // overskriven av inline-style.
+        // Stagger-forsinking: 80ms per chip-index. Klampes til 800ms max
+        // for store chip-lister. Køyrer berre når --visible-klassen er sett.
+        animationDelay: `${Math.min(index * 80, 800)}ms`,
+        // Aura-bølge nedover: kvar chip startar sin aura-puls litt etter
+        // forrige, slik at pulsen renner frå topp til bunn av lista.
+        // 250ms per chip-posisjon, klampes til 4s max. Pilar-aura sin
+        // animation-delay les denne custom property'n.
+        ["--aura-delay" as string]: `${1 + Math.min(index * 0.25, 4)}s`,
       }}
     >
       {chip.prefix && (
@@ -4815,6 +5081,111 @@ function KontrollorChipPill({
       )}
       <span style={{ minWidth: 0 }}>{displayText}</span>
     </button>
+  );
+}
+
+// === CountUp (#anim-01) ===
+// Tellast opp frå 0 til endeverdi over 1100ms med ease-out cubic. Animasjonen
+// triggrast når tile-en KJEM I VIEW (via IntersectionObserver), ikkje ved
+// mount. Det er fordi tiles ofte er nedanfor fold ved første mount —
+// brukaren si auga er på Kontrollør-kortet på toppen først, og når dei
+// scrollar ned skal count-up fortsatt skje. Køyrer berre ein gong per tile-
+// instans. Respekterer prefers-reduced-motion.
+//
+// Format-bevaring: same antall desimalar og same skiljeteikn (norsk komma)
+// som original-verdien.
+function CountUp({
+  numberStr,
+  durationMs = 1100,
+}: {
+  numberStr: string;
+  durationMs?: number;
+}) {
+  // Parse: "5120" → { value: 5120, decimals: 0, separator: "" }
+  //        "10,58" → { value: 10.58, decimals: 2, separator: "," }
+  const parsed = (() => {
+    const cleaned = numberStr.replace(/[≈~<>≥≤]/g, "").replace(/\s/g, "").trim();
+    const usesComma = cleaned.includes(",");
+    const normalized = usesComma ? cleaned.replace(",", ".") : cleaned;
+    const value = parseFloat(normalized);
+    if (!isFinite(value)) return null;
+    const decimalsMatch = cleaned.match(/[.,](\d+)$/);
+    const decimals = decimalsMatch ? decimalsMatch[1].length : 0;
+    return { value, decimals, separator: usesComma ? "," : "." };
+  })();
+
+  // Start på 0 — første render viser "0", deretter animerer vi opp.
+  const [current, setCurrent] = useState<number>(0);
+  const spanRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!parsed) return;
+
+    // Reduced-motion: hopp direkte til endeverdi, ingen animasjon
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      setCurrent(parsed.value);
+      return;
+    }
+
+    const element = spanRef.current;
+    if (!element) {
+      // Fallback om ref ikkje sat enno — sett endeverdi direkte
+      setCurrent(parsed.value);
+      return;
+    }
+
+    let hasStarted = false;
+    let raf: number | null = null;
+
+    const startAnimation = () => {
+      if (hasStarted) return;
+      hasStarted = true;
+      const target = parsed.value;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const elapsed = now - start;
+        const t = Math.min(elapsed / durationMs, 1);
+        // Ease-out cubic
+        const eased = 1 - Math.pow(1 - t, 3);
+        setCurrent(target * eased);
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    // Trigge når tile er minst 20% synleg
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted) {
+          startAnimation();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!parsed) return <>{numberStr}</>;
+
+  // Format: behaldar separator + antall desimalar
+  const formatted = current
+    .toFixed(parsed.decimals)
+    .replace(".", parsed.separator);
+  return (
+    <span ref={spanRef} style={{ fontVariantNumeric: "tabular-nums" }}>
+      {formatted}
+    </span>
   );
 }
 
@@ -4846,6 +5217,11 @@ function DimensjonerandeTile({
       type="button"
       onClick={isClickable ? () => setExpanded(!expanded) : undefined}
       aria-expanded={isClickable ? expanded : undefined}
+      className={
+        isClickable
+          ? `pilar-tile-clickable${isStyrande ? " pilar-tile-dark" : ""}`
+          : undefined
+      }
       style={{
         // Reset browser button-defaults
         appearance: "none",
@@ -4863,7 +5239,8 @@ function DimensjonerandeTile({
         flexDirection: "column",
         gap: 8,
         cursor: isClickable ? "pointer" : "default",
-        transition: "padding 0.15s ease",
+        // transition er flytta til .pilar-tile-clickable-klassen så hover
+        // sin transform/box-shadow får same easing-kurve som padding-overgangen
       }}
     >
       <div
@@ -4900,7 +5277,7 @@ function DimensjonerandeTile({
             whiteSpace: "nowrap",
           }}
         >
-          {number}
+          <CountUp numberStr={number} />
         </span>
         {unit && (
           <span
