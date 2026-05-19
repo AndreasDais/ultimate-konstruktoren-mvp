@@ -20,6 +20,7 @@ import "./rapport.css";
 import FeilrapportModal from "./feilrapport-modal";
 import { type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
+import { RapportLoadingPilelinja } from "./RapportLoadingPilelinja";
 const RP_LABELS: Record<string, Record<Locale, string>> = {
   // Loading + error
   generererRapport: { nb: "Genererer rapport...", nn: "Genererer rapport..." },
@@ -170,36 +171,9 @@ export default function RapportPage() {
   const runId = params.run_id as string;
 
   const [data, setData] = useState<FullReportResponse | null>(null);
-  const [loadingMessage, setLoadingMessage] = useState("Genererer rapport...");
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-
-  useEffect(() => {
-    async function loadReport() {
-      try {
-        setLoadingMessage("Genererer rapport...");
-        const res = await fetch("/api/agent-e", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ run_id: runId, locale }),
-        });
-
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || RP_LABELS.kunneIkkjeGenerere[locale]);
-        }
-
-        const responseData: FullReportResponse = await res.json();
-        setData(responseData);
-      } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : RP_LABELS.ukjendFeil[locale];
-        setError(message);
-      }
-    }
-
-    loadReport();
-  }, [runId, locale]);
 
   // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
   // Etter konsolidering ser observer berre på dei 4 outer-sections.
@@ -259,15 +233,16 @@ export default function RapportPage() {
 
   if (!data) {
     return (
-      <div className="rapport-loading">
-        <p>{loadingMessage}</p>
-        <p style={{ fontSize: "0.875rem", opacity: 0.7 }}>
-          {RP_LABELS.kanTaTid[locale]}
-        </p>
-      </div>
+      <RapportLoadingPilelinja
+        runId={runId}
+        locale={locale}
+        onComplete={(responseData: Record<string, unknown>) =>
+          setData(responseData as unknown as FullReportResponse)
+        }
+        onError={(message: string) => setError(message)}
+      />
     );
   }
-
   const blocked = data.controllerDecision?.blocked_outputs ?? [];
   const isBlocked = (field: string) => blocked.includes(field);
   const primary = data.agentA;
