@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import Header from "./components/Header";
+import { LocaleProvider } from "@/lib/locale-context";
 import "./globals.css";
 import "./tokens.css";
 import "katex/dist/katex.min.css";
-import Header from "./components/Header";
-import { LocaleProvider } from "@/lib/locale-context";
 
 export const metadata: Metadata = {
   title: "Pilar — AI-konstruksjonsassistent",

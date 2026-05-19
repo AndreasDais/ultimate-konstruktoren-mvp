@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -109,6 +110,7 @@ async function notifyHighSeveritySlack(payload: {
 }
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const body = await request.json();
     const {

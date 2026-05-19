@@ -1,6 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 
 /**
  * Hent user_id frå innlogga session viss han finst. Returnerer null for
@@ -40,6 +41,7 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 export async function POST(request: Request) {
+  let locale: Locale = "nb";
   try {
     const { request_id, calculation_type } = await request.json();
 

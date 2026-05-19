@@ -969,3 +969,12 @@
       display: none !important;
     }
   }
+
+  @keyframes pilar-block-appear {
+    0%   { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .pilar-block-appear {
+    animation: pilar-block-appear 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    will-change: opacity, transform;
+  }
