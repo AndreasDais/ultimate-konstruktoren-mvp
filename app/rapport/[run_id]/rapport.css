@@ -776,11 +776,21 @@
    margin og horisontal overflow for lange uttrykk.
    ====================================================== */
 
-   .rapport-formula {
+   /* Scroll-wrapper rundt katex-output. Siste sikkerheitsnett: om eit
+      enkelt formel-segment er for breitt for arket, kan det scrollast
+      horisontalt her i staden for å stikke ut. FormulaStack stablar
+      fleirledd-formlar, så denne scrollen treng sjeldan å aktiverast. */
+   .rapport-formula-scroll {
     margin: 1.25rem 0;
-    padding: 0.5rem 0;
     overflow-x: auto;
     overflow-y: hidden;
+    /* Maks-breidd = container. Utan dette ville scroll-wrapperen sjølv
+       vakse med innhaldet og overflyt-en ville aldri trigge. */
+    max-width: 100%;
+  }
+
+  .rapport-formula {
+    padding: 0.5rem 0;
   }
   
   /* KaTeX sin display-modus er sentrert som default. */
@@ -789,19 +799,18 @@
   }
   
   /* Lange uttrykk (t.d. kjede-likskap) kan trenge horisontal
-     scroll. Skjul scrollbar-en på vanleg skjerm, men la han
-     vere klikkbar på mobil/touch. */
-  .rapport-formula::-webkit-scrollbar {
+     scroll. Tynn scrollbar på scroll-wrapperen. */
+  .rapport-formula-scroll::-webkit-scrollbar {
     height: 4px;
   }
-  .rapport-formula::-webkit-scrollbar-thumb {
+  .rapport-formula-scroll::-webkit-scrollbar-thumb {
     background: var(--border-2);
     border-radius: 2px;
   }
   
   /* Print: la formlar bryte naturleg. Overflow er for skjerm. */
   @media print {
-    .rapport-formula {
+    .rapport-formula-scroll {
       overflow: visible;
     }
   }
@@ -1481,5 +1490,1569 @@
   
   .feilrapport-modal__severity {
     gap: 1rem;
+  }
+}
+/* =================================================================
+   Fase 0 (B-redesign) — felles infrastruktur
+   PageStripe, ChapterHeading, ForebelStripe.
+   Komponentane er definert i app/rapport/[run_id]/_components/
+   ================================================================= */
+
+/* --- PageStripe — topp-stripe på forsida ---------------------- */
+.rapport-page-stripe {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0 0.875rem;
+  margin: 0 0 1.75rem;
+  border-bottom: 1px solid var(--rapport-page-stripe-border);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rapport-page-stripe-fg);
+}
+
+.rapport-page-stripe__left,
+.rapport-page-stripe__right {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.rapport-page-stripe__sep {
+  color: var(--fg-faint);
+  margin: 0 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .rapport-page-stripe {
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* --- ChapterHeading — "01 Sammendrag" chapter-style ----------- */
+.rapport-chapter-heading {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: baseline;
+  gap: 1.25rem;
+  margin: 3.5rem 0 1.5rem;
+  padding: 0 0 0.875rem;
+  border-bottom: 1px solid var(--rapport-chapter-rule);
+}
+
+.rapport-chapter-heading__num {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--rapport-chapter-num-fg);
+}
+
+.rapport-chapter-heading__title {
+  font-family: var(--font-serif);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  color: var(--fg);
+}
+
+/* Første kapittel-heading etter forsida treng mindre topp-marg */
+.rapport-chapter-heading--first {
+  margin-top: 2rem;
+}
+
+@media (max-width: 640px) {
+  .rapport-chapter-heading {
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0.875rem;
+    margin: 2.5rem 0 1.25rem;
+  }
+  .rapport-chapter-heading__num { font-size: 1.375rem; }
+  .rapport-chapter-heading__title { font-size: 1.375rem; }
+}
+
+/* --- ForebelStripe — DNA-element, alltid identisk ------------- */
+.rapport-forebel-stripe {
+  display: flex;
+  align-items: baseline;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  margin: 1.5rem 0;
+  background: var(--warn-bg);
+  border-left: 3px solid var(--warn);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--disclaimer-fg);
+}
+
+.rapport-forebel-stripe__label {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.rapport-forebel-stripe__text {
+  color: var(--fg-2);
+}
+
+@media (max-width: 640px) {
+  .rapport-forebel-stripe {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* --- Print --------------------------------------------------- */
+@media print {
+  .rapport-page-stripe {
+    border-bottom-color: #000;
+    color: #000;
+  }
+  .rapport-chapter-heading {
+    page-break-after: avoid;
+    break-after: avoid;
+    border-bottom-color: #000;
+  }
+  .rapport-chapter-heading__num,
+  .rapport-chapter-heading__title {
+    color: #000;
+  }
+  .rapport-forebel-stripe {
+    border: 1px solid #000;
+    border-left-width: 3px;
+    background: transparent;
+  }
+}
+
+/* =================================================================
+   Fase 1 (B-redesign) — Forside
+   Tittel + italic underrubrikk, tabular metadata med strenge linjer,
+   status-badge, tillit-blokk, kort disclaimer.
+   ================================================================= */
+
+.rapport-forside {
+  /* Override .rapport-section sin standard padding/margin for å
+     gi forsida tettare struktur og betre kontroll over rytmen. */
+  padding-bottom: 1rem;
+}
+
+/* --- Tittel-blokk -------------------------------------------- */
+.rapport-forside__head {
+  margin: 0 0 2rem;
+}
+
+.rapport-forside__title {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.rapport-forside__subtitle {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--fg-2);
+  margin: 0.5rem 0 0;
+}
+
+@media (max-width: 640px) {
+  .rapport-forside__title { font-size: 1.875rem; }
+  .rapport-forside__subtitle { font-size: 0.9375rem; }
+}
+
+/* --- Tabular metadata ---------------------------------------- */
+.rapport-forside__meta {
+  margin: 0 0 2.25rem;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.rapport-forside__meta-row {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-forside__meta-row dt {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.rapport-forside__meta-row dd {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--fg);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rapport-forside__meta-row dd.uk-mono {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .rapport-forside__meta-row {
+    grid-template-columns: 8rem 1fr;
+    gap: 0.75rem;
+    padding: 0.625rem 0;
+  }
+  .rapport-forside__meta-row dt { font-size: 0.625rem; }
+  .rapport-forside__meta-row dd { font-size: 0.875rem; }
+}
+
+/* --- Status-badge — gold-stempel og variantar ---------------- */
+.rapport-forside__status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.rapport-forside__status-badge--ok {
+  background: var(--ok-bg);
+  border-color: var(--ok-border);
+  color: var(--ok);
+}
+
+.rapport-forside__status-badge--gold {
+  background: var(--rapport-badge-gold-bg);
+  border-color: var(--rapport-badge-gold-border);
+  color: var(--rapport-badge-gold-fg);
+}
+
+.rapport-forside__status-badge--warn {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn);
+}
+
+.rapport-forside__status-badge--bad {
+  background: var(--bad-bg);
+  border-color: var(--bad-border);
+  color: var(--bad);
+}
+
+/* --- Tillit-blokk — gauge venstre + prosa høgre -------------- */
+.rapport-forside__trust {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1.75rem;
+  margin: 0 0 2rem;
+  padding: 1.25rem 0;
+}
+
+.rapport-forside__trust-gauge {
+  flex-shrink: 0;
+  /* TillitGauge renderar seg sjølv — vi gir berre plassen. */
+}
+
+.rapport-forside__trust-prose {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+.rapport-forside__trust-prose p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .rapport-forside__trust {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: center;
+  }
+  .rapport-forside__trust-gauge {
+    justify-self: center;
+  }
+  .rapport-forside__trust-prose {
+    text-align: left;
+    font-size: 0.875rem;
+  }
+}
+
+/* --- Disclaimer (kort, gold-stripe) -------------------------- */
+.rapport-forside__disclaimer {
+  background: var(--disclaimer-bg);
+  border-left: 3px solid var(--disclaimer-stripe);
+  padding: 0.875rem 1.125rem;
+  margin: 0;
+}
+
+.rapport-forside__disclaimer-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--disclaimer-stripe);
+  margin-bottom: 0.375rem;
+}
+
+.rapport-forside__disclaimer-sep {
+  color: var(--disclaimer-stripe);
+  opacity: 0.5;
+}
+
+.rapport-forside__disclaimer-body {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--disclaimer-fg);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .rapport-forside__disclaimer {
+    padding: 0.75rem 0.875rem;
+  }
+  .rapport-forside__disclaimer-label {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* --- Print --------------------------------------------------- */
+@media print {
+  .rapport-forside__title,
+  .rapport-forside__subtitle {
+    color: #000;
+  }
+  .rapport-forside__meta {
+    border-top-color: #000;
+  }
+  .rapport-forside__meta-row {
+    border-bottom-color: #000;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-forside__meta-row dt {
+    color: #000;
+  }
+  .rapport-forside__meta-row dd {
+    color: #000;
+  }
+  .rapport-forside__status-badge {
+    border: 1px solid #000;
+    color: #000;
+    background: transparent;
+  }
+  .rapport-forside__status-badge--gold {
+    background: var(--rapport-badge-gold-bg);
+  }
+  .rapport-forside__trust {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-forside__disclaimer {
+    border: 1px solid #000;
+    border-left-width: 3px;
+    background: transparent;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* =================================================================
+   Fase 2 (B-redesign) — § 01 Sammendrag + § 02 Berekning
+   Forespørsel-blokk, sub-eyebrows, numerert liste,
+   resultat-tabell med DIMENSJONERANDE/INPUT-band, stegvis-grid.
+   ================================================================= */
+
+/* --- § 01 Forespørsel-blokk ---------------------------------- */
+.rapport-forespurnad-block {
+  background: var(--warn-bg);
+  border-left: 3px solid var(--disclaimer-stripe);
+  padding: 0.875rem 1rem;
+  margin: 1.5rem 0 0;
+}
+
+.rapport-forespurnad-block__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--disclaimer-stripe);
+  margin-bottom: 0.5rem;
+}
+
+.rapport-forespurnad-block__text {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--fg);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- Sub-eyebrow — "02.1 — FORUTSETNINGER" ------------------- */
+.rapport-subchapter {
+  margin: 2.25rem 0 0;
+}
+
+.rapport-subchapter:first-child {
+  margin-top: 1rem;
+}
+
+.rapport-subchapter__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem 0 0.0625rem 0.625rem;
+  border-left: 2px solid var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  margin: 0 0 1rem;
+}
+
+/* --- 02.1 Numerert liste — .01 .02 .03 ----------------------- */
+.rapport-numbered-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
+
+.rapport-numbered-list__item {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-numbered-list__num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.rapport-numbered-list__text {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+@media (max-width: 640px) {
+  .rapport-numbered-list__item {
+    grid-template-columns: 2.25rem 1fr;
+    gap: 0.625rem;
+    padding: 0.625rem 0;
+  }
+  .rapport-numbered-list__num { font-size: 0.6875rem; }
+  .rapport-numbered-list__text { font-size: 0.875rem; }
+}
+
+/* --- 02.2 Resultat-tabell med DIMENSJONERANDE/INPUT-band ----- */
+.rapport-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+.rapport-results-table__band {
+  /* Default = INPUT-stil; --dim-variant overstyrer. */
+  background: var(--rapport-band-input-bg);
+}
+
+.rapport-results-table__band--dim {
+  background: var(--rapport-band-dim-bg);
+}
+
+.rapport-results-table__band--bruksgrense {
+  background: var(--rapport-band-bruksgrense-bg);
+}
+
+.rapport-results-table__band-cell {
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rapport-band-input-accent);
+}
+
+.rapport-results-table__band--dim .rapport-results-table__band-cell {
+  color: var(--rapport-band-dim-accent);
+}
+
+.rapport-results-table__band--bruksgrense .rapport-results-table__band-cell {
+  color: var(--rapport-band-bruksgrense-accent);
+}
+
+.rapport-results-table__row {
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-results-table__row--dim {
+  /* Subtle tan tint for å koble visuelt til DIMENSJONERANDE-bandet */
+  background: var(--surface);
+}
+
+.rapport-results-table__row--bruksgrense {
+  /* Same subtle tint som dim — markerer at desse er resultat (ikkje input) */
+  background: var(--surface);
+}
+
+.rapport-results-table__key {
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  color: var(--fg);
+  /* Krympa frå 40% til auto-content-breidd med eit øvre tak. Tidlegare
+     pressa 40%-breidda value-cella langt mot høgre — verdien hamna
+     visuelt frikopla frå keyen. No følgjer value rett etter keyen. */
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.rapport-results-table__value {
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--fg);
+  text-align: left;
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+  /* Value-cella tek resten av plassen, men sidan key er width:1% +
+     nowrap, startar value rett etter key-innhaldet. */
+  width: auto;
+}
+
+.rapport-results-table__row--dim .rapport-results-table__value {
+  font-weight: 500;
+}
+
+.rapport-results-table__row--bruksgrense .rapport-results-table__value {
+  font-weight: 500;
+}
+
+.rapport-results-table__num {
+  white-space: nowrap;
+}
+
+.rapport-results-table__unit {
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .rapport-results-table__key,
+  .rapport-results-table__value {
+    padding: 0.625rem 0.625rem;
+    font-size: 0.875rem;
+  }
+  .rapport-results-table__value { font-size: 0.9375rem; }
+  .rapport-results-table__band-cell {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* --- 02.3 Stegvis utregning — grid med STEG-mono-prefix ------ */
+.rapport-step-list {
+  border-top: 1px solid var(--border);
+}
+
+.rapport-step-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-step-row__num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  padding-top: 0.125rem;
+  white-space: nowrap;
+}
+
+/* Kontroll-steg — siste konsistens-/verifikasjons-steg. Skil seg subtilt
+   frå reelle utrekningssteg: KONTROLL-label får accent-farge og ein
+   venstre-markør, så studenten ser at dette er ein sluttsjekk, ikkje
+   eit nytt utrekningssteg i sekvensen. */
+.rapport-step-row--kontroll .rapport-step-row__num {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.rapport-step-row--kontroll .rapport-step-row__body {
+  border-left: 2px solid var(--ok-border);
+  padding-left: 0.875rem;
+  margin-left: -0.875rem;
+}
+
+.rapport-step-row--kontroll .rapport-step-row__title::after {
+  /* Diskret hake etter tittelen — signaliserer "dette verifiserer" */
+  content: " ✓";
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.rapport-step-row__body {
+  min-width: 0; /* tillat at Formula-blokk overflow-scrollar utan å sprenge grid */
+}
+
+.rapport-step-row__title {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fg);
+  margin: 0 0 0.5rem;
+}
+
+.rapport-step-row__details {
+  margin-top: 0.625rem;
+}
+
+.rapport-step-row__details > summary {
+  display: inline-block;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--warn);
+  list-style: none;
+  user-select: none;
+  padding: 0.125rem 0;
+  transition: color 120ms;
+}
+
+.rapport-step-row__details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.rapport-step-row__details > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  font-size: 0.75rem;
+  transition: transform 150ms ease;
+  transform-origin: center;
+}
+
+.rapport-step-row__details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.rapport-step-row__details > summary:hover {
+  color: var(--fg);
+}
+
+.rapport-step-row__text {
+  margin: 0.625rem 0 0;
+  padding: 0.75rem 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-2);
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .rapport-step-row {
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0.875rem;
+    padding: 1rem 0;
+  }
+  .rapport-step-row__num { font-size: 0.6875rem; }
+  .rapport-step-row__title { font-size: 0.875rem; }
+}
+
+/* --- Print --------------------------------------------------- */
+@media print {
+  .rapport-forespurnad-block {
+    border: 1px solid #000;
+    border-left-width: 3px;
+    background: transparent;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-subchapter__eyebrow {
+    border-left-color: #000;
+    color: #000;
+  }
+  .rapport-numbered-list,
+  .rapport-numbered-list__item {
+    border-color: #000;
+  }
+  .rapport-numbered-list__item {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-results-table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-results-table__band {
+    background: #ececec;
+  }
+  .rapport-results-table__band--dim {
+    background: #1f1d18;
+    color: #fff;
+  }
+  .rapport-results-table__band--dim .rapport-results-table__band-cell {
+    color: #d4a93f;
+  }
+  .rapport-results-table__band--bruksgrense {
+    background: #4a4133;
+    color: #fff;
+  }
+  .rapport-results-table__band--bruksgrense .rapport-results-table__band-cell {
+    color: #c9a850;
+  }
+  .rapport-results-table__row {
+    border-bottom-color: #000;
+  }
+  .rapport-step-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-bottom-color: #000;
+  }
+  .rapport-step-row--kontroll .rapport-step-row__num {
+    color: #000;
+  }
+  .rapport-step-row--kontroll .rapport-step-row__body {
+    border-left-color: #000;
+  }
+  .rapport-step-row--kontroll .rapport-step-row__title::after {
+    color: #000;
+  }
+  .rapport-step-list {
+    border-top-color: #000;
+  }
+  /* Vis prosa-utregning skal vere alltid open under print
+     (vi har allereie beforeprint-handler i page.tsx). Pile-ikon
+     dukkar 90° fordi [open] er sett. */
+}
+
+/* =================================================================
+   FormulaStack — vertikal stacking av lange LaTeX-formlar på "=".
+   Brukast i § 02.3 stegvis-utregning når ein formel har 3+ likeverds-
+   segment (M = qL²/8 = 50). KaTeX bryt ikkje line automatisk, så vi
+   splittar manuelt og rendrar kvar linje på eigen rad.
+
+   KaTeX + Formula-wrapper har default styling som må overstyrast:
+     - .katex-display { text-align: center } → venstre-align kvar segment
+     - .katex-display { margin: 1em 0 } → kompakt vertikal rytme
+     - Eventuell overflow-x: auto på Formula-wrapper → fjern scroll-bar
+       under kvar segment (segmenta er korte nok ved seg sjølv).
+   Brukar !important fordi KaTeX si CSS er injisert seint og difor
+   ofte vinn cascade-kamp på likt-spesifikt selektor.
+   ================================================================= */
+.rapport-formula-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Gap skil storleik-grupper (FormulaStack rendrar éi aligned-blokk
+     per storleik). Innan ei gruppe styrer KaTeX aligned rytmen. */
+  gap: 0.875rem;
+  max-width: 100%;
+  /* Sjølve stacken må ikkje overflowe — barna (scroll-wrappers) handterer
+     eventuell horisontal overflyt internt. */
+  width: 100%;
+}
+
+/* Alle direkte barn av stacken er no .rapport-formula-scroll-wrappers.
+   Dei skal fylle stack-breidda, ha null vertikal margin (stacken styrer
+   gap), og BEHALDE sin overflow-x: auto så for-breie segment kan scrollast.
+
+   KRITISK: min-width: 0. Eit flex-barn har default min-width: auto, som
+   tyder "ikkje krymp under innhaldsbreidda". Utan denne ville scroll-
+   wrapperen vakse med katex-innhaldet (brei formel → brei wrapper) og
+   overflow-x ville aldri trigge — formelen stakk ut av arket. min-width: 0
+   lèt wrapperen krympe til stack-breidda, og DÅ aktiverast scrollen. */
+.rapport-formula-stack > * {
+  margin: 0 !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+
+/* .katex-display er KaTeX sitt block-mode container — sentrert som
+   standard. Vi vil ha venstre-align og null margin. */
+.rapport-formula-stack .katex-display {
+  margin: 0 !important;
+  padding: 0.25rem 0 !important;
+  text-align: left !important;
+}
+
+/* .rapport-formula er single-segment-wrapperen. Frittståande har han
+   padding: 0.5rem 0 — inne i stacken gjev det ~16px ekstra luft PER
+   "="-segment, og stega sprikar ("overkill"-kjensla). Nullstill her;
+   stack-gap + katex-display-padding gjev rytmen åleine (~10px/linje),
+   så kjede-utrekninga les som éin kompakt blokk. */
+.rapport-formula-stack .rapport-formula {
+  padding: 0;
+}
+
+/* Indre .katex (sjølve formelen) skal følgje containeren. */
+.rapport-formula-stack .katex-display > .katex,
+.rapport-formula-stack .katex {
+  text-align: left !important;
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .rapport-formula-stack {
+    gap: 0.625rem;
+  }
+  .rapport-formula-stack .katex-display {
+    font-size: 0.92em;
+  }
+}
+
+@media print {
+  .rapport-formula-stack {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* =================================================================
+   Fase 3 (B-redesign) — § 03 Vurdering + § 04 Kontroll
+   Ikkje-rekna-tabell med band-header, advarsel-stripes, verdict-box,
+   signatur-grid.
+   ================================================================= */
+
+/* --- 03.2 IKKJE REKNA — tabell med IKKJE DEKKA-band ---------- */
+.rapport-ikkje-rekna-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+.rapport-ikkje-rekna-table__band {
+  background: var(--warn-bg);
+}
+
+.rapport-ikkje-rekna-table__band-cell {
+  padding: 0.5rem 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--disclaimer-stripe);
+}
+
+.rapport-ikkje-rekna-table__band-cell::before {
+  content: "⚠ ";
+  margin-right: 0.25rem;
+}
+
+.rapport-ikkje-rekna-table__row {
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-ikkje-rekna-table__row:last-child {
+  border-bottom: none;
+}
+
+.rapport-ikkje-rekna-table__subject {
+  padding: 0.75rem 0.875rem;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--fg);
+  vertical-align: baseline;
+  width: 42%;
+}
+
+.rapport-ikkje-rekna-table__reason-cell {
+  padding: 0.75rem 0.875rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg-2);
+  vertical-align: baseline;
+}
+
+.rapport-ikkje-rekna-table__key {
+  font-weight: 500;
+}
+
+.rapport-ikkje-rekna-table__desc {
+  color: var(--fg-2);
+}
+
+.rapport-ikkje-rekna-table__subject-text {
+  /* Prosa-frase som ikkje er ein variabel-key — full farge */
+  color: var(--fg);
+}
+
+.rapport-ikkje-rekna-table__reason {
+  color: var(--fg-2);
+}
+
+.rapport-ikkje-rekna-table__reason-empty {
+  color: var(--fg-faint);
+}
+
+@media (max-width: 640px) {
+  /* Smal mobil: kollaps til éin kolonne — subject over reason */
+  .rapport-ikkje-rekna-table__subject,
+  .rapport-ikkje-rekna-table__reason-cell {
+    display: block;
+    width: auto;
+    padding: 0.625rem 0.625rem;
+  }
+  .rapport-ikkje-rekna-table__subject {
+    padding-bottom: 0.125rem;
+    font-size: 0.875rem;
+  }
+  .rapport-ikkje-rekna-table__reason-cell {
+    padding-top: 0;
+    font-size: 0.8125rem;
+  }
+  /* Rada er no eit block — border-bottom på __row handterar separasjon */
+  .rapport-ikkje-rekna-table__row {
+    display: block;
+  }
+  .rapport-ikkje-rekna-table__band-cell {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* --- 03.3 ADVARSEL-stripe ------------------------------------ */
+.rapport-advarsel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.rapport-advarsel-stripe {
+  background: var(--warn-bg);
+  border-left: 3px solid var(--warn);
+  padding: 0.75rem 1rem;
+}
+
+.rapport-advarsel-stripe__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn);
+  margin-bottom: 0.375rem;
+}
+
+.rapport-advarsel-stripe__body {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--fg);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .rapport-advarsel-stripe {
+    padding: 0.625rem 0.875rem;
+  }
+  .rapport-advarsel-stripe__label {
+    font-size: 0.625rem;
+  }
+  .rapport-advarsel-stripe__body {
+    font-size: 0.875rem;
+  }
+}
+
+/* --- 04.2 VERDICT-BOX — mørk header + gold status-badge ------ */
+.rapport-verdict-box {
+  border: 1px solid var(--rapport-band-dim-bg);
+  margin: 0;
+  background: var(--surface);
+}
+
+.rapport-verdict-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--rapport-band-dim-bg);
+  color: var(--rapport-band-dim-fg);
+}
+
+.rapport-verdict-box__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rapport-band-dim-accent);
+}
+
+.rapport-verdict-box__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.rapport-verdict-box__badge--ok {
+  background: var(--ok-bg);
+  border-color: var(--ok-border);
+  color: var(--ok);
+}
+
+.rapport-verdict-box__badge--gold {
+  background: var(--rapport-badge-gold-bg);
+  border-color: var(--rapport-badge-gold-border);
+  color: var(--rapport-badge-gold-fg);
+}
+
+.rapport-verdict-box__badge--warn {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn);
+}
+
+.rapport-verdict-box__badge--bad {
+  background: var(--bad-bg);
+  border-color: var(--bad-border);
+  color: var(--bad);
+}
+
+.rapport-verdict-box__body {
+  padding: 1rem 1.125rem;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.rapport-verdict-box__body p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .rapport-verdict-box__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    padding: 0.625rem 0.75rem;
+  }
+  .rapport-verdict-box__body {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* --- Signatur-grid — 3 kolonner med stiplet linje + caption -- */
+.rapport-signatur-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0 0;
+  padding: 0;
+}
+
+.rapport-signatur-grid__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.rapport-signatur-grid__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rapport-signatur-grid__line {
+  display: block;
+  height: 1.5rem;
+  /* Stipla linje signaliserer "skal fyllast ut for hånd" — eit kjent
+     visuelt kodeord på papir-skjema. Solid linje såg ut som ein ferdig
+     utfylt felt-strek. */
+  border-bottom: 1px dashed var(--fg-2);
+  margin-bottom: 0.125rem;
+}
+
+.rapport-signatur-grid__caption {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+@media (max-width: 640px) {
+  .rapport-signatur-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+  }
+}
+
+/* --- Print --------------------------------------------------- */
+@media print {
+  .rapport-ikkje-rekna-table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-ikkje-rekna-table__band {
+    background: #f5e9cd;
+  }
+  .rapport-ikkje-rekna-table__row {
+    border-bottom-color: #000;
+  }
+  .rapport-advarsel-stripe {
+    border: 1px solid #000;
+    border-left-width: 3px;
+    background: transparent;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-verdict-box {
+    border-color: #000;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-verdict-box__header {
+    background: #1f1d18;
+    color: #efece4;
+  }
+  .rapport-verdict-box__label {
+    color: #d4a93f;
+  }
+  .rapport-signatur-grid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-signatur-grid__line {
+    border-bottom: 1px dashed #000;
+  }
+}
+
+/* =================================================================
+   ORDLISTE — notasjon for § 02 Berekning.
+
+   To visningar, éi datakjelde (marginaliaEntries):
+     A) .rapport-ordliste       — fast, print-trygg blokk øvst i § 02.
+                                   Synleg i PDF- og Word-eksport.
+     B) .rapport-ordliste-trigger — knapp i høgre sidebar som opnar
+        .rapport-ordliste-panel    panelet. Sidebar + panel ute av print.
+
+   Erstattar den tidlegare marginalia-kolonna (Fase 4): kolonna
+   gjentok same ~10 symbol langs heile rapporten og åt 25-30 % av
+   innhaldsbreidda. Blokka gjev full breidd attende; panelet gjev
+   oppslag utan å ofre layout.
+   ================================================================= */
+
+/* --- A: Fast notasjon-blokk ---------------------------------- */
+.rapport-ordliste {
+  margin: 0 0 2rem;
+  padding: 1.125rem 1.25rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm, 6px);
+  background: var(--surface-2);
+}
+
+.rapport-ordliste__title {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0 0 0.875rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Responsivt fleirkolonne-grid — tilpassar seg innhaldsbreidda. */
+.rapport-ordliste__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 0.75rem 1.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Delt liste-element (brukt av både blokk og panel) -------- */
+.rapport-ordliste-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.rapport-ordliste-item__key {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-style: italic;
+  color: var(--fg);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.rapport-ordliste-item__desc {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--fg-2);
+  margin: 0;
+}
+
+.rapport-ordliste-item__unit {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- B: Trigger-knapp i høgre sidebar (under Fagperson) ------- */
+/* Sit i .rapport-status-panel og arvar .uk-btn for fyll/kant/padding.
+   Sidebaren er .no-print, so knappen er allereie ute av eksport. */
+.rapport-ordliste-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.rapport-ordliste-trigger__glyph {
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+/* --- B: Panel ------------------------------------------------ */
+.rapport-ordliste-panel {
+  position: fixed;
+  right: 1.5rem;
+  top: 5rem;
+  bottom: 1.5rem;
+  z-index: 90;
+  width: 19rem;
+  max-width: calc(100vw - 3rem);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm, 6px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14),
+    0 3px 10px rgba(15, 23, 42, 0.08);
+  animation: rapport-ordliste-in 0.16s ease-out;
+}
+
+@keyframes rapport-ordliste-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.rapport-ordliste-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rapport-ordliste-panel__title {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rapport-ordliste-panel__close {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.rapport-ordliste-panel__close:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.rapport-ordliste-panel__close:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 1px;
+}
+
+/* Panelet sjølv skroller — rapporten under er fri å scrolle. */
+.rapport-ordliste-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* --- Mobil: blokk-grid kollapsar, panel blir botn-ark -------- */
+@media (max-width: 600px) {
+  .rapport-ordliste__list {
+    grid-template-columns: 1fr;
+  }
+  .rapport-ordliste-panel {
+    top: auto;
+    right: 0.75rem;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-width: none;
+    max-height: 70vh;
+  }
+}
+
+/* --- Print: blokk synleg og kompakt, flytande UI skjult ------ */
+@media print {
+  .rapport-ordliste-trigger,
+  .rapport-ordliste-panel {
+    display: none !important;
+  }
+  .rapport-ordliste {
+    background: transparent;
+    border-color: #000;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-ordliste__list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem 1.5rem;
+  }
+  .rapport-ordliste__title {
+    border-bottom-color: #000;
+    color: #000;
+  }
+  .rapport-ordliste-item__key,
+  .rapport-ordliste-item__desc {
+    color: #000;
+  }
+}
+
+/* =================================================================
+   P3 — § 04.1 Konstruktørkontroll: verifikasjonstabell
+   Kompakt 4-kolonne-tabell: Storleik | Konstruktør A | Konstruktør B |
+   Samsvar. Lèt studenten kryssjekke at A og B er numerisk samde,
+   rad-for-rad. Matchar Retning B sitt tabular-hierarki.
+   ================================================================= */
+.rapport-verifikasjon-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+}
+
+.rapport-verifikasjon-table thead th {
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border-bottom: 1px solid var(--fg-2);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.rapport-verifikasjon-table__head-val,
+.rapport-verifikasjon-table__head-match {
+  text-align: right !important;
+}
+
+.rapport-verifikasjon-table__row {
+  border-bottom: 1px solid var(--border);
+}
+
+.rapport-verifikasjon-table__row:last-child {
+  border-bottom: none;
+}
+
+.rapport-verifikasjon-table__key {
+  padding: 0.625rem 0.75rem;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  color: var(--fg);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.rapport-verifikasjon-table__val {
+  padding: 0.625rem 0.75rem;
+  font-family: var(--font-serif);
+  color: var(--fg);
+  text-align: right;
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rapport-verifikasjon-table__match {
+  padding: 0.625rem 0.75rem;
+  text-align: right;
+  vertical-align: baseline;
+}
+
+.rapport-verifikasjon-table__check {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.rapport-verifikasjon-table__avvik {
+  color: var(--warn);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.rapport-verifikasjon-table__nomatch {
+  color: var(--fg-muted);
+}
+
+.rapport-verifikasjon-table__missing {
+  color: var(--fg-faint);
+}
+
+@media (max-width: 640px) {
+  .rapport-verifikasjon-table {
+    font-size: 0.8125rem;
+  }
+  .rapport-verifikasjon-table thead th,
+  .rapport-verifikasjon-table__key,
+  .rapport-verifikasjon-table__val,
+  .rapport-verifikasjon-table__match {
+    padding: 0.5rem 0.4375rem;
+  }
+  .rapport-verifikasjon-table__key {
+    font-size: 0.875rem;
+  }
+  /* Forkort kolonne-headerane på smal mobil — "Konstruktør A" → "Kons. A" */
+  .rapport-verifikasjon-table thead th {
+    font-size: 0.5625rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media print {
+  .rapport-verifikasjon-table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .rapport-verifikasjon-table thead th {
+    border-bottom-color: #000;
+    color: #000;
+  }
+  .rapport-verifikasjon-table__row {
+    border-bottom-color: #000;
+  }
+  .rapport-verifikasjon-table__key,
+  .rapport-verifikasjon-table__val {
+    color: #000;
+  }
+  .rapport-verifikasjon-table__check {
+    color: #000;
+  }
+  .rapport-verifikasjon-table__avvik {
+    color: #000;
   }
 }

@@ -59,6 +59,9 @@ DØME PÅ KORREKT KLASSIFISERING (felta står i same rekkefølge som JSON-skjema
 Døme 1 — delvis_klar (lastverknad utan kapasitet):
 Input: "Fritt opplagd stålbjelke L=5m, q=8 kN/m. Finn moment og skjær."
 → berekningstype: "Lastverknad — moment og skjær for fritt opplagd bjelke"
+→ report_title: "Fritt opplagd stålbjelke — moment og skjær"
+→ report_subtitle: "L = 5,0 m, q = 8,0 kN/m"
+→ calculation_type: "bjelke_lastverknad"
 → tolkte_verdiar: { "L": "5,0 m", "q": "8,0 kN/m", "oppleggstilhøve": "fritt opplagd" }
 → antakingar: ["q tolka som dimensjonerande last (qEd)"]
 → manglande_verdiar: ["profil", "stålkvalitet"]
@@ -70,6 +73,9 @@ Grunngiving: Lastverknad krev berre L og q. Profil og stålkvalitet er reelt man
 Døme 2 — mangelfull (betongarmering utan material):
 Input: "Betongbjelke b=250mm, h=500mm, MEd=120 kNm. Finn nødvendig armering."
 → berekningstype: "armeringsberekning betongbjelke"
+→ report_title: "Strekkarmering i rektangulær betongbjelke"
+→ report_subtitle: "b = 250 mm, h = 500 mm, MEd = 120 kNm"
+→ calculation_type: "armering_betongbjelke"
 → tolkte_verdiar: { "b": "250 mm", "h": "500 mm", "MEd": "120 kNm" }
 → antakingar: []
 → manglande_verdiar: ["betongkvalitet", "armeringskvalitet", "overdekning eller effektiv høgde"]
@@ -81,6 +87,9 @@ Grunngiving: Utan materialkvalitetar finst ingen meiningsfull delberekning. Beto
 Døme 3 — klar (alt på plass):
 Input: "Fritt opplagd IPE 240 S355, L=5m, qEd=8 kN/m. Finn MEd og kapasitetskontroll."
 → berekningstype: "Stålbjelke — moment og kapasitetskontroll"
+→ report_title: "Kapasitetskontroll av stålbjelke IPE 240"
+→ report_subtitle: "S355, L = 5,0 m"
+→ calculation_type: "stalkapasitet"
 → tolkte_verdiar: { "profil": "IPE 240", "stålkvalitet": "S355", "L": "5,0 m", "qEd": "8,0 kN/m" }
 → antakingar: []
 → manglande_verdiar: []
@@ -91,6 +100,9 @@ Input: "Fritt opplagd IPE 240 S355, L=5m, qEd=8 kN/m. Finn MEd og kapasitetskont
 Døme 4 — delvis_klar med låg konfidens (grensetilfelle, lar agentane prøve):
 Input: "IPE 300 S355, L=8m, qEd=6 kN/m, ikkje sideavstiva. Vurder momentkapasitet."
 → berekningstype: "Momentkapasitetskontroll stålbjelke med mogleg LT-knekking"
+→ report_title: "Momentkapasitet av stålbjelke IPE 300"
+→ report_subtitle: "S355, L = 8,0 m, ikkje sideavstiva"
+→ calculation_type: "stalkapasitet"
 → tolkte_verdiar: { "profil": "IPE 300", "stålkvalitet": "S355", "L": "8,0 m", "qEd": "6,0 kN/m", "sideavstiving": "ingen" }
 → antakingar: ["fritt opplagd antatt", "last antatt påført i tyngdepunktet (konservativt for vipping)"]
 → manglande_verdiar: ["momentfordeling for korrekt Cb-faktor"]
@@ -116,9 +128,22 @@ ANDRE REGLAR:
 - Bruk same språkstil som brukaren (nynorsk eller bokmål).
 - Konfidens måler tolkings-sikkerheit, ikkje data-tilstrekkelegheit. Ein klart formulert mangelfull-forespørsel skal ha høg konfidens.
 
+RAPPORT-FELT — report_title, report_subtitle, calculation_type:
+Pilar byggjer eit berekningsnotat av resultatet. Desse tre felta styrer forsida og resultat-grupperinga, og er separate frå berekningstype (det frie, menneskelege namnet).
+
+- report_title: ein kort, konkret tittel for notatet. Namngi konstruksjonselementet og kva som blir analysert — som emne-linja i eit konsulent-notat. Døme: "Fritt opplagd stålbjelke — moment og skjær", "Strekkarmering i rektangulær betongbjelke". IKKJE generisk "Berekningsnotat" eller "Konstruksjonsberekning".
+- report_subtitle: éi kort presisering, eller null. Spenn, last, materiale eller styrande standard. Døme: "L = 5,0 m, q = 8,0 kN/m", "S355, ikkje sideavstiva", "Kontroll mot NS-EN 1992-1-1". Hald det til ei underline, ikkje ei setning.
+- calculation_type: ein maskin-tag frå NØYAKTIG denne lista — den styrer kva verdiar rapporten viser som dimensjonerande:
+    "lastkombinasjon"        lastkombinasjon / dimensjonerande last (EC0)
+    "bjelke_lastverknad"     moment, skjær eller aksialkraft i bjelke
+    "armering_betongbjelke"  armeringsberekning i betongtverrsnitt (EC2)
+    "stalkapasitet"          kapasitetskontroll stål (EC3)
+    null                     når ingen av desse passar
+  Vel null heller enn å tvinge ein tag som ikkje passar — rapporten har ein universell fallback.
+
 ARBEIDSFLYT — fyll ut JSON-felta i den rekkefølga dei står i skjemaet under. Det er ikkje ei tilfeldig sortering, det er den faktiske tankeprosessen:
 
-1. berekningstype + fagomraade — kva spør brukaren om?
+1. berekningstype + fagomraade + report_title + report_subtitle + calculation_type — kva spør brukaren om, og korleis skal notatet titulerast?
 2. tolkte_verdiar — alt brukaren har oppgitt eksplisitt
 3. antakingar — kva må antakast for å gå vidare? (t.d. "q tolka som qEd", "fritt opplagd antatt")
 4. manglande_verdiar — kva manglar framleis etter at uttrekk og antakingar er gjort?
@@ -138,6 +163,9 @@ Produser dette objektet i nøyaktig denne rekkefølga:
 {
   "berekningstype": "kort namn på kva slags problem dette er, eller null",
   "fagomraade": "stål | betong | last | geoteknikk | osv | null",
+  "report_title": "kort konkret dokument-tittel — namngi elementet og analysen",
+  "report_subtitle": "kort presisering (spenn, last, materiale eller standard), eller null",
+  "calculation_type": "lastkombinasjon | bjelke_lastverknad | armering_betongbjelke | stalkapasitet | null",
   "tolkte_verdiar": { "L": "5,0 m", "q": "8,0 kN/m" },
   "antakingar": ["q tolka som dimensjonerande last"],
   "manglande_verdiar": ["liste over data som trengst"],
@@ -148,7 +176,7 @@ Produser dette objektet i nøyaktig denne rekkefølga:
   "status": "klar | delvis_klar | mangelfull | uklart | relevant_ikkje_stotta | avvist"
 }`;
 
-const PROMPT_VERSION = "input_agent_v0.4";
+const PROMPT_VERSION = "input_agent_v0.5";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 

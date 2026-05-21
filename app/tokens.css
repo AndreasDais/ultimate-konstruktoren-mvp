@@ -45,6 +45,26 @@
      --disclaimer-stripe: #8a5a00;
      --disclaimer-bg:     #fbf6e9;
      --disclaimer-fg:     #4a3500;
+
+     /* === Rapport-spesifikke tokens (B+marginalia-redesign) ===
+        Brukt av .rapport-page-stripe, .rapport-chapter-heading,
+        .rapport-forebel-stripe, og (frå Fase 1) verdict-box + bands. */
+     --rapport-band-dim-bg:        #1f2226;
+     --rapport-band-dim-fg:        #ebe8e2;
+     --rapport-band-dim-accent:    #d4a93f;
+     --rapport-band-bruksgrense-bg:      #3a3e46;
+     --rapport-band-bruksgrense-fg:      #ebe8e2;
+     --rapport-band-bruksgrense-accent:  #b3923f;
+     --rapport-band-input-bg:      #ececef;
+     --rapport-band-input-fg:      #3f3f46;
+     --rapport-band-input-accent:  #71717a;
+     --rapport-badge-gold-bg:      #ead7a8;
+     --rapport-badge-gold-fg:      #4a3500;
+     --rapport-badge-gold-border:  #c9a850;
+     --rapport-chapter-num-fg:     #3f3f46;
+     --rapport-chapter-rule:       #18181b;
+     --rapport-page-stripe-fg:     #71717a;
+     --rapport-page-stripe-border: #d4d4d8;
    }
    
    [data-palette="stone"] {
@@ -86,6 +106,25 @@
      --disclaimer-stripe: #875400;
      --disclaimer-bg:     #f5e9cd;
      --disclaimer-fg:     #3a2400;
+
+     /* === Rapport-spesifikke tokens (B+marginalia-redesign) ===
+        Stone er paletten som matchar Konsulent-notat-designet. */
+     --rapport-band-dim-bg:        #1f1d18;
+     --rapport-band-dim-fg:        #efece4;
+     --rapport-band-dim-accent:    #d4a93f;
+     --rapport-band-bruksgrense-bg:      #4a4133;
+     --rapport-band-bruksgrense-fg:      #efece4;
+     --rapport-band-bruksgrense-accent:  #c9a850;
+     --rapport-band-input-bg:      #ebe8df;
+     --rapport-band-input-fg:      #3b3830;
+     --rapport-band-input-accent:  #6b6757;
+     --rapport-badge-gold-bg:      #e3c97a;
+     --rapport-badge-gold-fg:      #3a2400;
+     --rapport-badge-gold-border:  #c9a850;
+     --rapport-chapter-num-fg:     #3b3830;
+     --rapport-chapter-rule:       #1c1a15;
+     --rapport-page-stripe-fg:     #6b6757;
+     --rapport-page-stripe-border: #cfcabd;
    }
    
    [data-palette="graphite"] {
@@ -127,6 +166,26 @@
      --disclaimer-stripe: #d4a04c;
      --disclaimer-bg:     #1f1808;
      --disclaimer-fg:     #f0d999;
+
+     /* === Rapport-spesifikke tokens (B+marginalia-redesign) ===
+        Graphite (dark): dim-band held same mørke tone som bg-sunken
+        men med kraftig saffron-accent for kontrast. */
+     --rapport-band-dim-bg:        #050608;
+     --rapport-band-dim-fg:        #ececef;
+     --rapport-band-dim-accent:    #d4a04c;
+     --rapport-band-bruksgrense-bg:      #16191e;
+     --rapport-band-bruksgrense-fg:      #ececef;
+     --rapport-band-bruksgrense-accent:  #b3854d;
+     --rapport-band-input-bg:      #1b1d22;
+     --rapport-band-input-fg:      #c9cbd0;
+     --rapport-band-input-accent:  #8a8d95;
+     --rapport-badge-gold-bg:      #3d2f10;
+     --rapport-badge-gold-fg:      #f0d999;
+     --rapport-badge-gold-border:  #5a4520;
+     --rapport-chapter-num-fg:     #c9cbd0;
+     --rapport-chapter-rule:       #ececef;
+     --rapport-page-stripe-fg:     #8a8d95;
+     --rapport-page-stripe-border: #3a3e46;
    }
    
    /* =========================================================

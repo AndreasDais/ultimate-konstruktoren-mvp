@@ -25,12 +25,19 @@ function FormulaInner({ latex, fallbackText }: Props) {
       output: "html",
     });
     return (
-      <div
-        className="rapport-formula"
-        // Trygt fordi katex sanitiserar output-en sin sjølv,
-        // og kjelda (våre eigne agentar) er ikkje brukar-input.
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      // Ytre wrapper med overflow-x: auto er siste sikkerheitsnett mot
+      // overflyt. FormulaStack pakkar opp aligned-formlar og splittar lange
+      // utrekningar, men eit ENKELT segment kan framleis vere for breitt
+      // (digert \frac, lang \sqrt e.l.). Då kan brukaren scrolle segmentet
+      // horisontalt i staden for at det stikk ut av arket.
+      <div className="rapport-formula-scroll">
+        <div
+          className="rapport-formula"
+          // Trygt fordi katex sanitiserar output-en sin sjølv,
+          // og kjelda (våre eigne agentar) er ikkje brukar-input.
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </div>
     );
   } catch (e) {
     console.error("KaTeX parse error:", e, { latex });

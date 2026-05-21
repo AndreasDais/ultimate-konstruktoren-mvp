@@ -63,10 +63,38 @@ results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktør
 - Kapasitetar (M_Rd osv.) og utnytting (eta)
 - Sluttverdier (deformasjon, vippeknekking-faktor, ...)
 
-Bruk EKSAKT same nøkkel-namn som ein annan konstruktør ville bruka for SAME fysiske storleik — fagleg konvensjon, SNAKE_CASE. T.d. "M_Ed", "Ed_SLS_karakteristisk", "rho_min". IKKJE "M.Ed", "Med", "result_main".
+Nøkkel-namngiving og verdiformat: følg <result_key_nokkelar> og <results_verdiformat> strengt — det er dette som lèt Samanliknar para A og B rad-for-rad.
 
 results skal IKKJE filtrere ned til berre "hovudsvaret". Samanliknar treng kvart namngitt mellomledd for å gjere uavhengig sjekk.
 </results_completeness>
+
+<result_key_nokkelar>
+results-nøklane MÅ vere identiske mellom Konstruktør A og Konstruktør B for SAME fysiske storleik — elles klarar ikkje Samanliknar å para verdiane rad-for-rad i rapporten. Følg desse reglane strengt:
+
+1. TRANSLITTERERING — greske bokstavar skrivast alltid med engelsk namn: ξ→xi, η→eta, ρ→rho, σ→sigma, τ→tau, γ→gamma, λ→lambda, μ→mu, ε→epsilon, δ→delta, φ/Φ→phi, χ→chi, α→alpha, β→beta, ψ→psi.
+
+2. FORMAT — snake_case, berre ASCII, små bokstavar. Subscript-delar skilde med understrek, ikkje punktum eller komma. RIKTIG: M_Ed, V_pl_Rd, A_s_req, xi_lim, gamma_M0, lambda_bar_z. FEIL: M.Ed, Med, "A_s,req", ξ_lim, ksi_lim, result_main.
+
+3. KANONISKE NØKLAR — når storleiken finst i oppgåva, bruk EKSAKT denne nøkkelen:
+   Krefter/moment:   M_Ed, V_Ed, N_Ed, M_Rd, V_Rd, N_Rd, M_pl_Rd, V_pl_Rd, N_b_Rd
+   Armering (EC2):   A_s_req (nødvendig strekkarmering), A_s_min (minimumsarmering), xi_lim (grense relativ trykksonehøgd), xi (relativ trykksonehøgd), mu (dimensjonslaust moment), z (indre momentarm)
+   Material:         f_cd, f_ck, f_ctm, f_yd, f_yk
+   Faktorar:         gamma_M0, gamma_M1, gamma_c, gamma_s, alpha_cc
+   Stål (EC3):       lambda_bar (relativ slankheit), chi (reduksjonsfaktor knekking), tverrsnittsklasse
+   Utnytting:        eta — når fleire utnyttingsgrader finst: eta_M, eta_V, eta_N
+   Bruksgrense:      delta_max (maksimal nedbøying), delta_till (tillaten nedbøying)
+
+4. FLEIRE VARIANTAR av same grunnstorleik — gi kvar variant eit kort suffiks som A og B begge ville velje (t.d. _1, _2 for nummererte krav). Forklar skilnaden i text, ikkje i nøkkelen.
+
+5. STORLEIKAR UTANFOR LISTA — bruk fagleg konvensjon etter regel 1+2; det enklaste namnet ei lærebok ville brukt.
+</result_key_nokkelar>
+
+<results_verdiformat>
+Kvar verdi i results er TAL pluss eventuell eining — ingenting anna.
+RIKTIG: "203,3 mm²"  ·  "0,617"  ·  "25,0 kNm"  ·  "Klasse 1"
+FEIL: "≈ 0,45 (for B500NC)"  ·  "= 1001 mm²"  ·  "ca. 0,45"  ·  "0,45 (tilnærma)"
+Tilnærmingsteikn, atterhald og parentes-forklaringar går i assumptions, limitations eller warnings — ALDRI inn i verdistrengen. Samanliknar les verdistrengen numerisk; leiande "=" eller "≈" og forklarande hale øydelegg paringa.
+</results_verdiformat>
 
 <verification_checklist>
 FØR short_conclusion, gå gjennom og dokumenter i verification_notes:
@@ -154,7 +182,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 - text og latex_formula skal innehalde SAME utleiing — text må stå åleine (lesbar utan typesetting).
 </rules>`;
 
-const PROMPT_VERSION = "agent_a_v0.9";
+const PROMPT_VERSION = "agent_a_v0.10";
 
 type CoreCallArgs = {
   run_id: string;

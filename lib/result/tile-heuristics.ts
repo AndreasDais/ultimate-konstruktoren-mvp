@@ -104,6 +104,38 @@ export function isInputKey(k: string): boolean {
   return INPUT_PATTERNS.some((p) => p.test(k));
 }
 
+// Patterns for keys som høyrer heime i BRUKSGRENSETILSTAND (SLS), ikkje
+// dimensjonerande (ULS). Trengs fordi DIMENSJONERANDE_PATTERNS si
+// "lastkombinasjon"-allowlist matchar BÅDE /^Ed_ULS/ OG /^Ed_SLS/ — som er
+// rett for å plukke dei som tiles, men feil for klassifisering i rapport-
+// tabellen der ULS og SLS skal stå i separate band.
+//
+// Norsk konvensjon: bruksgrensetilstand (SLS) er karakteristisk-, hyppig-
+// og kvasi-permanent-kombinasjon. Vi matchar:
+//   - "SLS" som tydeleg markør (Ed_SLS_*, _SLS_*)
+//   - karakteristisk/hyppig/kvasi-permanent som suffiks når dei ikkje
+//     allereie er fanga av SLS-substring (defensiv mot agent-variantar)
+const BRUKSGRENSE_PATTERNS: RegExp[] = [
+  /\bSLS\b/i, // "Ed_SLS_*", "SLS_kombo", "_SLS_"
+  /_kar(akteristisk)?(_|$)/i, // _kar, _karakteristisk
+  /_hyp(pig)?(_|$)/i, // _hyp, _hyppig
+  /_kvasi/i, // _kvasi, _kvasi_permanent
+  /_qp(_|$)/i, // _qp (quasi-permanent abbreviation)
+];
+
+/**
+ * Returnerer true om ein key høyrer i BRUKSGRENSE-band (SLS) heller enn
+ * dimensjonerande (ULS).
+ *
+ * Brukast på rapport-sida til å splitte `dimKeys` frå `getDimensjonerandeKeys`
+ * inn i ekte-ULS-band og SLS-band. Resultat-sida sin tile-logikk er uendra
+ * — der vil SLS framleis vere tilles saman med ULS i "dimensjonerande"-tiles
+ * (det er meininga: studenten skal sjå alle relevante kombinasjonsverdiar).
+ */
+export function isBruksgrenseKey(k: string): boolean {
+  return BRUKSGRENSE_PATTERNS.some((p) => p.test(k));
+}
+
 // Tile-label-mapping for dei vanlegaste keys — gir kortform-eyebrow
 // (UPPERCASE, prikkdelt). Fallback: key.toUpperCase().replace("_", " · ").
 // Inkluderer både kortform- (Ed_SLS_kvasi) og langform- (Ed_SLS_kvasi_permanent)
@@ -371,4 +403,56 @@ export function splitNumberUnit(value: string): { number: string; unit: string }
     return { number: match[1].trim(), unit: match[2].trim() };
   }
   return { number: trimmed, unit: "" };
+}
+
+// === R2 — kontroll-/setning-keys ============================================
+// Konstruktør-agentane legg av og til verdikt-/sjekk-setningar inn i
+// `results`-objektet — t.d. key "kapasitetskontroll_y" med verdi
+// "OK — 27,3 %", eller "LT_knekking_relevant" med verdi
+// "Nei — sentrisk belastet søyle uten bøyemoment".
+//
+// Slike par høyrer ikkje heime i resultat-tabellen eller verifikasjons-
+// tabellen: dei sprenger tal-kolonne-layouten, og den faktiske måleverdien
+// finst som regel allereie under ein eigen numerisk key (t.d. `eta_y` for
+// utnyttingsgrad). `isSetningResult` detekterer dei so dei kan filtrerast
+// vekk før band-bygging.
+
+// Kontroll-aktige key-namn: keyen sjølv røper at det er ei sjekk-rad.
+const CONTROL_KEY_PATTERN = /kontroll|relevant|sjekk|verifikasjon/i;
+
+/**
+ * Returnerer true om eit (key, value)-par er ei KONTROLL-/SETNING-rad heller
+ * enn ein reell måleverdi. Brukast til å filtrere `results` før resultat-
+ * og verifikasjonstabellen byggjast.
+ *
+ * Kriterium — eitt er nok:
+ *   - keyen er kontroll-aktig: inneheld "kontroll", "relevant", "sjekk"
+ *     eller "verifikasjon"
+ *   - verdien inneheld ein ulikskaps-/verdikt-markor: ≥, ≤, ✓, ✗
+ *   - verdien har "OK" som eige ord
+ *   - verdien er ei lang ordsekvens (≥ 4 alfabetiske ord) — ei setning,
+ *     ikkje "tal + eining"
+ *
+ * Konservativ med vilje: korte tekst-verdiar som "z-z (svak akse)" (2 ord,
+ * ingen verdikt-markor) reknast som gyldige resultat og blir verande.
+ */
+export function isSetningResult(key: string, value: string): boolean {
+  if (CONTROL_KEY_PATTERN.test(key)) return true;
+
+  const v = (value ?? "").trim();
+  if (!v) return false;
+
+  // Ulikskap eller hake/kryss — ei sjekk-setning, ikkje ein måleverdi.
+  if (/[≥≤✓✗]/.test(v)) return true;
+
+  // "OK" som eige ord (verdikt).
+  if (/(^|[\s—(-])OK([\s.,)]|$)/i.test(v)) return true;
+
+  // Lang ordsekvens: ≥ 4 alfabetiske ord (≥ 2 bokstavar). Ein måleverdi
+  // som "355 N/mm²" eller "z-z (svak akse)" har 0-2 slike ord; ei setning
+  // som "Nei — sentrisk belastet søyle uten bøyemoment" har mange.
+  const words = v.match(/[A-Za-zÆØÅæøåÄÖäö]{2,}/g) ?? [];
+  if (words.length >= 4) return true;
+
+  return false;
 }
