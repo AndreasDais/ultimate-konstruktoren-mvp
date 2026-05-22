@@ -6,6 +6,7 @@ import {
   extractMentionedProfiles,
   buildProfileDataPromptBlock,
 } from "@/lib/profiles/extract";
+import { buildNaBasisPromptBlock, type SteelGrade } from "@/lib/profiles/na-basis";
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 
 const SYSTEM_PROMPT = `<role>
@@ -104,6 +105,7 @@ FØR short_conclusion, gå gjennom og dokumenter i verification_notes:
 3. SHORT_CONCLUSION-KONSISTENS: tala matchar results eksakt.
 4. STANDARD-REFERANSAR: kvar §-referanse er du HELT sikker på. Viss ikkje, fjern referansen eller flag som "må verifiserast".
 5. TEIKN-KONVENSJON: fortegn (positivt moment, trykk vs strekk) konsistent gjennom utrekninga.
+6. NA-VERDI-KJELDE: kvar partialfaktor, NA-konstant og knekkekurve i results er henta frå NA-GRUNNLAG-blokka — ikkje frå minne.
 
 Døme på god verification_notes-entry:
 "Einingar verifisert: MEd = 120·10⁶ Nmm, b·d² = 5,06·10⁷ mm³, fcd = 14,17 N/mm² → produktet konsistent."
@@ -112,8 +114,9 @@ Viss du finn ein feil under sjekken: RETT FØR du skriv results og short_conclus
 </verification_checklist>
 
 <anti_hallucination>
+- NA-VERDIAR ER OPPSLAG, IKKJE MINNE. Partialfaktorar (gamma_M0, gamma_M1, gamma_c, gamma_s), NA-konstantar (alpha_cc, psi0, lastfaktorar) og knekkekurve-val skal ALLTID hentast frå NA-GRUNNLAG-blokka i meldinga — aldri frå eige minne, heller ikkje når du er sikker. EC si tilrådde verdi avvik ofte frå norsk NA; "sikker frå trening" er IKKJE ei gyldig kjelde. Manglar ein verdi i NA-GRUNNLAG: flagg som limitation, ikkje fyll holet.
 - ALDRI finn opp NS-EN- eller EC-paragrafnummer. Viss usikker, skriv "etter rektangulær spenningsblokk-metoden" i staden for "etter EC2 §3.1.7".
-- ALDRI finn opp materialdata, tabellverdiar, koeffisientar du ikkje er sikker på. Set som limitation: "fctm for denne betongkvaliteten må verifiserast mot tabell".
+- ALDRI finn opp materialdata eller tabellverdiar du ikkje er sikker på. Set som limitation: "fctm for denne betongkvaliteten må verifiserast mot tabell".
 - ALDRI finn opp manglande input. Tolkar har filtrert "kan reknast no"; nytt mangel = limitation.
 - ALDRI bruk "ifølge norsk standard" som dekkje for usikkerheit. Anten presis (med sikker referanse) eller passivform ("vanleg praksis er...").
 </anti_hallucination>
@@ -170,6 +173,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 
 <input_handling>
 - Løys berre det som er i "kan reknast no". Hopp over "kan ikkje reknast" — forklar i limitations.
+- Når meldinga har NA-GRUNNLAG-blokk øvst: alle partialfaktorar, NA-konstantar og knekkekurve-val SKAL hentast derifrå. Står ei konkret kurve oppgitt for profilen, bruk den — ikkje utled han på nytt.
 - Når meldinga har PROFILDATA-blokk øvst: bruk DESSE verdiane direkte. Ikkje hugs profil-data frå minnet.
 </input_handling>
 
@@ -182,7 +186,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 - text og latex_formula skal innehalde SAME utleiing — text må stå åleine (lesbar utan typesetting).
 </rules>`;
 
-const PROMPT_VERSION = "agent_a_v0.10";
+const PROMPT_VERSION = "agent_a_v0.11";
 
 type CoreCallArgs = {
   run_id: string;
@@ -203,6 +207,20 @@ type CoreCallResult =
     };
 
 /**
+ * Hentar stålkvalitet ut av Tolkar si vurdering, uavhengig av kva
+ * nøkkel-namn Tolkar brukte — trengst for det konkrete knekkekurve-
+ * oppslaget i NA-grunnlaget. Finn han ingen grad, blir konkret kurve
+ * berre utelaten; dei generelle NA-tabellane kjem uansett med.
+ */
+function resolveSteelGrade(
+  input_review: Record<string, unknown>,
+): SteelGrade | undefined {
+  const blob = JSON.stringify(input_review.tolkte_verdiar ?? input_review);
+  const m = blob.match(/\bS(235|275|355|420|460)/i);
+  return m ? (`S${m[1]}` as SteelGrade) : undefined;
+}
+
+/**
  * Felles logikk for både JSON- og SSE-handlerane. Kallar Anthropic med
  * extended thinking, parser JSON-output, lagrar i agent_outputs.
  * Viss onTextDelta er gjeve, blir han kalla for kvar tekst-delta frå streamen.
@@ -214,6 +232,15 @@ async function callKonstruktorA(args: CoreCallArgs): Promise<CoreCallResult> {
   const mentionedProfiles = extractMentionedProfiles(searchText);
   const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
 
+  // NA-grunnlag — autoritative NDP-verdiar (partialfaktorar, NA-konstantar,
+  // knekkekurve-val), bindande for både Konstruktør A og B. Stålkvaliteten
+  // trengst for det konkrete knekkekurve-oppslaget.
+  const grade = resolveSteelGrade(input_review);
+  const naBasisBlock = buildNaBasisPromptBlock({
+    profiles: mentionedProfiles,
+    grade,
+  });
+
   if (mentionedProfiles.length > 0) {
     console.log(
       `[agent-a] Injecting ${mentionedProfiles.length} profile(s):`,
@@ -221,7 +248,7 @@ async function callKonstruktorA(args: CoreCallArgs): Promise<CoreCallResult> {
     );
   }
 
-  const userMessage = `${profileBlock}TOLKAR SI VURDERING:
+  const userMessage = `${naBasisBlock}${profileBlock}TOLKAR SI VURDERING:
 - Berekningstype: ${input_review.berekningstype ?? "ukjend"}
 - Fagområde: ${input_review.fagomraade ?? "ukjend"}
 - Tolkte verdiar: ${JSON.stringify(input_review.tolkte_verdiar ?? {})}
@@ -324,6 +351,7 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
       input_payload: {
         ...input_review,
         _injected_profiles: mentionedProfiles.map((p) => p.name),
+        _injected_na_basis_grade: grade ?? null,
       },
       output_text: responseText,
       structured_output: parsed,
