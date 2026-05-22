@@ -10,39 +10,45 @@ type Props = {
   fallbackText: string;
 };
 
+function FormulaMarkup({ html }: { html: string }) {
+  return (
+    // Ytre wrapper med overflow-x: auto er siste sikkerheitsnett mot
+    // overflyt. FormulaStack pakkar opp aligned-formlar og splittar lange
+    // utrekningar, men eit ENKELT segment kan framleis vere for breitt
+    // (digert \frac, lang \sqrt e.l.). Då kan brukaren scrolle segmentet
+    // horisontalt i staden for at det stikk ut av arket.
+    <div className="rapport-formula-scroll">
+      <div
+        className="rapport-formula"
+        // Trygt fordi katex sanitiserar output-en sin sjølv,
+        // og kjelda (våre eigne agentar) er ikkje brukar-input.
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
+  );
+}
+
 /**
  * Inner-komponent som faktisk kallar katex.renderToString.
  * Try/catch fangar KaTeX sine parse-feil — typisk ved ugyldig syntaks
- * frå agenten. ErrorBoundary nedanfor er belt-and-suspenders for 
+ * frå agenten. ErrorBoundary nedanfor er belt-and-suspenders for
  * React-nivå-feil utanfor parsinga.
  */
 function FormulaInner({ latex, fallbackText }: Props) {
+  let html: string;
   try {
-    const html = katex.renderToString(latex, {
+    html = katex.renderToString(latex, {
       displayMode: true,
       throwOnError: true,
       strict: "warn", // Ikkje krasj på ukjende kommandoar, berre logg
       output: "html",
     });
-    return (
-      // Ytre wrapper med overflow-x: auto er siste sikkerheitsnett mot
-      // overflyt. FormulaStack pakkar opp aligned-formlar og splittar lange
-      // utrekningar, men eit ENKELT segment kan framleis vere for breitt
-      // (digert \frac, lang \sqrt e.l.). Då kan brukaren scrolle segmentet
-      // horisontalt i staden for at det stikk ut av arket.
-      <div className="rapport-formula-scroll">
-        <div
-          className="rapport-formula"
-          // Trygt fordi katex sanitiserar output-en sin sjølv,
-          // og kjelda (våre eigne agentar) er ikkje brukar-input.
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      </div>
-    );
   } catch (e) {
     console.error("KaTeX parse error:", e, { latex });
     return <pre className="rapport-step-text">{fallbackText}</pre>;
   }
+
+  return <FormulaMarkup html={html} />;
 }
 
 /**

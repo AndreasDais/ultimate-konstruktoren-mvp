@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabase } from "@/lib/supabase";
 
 const VALID_ERROR_TYPES = [
   "feil_talverdi",
@@ -45,7 +39,7 @@ async function notifyHighSeveritySlack(payload: {
       ? payload.userComment.slice(0, 200) + "…"
       : payload.userComment;
 
-      const adminUrl = `${payload.baseUrl}/admin/error-reports?highlight=${payload.errorReportId}`;
+  const adminUrl = `${payload.baseUrl}/admin/error-reports?highlight=${payload.errorReportId}`;
 
   const slackPayload = {
     text: `🚨 Høg-severity tilbakemelding på Pilar`,
@@ -110,7 +104,6 @@ async function notifyHighSeveritySlack(payload: {
 }
 
 export async function POST(request: Request) {
-  let locale: Locale = "nb";
   try {
     const body = await request.json();
     const {
@@ -174,6 +167,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const supabase = getSupabase();
 
     const { data: report } = await supabase
       .from("reports")

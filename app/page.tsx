@@ -358,7 +358,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Konstruerer ein AgentResult-shape frå partial-state for å kunne dele

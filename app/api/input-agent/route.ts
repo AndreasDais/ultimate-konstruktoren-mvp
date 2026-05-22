@@ -570,6 +570,7 @@ export async function POST(request: Request) {
   let locale: Locale = "nb";
   try {
     const parsed = await parseInput(request);
+    locale = parsed.locale;
     const built = await buildContent(parsed.text, parsed.file);
 
     if (!built.ok) {

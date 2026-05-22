@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
 import {
   calculateTillitScore,
   FORMULA_VERSION,
@@ -11,6 +10,7 @@ import {
 
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 import { formatAnthropicError } from "@/lib/anthropic-errors";
+import { getSupabase } from "@/lib/supabase";
 
 const PROMPT_VERSION = "agent_e_v0.3";
 const MODEL = "claude-sonnet-4-6";
@@ -123,10 +123,6 @@ KONKRETE KRAV:
 - Viss upstream-data manglar eit felt du normalt ville referert til, skriv prosa som er gyldig utan det feltet — ikkje finn opp innhald.
 </rules>`;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -189,6 +185,8 @@ function isBreakdownStale(breakdown: unknown): boolean {
  * Brukt i både SSE- og JSON-modus for å unngå duplikasjon.
  */
 async function fetchUpstreamData(run_id: string) {
+  const supabase = getSupabase();
+
   const { data: run, error: runError } = await supabase
     .from("calculation_runs")
     .select("*, request:requests(*)")
@@ -253,6 +251,8 @@ async function handleCache(
   controllerDecision: { decision_status?: string } | null,
 ) {
   if (!existing) return null;
+
+  const supabase = getSupabase();
 
   let enrichedReport = existing as { id: string; tillit_score: number | null; tillit_breakdown: unknown };
   const needsRecompute =
@@ -407,6 +407,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const supabase = getSupabase();
     const acceptHeader = request.headers.get("accept") ?? "";
     const wantsSSE = acceptHeader.includes("text/event-stream");
 

@@ -8,10 +8,16 @@ const nextConfig: NextConfig = {
 };
 
 /**
- * Sentry-wrapper. Minimal config — kun silent for å unngå
- * build-output-støy. Source-map-upload skjer berre om SENTRY_AUTH_TOKEN
- * er sett (ikkje i pilot, så ingenting blir uploada).
+ * Sentry-wrapper. I lokal/pilot-build utan Sentry-env returnerer vi rein
+ * Next-config. Dette unngår at Sentry-pluginen påverkar build når han uansett
+ * ikkje kan laste opp sourcemaps eller sende events.
  */
-export default withSentryConfig(nextConfig, {
-  silent: true,
-});
+const sentryEnabled = Boolean(
+  process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_AUTH_TOKEN
+);
+
+export default sentryEnabled
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+    })
+  : nextConfig;

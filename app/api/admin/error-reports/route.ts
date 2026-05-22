@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabase } from "@/lib/supabase";
 
 const VALID_STATUSES = [
   "open",
@@ -62,6 +57,7 @@ type ReviewSummary = {
 
 export async function GET(request: Request) {
   try {
+    const supabase = getSupabase();
     const { searchParams } = new URL(request.url);
     const statusFilter = searchParams.get("status");
     const typeFilter = searchParams.get("error_type");

@@ -16,7 +16,11 @@ const OPTIONS: { value: Palette; label: string; description: string }[] = [
   ];
 
 export default function ThemeToggle() {
-  const [palette, setPalette] = useState<Palette>("slate");
+  const [palette, setPalette] = useState<Palette>(() => {
+    if (typeof document === "undefined") return "slate";
+    const current = document.documentElement.dataset.palette as Palette | undefined;
+    return current === "slate" || current === "stone" ? current : "slate";
+  });
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
@@ -25,21 +29,21 @@ export default function ThemeToggle() {
 
   // Initial sync med <html data-palette>
   useEffect(() => {
-    const current = document.documentElement.dataset.palette as Palette | undefined;
-    if (current === "slate" || current === "stone") {
-      setPalette(current);
-    }
     setMounted(true);
   }, []);
 
-  const apply = (next: Palette) => {
-    setPalette(next);
-    document.documentElement.dataset.palette = next;
+  // DOM/localStorage-sideeffektar ligg i effect, ikkje i event-handleren.
+  useEffect(() => {
+    document.documentElement.dataset.palette = palette;
     try {
-      localStorage.setItem(STORAGE_KEY, next);
+      localStorage.setItem(STORAGE_KEY, palette);
     } catch {
       // localStorage kan vere blokkert (privacy-modus); ignorer
     }
+  }, [palette]);
+
+  const apply = (next: Palette) => {
+    setPalette(next);
     setOpen(false);
   };
 

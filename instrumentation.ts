@@ -1,30 +1,30 @@
-import * as Sentry from "@sentry/nextjs";
-
 /**
  * Server-side Sentry-init for Next.js 16.
- * Køyrer i både nodejs- og edge-runtime.
  *
- * Sample-rate 1.0 i pilot — vi vil fange alle errors og alle transactions.
- * Post-pilot, ved skala, set ned til 0.1-0.2.
+ * Sentry er valfri i PILAR. Vi importerer ikkje @sentry/nextjs på top-level,
+ * slik at lokal build utan NEXT_PUBLIC_SENTRY_DSN ikkje får ekstra Sentry-
+ * sideeffektar eller OpenTelemetry-warningar.
  */
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      tracesSampleRate: 1.0,
-      debug: false,
-    });
-  }
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return;
 
-  if (process.env.NEXT_RUNTIME === "edge") {
-    Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      tracesSampleRate: 1.0,
-      debug: false,
-    });
-  }
+  const Sentry = await import("@sentry/nextjs");
+  Sentry.init({
+    dsn,
+    tracesSampleRate: 1.0,
+    debug: false,
+  });
 }
 
 // Next.js 16-konvensjon: eksporter denne for å fange request-errors
-// automatisk (server-side).
-export const onRequestError = Sentry.captureRequestError;
+// automatisk (server-side). Dynamisk import held Sentry valfri ved lokal build.
+export async function onRequestError(...args: unknown[]) {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return;
+
+  const Sentry = await import("@sentry/nextjs");
+  return (Sentry.captureRequestError as (...innerArgs: unknown[]) => unknown)(
+    ...args
+  );
+}
