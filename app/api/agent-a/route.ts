@@ -78,6 +78,7 @@ results-nøklane MÅ vere identiske mellom Konstruktør A og Konstruktør B for 
 
 3. KANONISKE NØKLAR — når storleiken finst i oppgåva, bruk EKSAKT denne nøkkelen:
    Krefter/moment:   M_Ed, V_Ed, N_Ed, M_Rd, V_Rd, N_Rd, M_pl_Rd, V_pl_Rd, N_b_Rd
+   Lastkombinasjon:  Ed_dim — dimensjonerande lastverknad frå STR-kombinasjon, dvs. den styrande (største) av 6.10a/6.10b. Emitter Ed_dim for KVAR lastkombinasjon-oppgåve, i tillegg til eventuelle per-likning-variantar.
    Armering (EC2):   A_s_req (nødvendig strekkarmering), A_s_min (minimumsarmering), xi_lim (grense relativ trykksonehøgd), xi (relativ trykksonehøgd), mu (dimensjonslaust moment), z (indre momentarm)
    Material:         f_cd, f_ck, f_ctm, f_yd, f_yk
    Faktorar:         gamma_M0, gamma_M1, gamma_c, gamma_s, alpha_cc
@@ -186,7 +187,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 - text og latex_formula skal innehalde SAME utleiing — text må stå åleine (lesbar utan typesetting).
 </rules>`;
 
-const PROMPT_VERSION = "agent_a_v0.11";
+const PROMPT_VERSION = "agent_a_v0.12";
 
 type CoreCallArgs = {
   run_id: string;

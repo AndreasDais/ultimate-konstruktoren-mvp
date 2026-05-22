@@ -201,10 +201,31 @@ Pilar byggjer eit berekningsnotat av resultatet. Desse tre felta styrer forsida 
     null                     når ingen av desse passar
   Vel null heller enn å tvinge ein tag som ikkje passar — rapporten har ein universell fallback.
 
+LASTKOMBINASJON — STRUKTURERT LASTUTTREKK:
+
+Dette gjeld BERRE når calculation_type = "lastkombinasjon". For alle andre calculation_type skal lastkombinasjon_input vere null.
+
+Når oppgåva er ein STR-lastkombinasjon, fyller du — i tillegg til tolkte_verdiar — ut feltet lastkombinasjon_input, slik at Kontrollør kan re-rekne 6.10a/6.10b deterministisk:
+
+- permanent: liste over permanente (varige) laster G_k. Kvar oppføring: { "name": "kort namn", "value": <tal>, "unit": "eining" }.
+- variable: liste over variable laster Q_k. Kvar oppføring: { "name": "kort namn", "value": <tal>, "unit": "eining", "category": <kategori> }.
+- category MÅ vere nøyaktig ein av: "imposed_A_D" (nyttelast kategori A-D), "imposed_E" (lager), "snow" (snølast), "wind" (vindlast). Vel den som passar lasttypen. Er du i tvil mellom nyttelast-kategoriar, bruk "imposed_A_D".
+- value er det reine talet for den karakteristiske verdien. Alle laster i same oppgåve skal vere i SAME eining.
+
+Døme — bjelke med eigenvekt og to variable laster:
+  "lastkombinasjon_input": {
+    "permanent": [{ "name": "eigenvekt", "value": 6.0, "unit": "kN/m" }],
+    "variable": [
+      { "name": "nyttelast", "value": 8.0, "unit": "kN/m", "category": "imposed_A_D" },
+      { "name": "snolast", "value": 3.5, "unit": "kN/m", "category": "snow" }
+    ]
+  }
+
 ARBEIDSFLYT — fyll ut JSON-felta i den rekkefølga dei står i skjemaet under. Det er ikkje ei tilfeldig sortering, det er den faktiske tankeprosessen:
 
 1. berekningstype + fagomraade + report_title + report_subtitle + calculation_type — kva spør brukaren om, og korleis skal notatet titulerast?
 2. tolkte_verdiar — alt brukaren har oppgitt eksplisitt
+2b. lastkombinasjon_input — berre når calculation_type = "lastkombinasjon": strukturer permanente og variable laster med kategori. Elles null.
 3. antakingar — kva må antakast for å gå vidare? (t.d. "q tolka som qEd", "fritt opplagd antatt") — IKKJE faglege parameterval
 4. manglande_verdiar — kva manglar framleis, av det DET SOM ER SPURT OM treng?
 5. kan_reknast_no — KONKRET kva som faktisk kan reknast med det som er på plass
@@ -228,6 +249,7 @@ Produser dette objektet i nøyaktig denne rekkefølga:
   "report_subtitle": "kort presisering (spenn, last, materiale eller standard), eller null",
   "calculation_type": "lastkombinasjon | bjelke_lastverknad | armering_betongbjelke | stalkapasitet | null",
   "tolkte_verdiar": { "L": "5,0 m", "q": "8,0 kN/m" },
+  "lastkombinasjon_input": null,
   "antakingar": ["q tolka som dimensjonerande last"],
   "manglande_verdiar": ["liste over data som trengst for det som er spurt om"],
   "kan_reknast_no": ["MEd", "VEd"],
@@ -238,7 +260,7 @@ Produser dette objektet i nøyaktig denne rekkefølga:
   "status": "klar | delvis_klar | mangelfull | uklart | relevant_ikkje_stotta | avvist"
 }`;
 
-const PROMPT_VERSION = "input_agent_v0.6";
+const PROMPT_VERSION = "input_agent_v0.7";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 

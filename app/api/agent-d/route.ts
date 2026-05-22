@@ -9,12 +9,13 @@ import {
   EC3,
   type SteelGrade,
 } from "@/lib/profiles/na-basis";
+import { checkLoadCombination } from "@/lib/check/load-combination-check";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
 Du tek imot desse delane i user-meldinga:
 - NA-GRUNNLAG — dei autoritative norske NA-verdiane (partialfaktorar, NA-konstantar, knekkekurve per profil). Dette er fasit.
-- FORHÅNDSKONTROLL — deterministiske funn frå kode (NA-avvik, motstrid). Står berre der når noko er funne. Når blokka finst, er funna verifiserte.
+- FORHÅNDSKONTROLL — deterministiske funn frå kode (NA-avvik, motstrid, kombinasjonsstruktur-avvik). Står berre der når noko er funne. Når blokka finst, er funna verifiserte.
 - Tolkar si vurdering — kva brukaren bad om, kva som mangla, og eit motstrid-felt.
 - Konstruktør A si løysing.
 - Konstruktør B si uavhengige løysing.
@@ -48,7 +49,7 @@ NA-GRUNNLAG-blokka i user-meldinga inneheld dei autoritative norske NA-verdiane.
 - Eit avvik er ein "high"- eller "critical"-issue — UANSETT om A og B er einige om den feil verdien. Korrelert feil er framleis feil, og semje skjuler han.
 - EC si tilrådde verdi (t.d. gamma_M = 1,0, alpha_cc = 1,0) er IKKJE gyldig i Noreg. Brukar ein konstruktør den, er det eit avvik — sjølv om konstruktøren kallar det "norsk NA".
 
-FORHÅNDSKONTROLL-blokka, når den finst i user-meldinga, listar NA-avvik og motstrid som alt er funne deterministisk i kode. Desse er verifiserte — du skal ikkje overprøve dei, du skal handle på dei.
+FORHÅNDSKONTROLL-blokka, når den finst i user-meldinga, listar NA-avvik, motstrid og kombinasjonsstruktur-avvik som alt er funne deterministisk i kode. Desse er verifiserte — du skal ikkje overprøve dei, du skal handle på dei.
 
 MOTSTRID — uløyst sjølvmotseiing i input:
 
@@ -163,7 +164,7 @@ OUTPUT-FORMAT:
   "controller_notes": "Interne kommentarar for manuell gjennomgang"
 }`;
 
-const PROMPT_VERSION = "agent_d_v0.4";
+const PROMPT_VERSION = "agent_d_v0.5";
 
 /**
  * Forventa NA-verdiar per kanonisk result-nøkkel. Konstruktørane emitterer
@@ -260,9 +261,18 @@ export async function POST(request: Request) {
     )
       ? ((input_review as { motstrid: string[] }).motstrid)
       : [];
+    const loadComboDeviations = checkLoadCombination(
+      input_review,
+      agent_a_output,
+      agent_b_output
+    );
 
     let forhandskontroll = "";
-    if (naDeviations.length > 0 || motstrid.length > 0) {
+    if (
+      naDeviations.length > 0 ||
+      motstrid.length > 0 ||
+      loadComboDeviations.length > 0
+    ) {
       const lines = [
         "FORHÅNDSKONTROLL — DETERMINISTISKE FUNN (frå kode, verifisert, ikkje LLM):",
       ];
@@ -276,6 +286,19 @@ export async function POST(request: Request) {
           lines.push(
             `  - Konstruktør ${d.agent}: ${d.key} = ${d.brukt} ` +
               `(norsk NA krev ${d.korrekt})`
+          );
+        }
+      }
+      if (loadComboDeviations.length > 0) {
+        lines.push(
+          "Kombinasjonsstruktur-avvik — konstruktør har rapportert feil " +
+            "dimensjonerande lastverknad (Ed_dim):"
+        );
+        for (const d of loadComboDeviations) {
+          lines.push(
+            `  - Konstruktør ${d.agent}: Ed_dim = ${d.reported} — korrekt ` +
+              `STR-kombinasjon gjev ${d.correct.toFixed(2)} via ${d.governingEq}` +
+              (d.leadingLoad ? ` (${d.leadingLoad} leiande)` : "")
           );
         }
       }
@@ -347,7 +370,10 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
     //    tvingande — dette er det. Finst eit hardt blokkeringsvilkår, kan
     //    resultatet ALDRI vere approved/approved_with_warnings, uansett kva
     //    LLM-Kontrolløren konkluderte.
-    const hardBlock = naDeviations.length > 0 || motstrid.length > 0;
+    const hardBlock =
+      naDeviations.length > 0 ||
+      motstrid.length > 0 ||
+      loadComboDeviations.length > 0;
     if (
       hardBlock &&
       (parsed.decision_status === "approved" ||
@@ -360,7 +386,8 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
       parsed.controller_notes =
         `[KODE-OVERSTYRING] decision_status sett frå "${original}" til ` +
         `"uncertain": deterministisk forhåndskontroll fann ` +
-        `${naDeviations.length} NA-avvik og ${motstrid.length} motstrid. ` +
+        `${naDeviations.length} NA-avvik, ${motstrid.length} motstrid og ` +
+        `${loadComboDeviations.length} kombinasjonsstruktur-avvik. ` +
         `Approved er ikkje tillate her. Opphavleg Kontrollør-grunngiving: ` +
         `${parsed.controller_notes ?? "(ingen)"}`;
       console.warn("[agent-d] Hard-block override", {
@@ -368,6 +395,7 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
         original,
         naDeviations,
         motstrid,
+        loadComboDeviations,
       });
     }
 
