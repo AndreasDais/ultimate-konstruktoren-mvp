@@ -166,12 +166,14 @@ export function DimensjonerandeTiles({
   results,
   calculationType,
   locale,
+  resultRoles,
 }: {
   results: Record<string, string>;
   calculationType: string | null;
   locale: Locale;
+  resultRoles?: Record<string, string> | null;
 }) {
-  const keys = getDimensjonerandeKeys(results, calculationType);
+  const keys = getDimensjonerandeKeys(results, calculationType, resultRoles);
   if (keys.length === 0) return null;
 
   // Bereknar grid-span for kvar tile basert på totalt antall.

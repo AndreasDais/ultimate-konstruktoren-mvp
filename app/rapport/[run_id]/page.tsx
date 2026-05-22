@@ -34,6 +34,8 @@ import {
   isSetningResult,
 } from "@/lib/result/tile-heuristics";
 import { renderMathKey } from "@/lib/result/formula-extract";
+import { buildReportModel } from "@/lib/report/build-report-model";
+import { validateReportModel } from "@/lib/report/validate-report-model";
 import {
   lookupMarginalia,
   scanTextForCatalogKeys,
@@ -287,6 +289,14 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   forsideFallbackTittel: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
   forsideTillitOverskrift: { nb: "Tillit", nn: "Tillit" },
   forsideAITekst: { nb: "AI-generert dokument", nn: "AI-generert dokument" },
+  qrAccessTitle: { nb: "Skann for nettversjon", nn: "Skann for nettversjon" },
+  qrAccessText: {
+    nb: "Åpner rapporten på nett med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.",
+    nn: "Opnar rapporten på nett med kontrollstatus, pipeline og delbar lenkje for medstudentar eller kollegaer.",
+  },
+  qrAccessUrlLabel: { nb: "Rapportlenke", nn: "Rapportlenkje" },
+  qrAccessPipeline: { nb: "Nettversjon + pipeline", nn: "Nettversjon + pipeline" },
+  coverKeyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
   disclaimerKort: {
     nb: "Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.",
     nn: "Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Ikkje ein erstatning for kontroll av kvalifisert fagperson.",
@@ -455,16 +465,20 @@ export default function RapportPage() {
     return () => observer.disconnect();
   }, [data]);
 
-  // Rapport-URL for QR-kode i footer-signatur.
-  // window.location.origin er undefined under SSR, så vi set i useEffect.
-  const [rapportUrl, setRapportUrl] = useState("");
+  // Rapport-URL for QR-kode / nettversjon.
+  // VIKTIG: PDF-print kan starte før useEffect har rukke å setje state.
+  // Derfor har vi både ein klient-initializer og ein relativ fallback, slik at
+  // QR-/pipeline-kortet aldri forsvinn frå eksporten.
+  const [rapportUrl, setRapportUrl] = useState(() =>
+    typeof window === "undefined" ? "" : `${window.location.origin}/rapport/${runId}`,
+  );
   useEffect(() => {
     if (typeof window !== "undefined") {
       setRapportUrl(`${window.location.origin}/rapport/${runId}`);
     }
   }, [runId]);
 
-  // Tving alle <details>-element til å vere open under print.
+  // Tving alle <details>-element til å vere opne under print.
   // CSS aleine klarar ikkje overstyre user-agent sin closed-state.
   // MÅ ligge FØR early-returns under for å respektere Rules of Hooks.
   useEffect(() => {
@@ -472,10 +486,26 @@ export default function RapportPage() {
       document.querySelectorAll("details").forEach((d) => {
         d.open = true;
       });
+      document.documentElement.dataset.pilarExport = "pdf";
+    };
+    const cleanup = () => {
+      delete document.documentElement.dataset.pilarExport;
     };
     window.addEventListener("beforeprint", openAll);
-    return () => window.removeEventListener("beforeprint", openAll);
+    window.addEventListener("afterprint", cleanup);
+    return () => {
+      window.removeEventListener("beforeprint", openAll);
+      window.removeEventListener("afterprint", cleanup);
+    };
   }, []);
+
+  const handlePdfPrint = () => {
+    document.querySelectorAll("details").forEach((d) => {
+      d.open = true;
+    });
+    document.documentElement.dataset.pilarExport = "pdf";
+    window.requestAnimationFrame(() => window.print());
+  };
 
   if (error) {
     return (
@@ -515,6 +545,9 @@ export default function RapportPage() {
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
+  const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
+  const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
+  const reportModelValidation = validateReportModel(reportModel);
 
   // === TOC entries — fire konsoliderte seksjonar ===
   const tocEntries: Array<{ id: string; label: string }> = [
@@ -852,6 +885,7 @@ export default function RapportPage() {
   }
   const hasVerifikasjon = verifikasjonRows.length > 0;
   const hasAvvik = verifikasjonRows.some((r) => r.samsvar === "avvik");
+  const coverResultKeys = [...dimKeys, ...bruksgrenseKeys].slice(0, 4);
 
   return (
     <div className="rapport-shell">
@@ -954,6 +988,61 @@ export default function RapportPage() {
                 <dd className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</dd>
               </div>
             </dl>
+
+            {stableRapportUrl && (
+              <aside className="rapport-access-card" aria-label={reportModel.cover.qrLabel}>
+                <div className="rapport-access-card__body">
+                  <div className="rapport-access-card__eyebrow">
+                    {RP_LABELS.qrAccessPipeline[locale]}
+                  </div>
+                  <h2 className="rapport-access-card__title">
+                    {reportModel.cover.qrLabel}
+                  </h2>
+                  <p className="rapport-access-card__text">
+                    {reportModel.cover.qrDescription}
+                  </p>
+                  <div className="rapport-access-card__url-label">
+                    {RP_LABELS.qrAccessUrlLabel[locale]}
+                  </div>
+                  <div className="rapport-access-card__url uk-mono">
+                    {stableRapportUrl}
+                  </div>
+                </div>
+                <div className="rapport-access-card__qr" aria-hidden="true">
+                  <QRCodeSVG
+                    value={stableRapportUrl}
+                    size={118}
+                    level="M"
+                    marginSize={1}
+                  />
+                </div>
+              </aside>
+            )}
+
+            {reportModel.keyResults.length > 0 && (
+              <div className="rapport-cover-results" aria-label={RP_LABELS.coverKeyResults[locale]}>
+                <div className="rapport-cover-results__label">
+                  {RP_LABELS.coverKeyResults[locale]}
+                </div>
+                <div className="rapport-cover-results__grid">
+                  {reportModel.keyResults.slice(0, 4).map((result) => (
+                    <div key={`${result.label}-${result.raw}`} className="rapport-cover-results__item">
+                      <div className="rapport-cover-results__key">{renderMathKey(result.label)}</div>
+                      <div className="rapport-cover-results__value">
+                        <span>{result.value || result.raw || "-"}</span>
+                        {result.unit && <small>{result.unit}</small>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!reportModelValidation.ok && (
+              <aside className="rapport-model-warning no-print" role="note">
+                Rapportmodellen manglar nokre felt. PDF/Word bruker fallback-verdiar.
+              </aside>
+            )}
 
             <div className="rapport-forside__trust">
               <div className="rapport-forside__trust-gauge">
@@ -1604,18 +1693,19 @@ export default function RapportPage() {
                   <span className="rapport-footer__sep">·</span>
                   <span className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</span>
                 </div>
-                {rapportUrl && (
-                  <div className="rapport-footer__url uk-mono">{rapportUrl}</div>
+                {stableRapportUrl && (
+                  <div className="rapport-footer__url uk-mono">{stableRapportUrl}</div>
                 )}
               </div>
-              {rapportUrl && (
-                <div className="rapport-footer__qr">
+              {stableRapportUrl && (
+                <div className="rapport-footer__qr" aria-label={reportModel.cover.qrLabel}>
                   <QRCodeSVG
-                    value={rapportUrl}
+                    value={stableRapportUrl}
                     size={88}
                     level="M"
-                    marginSize={0}
+                    marginSize={1}
                   />
+                  <span className="rapport-footer__qr-label">{reportModel.cover.qrLabel}</span>
                 </div>
               )}
             </div>
@@ -1628,7 +1718,7 @@ export default function RapportPage() {
         <div className="rapport-actions">
           <div className="uk-eyebrow">{RP_LABELS.handlingar[locale]}</div>
           <button
-            onClick={() => window.print()}
+            onClick={handlePdfPrint}
             className="uk-btn uk-btn--primary"
           >
             {RP_LABELS.lastNedPDF[locale]}

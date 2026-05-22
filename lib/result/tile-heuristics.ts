@@ -349,10 +349,24 @@ export function dedupeByValue(keys: string[], results: Record<string, string>): 
 export function getDimensjonerandeKeys(
   results: Record<string, string> | null | undefined,
   calculationType: string | null,
+  resultRoles?: Record<string, string> | null,
 ): string[] {
   const allKeys = Object.keys(results || {});
   if (allKeys.length === 0) return [];
   const resultsObj = results || {};
+
+  // Steg 0 (FIKS 4): eksplisitt rolle frå konstruktøren. Har konstruktøren
+  // tagga minst éin nøkkel som "dimensjonerande", er det fasit — vi gjettar
+  // ikkje. Manglar feltet (eldre køyringar) eller er det feilforma, fell vi
+  // gjennom til den regelbaserte heuristikken under.
+  if (resultRoles && typeof resultRoles === "object") {
+    const tagged = allKeys.filter(
+      (k) => resultRoles[k] === "dimensjonerande",
+    );
+    if (tagged.length > 0) {
+      return dedupeByValue(hoistStyrande(tagged), resultsObj).slice(0, 5);
+    }
+  }
 
   let candidates: string[] = [];
 

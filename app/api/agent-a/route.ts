@@ -44,6 +44,9 @@ Generer felta i NØYAKTIG rekkefølga under. For kvart calculation_step: skriv p
     "M_Ed": "25,0 kNm",
     "V_Ed": "20,0 kN"
   },
+  "result_roles": {
+    "<kvar nøkkel frå results>": "dimensjonerande | mellomledd | input"
+  },
   "verification_notes": [
     "Konkret sjekk Konstruktør A har utført før finalisering. Sjå <verification_checklist>."
   ],
@@ -68,6 +71,14 @@ Nøkkel-namngiving og verdiformat: følg <result_key_nokkelar> og <results_verdi
 
 results skal IKKJE filtrere ned til berre "hovudsvaret". Samanliknar treng kvart namngitt mellomledd for å gjere uavhengig sjekk.
 </results_completeness>
+
+<result_roles>
+result_roles gir Pilar ei rolle for KVAR nøkkel i results, slik at resultat-sida kan vise dei dimensjonerande verdiane som tiles utan å gjette. For kvar nøkkel i results, oppgi nøyaktig éi av:
+- "dimensjonerande": eit dimensjonerande sluttresultat brukaren skal verifisere — den styrande verdien, hovudsvaret, dimensjonerande krefter/kapasitetar/utnytting som er konklusjonen på oppgåva.
+- "mellomledd": eit delsteg på vegen — lastfaktorar, materialfaktorar, geometri, karakteristiske verdiar, og krefter/kapasitetar som berre er reknesteg, ikkje sjølve svaret.
+- "input": ein inngangsverdi du berre echo-ar tilbake (oppgitt last, oppgitt spenn).
+Kvar nøkkel i results skal ha ein tilsvarande nøkkel i result_roles. Er du i tvil mellom dimensjonerande og mellomledd: spør deg om brukaren bad om nett denne verdien — i så fall er han dimensjonerande.
+</result_roles>
 
 <result_key_nokkelar>
 results-nøklane MÅ vere identiske mellom Konstruktør A og Konstruktør B for SAME fysiske storleik — elles klarar ikkje Samanliknar å para verdiane rad-for-rad i rapporten. Følg desse reglane strengt:
@@ -187,7 +198,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 - text og latex_formula skal innehalde SAME utleiing — text må stå åleine (lesbar utan typesetting).
 </rules>`;
 
-const PROMPT_VERSION = "agent_a_v0.12";
+const PROMPT_VERSION = "agent_a_v0.13";
 
 type CoreCallArgs = {
   run_id: string;

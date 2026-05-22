@@ -36,6 +36,7 @@ import type {
 } from "@/lib/result/types";
 import type { AgentResult } from "@/lib/workbench/types";
 import { WB_LABELS } from "@/lib/result/labels";
+import { isRealIssue } from "@/lib/compare/consistency-issues";
 import { computeProfile } from "@/lib/result/profile";
 import {
   isInputKey,
@@ -150,6 +151,14 @@ export function CalculationResultView(props: CalculationResultViewProps) {
             const effectiveProfile: Profile = computeProfile(controllerDecision, comparison, calculationA);
             const isKrevGjennomgang = effectiveProfile === "krev_gjennomgang";
 
+            // FIKS 7 (F6): finst det faktisk advarsler? Konstruktør-warnings
+            // eller Samanliknar sine metode-/føresetnad-skilnader.
+            const hasAnyAdvarsel =
+              (calculationA?.warnings?.length ?? 0) > 0 ||
+              (calculationB?.warnings?.length ?? 0) > 0 ||
+              (comparison?.method_differences?.length ?? 0) > 0 ||
+              (comparison?.assumption_differences?.length ?? 0) > 0;
+
             // Per-profil styling for indikator-chip
             const profileChipStyle: Record<Profile, { bg: string; color: string; label: string; forklaring: string }> = {
               trygg: {
@@ -162,7 +171,13 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 bg: "var(--surface-2)",
                 color: "var(--fg)",
                 label: WB_LABELS.profilStandard[locale],
-                forklaring: WB_LABELS.profilForklaringStandard[locale],
+                // FIKS 7 (F6): "standard" dekkjer både godkjent-med-advarsler
+                // og godkjent-utan. Vel forklaring etter om det FAKTISK finst
+                // advarsler — same signal computeProfile les. Elles påstår
+                // sida "med advarsler" på reine køyringar (slik A2 viste).
+                forklaring: hasAnyAdvarsel
+                  ? WB_LABELS.profilForklaringStandardMedAdvarsler[locale]
+                  : WB_LABELS.profilForklaringStandard[locale],
               },
               krev_gjennomgang: {
                 bg: "var(--warn-bg, rgba(180, 130, 30, 0.12))",
@@ -417,8 +432,16 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                         Default: kollapsa når 0 funne, auto-utvida med raud
                         kant når >0. Brukar kan toggle manuelt. */}
                     {comparison && (() => {
-                      const issuesA = comparison.internal_consistency_issues?.agent_a ?? [];
-                      const issuesB = comparison.internal_consistency_issues?.agent_b ?? [];
+                      // FIKS 5 (F3): tel berre REELLE inkonsistensar. Samanliknar
+                      // legg av og til inn ei "ingen inkonsistensar funne"-oppføring
+                      // i staden for ei tom liste — den skal ikkje teljast. Same
+                      // isRealIssue-predikat som agent-c brukar (delt modul).
+                      const issuesA = (
+                        comparison.internal_consistency_issues?.agent_a ?? []
+                      ).filter(isRealIssue);
+                      const issuesB = (
+                        comparison.internal_consistency_issues?.agent_b ?? []
+                      ).filter(isRealIssue);
                       const totalIssues = issuesA.length + issuesB.length;
                       // null = default kollapsa. Brukar må klikke for å opne.
                       // Tidligare auto-opna ved >0 issues, men brukar har bedt
@@ -717,6 +740,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                   ? getDimensjonerandeKeys(
                       calculationA.results,
                       result?.berekningstype ?? null,
+                      calculationA.result_roles,
                     )
                   : [];
                 const tilesShown = tilesKeys.length > 0;
@@ -740,6 +764,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                         results={calculationA.results}
                         calculationType={result?.berekningstype ?? null}
                         locale={locale}
+                        resultRoles={calculationA.result_roles}
                       />
                     )}
 
@@ -773,6 +798,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 const dimensjonerandeKeys = getDimensjonerandeKeys(
                   calculationA.results,
                   result?.berekningstype ?? null,
+                  calculationA.result_roles,
                 );
                 const dimensjonerandeSet = new Set(dimensjonerandeKeys);
                 const dimensjonerandeEntries = dimensjonerandeKeys
@@ -1404,7 +1430,13 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                   assumption-differences kollapsa som "Generelle merknader"
                   nedst — dei er ikkje per-rad-bundne. */}
               {comparison && (() => {
-                const numericDiffs = comparison.numeric_differences ?? [];
+                // FIKS 8 (F5): ein verdi Kontrollør har blokkert skal aldri
+                // stå i samanliknings-/✓-tabellen. isBlocked dekkjer blokk-
+                // nivå-nøklane; her filtrerer vi i tillegg per felt, slik at
+                // ein blokkert enkelt-verdi heller ikkje viser samsvar.
+                const numericDiffs = (comparison.numeric_differences ?? []).filter(
+                  (d) => !isBlocked(d.field) && !isBlocked(`results_a:${d.field}`),
+                );
                 const methodDiffs = comparison.method_differences ?? [];
                 const assumptionDiffs = comparison.assumption_differences ?? [];
                 const hasNumeric = numericDiffs.length > 0;
@@ -1746,6 +1778,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
               ? getDimensjonerandeKeys(
                   calculationA.results,
                   result?.berekningstype ?? null,
+                  calculationA.result_roles,
                 )
               : [];
             const styrendeKey = dimKeys[0];

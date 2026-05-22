@@ -3056,3 +3056,1267 @@
     color: #000;
   }
 }
+
+/* =================================================================
+   Export v2 — QR/pipeline access + cover result strip
+   Makes the shareable online report a first-class part of the note.
+   ================================================================= */
+
+.rapport-access-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  margin: -0.25rem 0 1.75rem;
+  padding: 1rem 1.125rem;
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--fg);
+  font-family: var(--font-sans);
+}
+
+.rapport-access-card__eyebrow,
+.rapport-cover-results__label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--rapport-badge-gold-fg, var(--fg-muted));
+  margin-bottom: 0.35rem;
+}
+
+.rapport-access-card__title {
+  font-family: var(--font-sans) !important;
+  font-size: 1rem !important;
+  line-height: 1.25 !important;
+  font-weight: 650 !important;
+  color: var(--fg) !important;
+  margin: 0 0 0.4rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.rapport-access-card__text {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--fg-2);
+  margin: 0 0 0.65rem;
+}
+
+.rapport-access-card__url-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 0.2rem;
+}
+
+.rapport-access-card__url {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--fg);
+  word-break: break-all;
+}
+
+.rapport-access-card__qr {
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 7px;
+}
+
+.rapport-access-card__qr svg,
+.rapport-footer__qr svg {
+  display: block;
+}
+
+.rapport-cover-results {
+  margin: 0 0 1.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-sans);
+}
+
+.rapport-cover-results__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.rapport-cover-results__item {
+  min-width: 0;
+  padding: 0.7rem 0.75rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--fg);
+}
+
+.rapport-cover-results__key {
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  line-height: 1.2;
+  color: var(--fg-2);
+  margin-bottom: 0.25rem;
+}
+
+.rapport-cover-results__value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.rapport-cover-results__value span {
+  font-size: 1.25rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.rapport-cover-results__value small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.rapport-footer__qr {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+}
+
+.rapport-footer__qr-label {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 95px;
+}
+
+@media (max-width: 640px) {
+  .rapport-access-card {
+    grid-template-columns: 1fr;
+  }
+  .rapport-access-card__qr {
+    justify-self: start;
+  }
+  .rapport-cover-results__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  .rapport-access-card,
+  .rapport-cover-results {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    background: #fff !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+  }
+  .rapport-access-card {
+    margin: 0 0 7mm !important;
+    padding: 5mm !important;
+    border-left-width: 1.5mm !important;
+  }
+  .rapport-access-card__title,
+  .rapport-access-card__text,
+  .rapport-access-card__url,
+  .rapport-access-card__url-label,
+  .rapport-access-card__eyebrow,
+  .rapport-cover-results__label {
+    color: #000 !important;
+  }
+  .rapport-access-card__qr {
+    width: 33mm !important;
+    height: 33mm !important;
+    padding: 1.5mm !important;
+    border-color: #000 !important;
+  }
+  .rapport-cover-results {
+    margin: 0 0 7mm !important;
+    padding: 4mm !important;
+  }
+  .rapport-cover-results__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3mm !important;
+  }
+  .rapport-cover-results__item {
+    background: #fff !important;
+    border: 1px solid #000 !important;
+    border-left-width: 1mm !important;
+    padding: 3mm !important;
+  }
+  .rapport-cover-results__key,
+  .rapport-cover-results__value,
+  .rapport-cover-results__value small {
+    color: #000 !important;
+  }
+  .rapport-footer__qr-label {
+    color: #000 !important;
+  }
+}
+
+/* =================================================================
+   EXPORT OVERRIDE v1 — A4/PDF.
+   Webrapporten har desktop-shell, sticky sidebar og interaktive details.
+   PDF skal vere eit reint A4-notat. Denne blokka ligg heilt sist for å
+   vinne over eldre print-reglar utan å påverke skjermvisinga.
+   ================================================================= */
+@page {
+  size: A4;
+  margin: 16mm 15mm 18mm 15mm;
+}
+
+@media print {
+  html,
+  body {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Fjern alt app-/browser-/dashboard-støy frå eksporten. */
+  .uk-header,
+  .rapport-sidebar,
+  .rapport-toolbar,
+  .rapport-back-link,
+  .rapport-actions,
+  .feilrapport-trigger,
+  .feilrapport-form,
+  .feilrapport-success,
+  .no-print,
+  button,
+  summary,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  /* Kritisk: desktop-grid/min-height kan skape blank førsteside i PDF. */
+  .rapport-shell,
+  .rapport-main,
+  .rapport-container {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .rapport-main .rapport-document,
+  .rapport-document {
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.55 !important;
+  }
+
+  /* Heile seksjonar skal kunne brytast. Berre kort/tabellar skal haldast samla. */
+  .rapport-section,
+  .rapport-section--group,
+  .rapport-berekning-content {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  .rapport-subchapter__eyebrow,
+  .rapport-step-row__title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .rapport-forside,
+  .rapport-forside__trust,
+  .rapport-forside__disclaimer,
+  .rapport-access-card,
+  .rapport-cover-results,
+  .rapport-forespurnad-block,
+  .rapport-ordliste,
+  .rapport-results-table,
+  .rapport-step-row,
+  .rapport-ikkje-rekna-table,
+  .rapport-advarsel-stripe,
+  .rapport-verifikasjon-table,
+  .rapport-verdict-box,
+  .rapport-signatur-grid,
+  .rapport-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-forside {
+    margin: 0 0 13mm !important;
+    padding: 0 0 9mm !important;
+    border-bottom: 1px solid #d8d3c8 !important;
+  }
+
+  .rapport-forside__head,
+  .rapport-forside__trust {
+    margin-top: 0 !important;
+  }
+
+  .rapport-forside__title {
+    font-size: 22pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .rapport-forside__meta,
+  .rapport-forside__disclaimer,
+  .rapport-access-card,
+  .rapport-cover-results,
+  .rapport-forespurnad-block,
+  .rapport-ordliste,
+  .rapport-advarsel-stripe,
+  .rapport-verdict-box {
+    box-shadow: none !important;
+  }
+
+  .rapport-prose,
+  .rapport-step-row__text,
+  .rapport-forside__trust-prose,
+  .rapport-verdict-box__body {
+    font-size: 10.5pt !important;
+    line-height: 1.55 !important;
+  }
+
+  .rapport-step-list {
+    gap: 0 !important;
+  }
+
+  .rapport-step-row {
+    margin: 0 0 5mm !important;
+    padding-top: 3mm !important;
+  }
+
+  .rapport-step-row__details {
+    margin-top: 2mm !important;
+  }
+
+  .rapport-formula-scroll {
+    overflow: visible !important;
+    max-width: 100% !important;
+    margin: 3mm 0 !important;
+  }
+
+  .rapport-formula,
+  .rapport-formula-stack {
+    max-width: 100% !important;
+  }
+
+  .rapport-formula .katex,
+  .rapport-formula-stack .katex {
+    font-size: 0.95em !important;
+  }
+
+  .rapport-footer {
+    margin-top: 12mm !important;
+    padding-top: 5mm !important;
+  }
+
+  .rapport-footer__qr {
+    display: grid !important;
+  }
+
+  a[href] {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
+
+/* =================================================================
+   EXPORT v3 — polished A4/PDF layout
+   Goal: engineering/student handout, strong QR access, less squeezed text,
+   fewer accidental page breaks, and no interactive UI artifacts in PDF.
+   Placed last intentionally to override earlier export rules.
+   ================================================================= */
+@page {
+  size: A4;
+  margin: 13mm 14mm 15mm 14mm;
+}
+
+@media print {
+  html,
+  body,
+  #__next {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
+  body::before,
+  body::after,
+  .rapport-document::before,
+  .rapport-document::after,
+  .rapport-main::before,
+  .rapport-main::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .rapport-shell,
+  .rapport-main,
+  .rapport-container,
+  .rapport-main .rapport-document,
+  .rapport-document {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    transform: none !important;
+  }
+
+  .rapport-document {
+    font-size: 9.7pt !important;
+    line-height: 1.48 !important;
+    color: #111 !important;
+  }
+
+  .uk-header,
+  .rapport-sidebar,
+  .rapport-toolbar,
+  .rapport-actions,
+  .rapport-back-link,
+  .feilrapport-trigger,
+  .feilrapport-form,
+  .feilrapport-success,
+  .no-print,
+  [data-no-print="true"],
+  button,
+  summary {
+    display: none !important;
+  }
+
+  /* Cover must start immediately. The earlier rule kept the entire cover
+     together; in Chromium this could create a blank first page. */
+  .rapport-section:first-child,
+  .rapport-forside {
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .rapport-forside {
+    margin: 0 0 8mm !important;
+    padding: 0 0 6mm !important;
+    border-bottom: 1px solid #d8d3c8 !important;
+  }
+
+  .rapport-page-stripe {
+    margin: 0 0 6mm !important;
+    padding: 0 0 3mm !important;
+    border-bottom: 0.8pt solid #111 !important;
+    color: #111 !important;
+  }
+
+  .rapport-forside__head {
+    margin: 0 0 6mm !important;
+  }
+
+  .rapport-forside__title {
+    font-family: var(--font-sans) !important;
+    font-size: 23pt !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.035em !important;
+    font-weight: 650 !important;
+  }
+
+  .rapport-forside__subtitle {
+    font-family: var(--font-sans) !important;
+    font-size: 9pt !important;
+    line-height: 1.35 !important;
+    max-width: 135mm !important;
+  }
+
+  .rapport-forside__meta {
+    margin: 0 0 5mm !important;
+    border-top: 1px solid #d8d3c8 !important;
+  }
+
+  .rapport-forside__meta-row {
+    grid-template-columns: 34mm 1fr !important;
+    gap: 5mm !important;
+    padding: 2.4mm 0 !important;
+    border-bottom: 1px solid #d8d3c8 !important;
+  }
+
+  .rapport-forside__meta-row dt {
+    font-size: 6.4pt !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .rapport-forside__meta-row dd {
+    font-size: 9.2pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .rapport-forside__status-badge {
+    font-size: 6.6pt !important;
+    padding: 1.1mm 2.3mm !important;
+    border-radius: 0 !important;
+    color: #111 !important;
+    background: #fff !important;
+    border: 0.8pt solid #111 !important;
+  }
+
+  /* QR/pipeline card: visually important, but compact enough to live on cover. */
+  .rapport-access-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 31mm !important;
+    gap: 5mm !important;
+    align-items: center !important;
+    margin: 0 0 5mm !important;
+    padding: 4mm !important;
+    border: 0.8pt solid #111 !important;
+    border-left: 3pt solid #111 !important;
+    background: #fbfaf7 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-access-card__eyebrow,
+  .rapport-cover-results__label {
+    color: #8a5d00 !important;
+    font-size: 6.1pt !important;
+    letter-spacing: 0.12em !important;
+    margin-bottom: 1.3mm !important;
+  }
+
+  .rapport-access-card__title {
+    font-size: 12.5pt !important;
+    line-height: 1.12 !important;
+    margin: 0 0 1.5mm !important;
+    color: #111 !important;
+  }
+
+  .rapport-access-card__text {
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+    margin: 0 0 2mm !important;
+    color: #333 !important;
+  }
+
+  .rapport-access-card__url-label {
+    font-size: 5.7pt !important;
+    margin-bottom: 0.7mm !important;
+    color: #555 !important;
+  }
+
+  .rapport-access-card__url {
+    font-size: 6.1pt !important;
+    line-height: 1.22 !important;
+    color: #111 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .rapport-access-card__qr {
+    width: 31mm !important;
+    height: 31mm !important;
+    padding: 1.4mm !important;
+    background: #fff !important;
+    border: 0.8pt solid #111 !important;
+  }
+
+  .rapport-access-card__qr svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .rapport-cover-results {
+    margin: 0 0 5mm !important;
+    padding: 3.3mm !important;
+    border: 0.8pt solid #d8d3c8 !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-cover-results__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2.5mm !important;
+  }
+
+  .rapport-cover-results__item {
+    padding: 2.4mm 2.6mm !important;
+    border: 0.8pt solid #d8d3c8 !important;
+    border-left: 2pt solid #111 !important;
+    background: #fbfaf7 !important;
+  }
+
+  .rapport-cover-results__key {
+    font-size: 8.1pt !important;
+    margin-bottom: 1mm !important;
+    color: #444 !important;
+  }
+
+  .rapport-cover-results__value span {
+    font-size: 12pt !important;
+  }
+
+  .rapport-cover-results__value small {
+    font-size: 6.8pt !important;
+    color: #666 !important;
+  }
+
+  /* Trust on cover: show the score compactly; the full reasoning is already
+     documented later under Kontroll. This avoids the squeezed right column. */
+  .rapport-forside__trust {
+    display: grid !important;
+    grid-template-columns: 31mm minmax(0, 1fr) !important;
+    gap: 5mm !important;
+    align-items: center !important;
+    margin: 0 0 5mm !important;
+    padding: 3.5mm 4mm !important;
+    border: 0.8pt solid #d8d3c8 !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .tillit-gauge {
+    gap: 0 !important;
+    align-items: center !important;
+  }
+
+  .tillit-gauge__button {
+    width: 30mm !important;
+    height: 30mm !important;
+    overflow: hidden !important;
+    cursor: default !important;
+  }
+
+  .tillit-gauge__svg {
+    width: 30mm !important;
+    height: 30mm !important;
+  }
+
+  .tillit-gauge__score {
+    font-size: 16pt !important;
+  }
+
+  .tillit-gauge__max {
+    font-size: 7pt !important;
+  }
+
+  .tillit-gauge__label {
+    font-size: 5.8pt !important;
+  }
+
+  .tillit-gauge__breakdown {
+    display: none !important;
+  }
+
+  .rapport-forside__trust-prose {
+    font-family: var(--font-sans) !important;
+    font-style: normal !important;
+    font-size: 8.2pt !important;
+    line-height: 1.35 !important;
+    color: #333 !important;
+  }
+
+  .rapport-forside__trust-prose p {
+    margin: 0 !important;
+    max-height: 34mm !important;
+    overflow: hidden !important;
+  }
+
+  .rapport-forside__disclaimer {
+    margin: 0 !important;
+    padding: 3.2mm 4mm !important;
+    border: 0.8pt solid #111 !important;
+    border-left: 3pt solid #8a5d00 !important;
+    background: #fff8e5 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-forside__disclaimer-label {
+    font-size: 6.1pt !important;
+    margin-bottom: 1mm !important;
+    color: #8a5d00 !important;
+  }
+
+  .rapport-forside__disclaimer-body {
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+    color: #111 !important;
+  }
+
+  /* Main sections: less giant newspaper feeling, better density. */
+  .rapport-chapter-heading {
+    margin: 8mm 0 4mm !important;
+    padding-bottom: 2mm !important;
+    border-bottom: 1pt solid #111 !important;
+  }
+
+  .rapport-chapter-heading__num {
+    min-width: 20mm !important;
+    font-size: 15pt !important;
+  }
+
+  .rapport-chapter-heading__title {
+    font-size: 18pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .rapport-prose {
+    font-size: 9.7pt !important;
+    line-height: 1.46 !important;
+    text-align: left !important;
+  }
+
+  .rapport-forespurnad-block,
+  .rapport-ordliste,
+  .rapport-results-table,
+  .rapport-ikkje-rekna-table,
+  .rapport-advarsel-stripe,
+  .rapport-verdict-box,
+  .rapport-signatur-grid {
+    border-color: #d8d3c8 !important;
+    box-shadow: none !important;
+  }
+
+  .rapport-subchapter__eyebrow {
+    margin-top: 5mm !important;
+    margin-bottom: 2.5mm !important;
+    font-size: 7.2pt !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .rapport-foresetnad-list__item,
+  .rapport-results-table__row,
+  .rapport-ikkje-rekna-table__row,
+  .rapport-verifikasjon-table__row {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Step layout: allow long steps to flow instead of leaving half-empty pages. */
+  .rapport-step-row {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin: 0 0 5mm !important;
+    padding-top: 3mm !important;
+    border-top: 0.8pt solid #d8d3c8 !important;
+  }
+
+  .rapport-step-row__kicker {
+    font-size: 7.3pt !important;
+    color: #777 !important;
+  }
+
+  .rapport-step-row__title {
+    font-size: 11.2pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .rapport-step-row__text,
+  .rapport-step-text,
+  .rapport-data {
+    font-size: 8.6pt !important;
+    line-height: 1.42 !important;
+  }
+
+  .rapport-step-prose,
+  .rapport-step-prose pre {
+    display: block !important;
+  }
+
+  .rapport-step-prose summary,
+  .rapport-step-prose::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .rapport-formula-scroll {
+    overflow: visible !important;
+    margin: 2.5mm 0 3mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-formula .katex,
+  .rapport-formula-stack .katex {
+    font-size: 0.88em !important;
+  }
+
+  .rapport-formula .katex-display {
+    margin: 0 !important;
+    text-align: left !important;
+  }
+
+  .rapport-footer {
+    margin-top: 8mm !important;
+    padding-top: 4mm !important;
+    border-top: 0.8pt solid #d8d3c8 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-footer__qr {
+    display: grid !important;
+  }
+
+  .rapport-footer__qr svg {
+    width: 18mm !important;
+    height: 18mm !important;
+  }
+
+  a[href] {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
+
+/* =================================================================
+   Report Engine v4 / Sprint 2 — print template hardening
+   - keep QR as a primary report feature
+   - remove the squeezed table feeling on the cover
+   - let long technical sections break naturally across A4 pages
+   ================================================================= */
+
+.rapport-cover-results__grid {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+}
+
+.rapport-cover-results__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.2rem;
+}
+
+@media print {
+  /* Important: large blocks should flow. Only genuinely small cards are kept. */
+  .rapport-section,
+  .rapport-section--group,
+  .rapport-berekning-content,
+  .rapport-prose,
+  .rapport-step-list,
+  .rapport-step-row,
+  .rapport-results-table,
+  .rapport-ikkje-rekna-table,
+  .rapport-verifikasjon-table {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .rapport-access-card,
+  .rapport-cover-results__item,
+  .rapport-advarsel-stripe,
+  .rapport-verdict-box,
+  .rapport-signatur-grid,
+  .rapport-footer__qr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Cover result strip: list-like, not a squeezed table/grid. */
+  .rapport-cover-results {
+    margin: 0 0 5mm !important;
+    padding: 3.5mm 4mm !important;
+    border: 0.8pt solid #d8d3c8 !important;
+    border-left: 3pt solid #111 !important;
+    background: #fff !important;
+  }
+
+  .rapport-cover-results__label {
+    margin: 0 0 2mm !important;
+    color: #8a5d00 !important;
+  }
+
+  .rapport-cover-results__grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 7mm !important;
+    row-gap: 0 !important;
+  }
+
+  .rapport-cover-results__item {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    gap: 4mm !important;
+    min-width: 0 !important;
+    padding: 1.8mm 0 !important;
+    border: 0 !important;
+    border-bottom: 0.6pt solid #eee8dc !important;
+    background: transparent !important;
+  }
+
+  .rapport-cover-results__key {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    font-size: 8.4pt !important;
+    line-height: 1.2 !important;
+    color: #444 !important;
+  }
+
+  .rapport-cover-results__value {
+    flex: 0 0 auto !important;
+    gap: 1.1mm !important;
+    white-space: nowrap !important;
+  }
+
+  .rapport-cover-results__value span {
+    font-size: 11.2pt !important;
+    line-height: 1 !important;
+  }
+
+  .rapport-cover-results__value small {
+    font-size: 6.6pt !important;
+  }
+
+  /* QR-card gets the visual priority; it is a handoff to live report + pipeline. */
+  .rapport-access-card {
+    grid-template-columns: minmax(0, 1fr) 34mm !important;
+    gap: 6mm !important;
+    padding: 4.5mm !important;
+  }
+
+  .rapport-access-card__qr {
+    width: 34mm !important;
+    height: 34mm !important;
+  }
+
+  .rapport-access-card__url {
+    max-width: 125mm !important;
+    font-size: 5.8pt !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Avoid orphaned headings and awkward splits. */
+  .rapport-chapter-heading,
+  .rapport-subchapter__eyebrow,
+  .rapport-step-row__title,
+  .rapport-step-row__kicker {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .rapport-chapter-heading {
+    margin-top: 7mm !important;
+  }
+
+  .rapport-chapter-heading:first-of-type {
+    margin-top: 4mm !important;
+  }
+
+  /* Tables inside the main body: technical tables may break, rows should not. */
+  .rapport-results-table,
+  .rapport-ikkje-rekna-table,
+  .rapport-verifikasjon-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 8.2pt !important;
+  }
+
+  .rapport-results-table tr,
+  .rapport-ikkje-rekna-table tr,
+  .rapport-verifikasjon-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-results-table__key,
+  .rapport-results-table__value,
+  .rapport-ikkje-rekna-table__subject,
+  .rapport-ikkje-rekna-table__reason,
+  .rapport-verifikasjon-table__key {
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  /* Formula/math blocks should not overflow the A4 content width. */
+  .rapport-formula-scroll,
+  .rapport-formula,
+  .rapport-formula-stack,
+  .rapport-step-prose,
+  .rapport-step-prose pre {
+    max-width: 100% !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rapport-formula .katex,
+  .rapport-formula-stack .katex {
+    white-space: normal !important;
+  }
+
+  /* Last page/signature should not overlap with footer QR. */
+  .rapport-footer,
+  .rapport-signatur-grid {
+    position: static !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+/* =================================================================
+   Report Engine v4 / Sprint 3 — PDF polish + stable cover handoff
+   - QR/pipeline card must never disappear from PDF export
+   - trust breakdown is not shown on cover print (it caused squeezed text)
+   - cover result cards are list-like, not table-like
+   - prevent formula/rendered-math blocks from overlapping later sections
+   ================================================================= */
+
+.rapport-model-warning {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--warn, #d4a017);
+  border-left: 4px solid var(--warn, #d4a017);
+  background: #fff8e5;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+}
+
+@media print {
+  /* The old generic `button { display:none }` rule removed the circular gauge.
+     Keep app buttons hidden through no-print/toolbar selectors, but allow the
+     non-interactive gauge button to render as a static visual in the PDF. */
+  .tillit-gauge__button {
+    display: flex !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .tillit-gauge__breakdown,
+  .tillit-gauge__breakdown[data-expanded="false"],
+  .tillit-gauge__breakdown[data-expanded="true"] {
+    display: none !important;
+  }
+
+  .info-popover,
+  .info-popover-trigger,
+  .info-popover__trigger {
+    display: none !important;
+  }
+
+  /* Cover: make it a deliberate first page, with QR + key numbers before trust.
+     Keep blocks compact so the disclaimer does not jump awkwardly. */
+  .rapport-forside {
+    break-after: page !important;
+    page-break-after: always !important;
+    min-height: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: 0 !important;
+  }
+
+  .rapport-access-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 31mm !important;
+    align-items: center !important;
+    gap: 5mm !important;
+    margin: 0 0 4.5mm !important;
+    padding: 4mm !important;
+    border: 0.8pt solid #111 !important;
+    border-left: 3pt solid #111 !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+  }
+
+  .rapport-access-card__title {
+    font-size: 11pt !important;
+    line-height: 1.15 !important;
+    margin-bottom: 1mm !important;
+  }
+
+  .rapport-access-card__text {
+    font-size: 7.8pt !important;
+    line-height: 1.28 !important;
+    margin-bottom: 1.6mm !important;
+  }
+
+  .rapport-access-card__url-label {
+    font-size: 5.7pt !important;
+    margin-bottom: 0.6mm !important;
+  }
+
+  .rapport-access-card__url {
+    font-size: 5.7pt !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rapport-access-card__qr {
+    width: 31mm !important;
+    height: 31mm !important;
+    padding: 1.3mm !important;
+  }
+
+  .rapport-cover-results {
+    margin: 0 0 4.5mm !important;
+    padding: 3.2mm 4mm !important;
+    border: 0.8pt solid #d8d3c8 !important;
+    border-left: 3pt solid #111 !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+  }
+
+  .rapport-cover-results__grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 7mm !important;
+    row-gap: 0 !important;
+  }
+
+  .rapport-cover-results__item {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: baseline !important;
+    gap: 3mm !important;
+    padding: 1.5mm 0 !important;
+    border: 0 !important;
+    border-bottom: 0.6pt solid #eee8dc !important;
+    background: transparent !important;
+  }
+
+  .rapport-cover-results__key {
+    font-size: 8pt !important;
+    line-height: 1.15 !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rapport-cover-results__value {
+    white-space: nowrap !important;
+  }
+
+  .rapport-cover-results__value span {
+    font-size: 10.8pt !important;
+  }
+
+  .rapport-cover-results__value small {
+    font-size: 6.4pt !important;
+  }
+
+  .rapport-forside__trust {
+    grid-template-columns: 27mm minmax(0, 1fr) !important;
+    gap: 4mm !important;
+    margin: 0 0 4.5mm !important;
+    padding: 3mm 4mm !important;
+  }
+
+  .tillit-gauge__button,
+  .tillit-gauge__svg {
+    width: 27mm !important;
+    height: 27mm !important;
+  }
+
+  .tillit-gauge__score {
+    font-size: 14pt !important;
+  }
+
+  .tillit-gauge__max {
+    font-size: 6.2pt !important;
+  }
+
+  .tillit-gauge__label {
+    font-size: 5.2pt !important;
+  }
+
+  .rapport-forside__trust-prose p {
+    max-height: 21mm !important;
+    overflow: hidden !important;
+  }
+
+  /* The prose calculation already contains readable formula lines. The rendered
+     KaTeX display can become tall/fragile in browser print and has caused odd
+     splits. Hide only the decorative rendered formula stack in PDF; keep the
+     text calculation visible. */
+  .rapport-step-row .rapport-formula-scroll,
+  .rapport-step-row .rapport-formula,
+  .rapport-step-row .rapport-formula-stack {
+    display: none !important;
+  }
+
+  .rapport-step-prose,
+  .rapport-step-prose pre {
+    display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-step-prose pre {
+    background: #f5f4f1 !important;
+    border-left: 2pt solid #d8d3c8 !important;
+    padding: 3mm 4mm !important;
+    font-size: 8.1pt !important;
+    line-height: 1.36 !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rapport-ikkje-rekna-table {
+    display: block !important;
+    border: 0.8pt solid #e9dfc8 !important;
+    background: #fff !important;
+  }
+
+  .rapport-ikkje-rekna-table__row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) !important;
+    gap: 5mm !important;
+    padding: 3mm 4mm !important;
+  }
+
+  .rapport-ikkje-rekna-table__subject,
+  .rapport-ikkje-rekna-table__reason {
+    display: block !important;
+    width: auto !important;
+    font-size: 9pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .rapport-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

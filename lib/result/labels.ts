@@ -175,6 +175,10 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Enig kontroll, ingen advarsler — sida viser kort hovudsvar.",
   },
   profilForklaringStandard: {
+    nb: "Godkjent — detaljer er kollapset, klikk for å utforske.",
+    nn: "Godkjent — detaljar er kollapsa, klikk for å utforske.",
+  },
+  profilForklaringStandardMedAdvarsler: {
     nb: "Godkjent med advarsler — detaljer er kollapset, klikk for å utforske.",
     nn: "Godkjent med advarsler — detaljar er kollapsa, klikk for å utforske.",
   },

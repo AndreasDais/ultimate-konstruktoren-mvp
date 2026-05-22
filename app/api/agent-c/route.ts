@@ -1,7 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
-import { formatAnthropicError } from "@/lib/anthropic-errors";
+import {
+  compareResults,
+  normalizeResultKey,
+  type ResultComparison,
+} from "@/lib/compare/result-compare";
+import { normalizeConsistencyIssues } from "@/lib/compare/consistency-issues";
 
 const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -34,6 +39,7 @@ Strukturen er:
       "likely_cause": "Kort forklaring på sannsynleg årsak — bruk 'Konstruktør A' og 'Konstruktør B' i fritekst"
     }
   ],
+  "unpaired_keys": { "only_a": [], "only_b": [] },
   "method_differences": ["forskjellar i metode/formelbruk/standardreferanse — bruk 'Konstruktør A' og 'Konstruktør B' når du refererer til dei"],
   "assumption_differences": ["forskjellar i føresetnader brukt — bruk 'Konstruktør A' og 'Konstruktør B' når du refererer til dei"],
   "internal_consistency_issues": {
@@ -51,6 +57,13 @@ Strukturen er:
 
 MERK: JSON-nøklane "agent_a_value", "agent_b_value", "internal_consistency_issues.agent_a", "internal_consistency_issues.agent_b" er kode-identifikatorar — desse skal IKKJE endrast. Det er berre fritekst-feltet (method_differences-strenger, assumption_differences-strenger, summary, og likely_cause) som skal bruke "Konstruktør A/B"-terminologi.
 
+DETERMINISTISK TALJAMFØRING:
+I user-meldinga får du ei blokk «DETERMINISTISK TALJAMFØRING» som er rekna i kode. Den er autoritativ — du skal ikkje rekne taljamføringa sjølv.
+- numeric_differences skal innehalde NØYAKTIG dei para nøklane frå blokka, med percent_diff-verdiane derifrå. Ikkje rekn percent_diff på nytt.
+- IKKJE lag numeric_differences-rader for nøklar som blokka listar som «berre rapportert av A» eller «berre rapportert av B». Slike nøklar er ikkje avvik — dei er rapporterings-hol.
+- unpaired_keys-feltet fyller du frå dei to «berre rapportert av»-listene i blokka.
+- Du skal framleis sjølv vurdere likely_cause, severity, method_differences, assumption_differences, internal_consistency_issues, recommended_status og summary.
+
 Klassifiseringsreglar:
 
 Numeriske forskjellar:
@@ -62,6 +75,7 @@ Numeriske forskjellar:
 Intern konsistens:
 - Forskjell mellom short_conclusion-tal og results-tal er ALLTID minst "high" — det er hallusinasjon
 - Forskjell i konklusjon (held vs held ikkje) er ALLTID "critical"
+- internal_consistency_issues.agent_a og .agent_b skal innehalde NØYAKTIG éi oppføring per FAKTISK inkonsistens. Finn du ingen inkonsistens hjå ein konstruktør, skal lista vere TOM ([]). Legg ALDRI inn ei oppføring som berre seier "ingen inkonsistensar funne", "alt stemmer" e.l. — ei tom liste ER svaret "ingen funne". Ein placeholder-oppføring blir feilaktig talt som ein inkonsistens.
 
 match_status:
 - "match": ingen forskjellar > 0,5%, ingen interne inkonsistensar
@@ -76,7 +90,40 @@ recommended_status:
 
 Bruk nynorsk eller bokmål — same språk som Konstruktør A og B brukte.`;
 
-const PROMPT_VERSION = "agent_c_v0.1";
+/**
+ * Formaterer den deterministiske jamføringa som ei tekstblokk for prompten.
+ * Para nøklar med kode-rekna avvik + listene over upara nøklar.
+ */
+function buildComparisonBlock(cmp: ResultComparison): string {
+  const lines: string[] = [
+    "DETERMINISTISK TALJAMFØRING (rekna i kode — autoritativ, ikkje rekn sjølv):",
+  ];
+  if (cmp.paired.length > 0) {
+    lines.push("Para nøklar (rapportert av BEGGE konstruktørar):");
+    for (const p of cmp.paired) {
+      const pd =
+        p.percentDiff === null
+          ? "ikkje-numerisk"
+          : `${(Math.round(p.percentDiff * 10) / 10).toFixed(1)} %`;
+      lines.push(`  ${p.key}: A = ${p.aValue} / B = ${p.bValue} -> ${pd}`);
+    }
+  } else {
+    lines.push("Para nøklar: ingen.");
+  }
+  lines.push(
+    cmp.onlyA.length > 0
+      ? `Nøklar rapportert BERRE av Konstruktør A: ${cmp.onlyA.join(", ")}`
+      : "Nøklar rapportert berre av Konstruktør A: ingen.",
+  );
+  lines.push(
+    cmp.onlyB.length > 0
+      ? `Nøklar rapportert BERRE av Konstruktør B: ${cmp.onlyB.join(", ")}`
+      : "Nøklar rapportert berre av Konstruktør B: ingen.",
+  );
+  return lines.join("\n") + "\n";
+}
+
+const PROMPT_VERSION = "agent_c_v0.3";
 
 export async function POST(request: Request) {
   let locale: Locale = "nb";
@@ -91,6 +138,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // === DETERMINISTISK TALJAMFØRING (kode, ikkje LLM) ===
+    const comparison: ResultComparison = compareResults(
+      (agent_a_output as { results?: Record<string, string> })?.results,
+      (agent_b_output as { results?: Record<string, string> })?.results,
+    );
+    const comparisonBlock = buildComparisonBlock(comparison);
+
     // === BYGG USER MESSAGE ===
     const userMessage = `KONSTRUKTØR A SITT SVAR:
 ${JSON.stringify(agent_a_output, null, 2)}
@@ -98,6 +152,7 @@ ${JSON.stringify(agent_a_output, null, 2)}
 KONSTRUKTØR B SITT SVAR:
 ${JSON.stringify(agent_b_output, null, 2)}
 
+${comparisonBlock}
 Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjekk også intern konsistens i kvar konstruktør. Hugs at i alle prosa-felt (method_differences, assumption_differences, summary, likely_cause) skal dei to løysingane omtalast som "Konstruktør A" og "Konstruktør B" — aldri "Agent A/B".`;
 
     // === KALL CLAUDE ===
@@ -143,6 +198,44 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
       );
     }
 
+    // === DETERMINISTISK OVERSTYRING (kode er fasit for tala) ===
+    // Sett unpaired_keys frå koden — aldri frå LLM-en.
+    parsed.unpaired_keys = {
+      only_a: comparison.onlyA,
+      only_b: comparison.onlyB,
+    };
+    // Bygg oppslag: normalisert nøkkel -> kode-rekna para felt.
+    const pairedByNorm = new Map(
+      comparison.paired.map((p) => [normalizeResultKey(p.key), p]),
+    );
+    const unpairedNorm = new Set(
+      [...comparison.onlyA, ...comparison.onlyB].map(normalizeResultKey),
+    );
+    if (Array.isArray(parsed.numeric_differences)) {
+      parsed.numeric_differences = parsed.numeric_differences
+        // F1: dropp rader for nøklar berre éin konstruktør rapporterte.
+        .filter(
+          (d: { field?: unknown }) =>
+            !unpairedNorm.has(normalizeResultKey(String(d.field ?? ""))),
+        )
+        // F9: overstyr tala med dei kode-rekna verdiane for para nøklar.
+        .map((d: Record<string, unknown>) => {
+          const hit = pairedByNorm.get(
+            normalizeResultKey(String(d.field ?? "")),
+          );
+          if (!hit) return d;
+          return {
+            ...d,
+            agent_a_value: hit.aValue,
+            agent_b_value: hit.bValue,
+            percent_diff:
+              hit.percentDiff === null
+                ? (d.percent_diff ?? null)
+                : Math.round(hit.percentDiff * 10) / 10,
+          };
+        });
+    }
+
     // === LAGRE COMPARISON ===
     let supabase;
     try {
@@ -153,7 +246,9 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
         numeric_differences: parsed.numeric_differences ?? [],
         method_differences: parsed.method_differences ?? [],
         assumption_differences: parsed.assumption_differences ?? [],
-        internal_consistency_issues: parsed.internal_consistency_issues ?? {},
+        internal_consistency_issues: normalizeConsistencyIssues(
+          parsed.internal_consistency_issues,
+        ),
         recommended_status: parsed.recommended_status,
         summary: parsed.summary,
         prompt_version: PROMPT_VERSION,

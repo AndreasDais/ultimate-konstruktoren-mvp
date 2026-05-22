@@ -67,6 +67,8 @@ Deliverablen er det brukaren faktisk ber om. "Finn moment og skjær" → deliver
 
 manglande_verdiar inneheld berre data som trengst for DET SOM ER SPURT OM. Ber brukaren om moment og skjær, og oppgir L og q, manglar ingenting — status er klar. Profil og stålkvalitet er då ikkje "manglande"; dei er irrelevante for det etterspurde.
 
+Det same gjeld kan_ikkje_reknast. Det feltet skal BERRE innehalde storleikar som er DEL AV det brukaren bad om, men som ikkje kan reknast no fordi inndata manglar. Ein kontroll brukaren IKKJE etterspurde (kapasitetskontroll når berre lastkombinasjon er bedt om, SLS når berre ULS er bedt om, vippeknekking når berre moment er bedt om) skal IKKJE stå i kan_ikkje_reknast — han skal ikkje nemnast der i det heile. kan_ikkje_reknast er ikkje ei liste over alt som finst av moglege vidare-berekningar; det er kva av REQUESTEN som står att. Grunnen: kan_ikkje_reknast tel med i fullstendigheits-målinga, og oppgåva skal ikkje straffast for å la vere å rekne noko brukaren aldri spurde om.
+
 Motsett: ber brukaren OGSÅ om utnytting, treng den berekninga profil og stålkvalitet — då er dei reelt manglande, og status blir delvis_klar. Skiljet er kva som vart etterspurt, ikkje kva ei "fullstendig" analyse ville omfatta.
 
 MOTSTRID-DETEKSJON — internt sjølvmotseiande input:
@@ -229,7 +231,7 @@ ARBEIDSFLYT — fyll ut JSON-felta i den rekkefølga dei står i skjemaet under.
 3. antakingar — kva må antakast for å gå vidare? (t.d. "q tolka som qEd", "fritt opplagd antatt") — IKKJE faglege parameterval
 4. manglande_verdiar — kva manglar framleis, av det DET SOM ER SPURT OM treng?
 5. kan_reknast_no — KONKRET kva som faktisk kan reknast med det som er på plass
-6. kan_ikkje_reknast — kva som ikkje kan reknast og kvifor
+6. kan_ikkje_reknast — kva av DET SOM ER SPURT OM som ikkje kan reknast no, og kvifor (manglande inndata). Ikkje ikkje-etterspurde kontrollar.
 7. motstrid — kan dei oppgitte verdiane vere sanne samstundes? Flagg kvar motstrid eksplisitt
 8. tolkings_oppsummering — 1-2 setningar som oppsummerer forståinga
 9. konfidens — kor sikker Tolkar er på TOLKINGA (ikkje på sluttsvaret)
@@ -253,14 +255,14 @@ Produser dette objektet i nøyaktig denne rekkefølga:
   "antakingar": ["q tolka som dimensjonerande last"],
   "manglande_verdiar": ["liste over data som trengst for det som er spurt om"],
   "kan_reknast_no": ["MEd", "VEd"],
-  "kan_ikkje_reknast": ["kapasitetskontroll"],
+  "kan_ikkje_reknast": [],
   "motstrid": ["liste over interne motstrider i input, eller tom array"],
   "tolkings_oppsummering": "1-2 setningar som forklarer kva Tolkar har forstått",
   "konfidens": 0.85,
   "status": "klar | delvis_klar | mangelfull | uklart | relevant_ikkje_stotta | avvist"
 }`;
 
-const PROMPT_VERSION = "input_agent_v0.7";
+const PROMPT_VERSION = "input_agent_v0.8";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
 
