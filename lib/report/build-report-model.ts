@@ -20,12 +20,15 @@ import {
   type ReportModel,
 } from "./report-model";
 import {
+  canonicalResultKey,
   categorizeResultKey,
   cleanReportText,
   compactReportText,
+  displayResultLabel,
   limitText,
   normalizeCalculationStep,
   normalizeReportModel,
+  resultPriorityScore,
   splitValueUnit,
 } from "./normalize-report-model";
 
@@ -107,36 +110,138 @@ function statusTone(value: string | undefined | null): PipelineStatusRow["status
 }
 
 function resultRowsFrom(results: Record<string, string> | undefined): CalculationResultRow[] {
-  return Object.entries(results ?? {}).map(([label, raw]) => {
+  const byCanonical = new Map<string, CalculationResultRow>();
+
+  for (const [sourceLabel, raw] of Object.entries(results ?? {})) {
     const cleanedRaw = compactReportText(raw);
+    if (!cleanedRaw) continue;
+
+    const canonical = canonicalResultKey(sourceLabel);
     const { value, unit } = splitValueUnit(cleanedRaw);
-    const category = categorizeResultKey(label);
-    return { label, value, unit, raw: cleanedRaw, category };
-  });
+    const category = categorizeResultKey(sourceLabel);
+    const row = {
+      label: displayResultLabel(sourceLabel),
+      value,
+      unit,
+      raw: cleanedRaw,
+      category,
+    };
+
+    const existing = byCanonical.get(canonical);
+    if (!existing || resultPriorityScore(sourceLabel) < resultPriorityScore(existing.label)) {
+      byCanonical.set(canonical, row);
+    }
+  }
+
+  return Array.from(byCanonical.values()).sort((a, b) => resultPriorityScore(a.label) - resultPriorityScore(b.label));
 }
 
 function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
-  const priority = { dimensjonerande: 0, input: 1, kontroll: 2, anna: 3 } satisfies Record<KeyResult["category"], number>;
-  return [...rows]
-    .sort((a, b) => priority[a.category] - priority[b.category])
-    .slice(0, 6)
-    .map((row) => ({ ...row }));
+  const byCanonical = new Map<string, CalculationResultRow>();
+  for (const row of rows) {
+    const canonical = canonicalResultKey(row.label);
+    if (!byCanonical.has(canonical)) byCanonical.set(canonical, row);
+  }
+
+  const preferredCoverOrder = [
+    "eddim",
+    "med",
+    "ved",
+    "ned",
+    "qed",
+    "l",
+    "qk",
+    "gk",
+    "sk",
+  ];
+
+  const selected: KeyResult[] = [];
+  const seen = new Set<string>();
+
+  for (const canonical of preferredCoverOrder) {
+    const row = byCanonical.get(canonical);
+    if (!row || seen.has(canonical)) continue;
+    seen.add(canonical);
+    selected.push({ ...row });
+    if (selected.length >= 4) return selected;
+  }
+
+  const fallbacks = rows
+    .filter((row) => row.category !== "anna")
+    .filter((row) => {
+      const canonical = canonicalResultKey(row.label);
+      // Cover should communicate main engineering results and basic input, not
+      // internal comparison variants or partial-/combination factors.
+      if (/^(psi0|gamma)/.test(canonical)) return false;
+      if (/^ed610/.test(canonical) && byCanonical.has("eddim")) return false;
+      return !seen.has(canonical);
+    })
+    .sort((a, b) => resultPriorityScore(a.label) - resultPriorityScore(b.label));
+
+  for (const row of fallbacks) {
+    const canonical = canonicalResultKey(row.label);
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    selected.push({ ...row });
+    if (selected.length >= 4) break;
+  }
+
+  return selected.length > 0 ? selected : rows.slice(0, 4).map((row) => ({ ...row }));
+}
+
+function numericValue(raw: string): number | null {
+  const token = raw.replace(/\s/g, "").match(/-?[\d.,]+/);
+  if (!token) return null;
+  const parsed = Number.parseFloat(token[0].replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function valuesMatch(a: string, b: string): boolean {
+  if (a === "-" || b === "-") return false;
+  if (a === b) return true;
+  const aNum = numericValue(a);
+  const bNum = numericValue(b);
+  return aNum !== null && bNum !== null && Math.abs(aNum - bNum) < 0.005;
 }
 
 function buildComparisonRows(data: UpstreamReportData): ComparisonRow[] {
   const resultsA = data.agentA.structured_output.results ?? {};
   const resultsB = data.agentB.structured_output.results ?? {};
-  const labels = Array.from(new Set([...Object.keys(resultsA), ...Object.keys(resultsB)]));
-  return labels.map((label) => {
-    const a = compactReportText(resultsA[label] ?? "-");
-    const b = compactReportText(resultsB[label] ?? "-");
-    return {
-      label,
-      constructorA: a,
-      constructorB: b,
-      match: a !== "-" && b !== "-" && a === b,
-    };
-  });
+  const groups = new Map<string, { label: string; a: string; b: string; score: number }>();
+
+  for (const [sourceLabel, raw] of Object.entries(resultsA)) {
+    const canonical = canonicalResultKey(sourceLabel);
+    const current = groups.get(canonical);
+    const score = resultPriorityScore(sourceLabel);
+    groups.set(canonical, {
+      label: current && current.score < score ? current.label : displayResultLabel(sourceLabel),
+      a: compactReportText(raw),
+      b: current?.b ?? "-",
+      score: Math.min(score, current?.score ?? score),
+    });
+  }
+
+  for (const [sourceLabel, raw] of Object.entries(resultsB)) {
+    const canonical = canonicalResultKey(sourceLabel);
+    const current = groups.get(canonical);
+    const score = resultPriorityScore(sourceLabel);
+    groups.set(canonical, {
+      label: current && current.score < score ? current.label : displayResultLabel(sourceLabel),
+      a: current?.a ?? "-",
+      b: compactReportText(raw),
+      score: Math.min(score, current?.score ?? score),
+    });
+  }
+
+  return Array.from(groups.values())
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 12)
+    .map((row) => ({
+      label: row.label,
+      constructorA: row.a || "-",
+      constructorB: row.b || "-",
+      match: valuesMatch(row.a || "-", row.b || "-"),
+    }));
 }
 
 function buildPipelineStatus(data: UpstreamReportData, locale: Locale): PipelineStatusRow[] {
@@ -173,11 +278,8 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
   const resultRows = resultRowsFrom(primary.structured_output.results);
   const keyResults = keyResultsFrom(resultRows);
   const tillit = data.report.tillit_score === null || data.report.tillit_score === undefined
-    ? { label: LABELS.ukjent[locale], tone: "unknown" }
-    : (() => {
-        const visuals = tillitVisuals(data.report.tillit_score, locale);
-        return { label: visuals.label, tone: visuals.labelKey };
-      })();
+    ? { label: LABELS.ukjent[locale], labelKey: "unknown" }
+    : tillitVisuals(data.report.tillit_score, locale);
   const decisionCode = decisionStatusCode(data);
   const decision = decisionStatusLabel(decisionCode, locale) ?? LABELS.ukjent[locale];
   const comparisonStatus = data.comparison?.match_status ?? "unknown";
@@ -237,7 +339,7 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     trust: {
       score: data.report.tillit_score ?? null,
       label: tillit.label,
-      tone: tillit.tone,
+      tone: tillit.labelKey,
       breakdown: data.report.tillit_breakdown ?? null,
     },
     conclusion: cleanReportText(data.report.conclusion),

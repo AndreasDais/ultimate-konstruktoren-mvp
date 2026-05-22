@@ -440,6 +440,8 @@ function formulaToPlainText(value: string): string {
     .replace(/_\{([^{}]+)\}/g, "_$1")
     .replace(/\^\{2\}|\^2/g, "²")
     .replace(/\^\{3\}|\^3/g, "³")
+    .replace(/\\quad/g, "  ")
+    .replace(/\\rightarrow|\\to|\\Rightarrow/g, "→")
     .replace(/\\cdot/g, "·")
     .replace(/\\times/g, "×");
 
@@ -468,10 +470,12 @@ function formulaLooksDuplicatedInProse(prose: string, formula: string): boolean 
   if (proseNorm.includes(formulaNorm)) return true;
 
   // If the prose already contains several calculation lines, the formula block
-  // is usually just the same math rendered as LaTeX. Avoid duplicate Word boxes.
+  // is usually just the same math rendered as LaTeX. Word is primarily a
+  // readable/redigerbart fagnotat, so avoid duplicate equation boxes here.
   const proseEquationCount = (prose.match(/=/g) ?? []).length;
+  if (proseEquationCount >= 2) return true;
   const formulaLead = formulaNorm.split("=")[0]?.trim();
-  return proseEquationCount >= 2 && !!formulaLead && proseNorm.includes(formulaLead);
+  return !!formulaLead && proseNorm.includes(formulaLead);
 }
 
 function calculationSteps(model: ReportModel): DocChild[] {
@@ -523,7 +527,9 @@ function bulletCallout(title: string, items: string[], kind: "warning" | "info" 
 
 function comparisonTable(model: ReportModel): Table | null {
   const locale = model.meta.locale;
-  const rows = model.control.comparisonRows;
+  // Word should be a readable control summary, not a raw dump of every
+  // intermediate variable. The full trace belongs in the online pipeline.
+  const rows = model.control.comparisonRows.slice(0, 8);
   if (rows.length === 0) return null;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -702,16 +708,24 @@ export async function renderReportModelDocx(
   children.push(sectionHeading("04", LABELS.assessment[locale]), p(model.assessment.professionalAssessment));
 
   const limitations = bulletCallout(LABELS.limitations[locale], model.assessment.limitations, "info");
-  if (limitations) children.push(subHeading(LABELS.limitations[locale]), limitations);
+  if (limitations) children.push(limitations);
 
   const warnings = bulletCallout(LABELS.warnings[locale], model.assessment.warnings, "warning");
-  if (warnings) children.push(subHeading(LABELS.warnings[locale]), warnings);
+  if (warnings) children.push(warnings);
 
   children.push(sectionHeading("05", LABELS.control[locale]));
   if (model.control.comparisonText) children.push(p(model.control.comparisonText, { font: FONT_SANS, size: 19 }));
 
   const compare = comparisonTable(model);
-  if (compare) children.push(subHeading(LABELS.constructorControl[locale]), compare);
+  if (compare) {
+    children.push(subHeading(LABELS.constructorControl[locale]), compare);
+    if (model.control.comparisonRows.length > 8) {
+      children.push(p(
+        `Tabellen viser de viktigste kontrollpunktene. Full variabel-/pipeline-sporing finnes i nettversjonen: ${model.meta.reportUrl}`,
+        { font: FONT_SANS, size: 17, color: COLOR_MUTED, after: 180 },
+      ));
+    }
+  }
 
   children.push(subHeading(LABELS.decision[locale]), decisionBox(model));
   children.push(subHeading(LABELS.conclusion[locale]), p(model.conclusion));

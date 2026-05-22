@@ -549,6 +549,23 @@ export default function RapportPage() {
   const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
+  // Sprint 6: bruk ReportModel som kjelde for dei delane som er mest
+  // sårbare i PDF/Word: resultat- og kontrolltabellar. Dette gir stabile,
+  // normaliserte labels (E_d,dim, ψ_0,q, γ_G,6.10a) i staden for rå
+  // agent-keys/renderMathKey-output som kan bryte i print.
+  const reportDimRows = reportModel.calculation.resultRows.filter(
+    (row) => row.category === "dimensjonerande",
+  );
+  const reportInputRows = reportModel.calculation.resultRows.filter(
+    (row) => row.category === "input",
+  );
+  const reportOtherRows = reportModel.calculation.resultRows.filter(
+    (row) => row.category !== "dimensjonerande" && row.category !== "input",
+  );
+  const reportControlRows = reportModel.control.comparisonRows.slice(0, 8);
+  const hasReportControlRows = reportControlRows.length > 0;
+  const reportControlHasAvvik = reportControlRows.some((row) => !row.match);
+
   // === TOC entries — fire konsoliderte seksjonar ===
   const tocEntries: Array<{ id: string; label: string }> = [
     { id: "samandrag", label: RP_LABELS.samandrag[locale] },
@@ -1027,7 +1044,7 @@ export default function RapportPage() {
                 <div className="rapport-cover-results__grid">
                   {reportModel.keyResults.slice(0, 4).map((result) => (
                     <div key={`${result.label}-${result.raw}`} className="rapport-cover-results__item">
-                      <div className="rapport-cover-results__key">{renderMathKey(result.label)}</div>
+                      <div className="rapport-cover-results__key uk-mono">{result.label}</div>
                       <div className="rapport-cover-results__value">
                         <span>{result.value || result.raw || "-"}</span>
                         {result.unit && <small>{result.unit}</small>}
@@ -1177,118 +1194,82 @@ export default function RapportPage() {
                     </div>
                     <table className="rapport-results-table">
                       <tbody>
-                        {dimKeys.length > 0 && (
+                        {reportDimRows.length > 0 && (
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--dim">
-                              <td
-                                colSpan={2}
-                                className="rapport-results-table__band-cell"
-                              >
+                              <td colSpan={2} className="rapport-results-table__band-cell">
                                 {RP_LABELS.bandDimensjonerande[locale]}
                               </td>
                             </tr>
-                            {dimKeys.map((k) => {
-                              const { number, unit } = splitNumberUnit(
-                                resultsObj[k] ?? "",
-                              );
-                              return (
-                                <tr
-                                  key={k}
-                                  className="rapport-results-table__row rapport-results-table__row--dim"
-                                >
-                                  <td className="rapport-results-table__key">
-                                    {renderMathKey(k)}
-                                  </td>
-                                  <td className="rapport-results-table__value">
-                                    <span className="rapport-results-table__num">
-                                      {number}
+                            {reportDimRows.map((row) => (
+                              <tr key={`dim-${row.label}`} className="rapport-results-table__row rapport-results-table__row--dim">
+                                <td className="rapport-results-table__key rapport-results-table__key--plain uk-mono">
+                                  {row.label}
+                                </td>
+                                <td className="rapport-results-table__value">
+                                  <span className="rapport-results-table__num">
+                                    {row.value || row.raw || "-"}
+                                  </span>
+                                  {row.unit && (
+                                    <span className="rapport-results-table__unit">
+                                      {" "}{row.unit}
                                     </span>
-                                    {unit && (
-                                      <span className="rapport-results-table__unit">
-                                        {" "}
-                                        {unit}
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
                           </>
                         )}
-                        {bruksgrenseKeys.length > 0 && (
-                          <>
-                            <tr className="rapport-results-table__band rapport-results-table__band--bruksgrense">
-                              <td
-                                colSpan={2}
-                                className="rapport-results-table__band-cell"
-                              >
-                                {RP_LABELS.bandBruksgrense[locale]}
-                              </td>
-                            </tr>
-                            {bruksgrenseKeys.map((k) => {
-                              const { number, unit } = splitNumberUnit(
-                                resultsObj[k] ?? "",
-                              );
-                              return (
-                                <tr
-                                  key={k}
-                                  className="rapport-results-table__row rapport-results-table__row--bruksgrense"
-                                >
-                                  <td className="rapport-results-table__key">
-                                    {renderMathKey(k)}
-                                  </td>
-                                  <td className="rapport-results-table__value">
-                                    <span className="rapport-results-table__num">
-                                      {number}
-                                    </span>
-                                    {unit && (
-                                      <span className="rapport-results-table__unit">
-                                        {" "}
-                                        {unit}
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </>
-                        )}
-                        {allInputBandKeys.length > 0 && (
+                        {reportInputRows.length > 0 && (
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--input">
-                              <td
-                                colSpan={2}
-                                className="rapport-results-table__band-cell"
-                              >
+                              <td colSpan={2} className="rapport-results-table__band-cell">
                                 {RP_LABELS.bandInputGeometri[locale]}
                               </td>
                             </tr>
-                            {allInputBandKeys.map((k) => {
-                              const { number, unit } = splitNumberUnit(
-                                resultsObj[k] ?? "",
-                              );
-                              return (
-                                <tr
-                                  key={k}
-                                  className="rapport-results-table__row"
-                                >
-                                  <td className="rapport-results-table__key">
-                                    {renderMathKey(k)}
-                                  </td>
-                                  <td className="rapport-results-table__value">
-                                    <span className="rapport-results-table__num">
-                                      {number}
+                            {reportInputRows.map((row) => (
+                              <tr key={`input-${row.label}`} className="rapport-results-table__row">
+                                <td className="rapport-results-table__key rapport-results-table__key--plain uk-mono">
+                                  {row.label}
+                                </td>
+                                <td className="rapport-results-table__value">
+                                  <span className="rapport-results-table__num">
+                                    {row.value || row.raw || "-"}
+                                  </span>
+                                  {row.unit && (
+                                    <span className="rapport-results-table__unit">
+                                      {" "}{row.unit}
                                     </span>
-                                    {unit && (
-                                      <span className="rapport-results-table__unit">
-                                        {" "}
-                                        {unit}
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        )}
+                        {reportOtherRows.length > 0 && (
+                          <>
+                            <tr className="rapport-results-table__band rapport-results-table__band--input">
+                              <td colSpan={2} className="rapport-results-table__band-cell">
+                                {locale === "nn" ? "ANNA" : "ØVRIG"}
+                              </td>
+                            </tr>
+                            {reportOtherRows.map((row) => (
+                              <tr key={`other-${row.label}`} className="rapport-results-table__row">
+                                <td className="rapport-results-table__key rapport-results-table__key--plain uk-mono">
+                                  {row.label}
+                                </td>
+                                <td className="rapport-results-table__value">
+                                  <span className="rapport-results-table__num">
+                                    {row.value || row.raw || "-"}
+                                  </span>
+                                  {row.unit && (
+                                    <span className="rapport-results-table__unit">
+                                      {" "}{row.unit}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
                           </>
                         )}
                       </tbody>
@@ -1512,10 +1493,10 @@ export default function RapportPage() {
               </div>
               <p className="rapport-prose">
                 {RP_LABELS.berekningaLoyst[locale]}
-                {hasVerifikasjon ? (
+                {hasReportControlRows ? (
                   <>
                     {" "}
-                    {hasAvvik
+                    {reportControlHasAvvik
                       ? RP_LABELS.kontrollMedAvvikKort[locale]
                       : RP_LABELS.kontrollSammeResultatKort[locale]}
                   </>
@@ -1528,7 +1509,7 @@ export default function RapportPage() {
                 )}
               </p>
 
-              {hasVerifikasjon && (
+              {hasReportControlRows && (
                 <table className="rapport-verifikasjon-table">
                   <thead>
                     <tr>
@@ -1547,52 +1528,38 @@ export default function RapportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {verifikasjonRows.map((row) => (
+                    {reportControlRows.map((row) => (
                       <tr
-                        key={row.key}
+                        key={row.label}
                         className="rapport-verifikasjon-table__row"
                       >
-                        <td className="rapport-verifikasjon-table__key">
-                          {renderMathKey(row.key)}
+                        <td className="rapport-verifikasjon-table__key rapport-verifikasjon-table__key--plain uk-mono">
+                          {row.label}
                         </td>
                         <td className="rapport-verifikasjon-table__val">
-                          {row.valueA}
+                          {row.constructorA}
                         </td>
                         <td className="rapport-verifikasjon-table__val">
-                          {row.valueB ?? (
+                          {row.constructorB || (
                             <span className="rapport-verifikasjon-table__missing">
                               {RP_LABELS.verifikasjonManglar[locale]}
                             </span>
                           )}
                         </td>
                         <td className="rapport-verifikasjon-table__match">
-                          {row.samsvar === "match" && (
+                          {row.match ? (
                             <span
                               className="rapport-verifikasjon-table__check"
                               aria-label={RP_LABELS.verifikasjonSamsvarAria[locale]}
                             >
                               ✓
                             </span>
-                          )}
-                          {row.samsvar === "avvik" && (
-                            <span
-                              className="rapport-verifikasjon-table__avvik"
-                              aria-label={RP_LABELS.verifikasjonAvvikAria[locale]}
-                            >
-                              {typeof row.avvikPct === "number"
-                                ? `${row.avvikPct.toLocaleString(
-                                    locale === "nn" ? "nn-NO" : "nb-NO",
-                                    { maximumFractionDigits: 1 },
-                                  )} %`
-                                : RP_LABELS.verifikasjonAvvikKort[locale]}
-                            </span>
-                          )}
-                          {row.samsvar === "ukjent" && (
+                          ) : (
                             <span
                               className="rapport-verifikasjon-table__nomatch"
                               aria-label={RP_LABELS.verifikasjonUkjentAria[locale]}
                             >
-                              —
+                              –
                             </span>
                           )}
                         </td>

@@ -4320,3 +4320,119 @@
     page-break-inside: avoid !important;
   }
 }
+
+/* =================================================================
+   Report Engine v4 Sprint 4 — label hygiene + less squeezed cover.
+   The ReportModel now supplies plain technical labels; keep the cover
+   list readable in PDF instead of forcing table-like columns.
+   ================================================================= */
+@media print {
+  .rapport-cover-results__grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  .rapport-cover-results__item {
+    padding: 1.55mm 0 !important;
+  }
+
+  .rapport-cover-results__key {
+    font-family: var(--font-mono) !important;
+    font-size: 8pt !important;
+    letter-spacing: 0.01em !important;
+    white-space: normal !important;
+  }
+
+  .rapport-cover-results__value {
+    max-width: 44mm !important;
+    justify-content: flex-end !important;
+    text-align: right !important;
+  }
+
+  .rapport-verifikasjon-table {
+    font-size: 7.4pt !important;
+  }
+
+  .rapport-verifikasjon-table th,
+  .rapport-verifikasjon-table td {
+    padding: 1.6mm 1.5mm !important;
+  }
+}
+
+/* =================================================================
+   Report Engine v4 Sprint 5 — final-page hygiene.
+   The cover already carries the QR code + pipeline handoff. In print,
+   the repeated footer could become an orphan page when the signature
+   block ended near the bottom of the previous page. Hide that repeated
+   footer in PDF so the report ends cleanly at control/signature.
+   ================================================================= */
+@media print {
+  .rapport-footer {
+    display: none !important;
+  }
+
+  .rapport-section:last-of-type,
+  .rapport-signatur-grid {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Sprint 6 — ReportModel labels in PDF/print.
+   These labels are already normalized (E_d,dim, ψ_0,q, γ_G,6.10a), so do not
+   let browser print split them into isolated subscript fragments. */
+.rapport-results-table__key--plain,
+.rapport-verifikasjon-table__key--plain {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+@media print {
+  .rapport-results-table,
+  .rapport-verifikasjon-table {
+    table-layout: auto !important;
+  }
+
+  .rapport-results-table__key--plain,
+  .rapport-verifikasjon-table__key--plain {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+  }
+}
+
+/* =================================================================
+   Report Engine v4 / Sprint 7 — final print rhythm + notation polish
+   - keep the cover as its own deliberate first page in PDF
+   - avoid raw technical notation in generated prose via ReportModel
+   ================================================================= */
+@media print {
+  .rapport-forside + .rapport-section {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .rapport-cover-results__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rapport-cover-results__item {
+    grid-template-columns: 37mm minmax(0, 1fr) !important;
+  }
+
+  .rapport-cover-results__value {
+    justify-self: end !important;
+    text-align: right !important;
+  }
+
+  .rapport-results-table td:first-child,
+  .rapport-verifikasjon-table td:first-child {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rapport-verifikasjon-table {
+    font-size: 8.9pt !important;
+  }
+}

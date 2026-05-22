@@ -71,6 +71,69 @@ export function splitChipText(raw: string): { text: string; body?: string } {
   return { text: s };
 }
 
+// === FIKS 11 (F15): kryss-konstruktør nær-dedup av advarsler ================
+//
+// Verbatim-dedupen i steg 3 fangar berre identisk ordlyd. Når Konstruktør A
+// og B uavhengig reiser SAME åtvaring med ulik formulering (same faktum, ulik
+// setningsbygnad), slepp begge gjennom og same åtvaring blir vist to gonger i
+// «Antakingar & åtvaringar»-gruppa på Resultat-sida (observert i A2-køyringa).
+//
+// Vi måler token-overlapp (Jaccard) mellom ein B-advarsel og kvar alt-behalden
+// A-advarsel. Ligg overlappen >= WARNING_NEAR_DUP_THRESHOLD, blir B-varianten
+// hoppa over og A si formulering står att (A blir iterert først → konsistent
+// med at den kanoniske rapporten alt er A-only).
+//
+// Heuristikken er medvite konservativ og deterministisk:
+//  - berre kryss A↔B. To liknande advarsler frå SAME konstruktør er truleg
+//    meint og blir aldri fuzzy-kollapsa — berre verbatim.
+//  - korte advarsler (< WARNING_NEAR_DUP_MIN_TOKENS token) blir aldri fuzzy-
+//    matcha; for lite tekst til trygt signal. Verbatim-dedupen dekkjer dei.
+//  - terskelen er kalibrert mot A2-køyringa og pinna i kontrollor-chips.test.ts.
+const WARNING_NEAR_DUP_THRESHOLD = 0.5;
+const WARNING_NEAR_DUP_MIN_TOKENS = 6;
+
+// Korte norske funksjonsord utan fagleg signal. Negasjon ("ikke"/"ikkje") er
+// MEDVITE halden — ho ber meining i ein åtvaring.
+const WARNING_STOPWORDS = new Set<string>([
+  "er", "i", "med", "som", "at", "og", "det", "å", "for", "av", "her",
+  "den", "ein", "eit", "en", "et", "skal", "blir", "vart", "har",
+]);
+
+// Normaliser ein advarsel til eit sett av meiningsberande token: NFC, små
+// bokstavar, alt som ikkje er bokstav/tal blir skiljeteikn, stoppord vekk.
+export function warningTokenSet(raw: string): Set<string> {
+  return new Set(
+    raw
+      .normalize("NFC")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+      .split(/\s+/)
+      .filter((t) => t.length > 0 && !WARNING_STOPWORDS.has(t)),
+  );
+}
+
+// Jaccard-likskap mellom to token-sett: |snitt| / |union|, i [0, 1].
+export function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const t of a) if (b.has(t)) intersection += 1;
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+// Er kandidat-advarselen ein nær-duplikat av ein alt-behalden advarsel?
+// Begge må ha nok token til trygt signal før Jaccard-terskelen gjeld.
+function isNearDuplicateWarning(candidate: Set<string>, kept: Set<string>): boolean {
+  if (
+    candidate.size < WARNING_NEAR_DUP_MIN_TOKENS ||
+    kept.size < WARNING_NEAR_DUP_MIN_TOKENS
+  ) {
+    return false;
+  }
+  return jaccardSimilarity(candidate, kept) >= WARNING_NEAR_DUP_THRESHOLD;
+}
+
 export function buildKontrollorChips(
   comparison: ComparisonResult | null,
   calculationA: CalculationResult | null,
@@ -142,23 +205,46 @@ export function buildKontrollorChips(
     }
   }
 
-  // 3) Warnings frå begge konstruktørar → warn-chip
-  // Dedupe på trim+lowercase for å fange "Bør verifiserast" / "bør verifiserast".
+  // 3) Warnings frå begge konstruktørar → warn-chip.
+  //    Verbatim-dedup (trim+lowercase) fangar identisk ordlyd. FIKS 11 (F15)
+  //    legg til kryss-A/B nær-dedup for ulikt formulerte, men like advarsler.
   const seenWarnings = new Set<string>();
-  const allWarnings = [...(calculationA?.warnings ?? []), ...(calculationB?.warnings ?? [])];
-  for (const w of allWarnings) {
-    const t = w.trim();
-    if (!t) continue;
-    const norm = t.toLowerCase().replace(/\s+/g, " ");
-    if (seenWarnings.has(norm)) continue;
-    seenWarnings.add(norm);
+  const keptATokenSets: Set<string>[] = [];
+
+  const pushWarningChip = (w: string) => {
     const split = splitChipText(w);
-    if (!split.text) continue;
+    if (!split.text) return;
     chips.push({
       ...split,
       tone: "warn",
       prefix: "⚠",
     });
+  };
+
+  // 3a) Konstruktør A — verbatim-dedup. Hugs token-sett for nær-dedup i 3b.
+  for (const w of calculationA?.warnings ?? []) {
+    const t = w.trim();
+    if (!t) continue;
+    const norm = t.toLowerCase().replace(/\s+/g, " ");
+    if (seenWarnings.has(norm)) continue;
+    seenWarnings.add(norm);
+    keptATokenSets.push(warningTokenSet(t));
+    pushWarningChip(w);
+  }
+
+  // 3b) Konstruktør B — verbatim-dedup + nær-dedup mot behaldne A-advarsler.
+  //     Nær-dedup gjeld berre kryss A↔B; B mot B er framleis verbatim-only.
+  for (const w of calculationB?.warnings ?? []) {
+    const t = w.trim();
+    if (!t) continue;
+    const norm = t.toLowerCase().replace(/\s+/g, " ");
+    if (seenWarnings.has(norm)) continue;
+    const tokens = warningTokenSet(t);
+    if (keptATokenSets.some((aTokens) => isNearDuplicateWarning(tokens, aTokens))) {
+      continue;
+    }
+    seenWarnings.add(norm);
+    pushWarningChip(w);
   }
 
   // 4) Manual review required → neutral-chip
