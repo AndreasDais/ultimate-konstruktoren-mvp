@@ -7,6 +7,8 @@ import {
   type ResultComparison,
 } from "@/lib/compare/result-compare";
 import { normalizeConsistencyIssues } from "@/lib/compare/consistency-issues";
+import { PIPELINE_MODEL } from "@/lib/models";
+import { recordStepMetric } from "@/lib/step-metrics";
 
 const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -161,8 +163,9 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
       maxRetries: 5,
     });
 
+    const t0 = Date.now();
     const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: PIPELINE_MODEL,
       max_tokens: 8192,
       system: [
         {
@@ -172,6 +175,15 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
         },
       ],
       messages: [{ role: "user", content: userMessage }],
+    });
+
+    await recordStepMetric({
+      runId: run_id,
+      stepName: "samanliknar",
+      message,
+      promptVersion: PROMPT_VERSION,
+      latencyMs: Date.now() - t0,
+      ok: message.stop_reason !== "max_tokens",
     });
 
     const responseText = message.content

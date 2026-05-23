@@ -41,7 +41,15 @@ async function getCurrentUserId(): Promise<string | null> {
 
 export async function POST(request: Request) {
   try {
-    const { request_id, calculation_type } = await request.json();
+    const { request_id, calculation_type, run_type: rawRunType } =
+      await request.json();
+
+    // run_type lèt test-agenten (steg 4) opprette golden-køyringar.
+    // Ukjend / utelaten verdi => "live" (defensivt — same åtferd som før).
+    const run_type =
+      rawRunType === "golden" || rawRunType === "discovery"
+        ? rawRunType
+        : "live";
 
     if (!request_id) {
       return Response.json(
@@ -74,6 +82,7 @@ export async function POST(request: Request) {
         request_id,
         calculation_type: calculation_type ?? null,
         run_status: "running",
+        run_type,
         agent_package_version: "agents_v0.2",
         started_at: new Date().toISOString(),
         user_id: userId,

@@ -5,6 +5,8 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 import { formatAnthropicError } from "@/lib/anthropic-errors";
+import { PIPELINE_MODEL } from "@/lib/models";
+import { recordStepMetric } from "@/lib/step-metrics";
 
 const SYSTEM_PROMPT = `Du er Tolkar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -452,8 +454,9 @@ async function callTolkar(args: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any = [{ role: "user", content: args.content }];
 
+  const t0 = Date.now();
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model: PIPELINE_MODEL,
     max_tokens: 2048,
     temperature: 0.3,
     system: wrapPromptWithLocale(SYSTEM_PROMPT, args.locale),
@@ -465,6 +468,7 @@ async function callTolkar(args: {
   }
 
   const message = await stream.finalMessage();
+  const latencyMs = Date.now() - t0;
 
   const responseText = message.content
     .filter((block) => block.type === "text")
@@ -531,6 +535,15 @@ async function callTolkar(args: {
       console.error("Klarte ikkje lagre request:", requestError);
     } else if (requestData) {
       requestId = requestData.id;
+
+      await recordStepMetric({
+        requestId,
+        stepName: "tolkar",
+        message,
+        promptVersion: PROMPT_VERSION,
+        latencyMs,
+        ok: message.stop_reason !== "max_tokens",
+      });
 
       const { error: reviewError } = await supabase
         .from("input_reviews")

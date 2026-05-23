@@ -8,6 +8,8 @@ import {
 } from "@/lib/profiles/extract";
 import { buildNaBasisPromptBlock, type SteelGrade } from "@/lib/profiles/na-basis";
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
+import { PIPELINE_MODEL } from "@/lib/models";
+import { recordStepMetric } from "@/lib/step-metrics";
 
 const SYSTEM_PROMPT = `<role>
 Du er Konstruktør B, ein UAVHENGIG KONTROLL-LØYSAR for Pilar — eit AI-basert verktøy for norsk byggfagleg praksis.
@@ -286,8 +288,9 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
+  const t0 = Date.now();
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model: PIPELINE_MODEL,
     max_tokens: 32768,
     thinking: {
       type: "enabled",
@@ -308,6 +311,15 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
   }
 
   const message = await stream.finalMessage();
+
+  await recordStepMetric({
+    runId: run_id,
+    stepName: "konstruktor_b",
+    message,
+    promptVersion: PROMPT_VERSION,
+    latencyMs: Date.now() - t0,
+    ok: message.stop_reason !== "max_tokens",
+  });
 
   const responseText = message.content
     .filter((block) => block.type === "text")

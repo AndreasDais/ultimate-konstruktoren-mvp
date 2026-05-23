@@ -11,9 +11,11 @@ import {
 import { coerceLocale, wrapPromptWithLocale, type Locale } from "@/lib/locale";
 import { formatAnthropicError } from "@/lib/anthropic-errors";
 import { getSupabase } from "@/lib/supabase";
+import { PIPELINE_MODEL } from "@/lib/models";
+import { recordStepMetric } from "@/lib/step-metrics";
 
 const PROMPT_VERSION = "agent_e_v0.3";
-const MODEL = "claude-sonnet-4-6";
+const MODEL = PIPELINE_MODEL;
 
 const SYSTEM_PROMPT = `<role>
 Du er Rapportør for Pilar — eit AI-basert verktøy for norsk byggfagleg praksis.
@@ -284,6 +286,7 @@ async function handleCache(
  * streaming. Returnerer ferdig parsed objekt eller kastar ein feil.
  */
 async function callRapportor(
+  run_id: string,
   upstream: {
     run: { request: { raw_text: string } };
     inputReview: unknown;
@@ -332,6 +335,7 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
   let thinkingStartedNotified = false;
   let textStartedNotified = false;
 
+  const t0 = Date.now();
   const stream = anthropic.messages.stream({
     model: MODEL,
     max_tokens: 4000,
@@ -372,6 +376,15 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
 
   // Vent til streaming er ferdig og hent final-meldinga
   const finalMessage = await stream.finalMessage();
+
+  await recordStepMetric({
+    runId: run_id,
+    stepName: "rapportor",
+    message: finalMessage,
+    promptVersion: PROMPT_VERSION,
+    latencyMs: Date.now() - t0,
+    ok: finalMessage.stop_reason !== "max_tokens",
+  });
 
   // finalMessage gjev oss alle content-blokker — plukk text-blokken om vi
   // ikkje fekk text gjennom delta-loopen (defensiv)
@@ -457,7 +470,7 @@ export async function POST(request: Request) {
             }
 
             // Generer ny via streaming Claude-call
-            const parsed = await callRapportor(upstream, locale, {
+            const parsed = await callRapportor(run_id, upstream, locale, {
               onThinkingStart: () => send("thinking_start", {}),
               onTextStart: () => send("text_start", {}),
               onTextDelta: (delta) => send("delta", { text: delta }),
@@ -547,7 +560,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const parsed = await callRapportor(upstream, locale);
+    const parsed = await callRapportor(run_id, upstream, locale);
 
     const documentId = `PILAR-${run_id.split("-")[0].toUpperCase()}`;
     const tillit = computeTillitFor(
