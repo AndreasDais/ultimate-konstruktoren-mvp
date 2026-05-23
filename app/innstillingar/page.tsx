@@ -78,7 +78,7 @@ export default async function InnstillingarPage() {
   if (!user) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <p className="text-neutral-600">{INNSTILLINGAR_LABELS.maVereInnlogga[locale]}</p>
+        <p style={{ color: "var(--fg-muted)" }}>{INNSTILLINGAR_LABELS.maVereInnlogga[locale]}</p>
       </main>
     );
   }
@@ -87,14 +87,14 @@ export default async function InnstillingarPage() {
     <main className="flex-1 px-4 py-8 md:py-12">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--fg-muted)" }}>
             {INNSTILLINGAR_LABELS.innstillingar[locale]}
           </p>
-          <h1 className="text-3xl font-semibold text-neutral-900">{INNSTILLINGAR_LABELS.konto[locale]}</h1>
+          <h1 className="text-3xl font-semibold" style={{ color: "var(--fg)" }}>{INNSTILLINGAR_LABELS.konto[locale]}</h1>
         </div>
 
-        <section className="rounded-lg border border-neutral-200 bg-white p-6 mb-4">
-          <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
+        <section className="uk-card p-6 mb-4">
+          <h2 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: "var(--fg-muted)" }}>
             {INNSTILLINGAR_LABELS.kontoinformasjon[locale]}
           </h2>
           <dl className="space-y-3">
@@ -104,37 +104,37 @@ export default async function InnstillingarPage() {
           </dl>
         </section>
 
-        <section className="rounded-lg border border-neutral-200 bg-white p-6 mb-4">
-          <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
+        <section className="uk-card p-6 mb-4">
+          <h2 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: "var(--fg-muted)" }}>
             {INNSTILLINGAR_LABELS.pilotStatus[locale]}
           </h2>
-          <p className="text-sm text-neutral-700 leading-relaxed">
+          <p className="text-sm leading-relaxed" style={{ color: "var(--fg-2)" }}>
             {INNSTILLINGAR_LABELS.pilotP1[locale]}
           </p>
-          <p className="text-sm text-neutral-700 leading-relaxed mt-3">
+          <p className="text-sm leading-relaxed mt-3" style={{ color: "var(--fg-2)" }}>
             {INNSTILLINGAR_LABELS.pilotP2[locale]}
           </p>
         </section>
 
-        <section className="rounded-lg border border-neutral-200 bg-white p-6">
-          <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
+        <section className="uk-card p-6">
+          <h2 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: "var(--fg-muted)" }}>
             {INNSTILLINGAR_LABELS.kontoHandlingar[locale]}
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               href="/mine"
-              className="inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="uk-btn"
             >
               {INNSTILLINGAR_LABELS.saMineBerekningar[locale]}
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-md bg-neutral-900 text-white px-4 py-2 text-sm font-medium hover:bg-neutral-800 transition-colors"
+              className="uk-btn uk-btn--primary"
             >
               {INNSTILLINGAR_LABELS.nyBerekning[locale]}
             </Link>
           </div>
-          <p className="text-xs text-neutral-500 mt-4">
+          <p className="text-xs mt-4" style={{ color: "var(--fg-muted)" }}>
             {INNSTILLINGAR_LABELS.slettKontoInfo[locale]}
           </p>
         </section>
@@ -152,8 +152,8 @@ function Row({
 }) {
   return (
     <div className="flex justify-between items-baseline gap-4">
-      <dt className="text-sm text-neutral-600">{label}</dt>
-      <dd className="text-sm text-neutral-900 text-right">{value}</dd>
+      <dt className="text-sm" style={{ color: "var(--fg-muted)" }}>{label}</dt>
+      <dd className="text-sm text-right" style={{ color: "var(--fg)" }}>{value}</dd>
     </div>
   );
 }

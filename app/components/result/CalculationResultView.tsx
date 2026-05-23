@@ -162,8 +162,8 @@ export function CalculationResultView(props: CalculationResultViewProps) {
             // Per-profil styling for indikator-chip
             const profileChipStyle: Record<Profile, { bg: string; color: string; label: string; forklaring: string }> = {
               trygg: {
-                bg: "rgba(79, 139, 110, 0.12)",
-                color: "#3F6B55",
+                bg: "var(--ok-bg)",
+                color: "var(--ok)",
                 label: WB_LABELS.profilTrygg[locale],
                 forklaring: WB_LABELS.profilForklaringTrygg[locale],
               },

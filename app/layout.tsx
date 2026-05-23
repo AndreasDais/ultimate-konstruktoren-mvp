@@ -17,7 +17,7 @@ const THEME_INIT_SCRIPT = `
 (function() {
   try {
     var t = localStorage.getItem('pilar-theme');
-    if (t !== 'slate' && t !== 'stone') t = 'slate';
+    if (t !== 'slate' && t !== 'stone' && t !== 'graphite') t = 'slate';
     document.documentElement.dataset.palette = t;
   } catch (e) {
     document.documentElement.dataset.palette = 'slate';

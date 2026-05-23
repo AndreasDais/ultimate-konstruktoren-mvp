@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { InfoPopover } from "@/app/components/InfoPopover";
 import type { Locale } from "@/lib/locale";
@@ -18,13 +18,13 @@ export type MineRow = {
 };
 
 // === FASE-MAPPING ===
-// PHASE_COLORS er språknøytrale Tailwind-klassar.
+// PHASE_COLORS er språknøytrale token-baserte stilar.
 // PHASE_LABELS_BY_LOCALE held label + forklaring per fase per språk.
-const PHASE_COLORS: Record<MineRow["phase"], string> = {
-  workbench: "bg-amber-50 text-amber-800 border-amber-200",
-  mission_control: "bg-blue-50 text-blue-800 border-blue-200",
-  rapport: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  krasja: "bg-red-50 text-red-800 border-red-200",
+const PHASE_COLORS: Record<MineRow["phase"], CSSProperties> = {
+  workbench: { background: "var(--warn-bg)", color: "var(--warn)", borderColor: "var(--warn-border)" },
+  mission_control: { background: "var(--info-bg)", color: "var(--info)", borderColor: "var(--info-border)" },
+  rapport: { background: "var(--ok-bg)", color: "var(--ok)", borderColor: "var(--ok-border)" },
+  krasja: { background: "var(--bad-bg)", color: "var(--bad)", borderColor: "var(--bad-border)" },
 };
 
 type PhaseLabelInfo = { label: string; explanation: string };
@@ -112,10 +112,9 @@ function formatDate(iso: string | null, locale: Locale): string {
 }
 
 function getTillitColor(score: number): string {
-  if (score >= 90) return "text-emerald-800";
-  if (score >= 75) return "text-emerald-600";
-  if (score >= 50) return "text-amber-600";
-  return "text-red-600";
+  if (score >= 75) return "var(--ok)";
+  if (score >= 50) return "var(--warn)";
+  return "var(--bad)";
 }
 
 export function MineList({ rows }: { rows: MineRow[] }) {
@@ -169,13 +168,17 @@ export function MineList({ rows }: { rows: MineRow[] }) {
           placeholder={ML_LABELS.sokPlaceholder[locale]}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+          className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-500"
+          style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--fg)" }}
           aria-label={ML_LABELS.sokAriaLabel[locale]}
         />
       </div>
 
       {filteredRows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center text-sm text-neutral-500">
+        <p
+          className="rounded-lg border border-dashed p-6 text-center text-sm"
+          style={{ borderColor: "var(--border-2)", background: "var(--surface-2)", color: "var(--fg-muted)" }}
+        >
           {ML_LABELS.ingenTreffPre[locale]}{search}{ML_LABELS.ingenTreffPost[locale]}
         </p>
       ) : (
@@ -195,24 +198,26 @@ export function MineList({ rows }: { rows: MineRow[] }) {
                   <button
                     type="button"
                     onClick={() => toggle(phase)}
-                    className="group flex flex-1 items-center gap-2 rounded-md text-left hover:bg-neutral-100 transition-colors py-1 px-1 -mx-1"
+                    className="flex flex-1 items-center gap-2 rounded-md text-left transition-colors py-1 px-1 -mx-1"
                     aria-expanded={!isCollapsed}
                     aria-controls={sectionId}
                   >
                     <span
-                      className={`inline-block transition-transform text-neutral-400 group-hover:text-neutral-600 ${
+                      className={`inline-block transition-transform ${
                         isCollapsed ? "" : "rotate-90"
                       }`}
+                      style={{ color: "var(--fg-faint)" }}
                       aria-hidden="true"
                     >
                       ▶
                     </span>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${color}`}
+                      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                      style={color}
                     >
                       {info.label}
                     </span>
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
                       ({phaseRows.length})
                     </span>
                   </button>
@@ -249,13 +254,13 @@ function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
       href={row.href}
       className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
-      <div className="rounded-lg border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-400 hover:shadow-sm">
+      <div className="uk-card p-4 transition-colors hover:shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h2 className="font-medium text-neutral-900 truncate">
+            <h2 className="font-medium truncate" style={{ color: "var(--fg)" }}>
               {row.title}
             </h2>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: "var(--fg-muted)" }}>
               <span>{date}</span>
               {row.documentId && (
                 <>
@@ -270,13 +275,12 @@ function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
             {row.tillit !== null && (
               <div className="text-right">
                 <div
-                  className={`text-xl font-semibold leading-none ${getTillitColor(
-                    row.tillit
-                  )}`}
+                  className="text-xl font-semibold leading-none"
+                  style={{ color: getTillitColor(row.tillit) }}
                 >
                   {row.tillit}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider text-neutral-500 mt-1 inline-flex items-center">
+                <div className="text-[10px] uppercase tracking-wider mt-1 inline-flex items-center" style={{ color: "var(--fg-muted)" }}>
                   <span>{ML_LABELS.tillit[locale]}</span>
                   <InfoPopover label={ML_LABELS.tillitSkarLabel[locale]}>
                     <p>{ML_LABELS.tillitPopover1[locale]}</p>
@@ -288,7 +292,8 @@ function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
               </div>
             )}
             <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${phaseColor}`}
+              className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
+              style={phaseColor}
             >
               {phaseLabel.label}
             </span>

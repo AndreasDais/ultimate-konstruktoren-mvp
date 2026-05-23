@@ -254,7 +254,7 @@ export default async function MinePage() {
   if (!userId) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <p className="text-neutral-600">
+        <p style={{ color: "var(--fg-muted)" }}>
           {MINE_LABELS.maVereInnlogga[locale]}
         </p>
       </main>
@@ -267,13 +267,13 @@ export default async function MinePage() {
     <main className="flex-1 px-4 py-8 md:py-12">
       <div className="mx-auto max-w-3xl">
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--fg-muted)" }}>
             {MINE_LABELS.mineEyebrow[locale]}
           </p>
-          <h1 className="text-3xl font-semibold text-neutral-900">
+          <h1 className="text-3xl font-semibold" style={{ color: "var(--fg)" }}>
             {MINE_LABELS.berekningarH1[locale]}
           </h1>
-          <p className="text-sm text-neutral-600 mt-1">
+          <p className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>
             {MINE_LABELS.oversiktDescription[locale]}
           </p>
         </div>
@@ -286,14 +286,14 @@ export default async function MinePage() {
 
 function EmptyState({ locale }: { locale: Locale }) {
   return (
-    <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
-      <p className="text-neutral-700 font-medium mb-1">
+    <div className="rounded-lg border border-dashed p-10 text-center" style={{ borderColor: "var(--border-2)", background: "var(--surface-2)" }}>
+      <p className="font-medium mb-1" style={{ color: "var(--fg-2)" }}>
         {MINE_LABELS.ingenBerekningar[locale]}
       </p>
-      <p className="text-sm text-neutral-500 mb-6">
+      <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
         {MINE_LABELS.narDuStartar[locale]}
       </p>
-      <Link href="/" className="inline-flex items-center gap-1 rounded-md bg-neutral-900 text-white text-sm font-medium px-4 py-2 hover:bg-neutral-800 transition-colors">
+      <Link href="/" className="uk-btn uk-btn--primary">
         {MINE_LABELS.startEiBerekning[locale]}
       </Link>
     </div>

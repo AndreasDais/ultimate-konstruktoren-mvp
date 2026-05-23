@@ -10,16 +10,18 @@ const STORAGE_KEY = "pilar-theme";
 const OPTIONS: { value: Palette; label: string; description: string }[] = [
     { value: "slate", label: "Slate", description: "Lyst, kjølig" },
     { value: "stone", label: "Stone", description: "Lyst, varmt" },
-    // V0.2-TODO: Graphite (mørk modus) er på vent til hardkoda Tailwind-fargar
-    // i app/page.tsx + rapport-sida er rydda til CSS-variablar. Palette står
-    // framleis i tokens.css — berre fjern denne kommentaren for å re-aktivere.
+    { value: "graphite", label: "Graphite", description: "Mørk, dempa" },
   ];
 
 export default function ThemeToggle() {
   const [palette, setPalette] = useState<Palette>(() => {
     if (typeof document === "undefined") return "slate";
     const current = document.documentElement.dataset.palette as Palette | undefined;
-    return current === "slate" || current === "stone" ? current : "slate";
+    return current === "slate" ||
+      current === "stone" ||
+      current === "graphite"
+      ? current
+      : "slate";
   });
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);

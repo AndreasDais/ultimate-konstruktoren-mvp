@@ -7,6 +7,7 @@
 
    :root,
    [data-palette="slate"] {
+     color-scheme: light;
      --bg:           #fafafa;
      --bg-sunken:   #f4f4f5;
      --surface:     #ffffff;
@@ -68,6 +69,7 @@
    }
    
    [data-palette="stone"] {
+     color-scheme: light;
      --bg:           #f6f4ef;
      --bg-sunken:   #efece4;
      --surface:     #fcfaf5;
@@ -128,6 +130,7 @@
    }
    
    [data-palette="graphite"] {
+     color-scheme: dark;
      --bg:           #0e0f12;
      --bg-sunken:   #08090b;
      --surface:     #15171b;
@@ -186,6 +189,31 @@
      --rapport-chapter-rule:       #ececef;
      --rapport-page-stripe-fg:     #8a8d95;
      --rapport-page-stripe-border: #3a3e46;
+   }
+
+   /* =========================================================
+      Bakoverkompatible token-alias
+      Eldre komponentkode (page.tsx, MissionControl m.fl.) refererer eit
+      tidlegare token-vokabular. Aliasa peikar paa dei kanoniske tokena via
+      var(), saa dei loyser seg paa brukstid og foelgjer palett-byte
+      (slate / stone / graphite) automatisk. Definert ein gong her.
+      ========================================================= */
+   :root {
+     --rule:             var(--border);
+     --surface-alt:      var(--surface-2);
+     --fg-subtle:        var(--fg-faint);
+
+     --tone-ok-fg:       var(--ok);
+     --tone-ok-bg:       var(--ok-bg);
+     --tone-ok-border:   var(--ok-border);
+
+     --tone-warn-fg:     var(--warn);
+     --tone-warn-bg:     var(--warn-bg);
+     --tone-warn-border: var(--warn-border);
+
+     --tone-bad-fg:      var(--bad);
+     --tone-bad-bg:      var(--bad-bg);
+     --tone-bad-border:  var(--bad-border);
    }
    
    /* =========================================================
