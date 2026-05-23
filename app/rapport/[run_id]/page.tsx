@@ -36,6 +36,7 @@ import {
 import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
 import { validateReportModel } from "@/lib/report/validate-report-model";
+import { displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
   lookupMarginalia,
   scanTextForCatalogKeys,
@@ -566,6 +567,16 @@ export default function RapportPage() {
   const hasReportControlRows = reportControlRows.length > 0;
   const reportControlHasAvvik = reportControlRows.some((row) => !row.match);
 
+  // Sprint 9: forsida skal vere roleg og ikkje bere heile
+  // kontrollørprosaen. Den fulle vurderinga ligg i § 04.2 og i
+  // nettversjonen/pipeline. På forsida viser vi berre ei kort
+  // leveranseoppsummering. Dette hindrar tekstklipping i PDF, særleg
+  // ved usikker/blokkert rapport.
+  const coverControllerMessage = limitText(
+    reportModel.control.controllerText || data.controllerDecision?.user_message || "",
+    230,
+  );
+
   // === TOC entries — fire konsoliderte seksjonar ===
   const tocEntries: Array<{ id: string; label: string }> = [
     { id: "samandrag", label: RP_LABELS.samandrag[locale] },
@@ -612,21 +623,17 @@ export default function RapportPage() {
     (primary.structured_output.warnings &&
       primary.structured_output.warnings.length > 0);
 
-  // === Forside-data (Fase 1, B-redesign) ===
-  // report_title + report_subtitle kjem frå Tolkar-agenten via inputReview.parsed_data
-  // (avtalt avgjerd 1a). Foreløpig kan dei mangle — fall tilbake til "Berekningsnotat".
+  // === Forside-data ===
+  // Tittel og undertittel kjem no frå ReportModel, slik at web, PDF og Word
+  // bruker same rapportkontrakt. ReportModel les report_title/report_subtitle
+  // frå Tolkar når dei finst, og byggjer fagleg fallback frå calculation_type
+  // og resultata når eldre run manglar desse felta.
   const parsedData = data.inputReview?.parsed_data as
     | Record<string, unknown>
     | null
     | undefined;
-  const reportTitle =
-    typeof parsedData?.report_title === "string" && parsedData.report_title.trim()
-      ? (parsedData.report_title as string)
-      : RP_LABELS.forsideFallbackTittel[locale];
-  const reportSubtitle =
-    typeof parsedData?.report_subtitle === "string" && parsedData.report_subtitle.trim()
-      ? (parsedData.report_subtitle as string)
-      : null;
+  const reportTitle = reportModel.cover.title || RP_LABELS.forsideFallbackTittel[locale];
+  const reportSubtitle = reportModel.cover.subtitle || null;
 
   // Brukar-felt (avgjerd 3 valfri) — pilot har ikkje auth-profilar, så
   // alltid null fram til vi har data. Conditional render under.
@@ -1068,9 +1075,9 @@ export default function RapportPage() {
                   breakdown={data.report.tillit_breakdown}
                 />
               </div>
-              {data.controllerDecision?.user_message && (
+              {coverControllerMessage && (
                 <div className="rapport-forside__trust-prose">
-                  <p>{data.controllerDecision.user_message}</p>
+                  <p>{coverControllerMessage}</p>
                 </div>
               )}
             </div>
@@ -1102,14 +1109,14 @@ export default function RapportPage() {
               first
             />
 
-            <p className="rapport-prose">{data.report.executive_summary}</p>
+            <p className="rapport-prose">{reportModel.summary.text}</p>
 
             <div id="forespurnad" className="rapport-forespurnad-block">
               <div className="rapport-forespurnad-block__label">
                 {RP_LABELS.forespurselLabel[locale]}
               </div>
               <pre className="rapport-forespurnad-block__text">
-                {data.run.request.raw_text}
+                {reportModel.summary.request}
               </pre>
             </div>
           </section>
@@ -1146,7 +1153,7 @@ export default function RapportPage() {
                     {marginaliaEntries.map(({ key, entry }) => (
                       <div key={key} className="rapport-ordliste-item">
                         <dt className="rapport-ordliste-item__key">
-                          {renderMathKey(key)}
+                          {displayResultLabel(key)}
                         </dt>
                         <dd className="rapport-ordliste-item__desc">
                           {entry.description}
@@ -1163,24 +1170,23 @@ export default function RapportPage() {
               )}
 
               {/* 02.1 — Forutsetninger (numerert .01 .02 .03) */}
-              {primary.structured_output.assumptions &&
-                primary.structured_output.assumptions.length > 0 && (
-                  <div id="foresetnader" className="rapport-subchapter">
-                    <div className="rapport-subchapter__eyebrow">
-                      {RP_LABELS.sub21Forutsetninger[locale]}
-                    </div>
-                    <ol className="rapport-numbered-list">
-                      {primary.structured_output.assumptions.map((a, i) => (
-                        <li key={i} className="rapport-numbered-list__item">
-                          <span className="rapport-numbered-list__num">
-                            .{(i + 1).toString().padStart(2, "0")}
-                          </span>
-                          <span className="rapport-numbered-list__text">{a}</span>
-                        </li>
-                      ))}
-                    </ol>
+              {reportModel.interpretation.assumptions.length > 0 && (
+                <div id="foresetnader" className="rapport-subchapter">
+                  <div className="rapport-subchapter__eyebrow">
+                    {RP_LABELS.sub21Forutsetninger[locale]}
                   </div>
-                )}
+                  <ol className="rapport-numbered-list">
+                    {reportModel.interpretation.assumptions.map((a, i) => (
+                      <li key={i} className="rapport-numbered-list__item">
+                        <span className="rapport-numbered-list__num">
+                          .{(i + 1).toString().padStart(2, "0")}
+                        </span>
+                        <span className="rapport-numbered-list__text">{a}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
 
               {/* 02.2 — Resultat (DIM-band + BRUKSGRENSE-band + INPUT-band).
                   P1: SLS-keys splittast ut i eige band — semantisk korrekt
@@ -1278,20 +1284,20 @@ export default function RapportPage() {
                 )}
 
               {/* 02.3 — Stegvis utregning */}
-              {primary.structured_output.calculation_steps &&
-                primary.structured_output.calculation_steps.length > 0 &&
+              {reportModel.calculation.steps.length > 0 &&
                 !isBlocked("calculation_steps_a") && (
                   <div id="utrekning" className="rapport-subchapter">
                     <div className="rapport-subchapter__eyebrow">
                       {RP_LABELS.sub23Stegvis[locale]}
                     </div>
                     <div className="rapport-step-list">
-                      {primary.structured_output.calculation_steps.map(
+                      {reportModel.calculation.steps.map(
                         (step, i) => {
                           // Kontroll-/konsistens-steg får eige visuelt
                           // uttrykk: "KONTROLL"-label i staden for "STEG NN",
                           // og ein modifier-klasse for subtil styling.
-                          const isControl = isControlStep(step.title);
+                          const isControl = step.isControlStep;
+                          const formulaText = step.formulas.join("\n");
                           return (
                           <div
                             key={i}
@@ -1314,24 +1320,29 @@ export default function RapportPage() {
                               <h4 className="rapport-step-row__title">
                                 {step.title}
                               </h4>
-                              {step.latex_formula ? (
+                              {formulaText ? (
                                 <>
-                                  <FormulaStack
-                                    latex={step.latex_formula}
-                                    fallbackText={step.text}
-                                  />
+                                  <div className="rapport-step-row__formula-screen">
+                                    <FormulaStack
+                                      latex={formulaText}
+                                      fallbackText={step.prose}
+                                    />
+                                  </div>
+                                  <pre className="rapport-step-row__text rapport-step-row__text--print">
+                                    {step.prose}
+                                  </pre>
                                   <details className="rapport-step-row__details">
                                     <summary>
                                       {RP_LABELS.visProsaUtrekning[locale]}
                                     </summary>
                                     <pre className="rapport-step-row__text">
-                                      {step.text}
+                                      {step.prose}
                                     </pre>
                                   </details>
                                 </>
                               ) : (
                                 <pre className="rapport-step-row__text">
-                                  {step.text}
+                                  {step.prose}
                                 </pre>
                               )}
                             </div>
@@ -1360,13 +1371,13 @@ export default function RapportPage() {
               <ChapterHeading num="03" title={RP_LABELS.chapter03Title[locale]} />
 
               {/* 03.1 Faglig vurdering */}
-              {data.report.technical_assessment && (
+              {reportModel.assessment.professionalAssessment && (
                 <div id="fagleg-vurdering" className="rapport-subchapter">
                   <div className="rapport-subchapter__eyebrow">
                     {RP_LABELS.sub31FagleVurdering[locale]}
                   </div>
                   <p className="rapport-prose">
-                    {data.report.technical_assessment}
+                    {reportModel.assessment.professionalAssessment}
                   </p>
                 </div>
               )}
@@ -1414,7 +1425,7 @@ export default function RapportPage() {
                               {looksLikeKey ? (
                                 <>
                                   <span className="rapport-ikkje-rekna-table__key">
-                                    {renderMathKey(keyForLookup)}
+                                    {displayResultLabel(keyForLookup)}
                                   </span>
                                   {marg?.description && (
                                     <span className="rapport-ikkje-rekna-table__desc">
@@ -1448,14 +1459,13 @@ export default function RapportPage() {
               )}
 
               {/* 03.3 Advarsler — warn-stripe per item */}
-              {primary.structured_output.warnings &&
-                primary.structured_output.warnings.length > 0 && (
-                  <div id="atvaringar" className="rapport-subchapter">
-                    <div className="rapport-subchapter__eyebrow">
-                      {RP_LABELS.sub33Advarsler[locale]}
-                    </div>
-                    <div className="rapport-advarsel-list">
-                      {primary.structured_output.warnings.map((w, i) => (
+              {reportModel.assessment.warnings.length > 0 && (
+                <div id="atvaringar" className="rapport-subchapter">
+                  <div className="rapport-subchapter__eyebrow">
+                    {RP_LABELS.sub33Advarsler[locale]}
+                  </div>
+                  <div className="rapport-advarsel-list">
+                    {reportModel.assessment.warnings.map((w, i) => (
                         <div key={i} className="rapport-advarsel-stripe">
                           <div className="rapport-advarsel-stripe__label">
                             <span aria-hidden="true">⚠</span>
@@ -1604,7 +1614,7 @@ export default function RapportPage() {
               <div className="rapport-subchapter__eyebrow">
                 {RP_LABELS.sub43Konklusjon[locale]}
               </div>
-              <p className="rapport-prose">{data.report.conclusion}</p>
+              <p className="rapport-prose">{reportModel.conclusion}</p>
             </div>
 
             {/* Foreløpig-stripe — DNA-element før signatur. */}

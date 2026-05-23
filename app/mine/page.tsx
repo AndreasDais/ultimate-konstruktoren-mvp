@@ -28,11 +28,33 @@ const MINE_LABELS: Record<string, Record<Locale, string>> = {
 // === FORMATERING (server-only — brukt for å bygge MineRow.title) ===
 function prettyCalculationType(type: string | null | undefined, locale: Locale): string {
   if (!type) return MINE_LABELS.defaultBerekning[locale];
+  const known: Record<string, Record<Locale, string>> = {
+    lastkombinasjon: { nb: "Lastkombinasjon i bruddgrense", nn: "Lastkombinasjon i brotgrense" },
+    bjelke_lastverknad: { nb: "Bjelke — moment og skjær", nn: "Bjelke — moment og skjerkraft" },
+    armering_betongbjelke: { nb: "Armeringsberegning av betongbjelke", nn: "Armeringsberekning av betongbjelke" },
+    stalkapasitet: { nb: "Kapasitetskontroll av stålbjelke", nn: "Kapasitetskontroll av stålbjelke" },
+  };
+  if (known[type]) return known[type][locale];
   // snake_case → "Bjelke lastverknad" (første ord stor bokstav)
   const words = type.split("_");
   return words
     .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(" ");
+}
+
+function titleFromInputReview(
+  review: { calculation_type: string | null; parsed_data?: unknown } | null,
+  locale: Locale,
+): string {
+  const parsed =
+    review?.parsed_data && typeof review.parsed_data === "object" && !Array.isArray(review.parsed_data)
+      ? (review.parsed_data as Record<string, unknown>)
+      : null;
+  const reportTitle = parsed?.report_title;
+  if (typeof reportTitle === "string" && reportTitle.trim()) {
+    return reportTitle.trim();
+  }
+  return prettyCalculationType(review?.calculation_type, locale);
 }
 
 // === DATA ===
@@ -85,8 +107,8 @@ type RawRequestRow = {
   id: string;
   created_at: string;
   input_reviews:
-    | { calculation_type: string | null }
-    | { calculation_type: string | null }[]
+    | { calculation_type: string | null; parsed_data?: unknown }
+    | { calculation_type: string | null; parsed_data?: unknown }[]
     | null;
 };
 
@@ -147,7 +169,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
     .select(`
       id,
       created_at,
-      input_reviews ( calculation_type )
+      input_reviews ( calculation_type, parsed_data )
     `)
     .eq("user_id", userId);
 
@@ -209,7 +231,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
       const review = firstOrNull(r.input_reviews);
       return {
         key: `req-${r.id}`,
-        title: prettyCalculationType(review?.calculation_type, locale),
+        title: titleFromInputReview(review, locale),
         date: r.created_at,
         phase: "workbench" as const,
         href: `/?from_request=${r.id}`,

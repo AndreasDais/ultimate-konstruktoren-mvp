@@ -24,6 +24,7 @@ import type {
   ReportModel,
   ReportValidationResult,
 } from "./report-model";
+import { normalizeCalculationSyntaxText } from "./normalize-report-model";
 
 const FONT_SANS = "Aptos";
 const FONT_SERIF = "Georgia";
@@ -460,7 +461,7 @@ function formulaToPlainText(value: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  return text;
+  return normalizeCalculationSyntaxText(text);
 }
 
 function formulaLooksDuplicatedInProse(prose: string, formula: string): boolean {

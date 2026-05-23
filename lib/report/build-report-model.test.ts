@@ -15,7 +15,15 @@ const sample: UpstreamReportData = {
     tillit_breakdown: null,
   },
   run: { request: { raw_text: "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m" } },
-  inputReview: { input_status: "klar", prompt_version: "input_agent_v0.1" },
+  inputReview: {
+    input_status: "klar",
+    prompt_version: "input_agent_v0.1",
+    parsed_data: {
+      report_title: "Fritt opplagd stålbjelke — moment og skjær",
+      report_subtitle: "L = 5,0 m · qEd = 8,0 kN/m",
+      calculation_type: "bjelke_lastverknad",
+    },
+  },
   agentA: {
     agent_name: "agent_a",
     prompt_version: "agent_a_v0.1",
@@ -58,7 +66,12 @@ describe("buildReportModel", () => {
 
     expect(model.meta.documentId).toBe("PILAR-54461FB9");
     expect(model.meta.schemaVersion).toBe("report_model_v0.1");
-    expect(model.keyResults.map((row) => row.label)).toContain("M_Ed");
+    expect(model.cover.title).toBe("Fritt opplagd stålbjelke — moment og skjær");
+    expect(model.cover.subtitle).toContain("L = 5,0 m");
+    expect(model.keyResults.map((row) => row.label)).toContain("MEd");
+    expect(model.summary.text).toContain("MEd");
+    expect(model.summary.text).not.toContain("_");
+    expect(model.calculation.steps[0].prose).not.toContain("_");
     expect(model.calculation.steps[1].isControlStep).toBe(true);
     expect(model.cover.qrUrl).toContain("https://pilar.example/rapport/");
 

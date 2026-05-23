@@ -147,6 +147,10 @@ function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
     "eddim",
     "med",
     "ved",
+    "etam",
+    "etav",
+    "mplrd",
+    "vplrd",
     "ned",
     "qed",
     "l",
@@ -201,7 +205,12 @@ function valuesMatch(a: string, b: string): boolean {
   if (a === b) return true;
   const aNum = numericValue(a);
   const bNum = numericValue(b);
-  return aNum !== null && bNum !== null && Math.abs(aNum - bNum) < 0.005;
+  if (aNum === null || bNum === null) return false;
+  const diff = Math.abs(aNum - bNum);
+  const scale = Math.max(1, Math.abs(aNum), Math.abs(bNum));
+  // Små avrundingsforskjellar som 15,075 vs 15,08 skal ikkje gi avvik
+  // i kontrolltabellen. Reelle avvik som 2760 vs 2568 blir framleis fanga.
+  return diff <= 0.01 || diff / scale <= 0.001;
 }
 
 function buildComparisonRows(data: UpstreamReportData): ComparisonRow[] {
@@ -272,6 +281,101 @@ function displayDate(createdAt: string, locale: Locale): string {
   return parsed.toLocaleDateString(dateTag, { year: "numeric", month: "long", day: "numeric" });
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function stringField(source: Record<string, unknown> | null, key: string): string {
+  const value = source?.[key];
+  return typeof value === "string" ? cleanReportText(value) : "";
+}
+
+function calculationTypeFallback(type: string, locale: Locale): string {
+  const labels: Record<string, Record<Locale, string>> = {
+    lastkombinasjon: {
+      nb: "Lastkombinasjon i bruddgrense",
+      nn: "Lastkombinasjon i brotgrense",
+    },
+    bjelke_lastverknad: {
+      nb: "Bjelke — moment og skjær",
+      nn: "Bjelke — moment og skjerkraft",
+    },
+    armering_betongbjelke: {
+      nb: "Armeringsberegning av betongbjelke",
+      nn: "Armeringsberekning av betongbjelke",
+    },
+    stalkapasitet: {
+      nb: "Kapasitetskontroll av stålbjelke",
+      nn: "Kapasitetskontroll av stålbjelke",
+    },
+  };
+  return labels[type]?.[locale] ?? "";
+}
+
+function titleFromResults(rows: CalculationResultRow[], rawRequest: string, locale: Locale): string {
+  const has = (canonical: string) => rows.some((row) => canonicalResultKey(row.label) === canonical);
+  const request = rawRequest.toLowerCase();
+
+  const profile = rawRequest.match(/\b(?:IPE|HEA|HEB|HEM|UNP|UPN)\s*\d{2,4}\b/i)?.[0];
+
+  if (has("etam") || has("etav") || has("mplrd") || has("vplrd") || request.includes("kapasitet")) {
+    const base = locale === "nn" ? "Kapasitetskontroll av stålbjelke" : "Kapasitetskontroll av stålbjelke";
+    return profile ? `${base} ${profile.toUpperCase()}` : base;
+  }
+
+  if (has("eddim") || has("ed610a") || has("ed610bq") || request.includes("lastkombinasjon")) {
+    return calculationTypeFallback("lastkombinasjon", locale);
+  }
+
+  if ((has("med") && has("ved")) || request.includes("fritt opplagd") || request.includes("fritt opplag")) {
+    if (request.includes("stål")) {
+      return locale === "nn"
+        ? "Fritt opplagd stålbjelke — moment og skjerkraft"
+        : "Fritt opplagd stålbjelke — moment og skjær";
+    }
+    return calculationTypeFallback("bjelke_lastverknad", locale);
+  }
+
+  return locale === "nn" ? "Teknisk berekning" : "Teknisk beregning";
+}
+
+function subtitleFromResults(rows: CalculationResultRow[]): string {
+  const candidates = ["l", "qed", "gk", "qk", "sk", "fy", "gammam0"];
+  const parts: string[] = [];
+  for (const canonical of candidates) {
+    const row = rows.find((item) => canonicalResultKey(item.label) === canonical);
+    if (!row) continue;
+    const value = row.unit ? `${row.value} ${row.unit}` : row.value;
+    parts.push(`${row.label} = ${value}`);
+    if (parts.length >= 3) break;
+  }
+  return parts.join(" · ");
+}
+
+function buildCoverText(
+  data: UpstreamReportData,
+  rows: CalculationResultRow[],
+  locale: Locale,
+): { title: string; subtitle: string } {
+  const parsed = asRecord(data.inputReview?.parsed_data);
+  const rawRequest = cleanReportText(data.run.request.raw_text);
+  const calculationType = stringField(parsed, "calculation_type");
+
+  const explicitTitle = stringField(parsed, "report_title");
+  const explicitSubtitle = stringField(parsed, "report_subtitle");
+
+  const fallbackTitle =
+    calculationTypeFallback(calculationType, locale) ||
+    titleFromResults(rows, rawRequest, locale);
+
+  return {
+    title: explicitTitle || fallbackTitle || LABELS.title[locale],
+    subtitle: explicitSubtitle || subtitleFromResults(rows) || LABELS.subtitle[locale],
+  };
+}
+
 export function buildReportModel(data: UpstreamReportData, options: BuildReportModelOptions): ReportModel {
   const locale = options.locale;
   const primary = data.agentA;
@@ -285,6 +389,7 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
   const comparisonStatus = data.comparison?.match_status ?? "unknown";
   const comparisonText = matchPhrase(comparisonStatus, locale) ?? "";
   const summary = cleanReportText(data.report.executive_summary);
+  const coverText = buildCoverText(data, resultRows, locale);
 
   return normalizeReportModel({
     meta: {
@@ -301,8 +406,8 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
       audience: options.audience ?? "engineer",
     },
     cover: {
-      title: LABELS.title[locale],
-      subtitle: LABELS.subtitle[locale],
+      title: coverText.title,
+      subtitle: coverText.subtitle,
       shortSummary: limitText(summary, 340),
       qrLabel: LABELS.qrLabel[locale],
       qrDescription: LABELS.qrDescription[locale],

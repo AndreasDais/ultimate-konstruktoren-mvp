@@ -4428,11 +4428,140 @@
 
   .rapport-results-table td:first-child,
   .rapport-verifikasjon-table td:first-child {
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+  }
+
+  .rapport-results-table__key--plain,
+  .rapport-verifikasjon-table__key--plain {
+    font-size: 8.2pt !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  .rapport-results-table__value,
+  .rapport-verifikasjon-table__val {
+    font-size: 8.9pt !important;
   }
 
   .rapport-verifikasjon-table {
     font-size: 8.9pt !important;
+  }
+}
+
+
+/* =================================================================
+   Report Engine v4 / Sprint 8 — robust print labels
+   Keep engineering symbols intact in PDF tables. Earlier print CSS allowed
+   `anywhere` wrapping in first cells, which could split M_Ed into M / _ / E / d.
+   ================================================================= */
+@media print {
+  .rapport-results-table__key--plain,
+  .rapport-verifikasjon-table__key--plain,
+  .rapport-cover-results__key {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    -webkit-hyphens: none !important;
+    hyphens: none !important;
+  }
+
+  .rapport-results-table,
+  .rapport-verifikasjon-table {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+}
+
+@media print {
+  .rapport-results-table,
+  .rapport-verifikasjon-table {
+    table-layout: auto !important;
+  }
+}
+
+/* =================================================================
+   Report Engine v4 / Sprint 9 — print polish from multi-case QA
+   - PDF should not show the interactive/web glossary block. It caused
+     detached subscript fragments in browser PDF text extraction.
+   - Cover verdict is intentionally short (also truncated in TS).
+   - "Hva er ikke beregnet" prints as readable cards instead of a cramped
+     two-column table.
+   ================================================================= */
+@media print {
+  .rapport-ordliste {
+    display: none !important;
+  }
+
+  .rapport-forside__trust-prose p {
+    max-height: 18mm !important;
+    overflow: hidden !important;
+  }
+
+  .rapport-ikkje-rekna-table,
+  .rapport-ikkje-rekna-table tbody,
+  .rapport-ikkje-rekna-table__row,
+  .rapport-ikkje-rekna-table__subject,
+  .rapport-ikkje-rekna-table__reason-cell {
+    display: block !important;
+    width: auto !important;
+  }
+
+  .rapport-ikkje-rekna-table__band,
+  .rapport-ikkje-rekna-table__band-cell {
+    display: block !important;
+    width: auto !important;
+  }
+
+  .rapport-ikkje-rekna-table__row {
+    padding: 2.2mm 0 !important;
+    border-bottom: 0.6pt solid #d8d3c8 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-ikkje-rekna-table__subject {
+    padding: 0 0 0.8mm !important;
+    font-size: 8.7pt !important;
+    line-height: 1.35 !important;
+    font-weight: 600 !important;
+  }
+
+  .rapport-ikkje-rekna-table__reason-cell {
+    padding: 0 !important;
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+    color: #333 !important;
+  }
+
+  .rapport-ikkje-rekna-table__reason-empty {
+    display: none !important;
+  }
+
+  .rapport-advarsel-stripe {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Sprint 11: calculation syntax print mode.
+   On screen we keep the interactive/math renderer; in PDF we prefer
+   deterministic, no-underscore calculation text so notation does not fragment. */
+.rapport-step-row__text--print {
+  display: none;
+}
+
+@media print {
+  .rapport-step-row__formula-screen,
+  .rapport-step-row__details {
+    display: none !important;
+  }
+
+  .rapport-step-row__text--print {
+    display: block !important;
+    margin-top: 2mm !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
   }
 }
