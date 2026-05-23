@@ -36,7 +36,7 @@ import {
 import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
 import { validateReportModel } from "@/lib/report/validate-report-model";
-import { displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
+import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
   lookupMarginalia,
   scanTextForCatalogKeys,
@@ -137,7 +137,7 @@ type LimitationEntry = {
  * band-headeren ("IKKJE DEKKA AV DENNE RAPPORTEN") allereie kommuniserer det.
  */
 function parseLimitationString(raw: string): { subject: string; reason: string | null } {
-  const text = raw.trim();
+  const text = cleanReportText(raw);
   if (!text) return { subject: "", reason: null };
 
   // Splitt på em-dash (—) eller " - " (mellomrom-bindestrek-mellomrom).
@@ -147,7 +147,7 @@ function parseLimitationString(raw: string): { subject: string; reason: string |
   if (dashMatch) {
     return {
       subject: cleanLimitationSubject(dashMatch[1]),
-      reason: dashMatch[2].trim() || null,
+      reason: cleanReportText(dashMatch[2]) || null,
     };
   }
 
@@ -156,7 +156,7 @@ function parseLimitationString(raw: string): { subject: string; reason: string |
   if (colonMatch) {
     return {
       subject: cleanLimitationSubject(colonMatch[1]),
-      reason: colonMatch[2].trim() || null,
+      reason: cleanReportText(colonMatch[2]) || null,
     };
   }
 
@@ -170,8 +170,7 @@ function parseLimitationString(raw: string): { subject: string; reason: string |
  * på kvar rad er støy.
  */
 function cleanLimitationSubject(s: string): string {
-  return s
-    .trim()
+  return cleanReportText(s)
     .replace(/\s+er\s+ikk?j?e\s+(beregnet|rekna|berekna)\s*$/i, "")
     .trim();
 }
@@ -189,17 +188,39 @@ function normalizeLimitations(
     if (item && typeof item === "object") {
       // Post-5a-format: { key, reason } strukturert
       const obj = item as Record<string, unknown>;
-      const k = typeof obj.key === "string" ? obj.key : null;
-      const r = typeof obj.reason === "string" ? obj.reason : "";
+      const k = typeof obj.key === "string" ? cleanReportText(obj.key) : null;
+      const r = typeof obj.reason === "string" ? cleanReportText(obj.reason) : "";
       // subject kan vere eksplisitt felt, elles fall til key
       const subj =
-        typeof obj.subject === "string" && obj.subject.trim()
-          ? obj.subject.trim()
+        typeof obj.subject === "string" && cleanReportText(obj.subject)
+          ? cleanReportText(obj.subject)
           : k ?? "";
       return { subject: subj, reason: r || null, key: k };
     }
-    return { subject: String(item ?? ""), reason: null, key: null };
+    return { subject: cleanReportText(String(item ?? "")), reason: null, key: null };
   });
+}
+
+function coverStatusSummary(decisionStatus: string | undefined, locale: Locale): string {
+  const summaries: Record<string, Record<Locale, string>> = {
+    approved: {
+      nb: "Beregningen er foreløpig godkjent. Resultatet skal kontrolleres av ansvarlig fagperson før bruk.",
+      nn: "Berekninga er førebels godkjend. Resultatet skal kontrollerast av ansvarleg fagperson før bruk.",
+    },
+    approved_with_warnings: {
+      nb: "Beregningen er foreløpig godkjent med advarsler. Forbeholdene må avklares før prosjekteringsbruk.",
+      nn: "Berekninga er førebels godkjend med åtvaringar. Atterhalda må avklarast før prosjekteringsbruk.",
+    },
+    uncertain: {
+      nb: "Beregningen er usikker. Avvik og inngangsverdier må avklares før resultatet kan brukes videre.",
+      nn: "Berekninga er usikker. Avvik og inngangsverdiar må avklarast før resultatet kan brukast vidare.",
+    },
+    rejected: {
+      nb: "Beregningen er avvist. Resultatet skal ikke brukes uten omfattende manuell verifikasjon.",
+      nn: "Berekninga er avvist. Resultatet skal ikkje brukast utan omfattande manuell verifisering.",
+    },
+  };
+  return summaries[decisionStatus ?? ""]?.[locale] ?? "";
 }
 
 const RP_LABELS: Record<string, Record<Locale, string>> = {
@@ -546,6 +567,8 @@ export default function RapportPage() {
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
+  const calculationSheetUrl = `/rapport/${runId}/beregning`;
+  const calculationSheetLabel = locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
   const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
@@ -572,10 +595,9 @@ export default function RapportPage() {
   // nettversjonen/pipeline. På forsida viser vi berre ei kort
   // leveranseoppsummering. Dette hindrar tekstklipping i PDF, særleg
   // ved usikker/blokkert rapport.
-  const coverControllerMessage = limitText(
-    reportModel.control.controllerText || data.controllerDecision?.user_message || "",
-    230,
-  );
+  const coverControllerMessage =
+    coverStatusSummary(data.controllerDecision?.decision_status, locale) ||
+    limitText(reportModel.control.controllerText || data.controllerDecision?.user_message || "", 230);
 
   // === TOC entries — fire konsoliderte seksjonar ===
   const tocEntries: Array<{ id: string; label: string }> = [
@@ -1702,6 +1724,9 @@ export default function RapportPage() {
           </button>
           <a href={wordUrl} className="uk-btn" download={wordFilename}>
             {RP_LABELS.lastNedWord[locale]}
+          </a>
+          <a href={calculationSheetUrl} className="uk-btn">
+            {calculationSheetLabel}
           </a>
           {data.run.request_id && (
             <a href={`/?from_request=${data.run.request_id}`} className="uk-btn">

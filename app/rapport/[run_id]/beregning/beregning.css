@@ -1,0 +1,235 @@
+.beregning-page {
+  min-height: 100vh;
+  background: #f5f4f0;
+  color: #151515;
+  padding: 32px 18px 64px;
+}
+
+.beregning-shell {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+.beregning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.beregning-actions__left,
+.beregning-actions__right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.beregning-sheet {
+  background: #fffdf8;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 24px;
+  box-shadow: 0 22px 80px rgba(20, 20, 20, 0.10);
+  padding: 44px;
+}
+
+.beregning-cover {
+  border-bottom: 1px solid rgba(0,0,0,.1);
+  padding-bottom: 24px;
+  margin-bottom: 30px;
+}
+
+.beregning-kicker {
+  font: 700 11px/1.2 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: #75654a;
+  margin-bottom: 12px;
+}
+
+.beregning-title {
+  margin: 0;
+  font: 750 34px/1.05 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.035em;
+}
+
+.beregning-subtitle {
+  margin: 10px 0 0;
+  font-size: 15px;
+  color: #5c5a55;
+}
+
+.beregning-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.beregning-meta__card,
+.beregning-card {
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,.72);
+  padding: 14px 16px;
+}
+
+.beregning-label {
+  display: block;
+  font: 700 10px/1.2 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: #7c7568;
+  margin-bottom: 6px;
+}
+
+.beregning-value {
+  font: 650 14px/1.3 ui-sans-serif, system-ui, sans-serif;
+}
+
+.beregning-section {
+  margin-top: 30px;
+}
+
+.beregning-section h2 {
+  font: 750 20px/1.18 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+
+.beregning-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.beregning-symbol-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.beregning-symbol {
+  font: 700 15px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.beregning-symbol-value {
+  font: 650 15px/1.2 ui-sans-serif, system-ui, sans-serif;
+  text-align: right;
+}
+
+.beregning-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #3d3a34;
+}
+
+.beregning-list li + li {
+  margin-top: 7px;
+}
+
+.beregning-step {
+  break-inside: avoid;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  background: #fff;
+  padding: 18px 20px;
+  margin-top: 14px;
+}
+
+.beregning-step__header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.beregning-step__number {
+  font: 800 10px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: #8a7348;
+  white-space: nowrap;
+}
+
+.beregning-step__title {
+  font: 720 16px/1.25 ui-sans-serif, system-ui, sans-serif;
+}
+
+.beregning-prose {
+  color: #2f2d29;
+  white-space: pre-wrap;
+  line-height: 1.62;
+  margin: 0 0 12px;
+}
+
+.beregning-formula-list {
+  display: grid;
+  gap: 8px;
+}
+
+.beregning-formula-item {
+  border-radius: 14px;
+  background: #f7f4ee;
+  border: 1px solid rgba(0,0,0,.06);
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+
+.beregning-footer-note {
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(0,0,0,.1);
+  color: #676158;
+  font-size: 12px;
+}
+
+@media print {
+  @page { size: A4; margin: 18mm 16mm 18mm; }
+
+  body { background: #fff !important; }
+  .beregning-page { padding: 0; background: #fff !important; }
+  .beregning-shell { width: auto; margin: 0; }
+  .beregning-actions { display: none !important; }
+  .beregning-sheet {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    background: #fff;
+  }
+  .beregning-title { font-size: 27px; }
+  .beregning-meta { grid-template-columns: repeat(3, 1fr); }
+  .beregning-section { break-inside: auto; }
+  .beregning-step,
+  .beregning-card,
+  .beregning-formula-item { break-inside: avoid; }
+}
+
+@media (max-width: 720px) {
+  .beregning-page { padding: 18px 10px 42px; }
+  .beregning-sheet { padding: 24px 18px; border-radius: 18px; }
+  .beregning-title { font-size: 27px; }
+  .beregning-meta,
+  .beregning-grid { grid-template-columns: 1fr; }
+}
+
+.beregning-formula-plain {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 500 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #181714;
+}
+
+@media print {
+  .beregning-formula-plain {
+    font-size: 10.5px;
+    line-height: 1.48;
+    overflow-wrap: break-word;
+  }
+}

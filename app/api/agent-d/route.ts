@@ -10,6 +10,7 @@ import {
   type SteelGrade,
 } from "@/lib/profiles/na-basis";
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
+import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -367,32 +368,17 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
     }
 
     // ── Lag 2: kode-tvungen verdikt-grense. Ein prompt-instruks er ikkje
-    //    tvingande — dette er det. Finst eit hardt blokkeringsvilkår, kan
-    //    resultatet ALDRI vere approved/approved_with_warnings, uansett kva
-    //    LLM-Kontrolløren konkluderte.
-    const hardBlock =
-      naDeviations.length > 0 ||
-      motstrid.length > 0 ||
-      loadComboDeviations.length > 0;
-    if (
-      hardBlock &&
-      (parsed.decision_status === "approved" ||
-        parsed.decision_status === "approved_with_warnings")
-    ) {
-      const original = parsed.decision_status;
-      parsed.decision_status = "uncertain";
-      parsed.manual_review_required = true;
-      if (parsed.risk_level === "low") parsed.risk_level = "medium";
-      parsed.controller_notes =
-        `[KODE-OVERSTYRING] decision_status sett frå "${original}" til ` +
-        `"uncertain": deterministisk forhåndskontroll fann ` +
-        `${naDeviations.length} NA-avvik, ${motstrid.length} motstrid og ` +
-        `${loadComboDeviations.length} kombinasjonsstruktur-avvik. ` +
-        `Approved er ikkje tillate her. Opphavleg Kontrollør-grunngiving: ` +
-        `${parsed.controller_notes ?? "(ingen)"}`;
+    //    tvingande — dette er det. Sjå applyControllerHardBlock.
+    const hardBlockOutcome = applyControllerHardBlock(parsed, {
+      naDeviations: naDeviations.length,
+      motstrid: motstrid.length,
+      loadCombo: loadComboDeviations.length,
+    });
+    parsed = hardBlockOutcome.decision;
+    if (hardBlockOutcome.clamped) {
       console.warn("[agent-d] Hard-block override", {
         run_id,
-        original,
+        original: hardBlockOutcome.original,
         naDeviations,
         motstrid,
         loadComboDeviations,
