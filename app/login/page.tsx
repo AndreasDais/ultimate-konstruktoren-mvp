@@ -71,21 +71,22 @@ export default function LoginPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-8">
-          <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
+        <div className="uk-card shadow-sm p-8">
+          <h1 className="text-2xl font-semibold mb-2" style={{ color: "var(--fg)" }}>
             {LOGIN_LABELS.loggInn[locale]}
           </h1>
-          <p className="text-sm text-neutral-600 mb-6">
+          <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
             {LOGIN_LABELS.introTekst[locale]}
           </p>
 
           {status === "sent" ? (
             <div
               role="status"
-              className="rounded-md bg-emerald-50 border border-emerald-200 p-4"
+              className="rounded-md border p-4"
+              style={{ background: "var(--ok-bg)", borderColor: "var(--ok-border)" }}
             >
-              <h2 className="font-medium text-emerald-900 mb-1">{LOGIN_LABELS.sjekkEposten[locale]}</h2>
-              <p className="text-sm text-emerald-800">
+              <h2 className="font-medium mb-1" style={{ color: "var(--ok)" }}>{LOGIN_LABELS.sjekkEposten[locale]}</h2>
+              <p className="text-sm" style={{ color: "var(--ok)" }}>
                 {LOGIN_LABELS.viSendePre[locale]}<strong>{email}</strong>{LOGIN_LABELS.viSendePost[locale]}
               </p>
               <button
@@ -94,7 +95,8 @@ export default function LoginPage() {
                   setStatus("idle");
                   setEmail("");
                 }}
-                className="mt-3 text-sm text-emerald-700 underline hover:text-emerald-900"
+                className="mt-3 text-sm underline"
+                style={{ color: "var(--ok)" }}
               >
                 {LOGIN_LABELS.brukAnnaEpost[locale]}
               </button>
@@ -104,7 +106,8 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-neutral-700 mb-1"
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: "var(--fg-2)" }}
                 >
                   {LOGIN_LABELS.epostLabel[locale]}
                 </label>
@@ -117,7 +120,8 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={status === "sending"}
-                  className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-neutral-50 disabled:text-neutral-500"
+                  className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--fg)" }}
                   placeholder={LOGIN_LABELS.epostPlaceholder[locale]}
                 />
               </div>
@@ -125,9 +129,10 @@ export default function LoginPage() {
               {status === "error" && errorMessage && (
                 <div
                   role="alert"
-                  className="rounded-md bg-red-50 border border-red-200 p-3"
+                  className="rounded-md border p-3"
+                  style={{ background: "var(--bad-bg)", borderColor: "var(--bad-border)" }}
                 >
-                  <p className="text-sm text-red-800">
+                  <p className="text-sm" style={{ color: "var(--bad)" }}>
                     {LOGIN_LABELS.noeFeilPre[locale]}{errorMessage}
                   </p>
                 </div>
@@ -136,7 +141,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={status === "sending" || !email.trim()}
-                className="w-full rounded-md bg-neutral-900 text-white text-sm font-medium py-2.5 hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="uk-btn uk-btn--primary w-full justify-center"
               >
                 {status === "sending" ? LOGIN_LABELS.senderLenke[locale] : LOGIN_LABELS.sendLenke[locale]}
               </button>
@@ -144,7 +149,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-xs text-neutral-500 text-center mt-4">
+        <p className="text-xs text-center mt-4" style={{ color: "var(--fg-muted)" }}>
           {LOGIN_LABELS.footer[locale]}
         </p>
       </div>

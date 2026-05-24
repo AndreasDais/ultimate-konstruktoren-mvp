@@ -94,19 +94,19 @@ export default async function VilkarPage() {
     <main className="flex-1 px-4 py-8 md:py-12">
       <article className="mx-auto max-w-2xl">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--fg-muted)" }}>
             {VILKAR_LABELS.eyebrow[locale]}
           </p>
-          <h1 className="text-3xl font-semibold text-neutral-900">
+          <h1 className="text-3xl font-semibold" style={{ color: "var(--fg)" }}>
             {VILKAR_LABELS.h1[locale]}
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">
+          <p className="text-sm mt-2" style={{ color: "var(--fg-muted)" }}>
             {VILKAR_LABELS.sistOppdatert[locale]}
           </p>
         </div>
 
         <div className="space-y-6">
-          <p className="text-base leading-relaxed text-neutral-800">
+          <p className="text-base leading-relaxed" style={{ color: "var(--fg-2)" }}>
             {VILKAR_LABELS.introPre[locale]}<strong>{VILKAR_LABELS.introBold[locale]}</strong>{VILKAR_LABELS.introPost[locale]}
           </p>
 
@@ -138,7 +138,7 @@ export default async function VilkarPage() {
           <Section title={VILKAR_LABELS.s4Title[locale]}>
             <p>
               {VILKAR_LABELS.s4P1Pre[locale]}
-              <a href="mailto:pilot@pilar.no" className="underline hover:text-neutral-900">pilot@pilar.no</a>
+              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>
               {VILKAR_LABELS.s4P1Post[locale]}
             </p>
           </Section>
@@ -150,16 +150,16 @@ export default async function VilkarPage() {
           <Section title={VILKAR_LABELS.s6Title[locale]}>
             <p>
               {VILKAR_LABELS.s6P1Pre[locale]}
-              <a href="mailto:pilot@pilar.no" className="underline hover:text-neutral-900">pilot@pilar.no</a>
+              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>
               {VILKAR_LABELS.s6P1Post[locale]}
             </p>
           </Section>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-neutral-200">
+        <div className="mt-12 pt-6 border-t" style={{ borderColor: "var(--border)" }}>
           <Link
             href="/"
-            className="text-sm text-neutral-600 hover:text-neutral-900 hover:underline"
+            className="text-sm hover:underline" style={{ color: "var(--fg-muted)" }}
           >
             {VILKAR_LABELS.tilbakePilar[locale]}
           </Link>
@@ -178,8 +178,8 @@ function Section({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
-      <div className="text-sm leading-relaxed text-neutral-700 space-y-3">
+      <h2 className="text-lg font-semibold" style={{ color: "var(--fg)" }}>{title}</h2>
+      <div className="text-sm leading-relaxed space-y-3" style={{ color: "var(--fg-2)" }}>
         {children}
       </div>
     </section>

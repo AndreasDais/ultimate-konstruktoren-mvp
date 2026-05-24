@@ -22,7 +22,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo =
-    searchParams.get("redirectTo") ?? "/admin/error-reports";
+    searchParams.get("redirectTo") ?? "/admin";
   const errorParam = searchParams.get("error");
 
   const [email, setEmail] = useState("");

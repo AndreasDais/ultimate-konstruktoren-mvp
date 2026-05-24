@@ -2,26 +2,40 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "@/lib/locale-context";
+import type { Locale } from "@/lib/locale";
 
 type Palette = "slate" | "stone" | "graphite";
 
 const STORAGE_KEY = "pilar-theme";
 
-const OPTIONS: { value: Palette; label: string; description: string }[] = [
+const OPTIONS: Record<Locale, { value: Palette; label: string; description: string }[]> = {
+  nb: [
     { value: "slate", label: "Slate", description: "Lyst, kjølig" },
     { value: "stone", label: "Stone", description: "Lyst, varmt" },
-    { value: "graphite", label: "Graphite", description: "Mørk, dempa" },
-  ];
+    { value: "graphite", label: "Graphite", description: "Mørkt, teknisk" },
+  ],
+  nn: [
+    { value: "slate", label: "Slate", description: "Lyst, kjøleg" },
+    { value: "stone", label: "Stone", description: "Lyst, varmt" },
+    { value: "graphite", label: "Graphite", description: "Mørkt, teknisk" },
+  ],
+};
+
+const THEME_COPY: Record<Locale, { trigger: string; aria: string }> = {
+  nb: { trigger: "Tema", aria: "Velg tema" },
+  nn: { trigger: "Tema", aria: "Vel tema" },
+};
 
 export default function ThemeToggle() {
+  const { locale } = useLocale();
+  const copy = THEME_COPY[locale];
+  const options = OPTIONS[locale];
+
   const [palette, setPalette] = useState<Palette>(() => {
     if (typeof document === "undefined") return "slate";
     const current = document.documentElement.dataset.palette as Palette | undefined;
-    return current === "slate" ||
-      current === "stone" ||
-      current === "graphite"
-      ? current
-      : "slate";
+    return current === "slate" || current === "stone" || current === "graphite" ? current : "slate";
   });
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -126,14 +140,14 @@ export default function ThemeToggle() {
         onClick={toggleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label="Vel tema"
-        title="Vel tema"
+        aria-label={copy.aria}
+        title={copy.aria}
       >
         <span
           className={`uk-theme-swatch uk-theme-swatch--${palette}`}
           aria-hidden="true"
         />
-        <span className="uk-theme-trigger__label">Tema</span>
+        <span className="uk-theme-trigger__label">{copy.trigger}</span>
         <span className="uk-theme-trigger__caret" aria-hidden="true">
           ▾
         </span>
@@ -145,14 +159,14 @@ export default function ThemeToggle() {
             ref={popoverRef}
             className="uk-theme-popover"
             role="listbox"
-            aria-label="Tema"
+            aria-label={copy.trigger}
             style={{
               position: "fixed",
               top: `${position.top}px`,
               right: `${position.right}px`,
             }}
           >
-            {OPTIONS.map((opt) => {
+            {options.map((opt) => {
               const isActive = palette === opt.value;
               return (
                 <button

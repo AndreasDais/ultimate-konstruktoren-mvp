@@ -28,6 +28,7 @@ import {
   limitText,
   normalizeCalculationStep,
   normalizeReportModel,
+  normalizeTitleTypography,
   resultPriorityScore,
   splitValueUnit,
 } from "./normalize-report-model";
@@ -314,6 +315,10 @@ function calculationTypeFallback(type: string, locale: Locale): string {
   return labels[type]?.[locale] ?? "";
 }
 
+function formatSteelProfileName(value: string): string {
+  return value.replace(/\b(IPE|HEA|HEB|HEM|UNP|UPN)\s*(\d{2,4})\b/gi, (_, profile: string, number: string) => `${profile.toUpperCase()} ${number}`);
+}
+
 function titleFromResults(rows: CalculationResultRow[], rawRequest: string, locale: Locale): string {
   const has = (canonical: string) => rows.some((row) => canonicalResultKey(row.label) === canonical);
   const request = rawRequest.toLowerCase();
@@ -322,7 +327,7 @@ function titleFromResults(rows: CalculationResultRow[], rawRequest: string, loca
 
   if (has("etam") || has("etav") || has("mplrd") || has("vplrd") || request.includes("kapasitet")) {
     const base = locale === "nn" ? "Kapasitetskontroll av stålbjelke" : "Kapasitetskontroll av stålbjelke";
-    return profile ? `${base} ${profile.toUpperCase()}` : base;
+    return profile ? `${base} ${formatSteelProfileName(profile)}` : base;
   }
 
   if (has("eddim") || has("ed610a") || has("ed610bq") || request.includes("lastkombinasjon")) {
@@ -371,8 +376,8 @@ function buildCoverText(
     titleFromResults(rows, rawRequest, locale);
 
   return {
-    title: explicitTitle || fallbackTitle || LABELS.title[locale],
-    subtitle: explicitSubtitle || subtitleFromResults(rows) || LABELS.subtitle[locale],
+    title: normalizeTitleTypography(explicitTitle || fallbackTitle || LABELS.title[locale]),
+    subtitle: normalizeTitleTypography(explicitSubtitle || subtitleFromResults(rows) || LABELS.subtitle[locale]),
   };
 }
 

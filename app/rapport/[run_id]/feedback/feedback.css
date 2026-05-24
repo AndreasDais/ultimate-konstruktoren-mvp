@@ -1,0 +1,173 @@
+.pilot-feedback-page {
+  --pilot-feedback-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
+  min-height: 100vh;
+  padding: 56px 20px;
+  display: grid;
+  place-items: start center;
+  background: var(--page-bg, #f6f4ef);
+  color: var(--text-strong, #14120f);
+}
+
+.pilot-feedback-card {
+  width: min(820px, 100%);
+  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
+  border-radius: 28px;
+  padding: 36px;
+  background: var(--surface, rgba(255, 255, 255, 0.84));
+  box-shadow: var(--pilot-feedback-shadow, 0 24px 80px rgba(0, 0, 0, 0.08));
+}
+
+.pilot-feedback-eyebrow {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  font-weight: 900;
+  color: var(--text-muted, #766e62);
+}
+
+.pilot-feedback-card h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1;
+}
+
+.pilot-feedback-card p {
+  color: var(--text-muted, #5d564c);
+  line-height: 1.6;
+}
+
+.pilot-feedback-form {
+  display: grid;
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.pilot-feedback-form fieldset {
+  margin: 0;
+  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.pilot-feedback-form legend,
+.pilot-field span {
+  font-weight: 900;
+  color: var(--text-strong, #14120f);
+}
+
+.pilot-radio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pilot-radio-grid label,
+.pilot-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--soft-surface, rgba(20, 18, 15, 0.035));
+  font-weight: 700;
+}
+
+.pilot-field {
+  display: grid;
+  gap: 8px;
+}
+
+.pilot-field select,
+.pilot-field textarea {
+  width: 100%;
+  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.16));
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--input-bg, #fff);
+  color: var(--input-text, inherit);
+  font: inherit;
+}
+
+.pilot-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.pilot-feedback-actions button,
+.pilot-feedback-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.pilot-feedback-actions button {
+  border: 0;
+  background: var(--button-bg, #171410);
+  color: var(--button-fg, #fffaf0);
+  cursor: pointer;
+}
+
+.pilot-feedback-actions a {
+  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.16));
+  color: inherit;
+}
+
+.pilot-success { color: #166534 !important; font-weight: 900; }
+.pilot-error { color: #991b1b !important; font-weight: 900; }
+
+[data-palette="graphite"] .pilot-feedback-page,
+[data-theme="graphite"] .pilot-feedback-page {
+  --page-bg: #101113;
+  --surface: rgba(26, 27, 30, 0.88);
+  --soft-surface: rgba(255, 255, 255, 0.06);
+  --text-strong: #f3f0ea;
+  --text-muted: #b5aea2;
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --button-bg: #f3f0ea;
+  --button-fg: #101113;
+  --input-bg: rgba(255, 255, 255, 0.08);
+  --input-text: #f3f0ea;
+  --pilot-feedback-shadow: 0 26px 90px rgba(0, 0, 0, 0.36);
+}
+
+[data-palette="stone"] .pilot-feedback-page,
+[data-theme="stone"] .pilot-feedback-page {
+  --page-bg: #f4f1ea;
+  --surface: rgba(255, 252, 246, 0.88);
+  --text-strong: #1c1814;
+  --text-muted: #70675b;
+  --border-subtle: rgba(70, 62, 50, 0.16);
+}
+
+@media (max-width: 720px) {
+  .pilot-feedback-card { padding: 24px; }
+  .pilot-radio-grid { grid-template-columns: 1fr; }
+}
+
+
+.pilot-feedback-form label,
+.pilot-feedback-form input,
+.pilot-feedback-form select,
+.pilot-feedback-form textarea {
+  color: var(--text-strong, #14120f);
+}
+
+.pilot-feedback-form select option {
+  color: #14120f;
+  background: #ffffff;
+}
+
+[data-palette="graphite"] .pilot-feedback-form select option,
+[data-theme="graphite"] .pilot-feedback-form select option {
+  color: #f3f0ea;
+  background: #1a1b1e;
+}

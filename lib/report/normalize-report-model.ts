@@ -29,6 +29,15 @@ export function cleanFormulaText(value: unknown): string {
     .trim();
 }
 
+
+export function normalizeTitleTypography(value: unknown): string {
+  return cleanReportText(value)
+    .replace(/\s*—\s*/g, " — ")
+    .replace(/\b(IPE|HEA|HEB|HEM|UNP|UPN)\s*(\d{2,4})\b/gi, (_, profile: string, number: string) => `${profile.toUpperCase()} ${number}`)
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 const NOTATION_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bF_Ed,dim\b/g, "Ed,dim"],
   [/\bF_Ed,6\.10a\b/g, "Ed,6.10a"],
@@ -64,6 +73,17 @@ const NOTATION_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\beta_V\b/g, "ηV"],
   [/\bM_pl_Rd\b/g, "Mpl,Rd"],
   [/\bV_pl_Rd\b/g, "Vpl,Rd"],
+  [/\bM_Rd\b/g, "MRd"],
+  [/\bV_Rd\b/g, "VRd"],
+  [/\bN_Rd\b/g, "NRd"],
+  [/\bA_v\b/g, "Av"],
+  [/\bA_s\b/g, "As"],
+  [/\bf_y\b/g, "fy"],
+  [/\bf_ck\b/g, "fck"],
+  [/\bf_yk\b/g, "fyk"],
+  [/\bt_f\b/g, "tf"],
+  [/\bt_w\b/g, "tw"],
+  [/\bW_pl,y\b/g, "Wpl,y"],
   [/\bqEd\b/g, "qEd"],
   [/\bMEd\b/g, "MEd"],
   [/\bVEd\b/g, "VEd"],
@@ -90,6 +110,13 @@ function stripTechnicalUnderscores(value: string): string {
     .replace(/\bEd610a\b/g, "Ed,6.10a")
     .replace(/\bEd610bq\b/g, "Ed,6.10b,q")
     .replace(/\bEd610bs\b/g, "Ed,6.10b,s")
+    .replace(/\bMplRd\b/g, "Mpl,Rd")
+    .replace(/\bVplRd\b/g, "Vpl,Rd")
+    .replace(/\bWply\b/g, "Wpl,y")
+    .replace(/\bAvz\b/g, "Av,z")
+    .replace(/\bMRd\b/g, "MRd")
+    .replace(/\bVRd\b/g, "VRd")
+    .replace(/\bNRd\b/g, "NRd")
     .replace(/\bFEd610a\b/g, "Ed,6.10a")
     .replace(/\bFEd610bq\b/g, "Ed,6.10b,q")
     .replace(/\bFEd610bs\b/g, "Ed,6.10b,s")
@@ -120,7 +147,14 @@ export function normalizeCalculationSyntaxText(value: unknown): string {
     .replace(/\bWply\b/g, "Wpl,y")
     .replace(/\bAvz\b/g, "Av,z")
     .replace(/\betam\b/gi, "ηM")
-    .replace(/\betav\b/gi, "ηV");
+    .replace(/\betav\b/gi, "ηV")
+    .replace(/\balpha_z\b|\balphaz\b/g, "αz")
+    .replace(/\bGammaM1\b|\bgammaM1\b/g, "γM1")
+    .replace(/\blambda_1\b|\blambda1\b/g, "λ1")
+    .replace(/\bbarlambda_z\b|\blambdazbar\b|\blambdabarz\b/g, "λ̄z")
+    .replace(/\bphi_z\b|\bphiz\b/g, "φz")
+    .replace(/\bchi_z\b|\bchiz\b/g, "χz")
+    .replace(/\bNbRd\b/g, "Nb,Rd");
 }
 
 
@@ -192,6 +226,22 @@ export function displayResultLabel(key: string): string {
     epsilon: "ε",
     cftf: "cf/tf",
     cwtw: "cw/tw",
+    alphaz: "αz",
+    alpha: "α",
+    lambda1: "λ1",
+    lambda_1: "λ1",
+    lambdabarz: "λ̄z",
+    lambdazbar: "λ̄z",
+    barlambda_z: "λ̄z",
+    phiz: "φz",
+    phi_z: "φz",
+    chiz: "χz",
+    chi_z: "χz",
+    gammam1: "γM1",
+    nbrd: "Nb,Rd",
+    iz: "iz",
+    izz: "Iz",
+    lcr: "Lcr",
   };
   if (known[canonical]) return known[canonical];
 
@@ -318,6 +368,8 @@ export function normalizeReportModel(model: ReportModel): ReportModel {
     ...model,
     cover: {
       ...model.cover,
+      title: normalizeTitleTypography(model.cover.title),
+      subtitle: normalizeTitleTypography(model.cover.subtitle),
       shortSummary: limitText(model.cover.shortSummary, 340),
       qrLabel: cleanReportText(model.cover.qrLabel),
       qrDescription: cleanReportText(model.cover.qrDescription),
