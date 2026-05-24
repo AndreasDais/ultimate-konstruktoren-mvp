@@ -19,7 +19,7 @@ type LatestJsonResult = {
   error?: string;
 };
 
-const QA_COMMAND = "npm run test:golden -- --case A1 --runs 3";
+const QA_COMMAND = "npm run test:golden";
 const DAILY_COMMAND = "npm run daily:report";
 
 function isRecord(value: unknown): value is JsonRecord {

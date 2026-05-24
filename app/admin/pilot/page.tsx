@@ -18,6 +18,25 @@ type PilotMetricsResponse = {
   error?: string;
 };
 
+type FinalReadinessState = "ok" | "warn" | "blocked" | "manual";
+
+type FinalReadinessItem = {
+  key: string;
+  label: string;
+  description: string;
+  state: FinalReadinessState;
+  automated: boolean;
+};
+
+type FinalReadinessSummary = {
+  status: "ready" | "caution" | "blocked";
+  readyCount: number;
+  automatedCount: number;
+  manualCount: number;
+  blockers: number;
+  items: FinalReadinessItem[];
+};
+
 const CHECKLIST: Record<Locale, string[]> = {
   nb: [
     "Production deploy fungerer",
@@ -88,6 +107,16 @@ const COPY: Record<Locale, {
   noAnomalies: string;
   topClusters: string;
   readinessTitle: string;
+  finalTitle: string;
+  finalIntro: string;
+  finalReady: string;
+  finalCaution: string;
+  finalBlocked: string;
+  finalProgress: string;
+  finalAutomatedChecks: string;
+  finalManualChecks: string;
+  finalStatus: Record<FinalReadinessState, string>;
+  finalItems: Record<string, { label: string; description: string }>;
   rating: Record<PilotFeedbackRating, string>;
 }> = {
   nb: {
@@ -132,6 +161,32 @@ const COPY: Record<Locale, {
     noAnomalies: "Ingen anomalier i siste rapport.",
     topClusters: "Største klynger",
     readinessTitle: "Operativ pilotstatus",
+    finalTitle: "Klar for pilot?",
+    finalIntro: "Automatisk sjekkliste basert på test-agent, daily-agent, Supabase, feedbackflyt og manuelle sistekontroller.",
+    finalReady: "Klar for kontrollert pilot",
+    finalCaution: "Nesten klar — manuell sjekk gjenstår",
+    finalBlocked: "Ikke klar — blokkering må løses",
+    finalProgress: "Automatiske sjekker bestått",
+    finalAutomatedChecks: "Automatiske sjekker",
+    finalManualChecks: "Manuelle sistekontroller",
+    finalStatus: {
+      ok: "OK",
+      warn: "Sjekk",
+      blocked: "Blokkerer",
+      manual: "Manuell",
+    },
+    finalItems: {
+      qa: { label: "Test-agent grønn", description: "Golden-set og Port 1/Port 2 bør være bestått før eksterne brukere inviteres." },
+      dangerous: { label: "Ingen farlige regresjoner", description: "Test-agenten skal ikke rapportere farlig-feil-kandidater eller regresjon i funn." },
+      daily: { label: "Daily-agent fersk", description: "Daglig overvåking bør ha minst én rapport slik at signaler fra ekte kjøringer fanges." },
+      feedback: { label: "Pilotfeedback fungerer", description: "Feedbackskjema og Supabase-tabellen pilot_feedback må fungere." },
+      supabase: { label: "Supabase-migrasjoner OK", description: "Pilotfeedback og målinger må kunne leses uten datakildefeil." },
+      errors: { label: "Ingen datakildevarsler", description: "Dashboardet bør ikke vise feil fra tabeller, dato-kolonner eller manglende rapportmapper." },
+      admin: { label: "Admin-dashboard klart", description: "Adminsidene må være tilgjengelige for oppfølging av pilot, feil og intelligence." },
+      exports: { label: "Rapporteksport manuelt testet", description: "PDF, Word, LaTeX og beregningsark bør verifiseres med minst én ny rapport." },
+      localeTheme: { label: "Språk og tema manuelt testet", description: "Bokmål/nynorsk og Slate/Stone/Graphite bør sjekkes på pilot- og adminsidene." },
+      deploy: { label: "Production deploy verifisert", description: "Produksjonslenke, login og miljøvariabler må kontrolleres før deling." },
+    },
     rating: {
       useful: "Nyttig",
       partly: "Delvis",
@@ -180,6 +235,32 @@ const COPY: Record<Locale, {
     noAnomalies: "Ingen anomaliar i siste rapport.",
     topClusters: "Største klynger",
     readinessTitle: "Operativ pilotstatus",
+    finalTitle: "Klar for pilot?",
+    finalIntro: "Automatisk sjekkliste basert på test-agent, daily-agent, Supabase, feedbackflyt og manuelle sistekontrollar.",
+    finalReady: "Klar for kontrollert pilot",
+    finalCaution: "Nesten klar — manuell sjekk står att",
+    finalBlocked: "Ikkje klar — blokkering må løysast",
+    finalProgress: "Automatiske sjekkar bestått",
+    finalAutomatedChecks: "Automatiske sjekkar",
+    finalManualChecks: "Manuelle sistekontrollar",
+    finalStatus: {
+      ok: "OK",
+      warn: "Sjekk",
+      blocked: "Blokkerer",
+      manual: "Manuell",
+    },
+    finalItems: {
+      qa: { label: "Test-agent grøn", description: "Golden-set og Port 1/Port 2 bør vere bestått før eksterne brukarar blir inviterte." },
+      dangerous: { label: "Ingen farlege regresjonar", description: "Test-agenten skal ikkje rapportere farleg-feil-kandidatar eller regresjon i funn." },
+      daily: { label: "Daily-agent fersk", description: "Dagleg overvaking bør ha minst éin rapport slik at signal frå ekte køyringar blir fanga." },
+      feedback: { label: "Pilotfeedback fungerer", description: "Feedbackskjema og Supabase-tabellen pilot_feedback må fungere." },
+      supabase: { label: "Supabase-migrasjonar OK", description: "Pilotfeedback og målingar må kunne lesast utan datakjeldefeil." },
+      errors: { label: "Ingen datakjeldevarsel", description: "Dashboardet bør ikkje vise feil frå tabellar, dato-kolonnar eller manglande rapportmapper." },
+      admin: { label: "Admin-dashboard klart", description: "Adminsidene må vere tilgjengelege for oppfølging av pilot, feil og intelligence." },
+      exports: { label: "Rapporteksport manuelt testa", description: "PDF, Word, LaTeX og berekningsark bør verifiserast med minst éin ny rapport." },
+      localeTheme: { label: "Språk og tema manuelt testa", description: "Bokmål/nynorsk og Slate/Stone/Graphite bør sjekkast på pilot- og adminsidene." },
+      deploy: { label: "Production deploy verifisert", description: "Produksjonslenke, login og miljøvariablar må kontrollerast før deling." },
+    },
     rating: {
       useful: "Nyttig",
       partly: "Delvis",
@@ -204,6 +285,92 @@ function dateLabel(value: string | null | undefined, locale: Locale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString(locale === "nn" ? "nn-NO" : "nb-NO");
+}
+
+function boolState(value: boolean | null | undefined): FinalReadinessState {
+  if (value === true) return "ok";
+  if (value === false) return "blocked";
+  return "warn";
+}
+
+function buildFinalReadiness(
+  ops: PilotReadinessOpsResponse | null,
+  metrics: PilotMetricsResponse | null,
+  T: (typeof COPY)[Locale],
+): FinalReadinessSummary {
+  const info = T.finalItems;
+  const items = [
+    { key: "qa", ...info.qa, state: boolState(ops?.readiness?.qaGreen), automated: true },
+    {
+      key: "dangerous",
+      ...info.dangerous,
+      state: boolState(ops?.readiness?.dangerousFindingsClear),
+      automated: true,
+    },
+    {
+      key: "daily",
+      ...info.daily,
+      state: (ops?.readiness?.dailyAvailable ? "ok" : "warn") as FinalReadinessState,
+      automated: true,
+    },
+    {
+      key: "feedback",
+      ...info.feedback,
+      state: boolState(metrics?.readiness?.feedbackFlow),
+      automated: true,
+    },
+    {
+      key: "supabase",
+      ...info.supabase,
+      state: boolState(metrics?.readiness?.supabaseMigration),
+      automated: true,
+    },
+    {
+      key: "errors",
+      ...info.errors,
+      state: (metrics?.errors?.length ? "warn" : "ok") as FinalReadinessState,
+      automated: true,
+    },
+    {
+      key: "admin",
+      ...info.admin,
+      state: boolState(metrics?.readiness?.adminDashboard),
+      automated: true,
+    },
+    {
+      key: "exports",
+      ...info.exports,
+      state: "manual" as FinalReadinessState,
+      automated: false,
+    },
+    {
+      key: "localeTheme",
+      ...info.localeTheme,
+      state: "manual" as FinalReadinessState,
+      automated: false,
+    },
+    {
+      key: "deploy",
+      ...info.deploy,
+      state: "manual" as FinalReadinessState,
+      automated: false,
+    },
+  ] satisfies FinalReadinessItem[];
+
+  const automated = items.filter((item) => item.automated);
+  const readyCount = automated.filter((item) => item.state === "ok").length;
+  const blockers = items.filter((item) => item.state === "blocked").length;
+  const warnings = items.filter((item) => item.state === "warn").length;
+  const manualCount = items.filter((item) => item.state === "manual").length;
+
+  return {
+    status: blockers > 0 ? "blocked" : warnings > 0 || manualCount > 0 ? "caution" : "ready",
+    readyCount,
+    automatedCount: automated.length,
+    manualCount,
+    blockers,
+    items,
+  };
 }
 
 export default function AdminPilotPage() {
@@ -243,7 +410,17 @@ export default function AdminPilotPage() {
 
   const qa = ops?.qa;
   const daily = ops?.daily;
-  const qaGreen = ops?.readiness.qaGreen;
+  const qaGreen = ops?.readiness?.qaGreen;
+  const finalReadiness = useMemo(
+    () => buildFinalReadiness(ops, data, T),
+    [ops, data, T],
+  );
+  const finalStatusLabel =
+    finalReadiness.status === "ready"
+      ? T.finalReady
+      : finalReadiness.status === "blocked"
+        ? T.finalBlocked
+        : T.finalCaution;
 
   return (
     <main className="admin-pilot-page">
@@ -271,6 +448,50 @@ export default function AdminPilotPage() {
         </section>
       )}
 
+      <section className={`admin-pilot-final-readiness ${finalReadiness.status}`}>
+        <div className="admin-pilot-final-summary">
+          <div>
+            <p className="admin-pilot-eyebrow">{T.finalTitle}</p>
+            <h2>{finalStatusLabel}</h2>
+            <p>{T.finalIntro}</p>
+          </div>
+          <div className="admin-pilot-readiness-score">
+            <strong>{finalReadiness.readyCount}/{finalReadiness.automatedCount}</strong>
+            <span>{T.finalProgress}</span>
+            <div className="admin-pilot-progress" aria-hidden="true">
+              <i style={{ width: `${Math.round((finalReadiness.readyCount / Math.max(finalReadiness.automatedCount, 1)) * 100)}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-pilot-final-checklist">
+          <div>
+            <h3>{T.finalAutomatedChecks}</h3>
+            {finalReadiness.items.filter((item) => item.automated).map((item) => (
+              <article className={`admin-pilot-final-item ${item.state}`} key={item.key}>
+                <span>{T.finalStatus[item.state]}</span>
+                <div>
+                  <strong>{item.label}</strong>
+                  <p>{item.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div>
+            <h3>{T.finalManualChecks}</h3>
+            {finalReadiness.items.filter((item) => !item.automated).map((item) => (
+              <article className={`admin-pilot-final-item ${item.state}`} key={item.key}>
+                <span>{T.finalStatus[item.state]}</span>
+                <div>
+                  <strong>{item.label}</strong>
+                  <p>{item.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="admin-pilot-cards">
         {cards.map((card) => (
           <article key={card.key}>
@@ -288,7 +509,7 @@ export default function AdminPilotPage() {
               <h2>{T.qaTitle}</h2>
               <p>{T.qaIntro}</p>
             </div>
-            <span className={`admin-pilot-status ${qaGreen === true ? "ok" : qaGreen === false ? "bad" : "neutral"}`}>
+            <span className={`admin-pilot-status ${qaGreen === true ? "ok" : qaGreen === false ? "blocked" : "neutral"}`}>
               {qaGreen === true ? T.qaGreen : qaGreen === false ? T.qaRed : T.qaUnknown}
             </span>
           </div>
@@ -380,10 +601,10 @@ export default function AdminPilotPage() {
         </article>
       </section>
 
-      {ops?.readiness.recommendation && (
+      {ops?.readiness?.recommendation && (
         <section className="admin-pilot-readiness-note">
           <h2>{T.readinessTitle}</h2>
-          <p>{ops.readiness.recommendation}</p>
+          <p>{ops.readiness?.recommendation}</p>
         </section>
       )}
 

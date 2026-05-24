@@ -381,3 +381,189 @@
     grid-template-columns: 1fr;
   }
 }
+
+.admin-pilot-final-readiness {
+  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
+  border-radius: 26px;
+  padding: 24px;
+  margin: 18px 0;
+  background: var(--admin-surface, rgba(255, 255, 255, 0.82));
+  box-shadow: var(--admin-shadow, 0 20px 70px rgba(0, 0, 0, 0.07));
+}
+
+.admin-pilot-final-readiness.ready {
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.admin-pilot-final-readiness.caution {
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.admin-pilot-final-readiness.blocked {
+  border-color: rgba(239, 68, 68, 0.32);
+}
+
+.admin-pilot-final-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 22px;
+  align-items: start;
+}
+
+.admin-pilot-final-summary h2 {
+  margin: 6px 0 8px;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.admin-pilot-final-summary p {
+  margin: 0;
+  color: var(--admin-muted, #625a50);
+  line-height: 1.6;
+}
+
+.admin-pilot-readiness-score {
+  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
+  border-radius: 20px;
+  padding: 18px;
+  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+}
+
+.admin-pilot-readiness-score strong {
+  display: block;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.admin-pilot-readiness-score span {
+  display: block;
+  margin-top: 8px;
+  color: var(--admin-muted, #766e62);
+  font-weight: 850;
+  font-size: 0.86rem;
+}
+
+.admin-pilot-progress {
+  height: 9px;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.22);
+}
+
+.admin-pilot-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+
+.admin-pilot-final-checklist {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.admin-pilot-final-checklist h3 {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--admin-muted, #766e62);
+}
+
+.admin-pilot-final-item {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
+  border-radius: 16px;
+  padding: 13px;
+  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+}
+
+.admin-pilot-final-item + .admin-pilot-final-item {
+  margin-top: 9px;
+}
+
+.admin-pilot-final-item > span {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 6px 8px;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+
+.admin-pilot-final-item strong {
+  display: block;
+}
+
+.admin-pilot-final-item p {
+  margin: 5px 0 0;
+  color: var(--admin-muted, #625a50);
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.admin-pilot-final-item.ok > span {
+  color: #166534;
+  background: rgba(220, 252, 231, 0.92);
+}
+
+.admin-pilot-final-item.warn > span,
+.admin-pilot-final-item.manual > span {
+  color: #92400e;
+  background: rgba(254, 243, 199, 0.92);
+}
+
+.admin-pilot-final-item.blocked > span {
+  color: #991b1b;
+  background: rgba(254, 226, 226, 0.92);
+}
+
+[data-palette="graphite"] .admin-pilot-final-readiness,
+[data-theme="graphite"] .admin-pilot-final-readiness {
+  background: var(--admin-surface, rgba(26, 27, 30, 0.86));
+}
+
+[data-palette="graphite"] .admin-pilot-final-item.ok > span,
+[data-theme="graphite"] .admin-pilot-final-item.ok > span {
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.4);
+}
+
+[data-palette="graphite"] .admin-pilot-final-item.warn > span,
+[data-theme="graphite"] .admin-pilot-final-item.warn > span,
+[data-palette="graphite"] .admin-pilot-final-item.manual > span,
+[data-theme="graphite"] .admin-pilot-final-item.manual > span {
+  color: #fde68a;
+  background: rgba(120, 73, 20, 0.32);
+}
+
+[data-palette="graphite"] .admin-pilot-final-item.blocked > span,
+[data-theme="graphite"] .admin-pilot-final-item.blocked > span {
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.36);
+}
+
+@media (max-width: 860px) {
+  .admin-pilot-final-summary,
+  .admin-pilot-final-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-pilot-readiness-score {
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-pilot-final-item {
+    grid-template-columns: 1fr;
+  }
+}
