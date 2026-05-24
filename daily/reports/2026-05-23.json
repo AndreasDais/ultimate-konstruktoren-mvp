@@ -50,13 +50,6 @@
       "registrert_status": "open"
     }
   ],
-  "anomaliar": [
-    {
-      "signal": "samanliknar_usemje_rate",
-      "i_dag": 0.6666666666666666,
-      "baseline": 0,
-      "alvor": "hog"
-    }
-  ],
+  "anomaliar": [],
   "mistenkte_farleg_feil": []
 }

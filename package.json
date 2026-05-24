@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest run",
     "debug:sweep": "node scripts/debug-sweep.mjs",
-    "daily:report": "tsx daily/daily-agent.ts"
+    "daily:report": "tsx daily/daily-agent.ts",
+    "test:golden": "tsx qa/test-agent.ts",
+    "qa:golden": "tsx qa/test-agent.ts",
+    "qa:smoke": "tsx qa/test-agent.ts --case A1 --runs 1"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
@@ -40,6 +43,7 @@
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^3"
+    "vitest": "^3",
+    "tsx": "^4.19.2"
   }
 }
