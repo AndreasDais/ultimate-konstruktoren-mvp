@@ -1,4 +1,6 @@
 import type { Locale } from "@/lib/locale";
+import { localizeResultLabel, polishEnglishGeneratedText } from "@/lib/international/display";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 import type { CalculationStep, ReportModel } from "./report-model";
 import {
   cleanReportText,
@@ -16,6 +18,7 @@ export type CalculationSheetMeta = {
   subtitle: string;
   date: string;
   status: string;
+  displayLanguage?: PilarDisplayLanguage;
   locale: Locale;
   reportUrl: string;
 };
@@ -205,8 +208,8 @@ function normalizeEngineeringFormulaPlain(value: string): string {
     .trim();
 }
 
-function displayCalculationLabel(label: string): string {
-  return normalizeEngineeringDisplaySymbols(displayResultLabel(label));
+function displayCalculationLabel(label: string, displayLanguage: PilarDisplayLanguage = "nb"): string {
+  return localizeResultLabel(normalizeEngineeringDisplaySymbols(displayResultLabel(label)), displayLanguage);
 }
 
 function uniqueByLabel<T extends { label: string }>(rows: T[]): T[] {
@@ -225,8 +228,8 @@ function resultToCalculationResult(row: {
   label: string;
   value: string;
   unit: string | null;
-}): CalculationSheetResult {
-  const label = displayCalculationLabel(row.label);
+}, displayLanguage: PilarDisplayLanguage): CalculationSheetResult {
+  const label = displayCalculationLabel(row.label, displayLanguage);
   return {
     label,
     latex: latexForSymbol(label),
@@ -239,8 +242,8 @@ function resultToGiven(row: {
   label: string;
   value: string;
   unit: string | null;
-}): CalculationGiven {
-  const label = displayCalculationLabel(row.label);
+}, displayLanguage: PilarDisplayLanguage): CalculationGiven {
+  const label = displayCalculationLabel(row.label, displayLanguage);
   return {
     label,
     latex: latexForSymbol(label),
@@ -288,14 +291,50 @@ function collapseDoubleLatexCommands(value: string): string {
 }
 
 
-function normalizeFormulaLatex(value: string): string {
+/**
+ * Normaliserer agent-formel-tekst til LaTeX for berekningsark.
+ * Eksportert for testing — sjaa calculation-sheet-model.test.ts.
+ */
+export function normalizeFormulaLatex(value: string): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
 
   // Agent-output may be a mix of plain text, Unicode math symbols and LaTeX.
   // Keep valid LaTeX commands intact, but normalise PILAR's plain report
   // notation into academic notation for calculation sheets.
-  const preprocessed = raw
+  // --- Struktur-normalisering (matematiske strukturar, ikkje symbol) ---
+  // Medvite konservativ: ein delvis fiks som aldri bryt, framfor ein
+  // full fiks som kan det. Rekkjefoelgja er viktig — sjaa kommentarar.
+  const structured = raw
+    // Fiks 3: Unicode-kvadrat/kube midt i eit tal-ledd: 3,2711² -> 3,2711^2.
+    .replace(/(\d)²/g, "$1^2")
+    .replace(/(\d)³/g, "$1^3")
+    // Fiks 1: eksponent med parentes: fck^(2/3) -> fck^{2/3}.
+    // [^()] => inga noesting. Maa koeyre FOER broek-regelen, slik at
+    // "2/3" hamnar trygt inni ^{...} og ikkje blir broek-konvertert.
+    .replace(/\^\(([^()]+)\)/g, "^{$1}")
+    // Fiks 2: broek — BERRE to trygge moenster.
+    //  a) tal / tal: 225,3 / 175,5 -> \frac{225,3}{175,5}.
+    //     Negativ lookbehind (?<!\^)(?<!\^{) => roerer ikkje tal rett
+    //     etter ein eksponent: L^2/8 tyder (L^2)/8, ikkje L^(2/8).
+    .replace(
+      /(?<!\^)(?<!\^{)(\b\d[\d.,]*)\s*\/\s*(\d[\d.,]*\b)/g,
+      "\\frac{$1}{$2}",
+    )
+    //  b) enkelt symbol / enkelt symbol: fctm / fyk -> \frac{fctm}{fyk}.
+    //     Berre reine identifikatorar paa begge sider — IKKJE uttrykk
+    //     med parentes eller mellomrom-ledd, og ikkje etter ^ eller {.
+    //     Negativ lookahead vernar kjende einings-par (kN/m, N/mm² ...):
+    //     dei er einingar, ikkje brøkar, og normalizeLatexUnits gjer dei
+    //     om til \\mathrm{...} seinare. Utan vakta vart "6,0 kN/m"
+    //     til ein stabla \\frac{kN}{m}.
+    .replace(
+      /(?<![\w}^])(?!(?:kN|N|MPa|mm|cm|m|Nmm|kNm)(?:\^?[23])?\s*\/\s*(?:kN|N|MPa|mm|cm|m|Nmm|kNm)(?:\^?[23])?(?![\w]))([A-Za-z][\w]*)\s*\/\s*([A-Za-z][\w]*)(?![\w{])/g,
+      "\\frac{$1}{$2}",
+    );
+
+  // Agent-output may be a mix of plain text, Unicode math symbols and LaTeX.
+  const preprocessed = structured
     .replace(/²/g, "^2")
     .replace(/³/g, "^3")
     .replace(/\bsqrt\(([^()]+)\)/g, "\\sqrt{$1}")
@@ -512,20 +551,21 @@ function buildFormulas(step: CalculationStep): CalculationFormula[] {
 }
 
 export function buildCalculationSheetModel(model: ReportModel): CalculationSheetModel {
+  const displayLanguage = model.meta.displayLanguage ?? model.meta.locale;
   const inputRows = uniqueByLabel(
     model.calculation.resultRows
       .filter((row) => row.category === "input")
-      .map(resultToGiven),
+      .map((row) => resultToGiven(row, displayLanguage)),
   );
 
   const resultRows = uniqueByLabel(
     model.calculation.resultRows
       .filter((row) => row.category === "dimensjonerande" || row.category === "kontroll")
-      .map(resultToCalculationResult),
+      .map((row) => resultToCalculationResult(row, displayLanguage)),
   );
 
-  const fallbackGiven = inputRows.length > 0 ? inputRows : model.keyResults.map(resultToGiven);
-  const fallbackResults = resultRows.length > 0 ? resultRows : model.keyResults.map(resultToCalculationResult);
+  const fallbackGiven = inputRows.length > 0 ? inputRows : model.keyResults.map((row) => resultToGiven(row, displayLanguage));
+  const fallbackResults = resultRows.length > 0 ? resultRows : model.keyResults.map((row) => resultToCalculationResult(row, displayLanguage));
 
   return {
     meta: {
