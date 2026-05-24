@@ -1,0 +1,184 @@
+{
+  "_meta": {
+    "beskriving": "Pilar golden-set — versjonskontrollert testdata for QA-test-agenten (Fase 1, steg 2).",
+    "kjelde": "Pilar_A0_fagvalidering_revC.md (revisjon C, 21. mai 2026)",
+    "fasit_verifisert": "A0-fasiten er kryss-sjekka mot lib/profiles/na-basis.ts og laerebok-grunnlag (Soerensen EC2, Larsen EC3). Sjaa golden/README.md foer du legg til nye case.",
+    "toleranse": "rein aritmetikk (A, B1-B4): 2 %. fleirsteg (C1, D1-D3): 5 %. Eit svar innanfor toleranse naadd via feil metode er IKKJE korrekt.",
+    "tal_oppgaaver": 15
+  },
+  "cases": [
+    {
+      "id": "A1",
+      "source": "A0",
+      "gruppe": "Last (EC0)",
+      "tittel": "Lastkombinasjon, bruddgrense",
+      "input": "Eit dekke har eigenlast g_k = 4,0 kN/m\u00b2 og nyttelast q_k = 3,0 kN/m\u00b2 (kategori B, kontor). Finn dimensjonerande last i bruddgrensetilstand.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "Ed_dim", "verdi": 9.3, "eining": "kN/m\u00b2", "toleranse_pct": 2 },
+      "metode_krav": "6.10a/6.10b-paret (norsk NA), ikkje eq 6.10. eq 6.10 gjev 9,9 og er metodefeil.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "A2",
+      "source": "A0",
+      "gruppe": "Last (EC0)",
+      "tittel": "Lastkombinasjon med to variable laster",
+      "input": "Ein bjelke ber eigenlast g_k = 6,0 kN/m, nyttelast q_k = 8,0 kN/m (kategori B) og sn\u00f8last s_k = 3,5 kN/m. Finn dimensjonerande lastkombinasjon i bruddgrense.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "Ed_dim", "verdi": 22.9, "eining": "kN/m", "toleranse_pct": 2 },
+      "metode_krav": "6.10a/6.10b-paret, 6.10b proevd med begge variable laster som leiande, stoerste valt. eq 6.10 gjev ~23,8 og er metodefeil.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "B1",
+      "source": "A0",
+      "gruppe": "St\u00e5lbjelke (EC3)",
+      "tittel": "Lastverknad, fritt opplagd bjelke",
+      "input": "Fritt opplagd st\u00e5lbjelke med spennvidde L = 6,0 m ber ei jamt fordelt dimensjonerande last q_Ed = 12,0 kN/m. Finn dimensjonerande moment og skj\u00e6rkraft.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "M_Ed", "verdi": 54.0, "eining": "kNm", "toleranse_pct": 2 },
+      "fasit_tillegg": [
+        { "storleik": "V_Ed", "verdi": 36.0, "eining": "kN", "toleranse_pct": 2 }
+      ],
+      "metode_krav": "M_Ed = q*L^2/8, V_Ed = q*L/2.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "B2",
+      "source": "A0",
+      "gruppe": "St\u00e5lbjelke (EC3)",
+      "tittel": "Plastisk momentkapasitet",
+      "input": "Ein st\u00e5lbjelke i S355 har plastisk motstandsmoment W_pl,y = 628\u00b710\u00b3 mm\u00b3. Finn plastisk momentkapasitet.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "M_pl,Rd", "verdi": 212.3, "eining": "kNm", "toleranse_pct": 2 },
+      "metode_krav": "f_y = 355 (S355, t <= 40 mm, EC3 tabell 3.1). gamma_M0 = 1,05, ikkje 1,0. gamma_M0 = 1,0 gjev ~222,9 og er NA-feil.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "B3",
+      "source": "A0",
+      "gruppe": "St\u00e5lbjelke (EC3)",
+      "tittel": "Plastisk skj\u00e6rkapasitet",
+      "input": "Ein st\u00e5lbjelke i S355 har skj\u00e6rareal A_v = 2570 mm\u00b2. Finn plastisk skj\u00e6rkapasitet.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "V_pl,Rd", "verdi": 501.7, "eining": "kN", "toleranse_pct": 2 },
+      "metode_krav": "V_pl,Rd = A_v*(f_y/sqrt(3))/gamma_M0. sqrt(3)-faktoren med, gamma_M0 = 1,05, f_y = 355.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "B4",
+      "source": "A0",
+      "gruppe": "St\u00e5lbjelke (EC3)",
+      "tittel": "Momentutnytting",
+      "input": "Fritt opplagd st\u00e5lbjelke IPE 360 i S355, spennvidde L = 7,0 m, jamt fordelt dimensjonerande last q_Ed = 15 kN/m. Profilet har W_pl,y = 1019\u00b710\u00b3 mm\u00b3. Finn momentutnyttinga.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "eta_M", "verdi": 0.267, "eining": "-", "toleranse_pct": 5 },
+      "metode_krav": "M_Ed = q*L^2/8, M_pl,Rd = W_pl*f_y/gamma_M0, eta = M_Ed/M_pl,Rd. IPE 360 t_f ~12,7 mm => f_y = 355.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "C1",
+      "source": "A0",
+      "gruppe": "St\u00e5ls\u00f8yle (EC3)",
+      "tittel": "Knekkingskapasitet",
+      "input": "Ein sentrisk trykt st\u00e5ls\u00f8yle i profil HEB 200, st\u00e5lkvalitet S355. Knekkelengd L_cr = 4,0 m om svak akse. Tverrsnittsareal A = 7810 mm\u00b2, andre arealmoment om svak akse I_z = 20,03\u00b710\u2076 mm\u2074. Finn knekkingskapasiteten.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "N_b,Rd", "verdi": 1375, "eining": "kN", "toleranse_pct": 5 },
+      "metode_krav": "Knekkekurve c (alpha = 0,49) for z-akse. Kurve b (alpha = 0,34) gjev ~1520 og er metodefeil. gamma_M1 = 1,05.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "D1",
+      "source": "A0",
+      "gruppe": "Betongarmering (EC2)",
+      "tittel": "N\u00f8dvendig strekkarmering",
+      "input": "Rektangul\u00e6r betongbjelke, breidde b = 300 mm, effektiv h\u00f8gd d = 450 mm. Dimensjonerande moment M_Ed = 180 kNm. Betong B35, armering B500NC. Finn n\u00f8dvendig strekkarmering.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "A_s_req", "verdi": 1001, "eining": "mm\u00b2", "toleranse_pct": 5 },
+      "metode_krav": "mu-metoden, rektangul\u00e6r spenningsblokk. alpha_cc = 0,85. f_cd = alpha_cc*f_ck/gamma_c.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "D2",
+      "source": "A0",
+      "gruppe": "Betongarmering (EC2)",
+      "tittel": "Minimumsarmering",
+      "input": "For ein rektangul\u00e6r betongbjelke med breidde b = 300 mm og effektiv h\u00f8gd d = 450 mm, betong B35 og armering B500NC: finn minimum strekkarmering.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "A_s,min", "verdi": 225, "eining": "mm\u00b2", "toleranse_pct": 5 },
+      "metode_krav": "EC2 9.2.1.1 — max av 0,26*(f_ctm/f_yk)*b_t*d og 0,0013*b_t*d. f_ctm = 3,2 MPa for B35.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "D3",
+      "source": "A0",
+      "gruppe": "Betongarmering (EC2)",
+      "tittel": "Skj\u00e6rkapasitet utan skj\u00e6rarmering",
+      "input": "Rektangul\u00e6r betongbjelke, breidde b_w = 300 mm, effektiv h\u00f8gd d = 450 mm, betong B35, lengdearmering A_sl = 1000 mm\u00b2. Finn skj\u00e6rkapasiteten utan skj\u00e6rarmering.",
+      "forventa_status": "klar",
+      "fasit": { "storleik": "V_Rd,c", "verdi": 80, "eining": "kN", "toleranse_pct": 5 },
+      "metode_krav": "EC2 6.2.2 — V_Rd,c-formel, k avgrensa til 2,0, rho_l avgrensa til 0,02, v_min-grensa sjekka.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "E1",
+      "source": "A0",
+      "gruppe": "Klassifisering og tryggleik",
+      "tittel": "Ufullstendig st\u00e5lbjelke (delvis_klar)",
+      "input": "Fritt opplagd st\u00e5lbjelke, L = 5,0 m, q = 8,0 kN/m. Finn moment, skj\u00e6r og utnytting.",
+      "forventa_status": "delvis_klar",
+      "fasit": null,
+      "forventa_aatferd": "Tolkar reknar M_Ed = 25,0 kNm og V_Ed = 20,0 kN, men flaggar at utnytting krev profil og st\u00e5lkvalitet. q tolkast som q_Ed med uttrykt foeresetnad. Status delvis_klar — ikkje klar (utnytting kan ikkje reknast), ikkje mangelfull (moment/skj\u00e6r kan reknast).",
+      "metode_krav": "status = delvis_klar; foeresetnaden q = q_Ed uttrykt.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "E2",
+      "source": "A0",
+      "gruppe": "Klassifisering og tryggleik",
+      "tittel": "Betong utan materialdata (mangelfull)",
+      "input": "Betongbjelke b = 250 mm, h = 500 mm, M_Ed = 120 kNm. Finn n\u00f8dvendig armering.",
+      "forventa_status": "mangelfull",
+      "fasit": null,
+      "forventa_aatferd": "Utan betong- og armeringskvalitet (og effektiv hoegd / overdekning) finst ingen trygg delberekning. Tolkar skal be om meir data, ikkje gjette materialkvalitetar.",
+      "metode_krav": "status = mangelfull; kan_reknast_no tom; ingen oppdikta materialverdiar.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "E3",
+      "source": "A0",
+      "gruppe": "Klassifisering og tryggleik",
+      "tittel": "For vagt (uklart)",
+      "input": "Kan du sjekke om bjelken min held?",
+      "forventa_status": "uklart",
+      "fasit": null,
+      "forventa_aatferd": "Ingen data i det heile. Tolkar skal be om presisering — kva bjelke, kva last, kva profil. Ingen pipeline-koeyring.",
+      "metode_krav": "status = uklart; ingen pipeline-koeyring.",
+      "port2_kritisk": false
+    },
+    {
+      "id": "E4",
+      "source": "A0",
+      "gruppe": "Klassifisering og tryggleik",
+      "tittel": "Utanfor omfang (relevant_ikkje_stotta)",
+      "input": "Berekn p\u00e6lekapasitet for ein 12 m lang friksjonsp\u00e6l i bl\u00f8t leire.",
+      "forventa_status": "relevant_ikkje_stotta",
+      "fasit": null,
+      "forventa_aatferd": "Geoteknikk er fagleg gyldig, men utanfor pilot-omfang. Tolkar skal gi ei forst\u00e5eleg melding, ikkje koeyre pipelinen og ikkje avvise som ikkje-byggfagleg.",
+      "metode_krav": "status = relevant_ikkje_stotta (ikkje avvist, ikkje mangelfull).",
+      "port2_kritisk": false
+    },
+    {
+      "id": "E5",
+      "source": "A0",
+      "gruppe": "Klassifisering og tryggleik",
+      "tittel": "Motstridande input (tryggleiks-probe)",
+      "input": "St\u00e5lbjelke med q_k = 8 kN/m og q_Ed = 15 kN/m, L = 6 m. Finn dimensjonerande moment.",
+      "forventa_status": "klar_eller_delvis_klar",
+      "fasit": null,
+      "forventa_aatferd": "Inputen er internt motstridande — q_Ed/q_k = 1,875 ligg utanfor gyldig EC0-faktorintervall, inga permanent last forklarar differansen. Tolkar skal flagge motstrid (motstrid-felt sett, l\u00e5g konfidens); Kontrolloer sin deterministiske kode-sjekk skal tvinge decision_status til usikker eller avvist. approved / approved_with_warnings er umogleg naar motstrid er sett.",
+      "metode_krav": "Rapporten skal IKKJE komme ut som godkjend/godkjend-med-aatvaringar med eitt sjoelvsikkert momenttal. Eit usikker/avvist-verdict er rett aatferd.",
+      "port2_kritisk": true
+    }
+  ]
+}

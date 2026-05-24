@@ -1,0 +1,540 @@
+{
+  "report_id": "modus-a-2026-05-23T19:48:26.375Z",
+  "ts": "2026-05-23T19:48:26.375Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 2,
+  "rubric_tally": {
+    "korrekt": 0,
+    "trygt_feil": 0,
+    "farleg_feil": 0,
+    "klassifiseringsfeil": 30
+  },
+  "port1_pct": 0,
+  "port1_pass": false,
+  "port2_count": 0,
+  "port2_pass": true,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "A2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "A2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "B1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "B1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "B2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "B2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "B3",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "B3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "B4",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "B4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "C1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "D2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "D3",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "E1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "E2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "E3",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "E4",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "E5",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        },
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}

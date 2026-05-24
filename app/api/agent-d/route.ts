@@ -11,8 +11,7 @@ import {
 } from "@/lib/profiles/na-basis";
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
-import { PIPELINE_MODEL } from "@/lib/models";
-import { recordStepMetric } from "@/lib/step-metrics";
+import { recordShadowCheck } from "@/lib/shadow/shadow-check";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -331,9 +330,8 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
       maxRetries: 5,
     });
 
-    const t0 = Date.now();
     const message = await client.messages.create({
-      model: PIPELINE_MODEL,
+      model: "claude-sonnet-4-6",
       max_tokens: 4096,
       temperature: 0.3,
       system: [
@@ -344,15 +342,6 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
         },
       ],
       messages: [{ role: "user", content: userMessage }],
-    });
-
-    await recordStepMetric({
-      runId: run_id,
-      stepName: "kontrollor",
-      message,
-      promptVersion: PROMPT_VERSION,
-      latencyMs: Date.now() - t0,
-      ok: message.stop_reason !== "max_tokens",
     });
 
     const responseText = message.content
@@ -396,6 +385,24 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
         loadComboDeviations,
       });
     }
+
+    // ── Steg 5: live shadow-check. Den deterministiske lastkombinasjon-
+    //    sjekken har alt køyrt; her loggar vi resultatet mot det
+    //    endelege verdiktet, so den daglege agenten kan triagere
+    //    FARLEG-FEIL-kandidatar. Rein observasjon — endrar ingenting.
+    await recordShadowCheck({
+      runId: run_id,
+      checkId: "load_combination",
+      deviations: loadComboDeviations.map((d) => ({
+        got: d.reported,
+        expected: d.correct,
+        agent: d.agent,
+      })),
+      verdikt:
+        typeof parsed.decision_status === "string"
+          ? parsed.decision_status
+          : null,
+    });
 
     let supabase;
     try {

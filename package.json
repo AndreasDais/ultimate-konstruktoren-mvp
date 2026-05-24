@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "debug:sweep": "node scripts/debug-sweep.mjs"
+    "debug:sweep": "node scripts/debug-sweep.mjs",
+    "daily:report": "tsx daily/daily-agent.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",

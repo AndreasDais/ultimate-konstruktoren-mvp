@@ -1,0 +1,64 @@
+{
+  "report_id": "daily-2026-05-22",
+  "dato": "2026-05-22",
+  "n_runs": 7,
+  "signal_summary": {
+    "verdikt_fordeling": {
+      "approved": 7
+    },
+    "samanliknar_usemje_rate": 0,
+    "shadow_check_treff_rate": 0,
+    "farleg_feil_kandidatar": 0
+  },
+  "klynger": [
+    {
+      "berekningstype": "Lastkombinasjon i bruddgrense (STR) — tre laster",
+      "n": 2,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    },
+    {
+      "berekningstype": "Lastvirkning — moment og skjær for fritt opplagd bjelke",
+      "n": 2,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    },
+    {
+      "berekningstype": "Lastkombinasjon — dimensjonerande last for kontorbygg (EC0/EC1)",
+      "n": 1,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    },
+    {
+      "berekningstype": "Lastvirkning — dimensjonerende moment og skjærkraft for fritt opplagd bjelke",
+      "n": 1,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    },
+    {
+      "berekningstype": "Lastkombinasjon i bruddgrense (STR) etter NS-EN 1990 ekv. 6.10a og 6.10b",
+      "n": 1,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    }
+  ],
+  "funn_aktivitet": [
+    {
+      "id": "F1",
+      "fyringar": 0,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F9",
+      "fyringar": 0,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F10",
+      "fyringar": 0,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F16",
+      "fyringar": 0,
+      "registrert_status": "open"
+    }
+  ],
+  "anomaliar": [],
+  "mistenkte_farleg_feil": []
+}

@@ -1,0 +1,107 @@
+{
+  "_meta": {
+    "beskriving": "Pilar funn-register — A0-funn som strukturert data (QA-spec kap. 7, Fase 1 steg 3).",
+    "status_verdiar": "open | fiksa | regressert",
+    "severity_verdiar": "blokker | hog | middels | lag",
+    "detector": "namn paa detektor-funksjon i funn/detectors.ts, eller null (spec-only — predikatet kan ikkje realiserast som reint predikat over RunRecord enno).",
+    "merknad": "F4, F5, F7, F8 er ikkje med: F7/F8 er tidlegare fastslaatt aa ikkje eksistere som handterbare funn; F4/F5 manglar verifisert definisjon. Legg dei til naar kjelda finst."
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "title": "Upara noekkel vist som 0,0 % avvik",
+      "description": "Samanliknar listar ein noekkel i numeric_differences som berre éin konstruktoer rapporterte (finst i unpaired_keys), vist som eit para avvik paa 0,0 %. Upara noeklar er rapporterings-hol, ikkje avvik.",
+      "severity": "middels",
+      "status": "open",
+      "detector": "detectF1"
+    },
+    {
+      "id": "F2",
+      "title": "Bokmaal-drift i rapport trass nynorsk input",
+      "description": "Rapport-prosa glir over til bokmaal sjoelv om input og locale er nynorsk. Gjeld ikkje berre Rapportoer.",
+      "severity": "middels",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F3",
+      "title": "Selvkontroll-teljing matchar ikkje reelle inkonsistensar",
+      "description": "rapportor.selvkontroll_count er ulik talet paa entries med is_real_inconsistency = true.",
+      "severity": "middels",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F6",
+      "title": "VISNING-badge matchar ikkje Kontrolloer-verdikt",
+      "description": "Badge-strengen vist paa rapporten samsvarar ikkje med kontrollor.verdict.",
+      "severity": "middels",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F9",
+      "title": "minor_differences utan reelle avvik",
+      "description": "Samanliknar set match_status = minor_differences, men alle per-noekkel-avvik er 0,0 %. Ingen reell skilnad => skulle vore match.",
+      "severity": "lag",
+      "status": "open",
+      "detector": "detectF9"
+    },
+    {
+      "id": "F10",
+      "title": "Ikkje-dimensjonerande verdi vist som DIMENSJONERANDE",
+      "description": "Konstruktoeren produserte result_roles, men tagga ingen noekkel som dimensjonerande — daa maa frontend vise ein mellomledd-/input-verdi under DIMENSJONERANDE-tiles.",
+      "severity": "middels",
+      "status": "open",
+      "detector": "detectF10"
+    },
+    {
+      "id": "F11",
+      "title": "Farleg feil stempla godkjent (Port 2)",
+      "description": "Eit gale resultat presentert som godkjent / godkjent-med-aatvaringar utan at avviket vart flagga. Den verste utgangen — bryt Port 2.",
+      "severity": "blokker",
+      "status": "fiksa",
+      "detector": null
+    },
+    {
+      "id": "F12",
+      "title": "Stegvis utrekning reknar ikkje opp",
+      "description": "calculation_steps viser mellomledd der vist operand og vist produkt ikkje stemmer aritmetisk (avrunda operand, ikkje-avrunda produkt).",
+      "severity": "hog",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F13",
+      "title": "Etterspurd verdi demotert til mellomledd",
+      "description": "Ein result_value som brukaren bad om (requested = true) har faatt role = mellomledd / er demotert.",
+      "severity": "middels",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F14",
+      "title": "Sjoelvkontrollen reknar eiga verifisering feil",
+      "description": "Rapportoeren sin aritmetiske sjoelvkontroll reknar sjoelv feil og melder difor feil verifiserings-utfall.",
+      "severity": "hog",
+      "status": "open",
+      "detector": null
+    },
+    {
+      "id": "F15",
+      "title": "Dupliserte aatvaringar i Kontrolloer-kort",
+      "description": "Same aatvaring fraa Konstruktoer A og B i ulik ordlyd vist som to separate chips.",
+      "severity": "lag",
+      "status": "fiksa",
+      "detector": null
+    },
+    {
+      "id": "F16",
+      "title": "relevant_ikkje_stotta med 'krever mer input'-tag",
+      "description": "Tolkar set status = relevant_ikkje_stotta, men markerer samstundes at noko kan reknast med meir input. Sjoelvmotseiande — er oppgaava utanfor omfang, kan ingenting reknast.",
+      "severity": "middels",
+      "status": "open",
+      "detector": "detectF16"
+    }
+  ]
+}

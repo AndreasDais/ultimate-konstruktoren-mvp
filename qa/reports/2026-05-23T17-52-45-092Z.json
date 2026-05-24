@@ -1,0 +1,66 @@
+{
+  "report_id": "modus-a-2026-05-23T17:52:45.092Z",
+  "ts": "2026-05-23T17:52:45.092Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 1,
+  "rubric_tally": {
+    "korrekt": 0,
+    "trygt_feil": 0,
+    "farleg_feil": 0,
+    "klassifiseringsfeil": 1
+  },
+  "port1_pct": 0,
+  "port1_pass": false,
+  "port2_count": 0,
+  "port2_pass": true,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 0,
+      "runs_total": 1,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: Manglar Supabase env vars. Sjekk at NEXT_PUBLIC_SUPABASE_URL og SUPABASE_SERVICE_ROLE_KEY er sett."
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}

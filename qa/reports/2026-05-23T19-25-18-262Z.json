@@ -1,0 +1,1104 @@
+{
+  "report_id": "modus-a-2026-05-23T19:25:18.262Z",
+  "ts": "2026-05-23T19:25:18.262Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 5,
+  "rubric_tally": {
+    "korrekt": 13,
+    "trygt_feil": 0,
+    "farleg_feil": 14,
+    "klassifiseringsfeil": 48
+  },
+  "port1_pct": 6.666666666666667,
+  "port1_pass": false,
+  "port2_count": 3,
+  "port2_pass": false,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 4,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "78be769a-5e64-4661-aae0-a8f269cfd0b5",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "fbe2226a-716e-4824-a5f9-d5631f107335",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "5d17302d-5256-4d00-bdda-82bdd9ec2dc8",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/agent-a -> HTTP 500: Konstruktør A møtte ein uventa feil. Prøv igjen — om problemet vedvarer, send tilbakemelding."
+        },
+        {
+          "case_id": "A1",
+          "run_id": "c089daaf-2787-420b-9b89-9aaa53645b16",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "A2",
+      "korrekt_av_n": 5,
+      "runs_total": 5,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A2",
+          "run_id": "2e3b1023-c0cf-4511-b71c-4d9c070d6c7e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.08733624454148287,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.88 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "fb7cb72d-563d-461a-b2ed-7f7f99233780",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.08733624454148287,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.88 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "4b0038ae-cfc1-4cb3-b51e-20edabe07686",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.08733624454148287,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.88 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "f62e5a29-2622-42d6-86e0-544def47842e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.08733624454148287,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.88 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "d5d5fa59-99d9-4008-a34f-3858d946b1ba",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.9 mot fasit 22.9 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B1",
+      "korrekt_av_n": 4,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "B1",
+          "run_id": "c4eedc72-8aef-4276-95b8-9a5bcd8489b1",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/agent-a -> HTTP 500: Klarte ikkje parse Konstruktør A sitt svar som JSON"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "6bcd82c8-c6f3-4ebb-b340-f1ceb3ea8c29",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "278ff478-e427-4938-a532-6d215fce89a7",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "19ce1b2c-0517-4c82-8cde-5283544e351b",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B2",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B2",
+          "run_id": "26ba624f-a8fb-4625-b121-8a3627b91bf2",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "a8c589c2-a0ae-401a-9458-5224763e8c95",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "f9fcc238-d8d7-4416-8335-beccb0009d08",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "09e86252-d9a2-4d55-8d81-4a691166204e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "206f5177-1745-43b3-8acc-f651d8e0342f",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "B3",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B3",
+          "run_id": "d6bab44a-de45-4095-901f-e9deb73b8a31",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "3ed70081-8d00-433c-9967-16dbe1888394",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 4 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "3347205e-00be-44d1-82cd-78a01219dc40",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 4 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "c2015d09-28d1-4bce-af8f-e2e48e01ff72",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "246632d2-14e5-423f-9210-16237f476cdc",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "B4",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B4",
+          "run_id": "c62c5c3a-0727-4079-95e8-f95e0285dfad",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 7 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "c5e5476d-89c6-4893-8b8f-28fc08971b0d",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "e257940e-c1eb-40d5-b640-35c2cac64a35",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "a51928bd-698e-46cc-8bf0-6ac373764aa3",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 8 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: fetch failed"
+        }
+      ]
+    },
+    {
+      "case_id": "C1",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/agent-c -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "D2",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "D3",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "E1",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "E2",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E2",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "E3",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E3",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "E4",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E4",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    },
+    {
+      "case_id": "E5",
+      "korrekt_av_n": 0,
+      "runs_total": 5,
+      "bestatt": false,
+      "verdikt_verst": "KLASSIFISERINGSFEIL",
+      "per_run": [
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        },
+        {
+          "case_id": "E5",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/input-agent -> HTTP 500: ukjend feil"
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 4
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}

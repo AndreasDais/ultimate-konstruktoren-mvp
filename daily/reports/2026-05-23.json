@@ -1,0 +1,62 @@
+{
+  "report_id": "daily-2026-05-23",
+  "dato": "2026-05-23",
+  "n_runs": 3,
+  "signal_summary": {
+    "verdikt_fordeling": {
+      "uncertain": 1,
+      "approved": 2
+    },
+    "samanliknar_usemje_rate": 0.6666666666666666,
+    "shadow_check_treff_rate": 0,
+    "farleg_feil_kandidatar": 0
+  },
+  "klynger": [
+    {
+      "berekningstype": "Kapasitetskontroll stålbjelke — moment og skjær",
+      "n": 1,
+      "signal_notat": "1 av 1 fekk usikker/avvist verdikt."
+    },
+    {
+      "berekningstype": "Pedagogisk lastverknad — dimensjonerande last, skjærkraft og bøyemoment for fritt opplagd bjelke",
+      "n": 1,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    },
+    {
+      "berekningstype": "Lastvirkning — moment og skjær for fritt opplagd bjelke",
+      "n": 1,
+      "signal_notat": "Ingen usikre/avviste verdikt."
+    }
+  ],
+  "funn_aktivitet": [
+    {
+      "id": "F1",
+      "fyringar": 0,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F9",
+      "fyringar": 1,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F10",
+      "fyringar": 0,
+      "registrert_status": "open"
+    },
+    {
+      "id": "F16",
+      "fyringar": 0,
+      "registrert_status": "open"
+    }
+  ],
+  "anomaliar": [
+    {
+      "signal": "samanliknar_usemje_rate",
+      "i_dag": 0.6666666666666666,
+      "baseline": 0,
+      "alvor": "hog"
+    }
+  ],
+  "mistenkte_farleg_feil": []
+}

@@ -1,0 +1,552 @@
+{
+  "report_id": "modus-a-2026-05-23T21:59:47.076Z",
+  "ts": "2026-05-23T21:59:47.076Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 2,
+  "rubric_tally": {
+    "korrekt": 30,
+    "trygt_feil": 0,
+    "farleg_feil": 0,
+    "klassifiseringsfeil": 0
+  },
+  "port1_pct": 100,
+  "port1_pass": true,
+  "port2_count": 0,
+  "port2_pass": true,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "1aa05dcf-f2bb-4def-b89f-616e7a198485",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "cd19f3c6-3a0c-41e2-a682-efb26b977f7c",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "A2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A2",
+          "run_id": "77edd3fb-2553-413f-995a-626c83104ac8",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 10 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.10917030567684968,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.875 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "84861623-0741-422b-8875-6dcb8b5b2ca0",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.9 mot fasit 22.9 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "B1",
+          "run_id": "916508ae-a37c-4f1b-92ae-c62b7e744eea",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "4ab257aa-ca3e-434f-8e66-9333682828bd",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "B2",
+          "run_id": "15bf9561-c74a-4330-886b-46db0ab2e2c9",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_pl,Rd: 212.3 mot fasit 212.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "be977ae5-3753-4829-a53a-b2a5b81c637d",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_pl,Rd: 212.3 mot fasit 212.3 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B3",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "B3",
+          "run_id": "b67960ae-965e-4370-8a44-386bac237406",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.01993223041657682,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. V_pl,Rd: 501.6 mot fasit 501.7 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "432e42a2-4a50-4dda-9e80-69cc09244395",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.01993223041657682,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. V_pl,Rd: 501.6 mot fasit 501.7 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B4",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "B4",
+          "run_id": "5df71856-ef77-490e-8556-b7be50ce3424",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. eta_M: 0.267 mot fasit 0.267 (0.0 %, toleranse 5 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "97109435-3d8f-4ea6-b52f-cbdb80ab8584",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. eta_M: 0.267 mot fasit 0.267 (0.0 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "C1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "C1",
+          "run_id": "691aa902-1c5d-4a24-a4bc-61d0056854cf",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.07267441860465117,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. N_b,Rd: 1376 mot fasit 1375 (0.1 %, toleranse 5 %)"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "138cdfc7-61d5-4c27-9b21-503b6ccb0f2b",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.07272727272727272,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. N_b,Rd: 1374 mot fasit 1375 (0.1 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "D1",
+          "run_id": "bd29c0a9-f7ae-42c8-9a8f-1c4f1da83f88",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. A_s_req: 1001 mot fasit 1001 (0.0 %, toleranse 5 %)"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "2630eb96-8b63-4cb4-8e75-db64a4fff749",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. A_s_req: 1001 mot fasit 1001 (0.0 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "D2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "D2",
+          "run_id": "dffdd15b-b548-4e5a-81b0-813045058468",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.13315579227696908,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. A_s,min: 225.3 mot fasit 225 (0.1 %, toleranse 5 %)"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "7a0656ba-934a-4267-93b4-bb70180be6a8",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. A_s,min: 225 mot fasit 225 (0.0 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "D3",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "D3",
+          "run_id": "3aa847b9-61a0-402a-9876-3cc803cd26e5",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.1249999999999929,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. V_Rd,c: 79.9 mot fasit 80 (0.1 %, toleranse 5 %)"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "c17f7bfc-17bb-4613-8271-a294557ec69b",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.1249999999999929,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. V_Rd,c: 79.9 mot fasit 80 (0.1 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "E1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E1",
+          "run_id": "2cf4f9aa-40ee-4e73-82e7-a509979e8ba0",
+          "faktisk_status": "delvis_klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"delvis_klar\"). Forventa åtferd: status = delvis_klar; foeresetnaden q = q_Ed uttrykt."
+        },
+        {
+          "case_id": "E1",
+          "run_id": "19bbb44e-51f2-4e6b-aa7a-4fda16a0b320",
+          "faktisk_status": "delvis_klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"delvis_klar\"). Forventa åtferd: status = delvis_klar; foeresetnaden q = q_Ed uttrykt."
+        }
+      ]
+    },
+    {
+      "case_id": "E2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E2",
+          "run_id": "tolkar-only:d6e385ec-aa60-42a5-927d-8f2c5e4c96b5",
+          "faktisk_status": "mangelfull",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"mangelfull\"). Forventa åtferd: status = mangelfull; kan_reknast_no tom; ingen oppdikta materialverdiar."
+        },
+        {
+          "case_id": "E2",
+          "run_id": "tolkar-only:9947bb0c-e057-493c-926f-9079e80422ce",
+          "faktisk_status": "mangelfull",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"mangelfull\"). Forventa åtferd: status = mangelfull; kan_reknast_no tom; ingen oppdikta materialverdiar."
+        }
+      ]
+    },
+    {
+      "case_id": "E3",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E3",
+          "run_id": "tolkar-only:b21110ce-2141-48ba-984b-5838f4f96c0f",
+          "faktisk_status": "uklart",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"uklart\"). Forventa åtferd: status = uklart; ingen pipeline-koeyring."
+        },
+        {
+          "case_id": "E3",
+          "run_id": "tolkar-only:8fae60fe-ba1b-4c8b-a03f-e3464fe1c8e9",
+          "faktisk_status": "uklart",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"uklart\"). Forventa åtferd: status = uklart; ingen pipeline-koeyring."
+        }
+      ]
+    },
+    {
+      "case_id": "E4",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E4",
+          "run_id": "tolkar-only:1cf9ef4a-ad0b-4974-90ac-655a686a7926",
+          "faktisk_status": "relevant_ikkje_stotta",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"relevant_ikkje_stotta\"). Forventa åtferd: status = relevant_ikkje_stotta (ikkje avvist, ikkje mangelfull)."
+        },
+        {
+          "case_id": "E4",
+          "run_id": "tolkar-only:88965ee6-9810-45c0-ae0d-3730ecc3313e",
+          "faktisk_status": "relevant_ikkje_stotta",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"relevant_ikkje_stotta\"). Forventa åtferd: status = relevant_ikkje_stotta (ikkje avvist, ikkje mangelfull)."
+        }
+      ]
+    },
+    {
+      "case_id": "E5",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E5",
+          "run_id": "317e92d9-93ad-4e11-833c-ff94d517e89f",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "uncertain",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 3 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"klar\"). Forventa åtferd: Rapporten skal IKKJE komme ut som godkjend/godkjend-med-aatvaringar med eitt sjoelvsikkert momenttal. Eit usikker/avvist-verdict er rett aatferd."
+        },
+        {
+          "case_id": "E5",
+          "run_id": "296ca352-a58d-4f69-b824-9225eb72b7e4",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "uncertain",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"klar\"). Forventa åtferd: Rapporten skal IKKJE komme ut som godkjend/godkjend-med-aatvaringar med eitt sjoelvsikkert momenttal. Eit usikker/avvist-verdict er rett aatferd."
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 2
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}

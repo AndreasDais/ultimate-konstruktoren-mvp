@@ -1,0 +1,66 @@
+{
+  "report_id": "modus-a-2026-05-23T18:16:27.104Z",
+  "ts": "2026-05-23T18:16:27.104Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 1,
+  "rubric_tally": {
+    "korrekt": 1,
+    "trygt_feil": 0,
+    "farleg_feil": 0,
+    "klassifiseringsfeil": 0
+  },
+  "port1_pct": 100,
+  "port1_pass": true,
+  "port2_count": 0,
+  "port2_pass": true,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 1,
+      "runs_total": 1,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "fdf3d01a-9ba2-4e76-9b68-21fa21ed8e99",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}

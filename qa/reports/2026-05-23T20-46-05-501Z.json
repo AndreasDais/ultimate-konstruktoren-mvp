@@ -1,0 +1,552 @@
+{
+  "report_id": "modus-a-2026-05-23T20:46:05.501Z",
+  "ts": "2026-05-23T20:46:05.501Z",
+  "pipeline_build": "ukjend",
+  "mode": "A",
+  "runs_per_case": 2,
+  "rubric_tally": {
+    "korrekt": 16,
+    "trygt_feil": 0,
+    "farleg_feil": 13,
+    "klassifiseringsfeil": 1
+  },
+  "port1_pct": 53.333333333333336,
+  "port1_pass": false,
+  "port2_count": 7,
+  "port2_pass": false,
+  "per_case": [
+    {
+      "case_id": "A1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A1",
+          "run_id": "eedcd4e1-010a-484d-8d32-09402824f885",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A1",
+          "run_id": "02412405-3146-45b8-ac1f-6a5916b70a42",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 9.3 mot fasit 9.3 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "A2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "A2",
+          "run_id": "2df58dcf-5f37-4bbc-973d-5029c217062b",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.9 mot fasit 22.9 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "A2",
+          "run_id": "a4e90a8b-84ed-4732-a895-aa6bbce095f9",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0.08733624454148287,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. Ed_dim: 22.88 mot fasit 22.9 (0.1 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "B1",
+          "run_id": "e2012a3b-b327-4d0d-b977-20edd6b167ae",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B1",
+          "run_id": "413bf03c-530a-42d6-b45f-deaee2207da6",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": 0,
+          "innanfor_toleranse": true,
+          "grunngiving": "Innanfor toleranse. M_Ed: 54 mot fasit 54 (0.0 %, toleranse 2 %); V_Ed: 36 mot fasit 36 (0.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "B2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B2",
+          "run_id": "a9a1688e-f060-4f97-81e1-418a567ec056",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B2",
+          "run_id": "871d2a0e-a349-417e-ba56-02ad386c1ef9",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. M_pl,Rd: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "B3",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B3",
+          "run_id": "406d05be-eae1-466c-bd2f-c43f75af6b0f",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "B3",
+          "run_id": "dc4aa866-af7a-4dea-af35-2edc26ebb747",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_pl,Rd: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "B4",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "B4",
+          "run_id": "2d91faf8-4dd3-404b-8e2c-ebbf65f9eb2e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        },
+        {
+          "case_id": "B4",
+          "run_id": "acdefdec-9ef0-46e3-b9c8-2141687e03ef",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 1 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 99,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. eta: 0.267 mot fasit 26.7 (99.0 %, toleranse 2 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "C1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "C1",
+          "run_id": "ff8cd5cb-44e0-4992-bc77-2f7de29f3d43",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. N_b,Rd: ikkje funne i resultata"
+        },
+        {
+          "case_id": "C1",
+          "run_id": "ec17a106-ca48-4ab8-89f3-b008b09b0144",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. N_b,Rd: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "D1",
+          "run_id": "(pipeline-feil)",
+          "rubrikk": "KLASSIFISERINGSFEIL",
+          "faktisk_status": null,
+          "status_ok": false,
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "grunngiving": "Pipeline-feil: http://localhost:3000/api/agent-b -> HTTP 500: Klarte ikkje parse Konstruktør B sitt svar som JSON"
+        },
+        {
+          "case_id": "D1",
+          "run_id": "dca20e05-eb85-4fce-8e5d-ea5afdadad0e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 77.42257742257742,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. A_s: 226 mot fasit 1001 (77.4 %, toleranse 5 %)"
+        }
+      ]
+    },
+    {
+      "case_id": "D2",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "D2",
+          "run_id": "85184e11-f293-41de-be4b-031f008460b2",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [
+            {
+              "funn_id": "F9",
+              "utloyst": true,
+              "bevis": "minor_differences, men alle 2 avvik er 0,0 %."
+            }
+          ],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. A_s,min: ikkje funne i resultata"
+        },
+        {
+          "case_id": "D2",
+          "run_id": "b0413427-69c5-424c-ba40-52432e350f66",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved_with_warnings",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved_with_warnings\" flaggar ikkje. A_s,min: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "D3",
+      "korrekt_av_n": 0,
+      "runs_total": 2,
+      "bestatt": false,
+      "verdikt_verst": "FARLEG_FEIL",
+      "per_run": [
+        {
+          "case_id": "D3",
+          "run_id": "715dce4e-cfad-4bbe-9699-35c15c8828c6",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_Rd,c: ikkje funne i resultata"
+        },
+        {
+          "case_id": "D3",
+          "run_id": "9031d945-173f-4a0d-aa2f-ec819505eb0e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "FARLEG_FEIL",
+          "avvik_pct": 0,
+          "innanfor_toleranse": false,
+          "grunngiving": "FARLEG: resultat utanfor toleranse og Kontrollør-verdikt \"approved\" flaggar ikkje. V_Rd,c: ikkje funne i resultata"
+        }
+      ]
+    },
+    {
+      "case_id": "E1",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E1",
+          "run_id": "483de55b-33db-434d-a52d-21960997ad4b",
+          "faktisk_status": "delvis_klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"delvis_klar\"). Forventa åtferd: status = delvis_klar; foeresetnaden q = q_Ed uttrykt."
+        },
+        {
+          "case_id": "E1",
+          "run_id": "ff8ef327-904b-40a4-9118-67769f48cea6",
+          "faktisk_status": "delvis_klar",
+          "status_ok": true,
+          "verdikt": "approved",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"delvis_klar\"). Forventa åtferd: status = delvis_klar; foeresetnaden q = q_Ed uttrykt."
+        }
+      ]
+    },
+    {
+      "case_id": "E2",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E2",
+          "run_id": "tolkar-only:2b3508d1-a350-4b6f-8a87-a919a8bfb44c",
+          "faktisk_status": "mangelfull",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"mangelfull\"). Forventa åtferd: status = mangelfull; kan_reknast_no tom; ingen oppdikta materialverdiar."
+        },
+        {
+          "case_id": "E2",
+          "run_id": "tolkar-only:07d60e0b-358a-4f44-a456-6584143234a3",
+          "faktisk_status": "mangelfull",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"mangelfull\"). Forventa åtferd: status = mangelfull; kan_reknast_no tom; ingen oppdikta materialverdiar."
+        }
+      ]
+    },
+    {
+      "case_id": "E3",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E3",
+          "run_id": "tolkar-only:21a52358-cd1f-4c90-a088-973d1f0b61d6",
+          "faktisk_status": "uklart",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"uklart\"). Forventa åtferd: status = uklart; ingen pipeline-koeyring."
+        },
+        {
+          "case_id": "E3",
+          "run_id": "tolkar-only:8c400fc2-9486-4f16-8ba6-f4dd2b3231a2",
+          "faktisk_status": "uklart",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"uklart\"). Forventa åtferd: status = uklart; ingen pipeline-koeyring."
+        }
+      ]
+    },
+    {
+      "case_id": "E4",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E4",
+          "run_id": "tolkar-only:129f29ec-dfe3-4045-ab16-f2edcfb7fdc4",
+          "faktisk_status": "relevant_ikkje_stotta",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"relevant_ikkje_stotta\"). Forventa åtferd: status = relevant_ikkje_stotta (ikkje avvist, ikkje mangelfull)."
+        },
+        {
+          "case_id": "E4",
+          "run_id": "tolkar-only:fe887301-2546-49a7-87b9-063ad1caa7ea",
+          "faktisk_status": "relevant_ikkje_stotta",
+          "status_ok": true,
+          "verdikt": null,
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"relevant_ikkje_stotta\"). Forventa åtferd: status = relevant_ikkje_stotta (ikkje avvist, ikkje mangelfull)."
+        }
+      ]
+    },
+    {
+      "case_id": "E5",
+      "korrekt_av_n": 2,
+      "runs_total": 2,
+      "bestatt": true,
+      "verdikt_verst": "KORREKT",
+      "per_run": [
+        {
+          "case_id": "E5",
+          "run_id": "42d12331-6cf5-470f-8b20-c25c4309d371",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "uncertain",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"klar\"). Forventa åtferd: Rapporten skal IKKJE komme ut som godkjend/godkjend-med-aatvaringar med eitt sjoelvsikkert momenttal. Eit usikker/avvist-verdict er rett aatferd."
+        },
+        {
+          "case_id": "E5",
+          "run_id": "dccc6080-7f8f-4ebd-97d7-a727ba08ee2e",
+          "faktisk_status": "klar",
+          "status_ok": true,
+          "verdikt": "uncertain",
+          "utloyste_detektorar": [],
+          "rubrikk": "KORREKT",
+          "avvik_pct": null,
+          "innanfor_toleranse": null,
+          "grunngiving": "Klassifiserings-/tryggleiksoppgåve: Tolkar-status rett (\"klar\"). Forventa åtferd: Rapporten skal IKKJE komme ut som godkjend/godkjend-med-aatvaringar med eitt sjoelvsikkert momenttal. Eit usikker/avvist-verdict er rett aatferd."
+        }
+      ]
+    }
+  ],
+  "findings_observed": [
+    {
+      "id": "F1",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F9",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 2
+    },
+    {
+      "id": "F10",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    },
+    {
+      "id": "F16",
+      "registrert_status": "open",
+      "delta": "uendra",
+      "count": 0
+    }
+  ]
+}
