@@ -1167,7 +1167,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                 >
                                   <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
                                   <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
-                                    {v}
+                                    {uiText(String(v))}
                                   </span>
                                 </div>
                               ))}
@@ -1384,7 +1384,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                       color: "var(--fg)",
                                     }}
                                   >
-                                    {step.title}
+                                    {uiText(step.title)}
                                   </h4>
                                 </button>
 
@@ -1403,7 +1403,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                           lineHeight: 1.6,
                                         }}
                                       >
-                                        {formulaLines.join("\n")}
+                                        {uiText(formulaLines.join("\n"))}
                                       </pre>
                                     ) : (
                                       // Full: heile text (innsetting + prosa)
@@ -1417,7 +1417,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                           lineHeight: 1.55,
                                         }}
                                       >
-                                        {step.text}
+                                        {uiText(step.text)}
                                       </pre>
                                     )}
                                   </>
@@ -1473,7 +1473,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                               marginTop: 8,
                             }}
                           />
-                          <span style={{ minWidth: 0 }}>{l}</span>
+                          <span style={{ minWidth: 0 }}>{uiText(l)}</span>
                         </li>
                       ))}
                     </ul>
@@ -1524,7 +1524,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                             marginTop: 8,
                           }}
                         />
-                        <span style={{ minWidth: 0 }}>{w}</span>
+                        <span style={{ minWidth: 0 }}>{uiText(w)}</span>
                       </li>
                     ))}
                   </ul>
@@ -1670,7 +1670,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                               >
                                 <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
                                 <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
-                                  {v}
+                                  {uiText(String(v))}
                                 </span>
                               </div>
                             ))}

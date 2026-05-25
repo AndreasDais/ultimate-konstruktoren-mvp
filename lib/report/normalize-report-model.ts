@@ -6,7 +6,7 @@ const CONTROL_STEP_RE = /\b(kontroll|kryss-?sjekk|kryss-?kontroll|verifikasjon|v
 const DIMENSJONERANDE_RE = /^(ed|e_d|m_ed|v_ed|n_ed|q_ed|mrd|vrd|m_rd|v_rd|eta|η|utnytt)/i;
 const INPUT_RE = /^(g_k|q_k|s_k|l|b|h|d|t|a|f|fy|fyk|fck|profil|spenn|lengde|gamma|γ|psi|ψ)/i;
 
-export function cleanReportText(value: unknown): string {
+function cleanReportTextRaw(value: unknown): string {
   if (typeof value !== "string") return "";
   return normalizeNotationText(
     value
@@ -16,6 +16,16 @@ export function cleanReportText(value: unknown): string {
       .replace(/\n{3,}/g, "\n\n"),
   ).trim();
 }
+
+export function cleanReportText(value: unknown): string {
+  return sanitizeAiscGuardedOutputText(cleanReportTextRaw(value));
+}
+
+
+export function cleanReportTextPreserveUserInput(value: unknown): string {
+  return cleanReportTextRaw(value);
+}
+
 
 export function compactReportText(value: unknown): string {
   return cleanReportText(value).replace(/\s+/g, " ").trim();
@@ -380,7 +390,7 @@ export function normalizeReportModel(model: ReportModel): ReportModel {
     keyResults: model.keyResults.map(normalizeResultRow),
     summary: {
       text: cleanReportText(model.summary.text),
-      request: cleanReportText(model.summary.request),
+      request: cleanReportTextPreserveUserInput(model.summary.request),
     },
     interpretation: {
       ...model.interpretation,

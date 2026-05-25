@@ -1,0 +1,613 @@
+
+> ultimate-konstruktoren-mvp@0.1.0 debug:sweep
+> node scripts/debug-sweep.mjs
+
+
+=== npm test ===
+
+> ultimate-konstruktoren-mvp@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/rayma/Code/ultimate-konstruktoren-mvp[39m
+
+ [32m✓[39m lib/compare/result-compare.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/compare/consistency-issues.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/report/render-calculation-docx.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m funn/funn-register.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m daily/aggregate.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m funn/detectors.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m qa/grade.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+[90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mhoppar over når lastkombinasjon_input manglar
+[22m[39m[load-combination-check] calculation_type=lastkombinasjon utan lastkombinasjon_input — strukturkontroll hoppa over.
+
+ [32m✓[39m lib/calc/load-combination.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+[90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mdegraderer trygt ved ugyldig lastkategori frå Tolkar
+[22m[39m[load-combination-check] kunne ikkje re-rekne lastkombinasjon — strukturkontroll hoppa over: Error: Variabel last #1 (unamngitt): ukjend lastkategori "jordskjelv". Gyldige: imposed_A_D, imposed_E, snow, wind.
+    at [90mC:\Users\rayma\Code\ultimate-konstruktoren-mvp\[39mlib\calc\load-combination.ts:149:13
+    at Array.forEach (<anonymous>)
+    at computeStrCombination [90m(C:\Users\rayma\Code\ultimate-konstruktoren-mvp\[39mlib\calc\load-combination.ts:143:12[90m)[39m
+    at checkLoadCombination [90m(C:\Users\rayma\Code\ultimate-konstruktoren-mvp\[39mlib\check\load-combination-check.ts:140:22[90m)[39m
+    at [90mC:\Users\rayma\Code\ultimate-konstruktoren-mvp\[39mlib\check\load-combination-check.test.ts:64:12
+    at [90mfile:///C:/Users/rayma/Code/ultimate-konstruktoren-mvp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///C:/Users/rayma/Code/ultimate-konstruktoren-mvp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///C:/Users/rayma/Code/ultimate-konstruktoren-mvp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///C:/Users/rayma/Code/ultimate-konstruktoren-mvp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+
+ [32m✓[39m lib/result/tile-heuristics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+[90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mingen avvik når konstruktøren ikkje rapporterte Ed_dim
+[22m[39m[load-combination-check] Engineer A: fann korkje "Ed_dim" eller éin eintydig "diwhilejonerande" result_roles-nøkkel — Port-2-strukturkontroll hoppa over.
+[load-combination-check] Engineer B: fann korkje "Ed_dim" eller éin eintydig "diwhilejonerande" result_roles-nøkkel — Port-2-strukturkontroll hoppa over.
+
+[90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mhoppar over nar fleire result_roles-noklar er diwhilejonerande og ingen Ed_dim
+[22m[39m[load-combination-check] Engineer A: fleire result_roles-nøklar er "diwhilejonerande" (F_a, F_b) og ingen "Ed_dim" — Port-2-strukturkontroll hoppa over.
+[load-combination-check] Engineer B: fleire result_roles-nøklar er "diwhilejonerande" (F_a, F_b) og ingen "Ed_dim" — Port-2-strukturkontroll hoppa over.
+
+ [32m✓[39m lib/check/load-combination-check.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m lib/result/kontrollor-chips.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m lib/step-metrics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m golden/golden-set.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m lib/report/calculation-sheet-model.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m lib/report/build-report-model.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m lib/check/controller-hard-block.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m lib/tillit-score.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m lib/json/extract-json.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m lib/shadow/shadow-check.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m173 passed[39m[22m[90m (173)[39m
+[2m   Start at [22m 04:09:23
+[2m   Duration [22m 1.42s[2m (transform 1.82s, setup 0ms, collect 3.72s, tests 209ms, environment 5ms, prepare 4.26s)[22m
+
+
+=== npm run lint ===
+
+> ultimate-konstruktoren-mvp@0.1.0 lint
+> eslint
+
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\error-reports\page.tsx
+  132:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\error-reports\page.tsx:132:5
+  130 |
+  131 |   useEffect(() => {
+> 132 |     fetchReports();
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  133 |   }, [fetchReports]);
+  134 |
+  135 |   // Hent innlogga uses email for visning i topbar  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\intelligence\page.tsx
+  711:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\intelligence\page.tsx:711:5
+  709 |
+  710 |   useEffect(() => {
+> 711 |     fetchReports();
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  712 |   }, [fetchReports]);
+  713 |
+  714 |   useEffect(() => {                                                                        react-hooks/set-state-in-effect
+  715:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\intelligence\page.tsx:715:5
+  713 |
+  714 |   useEffect(() => {
+> 715 |     fetchActions(selectedReport?.id);
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  716 |   }, [fetchActions, selectedReport?.id]);
+  717 |
+  718 |   const generateReport = async (force = false) => {  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\pilot\page.tsx
+  400:10  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\admin\pilot\page.tsx:400:10
+  398 |
+  399 |   useEffect(() => {
+> 400 |     void load();
+      |          ^^^^ Avoid calling setState() directly within an effect
+  401 |   }, []);
+  402 |
+  403 |   const cards = data?.cards ?? [];  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\api\agent-c\route.ts
+  15:7  warning  'SPRINT338_INTERNATIONAL_COMPARATOR_LANGUAGE_RULE' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\ThemeToggle.tsx
+  48:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\ThemeToggle.tsx:48:5
+  46 |   // Initial sync med <html data-palette>
+  47 |   useEffect(() => {
+> 48 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |   }, []);
+  50 |
+  51 |   // DOM/localStorage-sideeffektar ligg i effect, ikkje i event-handleren  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\CalculationResultView.tsx
+   22:85  warning  'CONFIDENCE_TONES' is defined but never used            @typescript-eslint/no-unused-vars
+   30:63  warning  'polishEnglishGeneratedText' is defined but never used  @typescript-eslint/no-unused-vars
+   30:91  warning  'localizeResultLabel' is defined but never used         @typescript-eslint/no-unused-vars
+   35:3   warning  'isInputKey' is defined but never used                  @typescript-eslint/no-unused-vars
+   39:3   warning  'KEY_TILE_DESCRIPTIONS' is defined but never used       @typescript-eslint/no-unused-vars
+  208:10  warning  'sprint337ResultUiText' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\CountUp.tsx
+  53:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\CountUp.tsx:53:7
+  51 |       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  52 |     if (reduced) {
+> 53 |       setCurrent(parsed.value);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  54 |       return;
+  55 |     }
+  56 |  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\DimensjonerandeTile.tsx
+  20:10  warning  'renderMathKey' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\KontrollorChipPill.tsx
+  52:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\result\KontrollorChipPill.tsx:52:7
+  50 |       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  51 |     if (reduced) {
+> 52 |       setHasAppeared(true);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  53 |       return;
+  54 |     }
+  55 |     const obs = new IntersectionObserver(  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\workbench\WorkbenchComponents.tsx
+   28:3  warning  'formatKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  149:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\components\workbench\WorkbenchComponents.tsx:149:7
+  147 |     // Ny stream eller reset: tekst kortare enn det vi viser
+  148 |     if (text.length < displayed.length) {
+> 149 |       setDisplayed("");
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  150 |       return;
+  151 |     }
+  152 |  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\international\page.tsx
+  124:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\international\page.tsx:124:9
+  122 |       const countryCode = parsed.region?.countryCode;
+  123 |       if (countryCode && countryCode in REGION_LABELS) {
+> 124 |         setRegion(countryCode as EngineeringRegionCode);
+      |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  125 |       }
+  126 |
+  127 |       const family = parsed.standards?.family;  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx
+     5:3   warning  'matchStatusLabel' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+     5:21  warning  'MATCH_STATUS_TONES' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+     6:3   warning  'decisionStatusLabel' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+     6:24  warning  'DECISION_STATUS_TONES' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+     7:3   warning  'CONFIDENCE_TONES' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+     7:21  warning  'SEVERITY_TONES' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+     9:8   warning  'Tone' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    15:15  warning  'Locale' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    21:8   warning  'CalculationStep' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+    23:8   warning  'ConsistencyIssue' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+    24:8   warning  'NumericDifference' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+    27:8   warning  'Profile' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    28:8   warning  'KontrollorChip' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+    33:3   warning  'isInputKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    34:3   warning  'hoistStyrande' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    35:3   warning  'dedupeByValue' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    36:3   warning  'getDimensjonerandeKeys' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    37:3   warning  'tileLabel' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+    38:3   warning  'splitNumberUnit' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+    39:3   warning  'DIMENSJONERANDE_PATTERNS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    40:3   warning  'STYRANDE_PATTERNS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+    41:3   warning  'KEY_TILE_DESCRIPTIONS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+    44:3   warning  'splitChipText' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    45:3   warning  'buildKontrollorChips' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    46:3   warning  'getVerdiktForMatchStatus' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    47:3   warning  'getFirstSentence' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+    50:3   warning  'extractFormulaLines' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    51:3   warning  'GREEK_LETTERS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    52:3   warning  'renderMathKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    56:10  warning  'CountUp' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    57:10  warning  'KontrollorChipPill' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    59:3   warning  'DimensjonerandeTile' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    60:3   warning  'DimensjonerandeTiles' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    63:35  warning  'ValueCategory' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    73:3   warning  'CATEGORY_ORDER' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+    74:3   warning  'CATEGORY_LABELS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+    75:3   warning  'categorizeKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+    76:3   warning  'formatKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+    84:3   warning  'StatusKV' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   215:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:215:5
+  213 |
+  214 |   useEffect(() => {
+> 215 |     setEngineeringContext(loadEngineeringContextFromStorage());
+      |     ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  216 |
+  217 |     const handleFocus = () => {
+  218 |       setEngineeringContext(loadEngineeringContextFromStorage());                                                                        react-hooks/set-state-in-effect
+   488:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:488:7
+  486 |       if (!state.currentRunId) return;
+  487 |
+> 488 |       setInput(state.input ?? "");
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  489 |       setResult(state.result ?? null);
+  490 |       setRequestId(state.requestId ?? null);
+  491 |       setCalculationA(state.calculationA ?? null);                                                        react-hooks/set-state-in-effect
+   593:9   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:593:9
+  591 |       const onboarded = window.localStorage.getItem("pilar-onboarded-v1");
+  592 |       if (onboarded !== "true") {
+> 593 |         setShowFirstTimeGuide(true);
+      |         ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  594 |       }
+  595 |     } catch {
+  596 |       // localStorage kan vere blokkert (private modus, cookies-block) — då      react-hooks/set-state-in-effect
+   611:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:611:7
+  609 |         // Ignorer — neste mount vil vise guiden igjen om localStorage feila
+  610 |       }
+> 611 |       setShowFirstTimeGuide(false);
+      |       ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  612 |     }
+  613 |   }, [phase, showFirstTimeGuide]);
+  614 |                                                                                          react-hooks/set-state-in-effect
+   625:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:625:5
+  623 |
+  624 |     // Generelle merknader: utvida ved krev_gjennomgang, kollapsa elles
+> 625 |     setComparisonGeneralExpanded(krev);
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  626 |
+  627 |     // Comparator-rader: ved krev_gjennomgang, auto-utvid rader med
+  628 |     // severity high/critical. Elles: ingen pre-utvida (Set tom)  react-hooks/set-state-in-effect
+   707:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\page.tsx:707:7
+  705 |     if (!result) return;
+  706 |     if (result.status === "mangelfull") {
+> 707 |       setActiveTab("resultat");
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  708 |     } else if (result.status === "avvist" || result.status === "uklart" || result.status === "uklar") {
+  709 |       setActiveTab("status");
+  710 |     } else {               react-hooks/set-state-in-effect
+  1170:9   warning  'isBlocked' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\RapportLoadingPilelinja.tsx
+  157:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\RapportLoadingPilelinja.tsx:157:5
+  155 |
+  156 |   useEffect(() => {
+> 157 |     setEngineeringContext(loadEngineeringContextFromStorage());
+      |     ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  158 |     setEngineeringContextLoaded(true);
+  159 |   }, []);
+  160 |  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\_components\OrdlisteFlyt.tsx
+  49:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\_components\OrdlisteFlyt.tsx:49:5
+  47 |   // Portal krev document — vent til etter mount (SSR-trygt).
+  48 |   useEffect(() => {
+> 49 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  50 |   }, []);
+  51 |
+  52 |   // Escape lukkar panelet  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\beregning\page.tsx
+  282:10  warning  'calculationSheetDisplayLanguage' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\page.tsx
+    36:3   warning  'splitNumberUnit' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+    39:10  warning  'renderMathKey' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+    63:10  warning  'isControlStep' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   388:10  warning  'sprint339FinalNorwegianResidueText' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   558:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\app\rapport\[run_id]\page.tsx:558:7
+  556 |   useEffect(() => {
+  557 |     if (typeof window !== "undefined") {
+> 558 |       setRapportUrl(`${window.location.origin}/rapport/${runId}`);
+      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  559 |     }
+  560 |   }, [runId]);
+  561 |  react-hooks/set-state-in-effect
+   629:9   warning  'polishReportText' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   630:9   warning  'maybeEnglish' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  1184:9   warning  'hasVerifikasjon' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  1185:9   warning  'hasAvvik' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  1186:9   warning  'coverResultKeys' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\locale-context.tsx
+  40:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\locale-context.tsx:40:7
+  38 |     try {
+  39 |       const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+> 40 |       setLocaleState(coerceLocale(stored));
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |       // Migration: om cookie manglar men localStorage har verdi (use har
+  42 |       // toggla før cookie-feature kom inn), synk cookie så server-SSR får
+  43 |       // riktig språk neste navigasjon  react-hooks/set-state-in-effect
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\report\calculation-sheet-model.ts
+  1:31  warning  'polishEnglishGeneratedText' is defined but never used      @typescript-eslint/no-unused-vars
+  8:3   warning  'normalizeCalculationSyntaxText' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\report\render-calculation-docx.ts
+    1:10  warning  'inferCalculationEnglishDisplay' is defined but never used      @typescript-eslint/no-unused-vars
+   15:15  warning  'Locale' is defined but never used                              @typescript-eslint/no-unused-vars
+   22:10  warning  'sprint339FinalNorwegianResidueText' is defined but never used  @typescript-eslint/no-unused-vars
+   88:7   warning  'COLOR_BLUE_BG' is assigned a value but never used              @typescript-eslint/no-unused-vars
+   89:7   warning  'COLOR_BLUE_BORDER' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  171:10  warning  'label' is defined but never used                               @typescript-eslint/no-unused-vars
+  197:10  warning  'subheading' is defined but never used                          @typescript-eslint/no-unused-vars
+  279:10  warning  'formulaPlainForWord' is defined but never used                 @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\report\render-calculation-latex.ts
+   3:10  warning  'calculationSheetDisplayLanguage' is defined but never used  @typescript-eslint/no-unused-vars
+  10:10  warning  'labelFor' is defined but never used                         @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\report\render-docx.ts
+   3:10  warning  'polishEnglishGeneratedText' is defined but never used  @typescript-eslint/no-unused-vars
+   4:15  warning  'Locale' is defined but never used                      @typescript-eslint/no-unused-vars
+  77:7   warning  'COLOR_PAPER' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\lib\result\kontrollor-chips.ts
+  143:3  warning  'maxChars' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-1-json-hardening.mjs
+  8:10  warning  'replaceOnce' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-2-international-render-cleanup.mjs
+  37:10  warning  'replaceOnce' is defined but never used                @typescript-eslint/no-unused-vars
+  45:10  warning  'addObjectEntryBeforeClose' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-4-final-international-polish.mjs
+  2:8  warning  'path' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-6-i18n-hardcoded-norwegian-cleanup.mjs
+  307:63  warning  '_s' is defined but never used  @typescript-eslint/no-unused-vars
+  348:66  warning  '_s' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-8-comparator-prose-fallback-cleanup.mjs
+  2:8  warning  'path' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\rayma\Code\ultimate-konstruktoren-mvp\scripts\apply-sprint33-9-final-norwegian-residue-cleanup.mjs
+   6:10  warning  'fileExists' is defined but never used  @typescript-eslint/no-unused-vars
+  10:10  warning  'read' is defined but never used        @typescript-eslint/no-unused-vars
+  14:10  warning  'write' is defined but never used       @typescript-eslint/no-unused-vars
+
+✖ 104 problems (0 errors, 104 warnings)
+
+
+=== npx tsc --noEmit --pretty false ===
+
+> ultimate-konstruktoren-mvp@0.1.0 build
+> next build
+
+▲ Next.js 16.2.4 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./app/api/admin/pilot/qa-status/route.ts
+
+
+✓ Compiled successfully in 7.8s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 405ms
+  Running TypeScript ...
+  Finished TypeScript in 6.4s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/32) ...
+  Generating static pages using 15 workers (8/32) 
+  Generating static pages using 15 workers (16/32) 
+  Generating static pages using 15 workers (24/32) 
+✓ Generating static pages using 15 workers (32/32) in 322ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /admin/error-reports
+├ ○ /admin/intelligence
+├ ○ /admin/login
+├ ○ /admin/pilot
+├ ƒ /api/admin/backfill-tillit
+├ ƒ /api/admin/error-reports
+├ ƒ /api/admin/error-reports/[id]
+├ ƒ /api/admin/intelligence/actions
+├ ƒ /api/admin/intelligence/actions/[id]
+├ ƒ /api/admin/intelligence/actions/[id]/plan
+├ ƒ /api/admin/intelligence/cron
+├ ƒ /api/admin/intelligence/daily
+├ ƒ /api/admin/intelligence/daily/markdown
+├ ƒ /api/admin/pilot/metrics
+├ ƒ /api/admin/pilot/qa-status
+├ ƒ /api/agent-a
+├ ƒ /api/agent-b
+├ ƒ /api/agent-c
+├ ƒ /api/agent-d
+├ ƒ /api/agent-e
+├ ƒ /api/engineering-context
+├ ƒ /api/error-reports
+├ ƒ /api/health
+├ ƒ /api/init-run
+├ ƒ /api/input-agent
+├ ƒ /api/pilot/feedback
+├ ƒ /api/rapport/[run_id]/calculation/latex
+├ ƒ /api/rapport/[run_id]/calculation/pdf
+├ ƒ /api/rapport/[run_id]/calculation/word
+├ ƒ /api/rapport/[run_id]/word
+├ ƒ /api/requests/[id]
+├ ƒ /api/runs/[id]
+├ ƒ /auth/callback
+├ ƒ /innstillingar
+├ ○ /international
+├ ○ /login
+├ ƒ /mine
+├ ○ /pilot
+├ ƒ /rapport/[run_id]
+├ ƒ /rapport/[run_id]/beregning
+├ ƒ /rapport/[run_id]/feedback
+└ ƒ /vilkar
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

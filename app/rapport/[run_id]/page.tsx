@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { polishEnglishGeneratedText, sprint335PolishEnglishText } from "@/lib/international/display";
+import { polishEnglishGeneratedText, sprint335PolishEnglishText,
+  sanitizeAiscGuardedOutputText,
+} from "@/lib/international/display";
 import { useParams, useRouter } from "next/navigation";
 import {
   decisionStatusLabel,
@@ -624,7 +626,7 @@ export default function RapportPage() {
   const reportPromptVersion = reportDisplayLanguage === "en"
     ? formatPromptVersion(data.report.prompt_version).replace(/\bRapportør\b/g, "Reporter")
     : formatPromptVersion(data.report.prompt_version);
-  const polishReportText = (value: string) => reportDisplayLanguage === "en" ? sprint335PolishEnglishText(value) : value;
+  const polishReportText = (value: string) => reportDisplayLanguage === "en" ? sanitizeAiscGuardedOutputText(sprint335PolishEnglishText(value)) : value;
   const maybeEnglish = (value: string) => reportDisplayLanguage === "en" ? polishEnglishGeneratedText(value) : value;
 
   const RP_LABELS = buildLocalizedLabelProxyForLanguage(BASE_RP_LABELS, locale, reportDisplayLanguage, {
@@ -1716,7 +1718,7 @@ export default function RapportPage() {
                             <td className="rapport-ikkje-rekna-table__reason-cell">
                               {lim.reason ? (
                                 <span className="rapport-ikkje-rekna-table__reason">
-                                  {lim.reason}
+                                  {sanitizeAiscGuardedOutputText(lim.reason)}
                                 </span>
                               ) : (
                                 <span className="rapport-ikkje-rekna-table__reason-empty">

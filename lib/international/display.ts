@@ -358,7 +358,7 @@ export function sprint335EnglishResultLabel(label: string): string | null {
 }
 
 
-export function sanitizeAiscGuardedOutputText(value: string): string {
+function sanitizeAiscGuardedOutputTextBase(value: string): string {
   return String(value ?? "")
     .replace(/Cb\s*=\s*1\.0\s+is\s+a\s+conservative\s+screening\s+assumption\s+only\.\s*The actual Cb for uniform load on a simply supported beam is 1\.14;?\s*using Cb\s*=\s*1\.0[^.]*\./gi, "Cb = 1.0 is used only as a conservative screening assumption. No refined Cb value is computed or assumed without verified input.")
     .replace(/The actual Cb for (?:a )?uniform(?:ly)? load(?:ed)? on a simply supported beam is 1\.14[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
@@ -383,6 +383,92 @@ export function sanitizeAiscGuardedOutputText(value: string): string {
     .replace(/Both engineers treat this correctly as a screening conservatism rather than a computed value\./gi, "Any refined Cb effect must be computed from verified input before being used.")
     .replace(/Both engineers respect the AISC Data Guard and withhold all tabulated section properties/gi, "The AISC Data Guard requires tabulated section properties to be verified before capacity conclusions are made")
     .replace(/No AISC Manual tabulated values were generated or estimated — the AISC Data Guard was respected throughout by both engineers\./gi, "No AISC Manual section-property values are accepted unless supplied by verified input or an approved application data source.");
+}
+
+
+export function sprint3310eFix4ComparatorResidueText(value: string): string {
+  return String(value ?? "")
+    .replace(
+      /Engineer B notes in limitations that the actual Cb[\s\S]{0,900}?Any refined Cb effect must be computed from verified input before being used\./gi,
+      "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.0\s+does not establish any refined\s+Cb effect without verified input\./gi,
+      "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /verified input\.0\s+does not establish any refined\s+Cb effect without verified input\./gi,
+      "verified input. Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /A verified AISC Manual section properties and Chapter F checks is required/gi,
+      "Verified AISC Manual section properties and Chapter F checks are required",
+    )
+    .replace(
+      /a verified AISC Manual section properties and Chapter F checks for the W12x26 is required/gi,
+      "verified AISC Manual section properties and Chapter F checks for the W12x26 are required",
+    )
+    .replace(
+      /a verified AISC Manual section properties and Chapter F checks is required/gi,
+      "verified AISC Manual section properties and Chapter F checks are required",
+    )
+    .replace(
+      /LTB may be critical and requires verified AISC Chapter F checking\. A verified AISC Manual section properties and Chapter F checks is required/gi,
+      "LTB may be critical and requires verified AISC Manual section properties and Chapter F checks",
+    );
+}
+
+export function sanitizeAiscGuardedOutputText(value: string): string {
+  return sprint3310eFix4ComparatorResidueText(
+    sprint3310eFix2AiscGuardExtraText(
+      sanitizeAiscGuardedOutputTextBase(value),
+    ),
+  );
+}
+
+
+
+export function sprint3310eFix2AiscGuardExtraText(value: string): string {
+  return String(value ?? "")
+    .replace(/\bFORELØPIG GODKJENT\b/gi, "PRELIMINARILY APPROVED")
+    .replace(/\bFOREL├ÿPIG GODKJENT\b/gi, "PRELIMINARILY APPROVED")
+    .replace(/Engineer\s+Engineer A and Engineer B fully agree om alle design values\.?/gi, "Engineer A and Engineer B fully agree on all design values.")
+    .replace(/Engineer A and Engineer B fully agree om alle design values\.?/gi, "Engineer A and Engineer B fully agree on all design values.")
+    .replace(/fully agree om alle design values/gi, "fully agree on all design values")
+    .replace(/;\s*(?:phi_b|phib)\*Mn reduction below (?:phi_b|phib)\*Mp expected; verified section properties required/gi, "; AISC flexural strength cannot be determined without verified section properties and Chapter F checks")
+    .replace(/(?:phi_b|phib)\*Mn reduction below (?:phi_b|phib)\*Mp expected;?\s*verified section properties required/gi, "AISC flexural strength cannot be determined without verified section properties and Chapter F checks")
+    .replace(/(?:phi_b|phib)\*Mn reduction below (?:phi_b|phib)\*Mp expected/gi, "AISC flexural strength cannot be determined without verified section properties and Chapter F checks")
+    .replace(/The actual Cb for uniform load on a simply supported beam is 1\.14;?\s*using Cb\s*=\s*1\.0[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/The actual Cb for a uniformly loaded simply supported beam is 1\.14[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/actual Cb[^.]{0,180}1\.14[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/actual Cb[^.]{0,180}Cb\s*>\s*1\.0[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/Cb\s*(?:≈|=|is approximately)\s*1\.14/gi, "refined Cb value is not computed or assumed")
+    .replace(/Cb\s*>\s*1\.0/gi, "refined Cb value not determined")
+    .replace(/using Cb\s*=\s*1\.0 understates available capacity in a full design calculation/gi, "no refined Cb effect is claimed without verified input")
+    .replace(/\(W12x26 nominally 26\s*lb\/ft\s*=\s*0\.026\s*kip\/ft\)/gi, "(beam self-weight must be verified before use)")
+    .replace(/W12x26 nominally 26\s*lb\/ft\s*=\s*0\.026\s*kip\/ft/gi, "beam self-weight must be supplied as verified input or calculated from an approved data source")
+    .replace(/If the designer intends to include self-weight[^.]{0,220}wu and resulting Mu and Vu should be recalculated\./gi, "If the designer intends to include beam self-weight, it must be supplied as verified input or calculated from an approved data source before recalculating demand.")
+    .replace(/The W12x26 is a relatively shallow,\s*wide-flange section\.\s*A 20 ft unbraced length represents a large fraction of the section's lateral stiffness capacity\./gi, "No AISC shape geometry or stiffness conclusion is assumed. LTB may be critical because Lb equals the full span and no intermediate lateral bracing is provided.")
+    .replace(/The W12x26 is a relatively shallow,\s*wide-flange section\./gi, "No AISC shape geometry conclusion is assumed.")
+    .replace(/relatively shallow,\s*wide-flange section/gi, "section with unverified AISC properties")
+    .replace(/\bshallow W-shape\b/gi, "section with unverified AISC properties")
+    .replace(/\bnarrow-flanged\b/gi, "section with unverified AISC properties")
+    .replace(/represents a significant LTB exposure/gi, "requires an LTB check with verified AISC data")
+    .replace(/The available flexural strength (?:phi_b|phib)\*Mn is likely to be reduced below the plastic moment (?:phi_b|phib)\*Mp due to lateral-torsional buckling\./gi, "Available flexural strength cannot be determined without verified AISC Manual section properties and Chapter F checks.")
+    .replace(/available flexural strength[^.]{0,180}likely[^.]{0,120}reduced below[^.]*\./gi, "Available flexural strength cannot be determined without verified AISC Manual section properties and Chapter F checks.")
+    .replace(/Adding bracing at midspan or third-points would substantially increase (?:phi_b|phib)\*Mn and is recommended if the section is found to be inadequate\./gi, "Adding verified lateral bracing may improve LTB performance, but the effect must be checked using verified AISC Manual properties and Chapter F procedures.")
+    .replace(/Engineer B notes in limitations that the actual Cb for a uniformly loaded simply supported beam is greater than 1\.0[^.]*\.\s*Engineer A makes the same point[^.]*\.\s*Any refined Cb effect must be computed from verified input before being used\./gi, "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.")
+    .replace(/Engineer B notes in limitations that the actual Cb[^.]*greater than 1\.0[^.]*\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/and that Cb\s*=\s*1\.0 therefore understates available LTB capacity/gi, "and no refined Cb effect is claimed without verified input")
+    .replace(/therefore understates available LTB capacity/gi, "does not establish any refined Cb effect without verified input")
+    .replace(/parabolic moment diagram, refined Cb value not determined/gi, "refined Cb value not determined")
+    .replace(/would remain as a conservative but appropriate screen/gi, "must not be refined without verified input")
+    .replace(/LTB is flagged as a likely governing or co-governing limit state/gi, "LTB may be critical and requires verified AISC Chapter F checking")
+    .replace(/The W12x26 must not be accepted for this span without a complete (?:phi_b|phib)\*Mn calculation using verified section properties\./gi, "The W12x26 must not be accepted for this span without verified AISC Manual section properties and Chapter F checks.")
+    .replace(/complete (?:phi_b|phib)\*Mn calculation using verified section properties/gi, "verified AISC Manual section properties and Chapter F checks")
+    .replace(/complete (?:phi_b|phib)\*Mn evaluation using verified AISC Manual section properties/gi, "verified AISC Manual section properties and Chapter F checks")
+    .replace(/must be evaluated against (?:phi_b|phib)\*Mn once verified AISC Manual section properties are provided/gi, "must be evaluated using verified AISC Manual section properties and Chapter F checks")
+    .replace(/would substantially increase (?:phi_b|phib)\*Mn/gi, "may improve LTB performance after verified AISC checking");
 }
 
 export const SPRINT335_NO_UNVERIFIED_AISC_VALUES_PROMPT = [

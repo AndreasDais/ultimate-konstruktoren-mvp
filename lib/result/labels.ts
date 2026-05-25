@@ -137,20 +137,20 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   konstruktorBResultat: { nb: "Engineer B sine resultater", nn: "Engineer B sine resultat" },
   // Controller-kort (#02) — verdikt-setningar per match_status og toggle-labels
   verdiktMatch: {
-    nb: "Engineer Engineer A and Engineer B fully agree om alle design values.",
-    nn: "Engineer Engineer A and Engineer B er fullstendig samde om alle design values.",
+    nb: "Engineer A and Engineer B fully agree on all design values.",
+    nn: "Engineer A and Engineer B fully agree on all design values.",
   },
   verdiktMinor: {
-    nb: "Engineer Engineer A and Engineer B har små forskjeller — ingen kritiske avvik.",
-    nn: "Engineer Engineer A and Engineer B har små skilnader — ingen kritiske avvik.",
+    nb: "Engineer A and Engineer B har små forskjeller — ingen kritiske avvik.",
+    nn: "Engineer A and Engineer B har små skilnader — ingen kritiske avvik.",
   },
   verdiktSignificant: {
-    nb: "Engineer Engineer A and Engineer B har vesentlige avvik på design values.",
-    nn: "Engineer Engineer A and Engineer B har vesentlege avvik på design values.",
+    nb: "Engineer A and Engineer B har vesentlige avvik på design values.",
+    nn: "Engineer A and Engineer B har vesentlege avvik på design values.",
   },
   verdiktCritical: {
-    nb: "Engineer Engineer A and Engineer B er ikke enige — manuell gjennomgang trengs.",
-    nn: "Engineer Engineer A and Engineer B er ikkje samde — manuell gjennomgang trengst.",
+    nb: "Engineer A and Engineer B er ikke enige — manuell gjennomgang trengs.",
+    nn: "Engineer A and Engineer B er ikkje samde — manuell gjennomgang trengst.",
   },
   fagligMerknad: { nb: "Faglig merknad", nn: "Fagleg merknad" },
   // Grupper-overskrifter for fag-chips (delt frå #lettlese5)

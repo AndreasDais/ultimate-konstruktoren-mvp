@@ -30,8 +30,7 @@ import {
   normalizeReportModel,
   normalizeTitleTypography,
   resultPriorityScore,
-  splitValueUnit,
-} from "./normalize-report-model";
+  splitValueUnit, cleanReportTextPreserveUserInput } from "./normalize-report-model";
 
 function sprint339FinalNorwegianResidueText(value: string): string {
   return String(value ?? "")
@@ -517,7 +516,7 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     keyResults,
     summary: {
       text: polishForDisplay(summary, displayLanguage),
-      request: cleanReportText(data.run.request.raw_text),
+      request: cleanReportTextPreserveUserInput(data.run.request.raw_text),
     },
     interpretation: {
       status: displayLanguage === "en" ? ({ klar: "Ready", delvis_klar: "Partly ready", mangelfull: "Incomplete", avvist: "Rejected", uklar: "Unclear", uklart: "Unclear", relevant_ikkje_stotta: "Not supported" }[data.inputReview?.input_status ?? ""] ?? "Unknown") : data.inputReview ? inputStatusLabel(data.inputReview.input_status, locale) : "-",
