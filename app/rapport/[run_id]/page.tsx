@@ -1319,12 +1319,15 @@ export default function RapportPage() {
             )}
 
             {reportModel.keyResults.length > 0 && (
-              <div className="rapport-cover-results" aria-label={RP_LABELS.coverKeyResults[locale]}>
+              <div className="rapport-cover-results" aria-label={reportDisplayLanguage === "en" ? "KEY RESULTS" : RP_LABELS.coverKeyResults[locale]}>
                 <div className="rapport-cover-results__label">
-                  {RP_LABELS.coverKeyResults[locale]}
+                  {reportDisplayLanguage === "en" ? "KEY RESULTS" : RP_LABELS.coverKeyResults[locale]}
                 </div>
                 <div className="rapport-cover-results__grid">
-                  {reportModel.keyResults.slice(0, 4).map((result) => (
+                  {reportModel.keyResults
+                    .filter((result) => !/\bltb\s*risk\b/i.test(`${result.label} ${result.raw}`))
+                    .slice(0, 4)
+                    .map((result) => (
                     <div key={`${result.label}-${result.raw}`} className="rapport-cover-results__item">
                       <div className="rapport-cover-results__key uk-mono">{result.label}</div>
                       <div className="rapport-cover-results__value">

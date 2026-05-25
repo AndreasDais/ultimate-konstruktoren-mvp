@@ -1971,7 +1971,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                             marginTop: 8,
                                           }}
                                         />
-                                        <span style={{ minWidth: 0 }}>{a}</span>
+                                        <span style={{ minWidth: 0 }}>{uiText(a)}</span>
                                       </li>
                                     ))}
                                   </ul>

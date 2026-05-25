@@ -166,6 +166,20 @@ function statusTone(value: string | undefined | null): PipelineStatusRow["status
   return "unknown";
 }
 
+
+function isDescriptiveResultValue(sourceLabel: string, raw: string): boolean {
+  const label = String(sourceLabel ?? "").toLowerCase();
+  const text = String(raw ?? "").trim();
+
+  if (!text) return false;
+  if (/^\s*[-+]?\d/.test(text)) return false;
+
+  return (
+    /\b(risk|status|warning|assessment|conclusion|note|ltb)\b/i.test(label) ||
+    /\b(high|medium|low|critical|requires|required|verified|preliminary|not determined)\b/i.test(text)
+  );
+}
+
 function resultRowsFrom(results: Record<string, string> | undefined, currentDisplayLanguage: PilarDisplayLanguage): CalculationResultRow[] {
   const byCanonical = new Map<string, CalculationResultRow>();
 
@@ -174,7 +188,10 @@ function resultRowsFrom(results: Record<string, string> | undefined, currentDisp
     if (!cleanedRaw) continue;
 
     const canonical = canonicalResultKey(sourceLabel);
-    const { value, unit } = splitValueUnit(cleanedRaw);
+    const descriptiveResult = isDescriptiveResultValue(sourceLabel, cleanedRaw);
+    const { value, unit } = descriptiveResult
+      ? { value: cleanedRaw, unit: null }
+      : splitValueUnit(cleanedRaw);
     const category = categorizeResultKey(sourceLabel);
     const row = {
       label: localizeResultLabel(displayResultLabel(sourceLabel), currentDisplayLanguage),

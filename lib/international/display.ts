@@ -418,10 +418,73 @@ export function sprint3310eFix4ComparatorResidueText(value: string): string {
     );
 }
 
+
+export function sprint3310fReportPolishText(value: string): string {
+  return String(value ?? "")
+    .replace(
+      /Engineer B notes in limitations that the actual Cb[^.\n]*(?:\.[\s\S]{0,500}?before being used\.)?/gi,
+      "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /Engineer A makes the same point in the limitations section,\s*citing refined Cb value is not computed or assumed for a uniformly loaded simply supported beam\./gi,
+      "Engineer A also treats any refined Cb effect as requiring verified input.",
+    )
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\.\s*No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\./gi,
+      "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /LTB may be critical and requires verified AISC Chapter F checking\.\s*Verified AISC Manual section properties and Chapter F checks are required/gi,
+      "LTB may be critical; verified AISC Manual section properties and Chapter F checks are required",
+    )
+    .replace(
+      /Verified AISC Manual section properties and Chapter F checks for the W12x26 are required before any capacity or adequacy conclusion can be drawn\./gi,
+      "Verified AISC Manual section properties and Chapter F checks are required before any capacity or adequacy conclusion can be drawn.",
+    )
+    .replace(
+      /Verified AISC Manual section properties and Chapter F checks are required before the W12x26 can be accepted for this span and loading\./gi,
+      "Verified AISC Manual section properties and Chapter F checks are required before the section can be accepted for this span and loading.",
+    );
+}
+
+
+export function sprint3310fFixDuplicateCbPolishText(value: string): string {
+  const refined =
+    "No refined Cb value is computed or assumed without verified input. Any refined Cb effect must be computed from verified input before being used.";
+
+  return String(value ?? "")
+    .replace(/;\s*Verified AISC Manual/g, "; verified AISC Manual")
+    .replace(/;\s*Verified AISC section/g, "; verified AISC section")
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\.\s*No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\./gi,
+      refined,
+    )
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\.\s*Engineer A also treats any refined Cb effect as requiring verified input\.\s*Any refined Cb effect must be computed from verified input before being used\./gi,
+      refined,
+    )
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.\s*Any refined Cb effect must be computed from verified input before being used\.\s*Engineer A also treats any refined Cb effect as requiring verified input\./gi,
+      refined,
+    )
+    .replace(
+      /Any refined Cb effect must be computed from verified input before being used\.\s*Any refined Cb effect must be computed from verified input before being used\./gi,
+      "Any refined Cb effect must be computed from verified input before being used.",
+    )
+    .replace(
+      /No refined Cb value is computed or assumed without verified input\.\s*No refined Cb value is computed or assumed without verified input\./gi,
+      "No refined Cb value is computed or assumed without verified input.",
+    );
+}
+
 export function sanitizeAiscGuardedOutputText(value: string): string {
-  return sprint3310eFix4ComparatorResidueText(
-    sprint3310eFix2AiscGuardExtraText(
-      sanitizeAiscGuardedOutputTextBase(value),
+  return sprint3310fFixDuplicateCbPolishText(
+    sprint3310fReportPolishText(
+      sprint3310eFix4ComparatorResidueText(
+        sprint3310eFix2AiscGuardExtraText(
+          sanitizeAiscGuardedOutputTextBase(value),
+        ),
+      ),
     ),
   );
 }
