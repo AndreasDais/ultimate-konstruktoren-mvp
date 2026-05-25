@@ -10,6 +10,7 @@ import { buildCalculationSheetModel } from "@/lib/report/calculation-sheet-model
 import { renderCalculationSheetLatex } from "@/lib/report/render-calculation-latex";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { RapportLoadingPilelinja } from "../RapportLoadingPilelinja";
+import { FormulaStack } from "../_components/FormulaStack";
 import "../rapport.css";
 import "./beregning.css";
 import { inferCalculationEnglishDisplay } from "@/lib/international/display";
@@ -235,7 +236,10 @@ export default function CalculationSheetPage() {
                   <div className="beregning-formula-list">
                     {step.formulas.map((formula, index) => (
                       <div className="beregning-formula-item" key={`${step.id}-formula-${index}`}>
-                        <pre className="beregning-formula-plain">{formula.plain}</pre>
+                        <FormulaStack
+                          latex={formula.latex}
+                          fallbackText={formula.plain}
+                        />
                       </div>
                     ))}
                   </div>

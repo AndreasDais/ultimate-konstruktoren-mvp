@@ -245,3 +245,32 @@
   .beregning-meta,
   .beregning-grid { grid-template-columns: 1fr; }
 }
+
+/* ── FormulaStack-sentrering på beregning-sida ────────────────────────
+   FormulaStack rendrar via TO vegar, og begge må sentrerast her:
+
+   1) Kort formel  → <Formula> direkte → .rapport-formula-scroll.
+      Den boksen har overflow-x:auto, som gjer han shrink-to-fit og
+      venstrestilt i det breie .beregning-formula-item-kortet. flex +
+      justify-content:center sentrerer KaTeX-barnet (overflow-x for
+      lange formlar på skjerm er framleis intakt).
+
+   2) Lang formel → .rapport-formula-stack. rapport.css set der
+      text-align:left !important på .katex-display — rett for rapport-
+      sida, men venstrepressar her. Override med same spesifisitet +
+      !important. Alt scoped til .beregning-formula-item — rapport-
+      sida er urørt. */
+.beregning-formula-item .rapport-formula-scroll {
+  display: flex;
+  justify-content: center;
+}
+
+.beregning-formula-item .rapport-formula-stack .katex-display,
+.beregning-formula-item .rapport-formula-scroll .katex-display {
+  text-align: center !important;
+}
+
+.beregning-formula-item .rapport-formula-stack .katex,
+.beregning-formula-item .rapport-formula-scroll .katex-display > .katex {
+  text-align: center !important;
+}
