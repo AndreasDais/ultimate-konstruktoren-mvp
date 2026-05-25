@@ -212,7 +212,7 @@ export async function POST(request: Request) {
     );
 
     // === SLACK-NOTIFIKASJON ved høg severity ===
-    // Wrappa i try-catch så feil ikkje breaker respons-pathen til brukaren.
+    // Wrappa i try-catch så feil ikkje breaker respons-pathen til useen.
     if (finalSeverity === "high") {
       const baseUrl = new URL(request.url).origin;
       await notifyHighSeveritySlack({

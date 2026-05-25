@@ -1,5 +1,5 @@
 /**
- * Generisk SSE-konsument for streaming agent-routes (Tolkar, Konstruktør A/B,
+ * Generisk SSE-konsument for streaming agent-routes (Tolkar, Engineer A/B,
  * Rapportør).
  *
  * Støttar både JSON-payload (Record) og FormData (for fil-opplasting).
@@ -9,7 +9,7 @@
  * Støtta event-typar:
  * - `cached`        — for Rapportør: rapporten var i cache, complete kjem
  *                     umiddelbart utan thinking/text
- * - `thinking_start`— Claude byrjar "extended thinking" (kjem berre når
+ * - `thinking_start`— Claude byrjar "extended thinking" (kjem only når
  *                     thinking: enabled — Rapportør sin Agent E)
  * - `text_start`    — første text-token er klar (eller første agent-text
  *                     etter thinking-fasen)
@@ -94,7 +94,7 @@ export async function streamAgent(
               handlers.onDelta?.(parsed.text || "", accumulated);
             } else if (currentEvent === "complete") {
               // For Rapportør: heile full-respons-objektet (report, run,
-              // agentA, agentB, ...) er i parsed. For Konstruktør A/B
+              // agentA, agentB, ...) er i parsed. For Engineer A/B
               // (eldre): { result: {...} } var standard. Pass på begge:
               if (parsed.result !== undefined) {
                 handlers.onComplete?.(parsed.result || {});

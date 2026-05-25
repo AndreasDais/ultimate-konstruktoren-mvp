@@ -37,13 +37,13 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
   // 2. Avgrensingar og ansvar
   s2Title: { nb: "2. Begrensninger og ansvar", nn: "2. Avgrensingar og ansvar" },
   s2P1Pre: {
-    nb: "Du som bruker er fullt ut ansvarlig for å verifisere alle resultater Pilar produserer. Pilar er ",
-    nn: "Du som brukar er fullt ut ansvarleg for å verifisere alle resultat Pilar produserer. Pilar er ",
+    nb: "Du som use er fullt ut ansvarlig for å verifisere alle resultater Pilar produserer. Pilar er ",
+    nn: "Du som use er fullt ut ansvarleg for å verifisere alle resultat Pilar produserer. Pilar er ",
   },
   s2P1Bold: { nb: "ikke sertifisert", nn: "ikkje sertifisert" },
   s2P1Post: {
-    nb: " for dimensjonering av reelle byggverk, og resultatene skal ikke brukes som eneste grunnlag for konstruksjonsavgjørelser.",
-    nn: " for dimensjonering av reelle byggverk, og resultata skal ikkje brukast som einaste grunnlag for konstruksjonsavgjerder.",
+    nb: " for diwhilejonering av reelle byggverk, og resultatene skal ikke brukes som eneste grunnlag for konstruksjonsavgjørelser.",
+    nn: " for diwhilejonering av reelle byggverk, og resultata skal ikkje brukast som einaste grunnlag for konstruksjonsavgjerder.",
   },
   s2P2: {
     nb: "Vi gir ingen garanti for at AI-genererte beregninger er korrekte, komplette eller i samsvar med gjeldende regelverk. Bruk av Pilar skjer på eget ansvar.",
@@ -52,18 +52,18 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
 
   // 3. Data vi lagrar
   s3Title: { nb: "3. Data vi lagrer", nn: "3. Data vi lagrar" },
-  s3P1: { nb: "Når du bruker Pilar, lagrer vi:", nn: "Når du brukar Pilar, lagrar vi:" },
+  s3P1: { nb: "Når du use Pilar, lagrer vi:", nn: "Når du use Pilar, lagrar vi:" },
   s3Li1: { nb: "Din e-postadresse (fra innlogging)", nn: "Di e-postadresse (frå innlogging)" },
   s3Li2: { nb: "Forespørslene du sender inn (input-tekst)", nn: "Forespurnadene du sender inn (input-tekst)" },
   s3Li3: { nb: "AI-genererte tolkninger, beregninger og rapporter", nn: "AI-genererte tolkingar, berekningar og rapportar" },
   s3Li4: { nb: "Tilbakemeldinger og feilrapporter du sender", nn: "Tilbakemeldingar og feilrapportar du sender" },
   s3P2: {
-    nb: "Vi bruker dataen til å forbedre produktet og analysere kalibreringen av tillit-systemet vårt. Data blir lagret i Supabase (EU-region). Vi deler ikke dataen din med tredjepart utenfor det som er nødvendig for å levere tjenesten (Anthropic for AI-beregning, Supabase for lagring, Vercel for hosting).",
-    nn: "Vi brukar dataen til å forbetre produktet og analysere kalibreringa av tillit-systemet vårt. Data blir lagra i Supabase (EU-region). Vi deler ikkje dataen din med tredjepart utanfor det som er naudsynt for å levere tenesta (Anthropic for AI-berekning, Supabase for lagring, Vercel for hosting).",
+    nb: "Vi use dataen til å forbedre produktet og analysere kalibreringen av tillit-systemet vårt. Data blir lagret i Supabase (EU-region). Vi deler ikke dataen din med tredjepart utenfor det som er nødvendig for å levere tjenesten (Anthropic for AI-beregning, Supabase for lagring, Vercel for hosting).",
+    nn: "Vi use dataen til å forbetre produktet og analysere kalibreringa av tillit-systemet vårt. Data blir lagra i Supabase (EU-region). Vi deler ikkje dataen din med tredjepart utanfor det som er naudsynt for å levere tenesta (Anthropic for AI-berekning, Supabase for lagring, Vercel for hosting).",
   },
   s3P3: {
-    nb: "Du kan også bruke Pilar anonymt (uten innlogging) — da lagrer vi bare forespørselen og resultatet, uten bruker-kobling.",
-    nn: "Du kan òg bruke Pilar anonymt (utan innlogging) — då lagrar vi berre forespurnaden og resultatet, utan brukar-kopling.",
+    nb: "Du kan også bruke Pilar anonymt (uten innlogging) — da lagrer vi only forespørselen og resultatet, uten use-kobling.",
+    nn: "Du kan òg bruke Pilar anonymt (utan innlogging) — då lagrar vi only forespurnaden og resultatet, utan use-kopling.",
   },
 
   // 4. Sletting av data
@@ -74,8 +74,8 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
   // 5. Endringar i pilot
   s5Title: { nb: "5. Endringer i pilot", nn: "5. Endringar i pilot" },
   s5P1: {
-    nb: "Pilar er under aktiv utvikling. Funksjonalitet, priser (gratis i pilot), og vilkår kan endres uten varsel. Større endringer blir kommunisert via e-post til registrerte brukere.",
-    nn: "Pilar er under aktiv utvikling. Funksjonalitet, prisar (gratis i pilot), og vilkår kan endrast utan varsel. Større endringar blir kommunisert via e-post til registrerte brukarar.",
+    nb: "Pilar er under aktiv utvikling. Funksjonalitet, priser (gratis i pilot), og vilkår kan endres uten varsel. Større endringer blir kommunisert via e-post til registrerte usee.",
+    nn: "Pilar er under aktiv utvikling. Funksjonalitet, prisar (gratis i pilot), og vilkår kan endrast utan varsel. Større endringar blir kommunisert via e-post til registrerte usear.",
   },
 
   // 6. Kontakt

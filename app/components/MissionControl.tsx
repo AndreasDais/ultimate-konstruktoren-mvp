@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import "./mission-control.css";
 import { InfoPopover } from "@/app/components/InfoPopover";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { buildLocalizedLabelProxy, standardShortLabel } from "@/lib/international/display";
 
 // Greske bokstavar (norsk byggfagleg konvensjon — alpha_cc → α_cc, rho_min → ρ_min)
 const GREEK_MAP: Record<string, string> = {
@@ -53,14 +55,14 @@ import { useLocale } from "@/lib/locale-context";
 const MC_LABELS: Record<string, Record<Locale, string>> = {
   // Header
   eyebrow: { nb: "STEG · BEREGNER", nn: "STEG · BEREKNAR" },
-  title: { nb: "To uavhengige konstruktører beregner samme problem", nn: "To uavhengige konstruktørar reknar same problem" },
-  subtitle: { nb: "Konstruktør A og B bruker ulik metode. Sammenligneren bekrefter at de er enige før resultatet presenteres.", nn: "Konstruktør A og B brukar ulik metode. Samanliknaren stadfestar at dei er einige før resultatet er presentert." },
+  title: { nb: "To uavhengige engineers beregner samme problem", nn: "To uavhengige engineers reknar same problem" },
+  subtitle: { nb: "Engineer A and Engineer B use ulik metode. Comparatoren bekrefter at de er enige før resultatet presenteres.", nn: "Engineer A and Engineer B use ulik metode. Comparatoren stadfestar at dei er einige før resultatet er presentert." },
   // Pair-bar (#1) — felles overskrift over A+B som signaliserer arkitekturen
   toLoysningar: { nb: "TO LØSNINGER, ETT SVAR", nn: "TO LØYSINGAR, EITT SVAR" },
   samanliknast: { nb: "samanliknast", nn: "samanliknast" },
-  // Konstruktør tags
-  konstruktorA: { nb: "Konstruktør", nn: "Konstruktør" },
-  konstruktorB: { nb: "Konstruktør", nn: "Konstruktør" },
+  // Engineer tags
+  konstruktorA: { nb: "Engineer", nn: "Engineer" },
+  konstruktorB: { nb: "Engineer", nn: "Engineer" },
   tagA: { nb: "LUKKET FORMEL · EUROKODE", nn: "LUKKA FORMEL · EUROKODE" },
   tagB: { nb: "NUMERISK · FRITT LEGEME", nn: "NUMERISK · FRI LEKAM" },
   // Tooltip-tekstar (#7) — forklar metode-tags på hover/long-press
@@ -81,14 +83,14 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   ventarPaPartner: { nb: "Ventar på partner — kan ikkje samanliknast åleine", nn: "Ventar på partner — kan ikkje samanliknast åleine" },
   blokkertARetry: { nb: "BLOKKERT · A TRENG RETRY", nn: "BLOKKERT · A TRENG RETRY" },
   blokkertBRetry: { nb: "BLOKKERT · B TRENG RETRY", nn: "BLOKKERT · B TRENG RETRY" },
-  blokkertForklaring: { nb: "Begge konstruktørar må fullføre før samanlikning kan starte.", nn: "Begge konstruktørar må fullføre før samanlikning kan starte." },
+  blokkertForklaring: { nb: "Both engineers må fullføre før samanlikning kan starte.", nn: "Both engineers må fullføre før samanlikning kan starte." },
   tenkjerDjupt: { nb: "Tenker dypt på problemet", nn: "Tenkjer djupt på problemet" },
   skrivNesteSteg: { nb: "Skriver neste steg", nn: "Skriv neste steg" },
-  // SamanliknarPanel
-  samanliknar: { nb: "Sammenligner", nn: "Samanliknar" },
+  // ComparatorPanel
+  samanliknar: { nb: "Comparator", nn: "Comparator" },
   ventar: { nb: "VENTER", nn: "VENTAR" },
   reknarAvvik: { nb: "BEREGNER AVVIK", nn: "REKNAR AVVIK" },
-  // Placeholder-stripe (#4): synleg medan A+B streamar — slank tekst i staden
+  // Placeholder-stripe (#4): synleg while A+B streamar — slank tekst i staden
   // for full kort som ser ut som han "ventar".
   ventarPaBegge: { nb: "Ventar på at begge løsninger fullføres", nn: "Ventar på at begge løysingar fullførast" },
   einige: { nb: "ENIGE", nn: "EINIGE" },
@@ -106,7 +108,7 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   cellMetode: { nb: "METODE", nn: "METODE" },
   cellKonklusjon: { nb: "KONKLUSJON", nn: "KONKLUSJON" },
   cellAvvikSuffix: { nb: "AVVIK", nn: "AVVIK" },
-  abIdentiske: { nb: "A og B identiske", nn: "A og B identiske" },
+  abIdentiske: { nb: "Engineer A and Engineer B identiske", nn: "Engineer A and Engineer B identiske" },
   beggeKonvergerer: { nb: "Begge konvergerer", nn: "Begge konvergerer" },
   lukkaFormelSame: { nb: "Lukket formel og numerisk gir samme svar", nn: "Lukka formel og numerisk gir same svar" },
   innanforToleranse: { nb: "Innenfor toleranse", nn: "Innanfor toleranse" },
@@ -116,6 +118,7 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   tabellVerdi: { nb: "VERDI", nn: "VERDI" },
   tabellAvvik: { nb: "AVVIK", nn: "AVVIK" },
   toAvToEinige: { nb: "2 av 2 metoder enige", nn: "2 av 2 metodar einige" },
+  doneToComparator: { nb: "{L.doneToComparator[locale]}", nn: "Ferdig — leverer resultat til Comparator" },
   avvikAVurdere: { nb: "avvik å vurdere", nn: "avvik å vurdere" },
 };
 
@@ -162,6 +165,7 @@ type Props = {
   onRetry?: (letter: "A" | "B") => void;
   retryCountA?: number;
   retryCountB?: number;
+  engineeringContext?: EngineeringContext | null;
 };
 
 export default function MissionControl({
@@ -173,14 +177,65 @@ export default function MissionControl({
   onRetry,
   retryCountA = 0,
   retryCountB = 0,
+  engineeringContext = null,
 }: Props) {
   const { locale } = useLocale();
+  const L = buildLocalizedLabelProxy(MC_LABELS, locale, engineeringContext, {
+    eyebrow: "STEP · CALCULATING",
+    title: "Two independent engineers solve the same problem",
+    subtitle: "Engineer A and Engineer B use independent methods. The Comparator checks agreement before the result is presented.",
+    toLoysningar: "TWO SOLUTIONS, ONE ANSWER",
+    samanliknast: "compared",
+    konstruktorA: "Engineer",
+    konstruktorB: "Engineer",
+    tagA: `CLOSED FORM · ${standardShortLabel(engineeringContext)}`,
+    tagB: `NUMERICAL · ${standardShortLabel(engineeringContext)}`,
+    tagATooltip: "Uses established formulas directly within the selected standard context.",
+    tagBTooltip: "Builds the check independently from equilibrium and mechanics.",
+    fagligVenting: "Reading request · Setting up equations · Calculating values · Verifying result · Writing next step",
+    feilPrefix: "Error:",
+    provPaNytt: "Try again",
+    forsokAv: "attempt {n} of 3",
+    ventarPaPartner: "Waiting for partner — cannot compare one solution alone",
+    blokkertARetry: "BLOCKED · A NEEDS RETRY",
+    blokkertBRetry: "BLOCKED · B NEEDS RETRY",
+    blokkertForklaring: "Both engineers must finish before comparison can start.",
+    tenkjerDjupt: "Thinking through the problem",
+    skrivNesteSteg: "Writing next step",
+    samanliknar: "Comparator",
+    ventar: "WAITING",
+    reknarAvvik: "CALCULATING DIFFERENCES",
+    ventarPaBegge: "Waiting for both solutions to finish",
+    einige: "AGREE",
+    nestenEinige: "NEAR MATCH",
+    avvikBadge: "DIFFERENCE",
+    terskelEnige: "All differences below 5%",
+    terskelNestenEnige: "All differences below 15%, some above 5%",
+    terskelAvvik: "One or more differences above 15%",
+    avvikInnanforTerskel: "Within threshold",
+    avvikSjekkNaerare: "Check closer",
+    avvikStorDiskrepans: "Large discrepancy",
+    cellResultat: "RESULT",
+    cellMetode: "METHOD",
+    cellKonklusjon: "CONCLUSION",
+    cellAvvikSuffix: "DIFFERENCE",
+    abIdentiske: "A and B identical",
+    beggeKonvergerer: "Both converge",
+    lukkaFormelSame: "Closed form and numerical approach agree",
+    innanforToleranse: "Within tolerance",
+    vurderNarare: "Review closer",
+    videreKontrollor: "Continue to controller",
+    tabellVerdi: "VALUE",
+    tabellAvvik: "DIFFERENCE",
+    toAvToEinige: "2 of 2 methods agree",
+    avvikAVurdere: "differences to review",
+  });
   const bothComplete = calculationA !== null && calculationB !== null;
   const aErrored = streamingA.phase === "error";
   const bErrored = streamingB.phase === "error";
 
-  // Auto-scroll til Sammenligner i to fasar (#5):
-  //  Fase 1: når begge konstruktørar er ferdige → vis "BEREGNER AVVIK"-kortet.
+  // Auto-scroll til Comparator i to fasar (#5):
+  //  Fase 1: når begge engineers er ferdige → vis "BEREGNER AVVIK"-kortet.
   //  Fase 2: når comparison-data kjem inn → tabell ekspanderer, scroll på nytt
   //          slik at konklusjon-blokka (botn av tabellen) er synleg.
   // Begge med 400ms delay så slide-in/ekspansjon-animasjonen får starte først.
@@ -211,17 +266,17 @@ export default function MissionControl({
   return (
     <div className="mc">
       <header className="mc-header">
-        <p className="mc-eyebrow">{MC_LABELS.eyebrow[locale]}</p>
+        <p className="mc-eyebrow">{L.eyebrow[locale]}</p>
         <h1 className="mc-title">
-          {MC_LABELS.title[locale]}
+          {L.title[locale]}
         </h1>
         <p className="mc-subtitle">
-          {MC_LABELS.subtitle[locale]}
+          {L.subtitle[locale]}
         </p>
       </header>
 
-      {/* Pair-frame (#1): felles topp-bar + ↔-element mellom A og B.
-          Signaliserer arkitekturen visuelt — A og B er to halvdelar av
+      {/* Pair-frame (#1): felles topp-bar + ↔-element mellom Engineer A and Engineer B.
+          Signaliserer arkitekturen visuelt — Engineer A and Engineer B er to halvdelar av
           ein dobbel-løysing, ikkje to separate berekningar. */}
       <style>{`
         .mc-pair-bar {
@@ -296,7 +351,7 @@ export default function MissionControl({
 
       <div className="mc-pair-bar" aria-hidden>
         <div className="mc-pair-bar-line" />
-        <div className="mc-pair-bar-text">{MC_LABELS.toLoysningar[locale]}</div>
+        <div className="mc-pair-bar-text">{L.toLoysningar[locale]}</div>
         <div className="mc-pair-bar-line" />
       </div>
 
@@ -304,39 +359,42 @@ export default function MissionControl({
         <div className="mc-grid">
           <AgentCard
             letter="A"
-            name={MC_LABELS.konstruktorA[locale]}
-            tag={MC_LABELS.tagA[locale]}
-            tagTooltip={MC_LABELS.tagATooltip[locale]}
+            name={L.konstruktorA[locale]}
+            tag={L.tagA[locale]}
+            tagTooltip={L.tagATooltip[locale]}
             streaming={streamingA}
             calculation={calculationA}
             locale={locale}
+            labels={L}
             partnerErrored={bErrored}
             onRetry={onRetry ? () => onRetry("A") : undefined}
             retryCount={retryCountA}
           />
           <AgentCard
             letter="B"
-            name={MC_LABELS.konstruktorB[locale]}
-            tag={MC_LABELS.tagB[locale]}
-            tagTooltip={MC_LABELS.tagBTooltip[locale]}
+            name={L.konstruktorB[locale]}
+            tag={L.tagB[locale]}
+            tagTooltip={L.tagBTooltip[locale]}
             streaming={streamingB}
             calculation={calculationB}
             locale={locale}
+            labels={L}
             partnerErrored={aErrored}
             onRetry={onRetry ? () => onRetry("B") : undefined}
             retryCount={retryCountB}
           />
         </div>
-        <div className="mc-pair-connector" aria-label={MC_LABELS.samanliknast[locale]}>
+        <div className="mc-pair-connector" aria-label={L.samanliknast[locale]}>
           <span className="mc-pair-connector-icon">↔</span>
         </div>
       </div>
 
       <div ref={sammenlignerRef}>
-        <SamanliknarPanel
+        <ComparatorPanel
           bothComplete={bothComplete}
           comparison={comparison}
           locale={locale}
+          labels={L}
           aErrored={aErrored}
           bErrored={bErrored}
           calculationA={calculationA}
@@ -357,6 +415,7 @@ function AgentCard({
   streaming,
   calculation,
   locale,
+  labels: L,
   partnerErrored,
   onRetry,
   retryCount,
@@ -368,6 +427,7 @@ function AgentCard({
   streaming: AgentStreamingState;
   calculation: CalculationResultMin | null;
   locale: Locale;
+  labels: typeof MC_LABELS;
   partnerErrored: boolean;
   onRetry?: () => void;
   retryCount: number;
@@ -375,7 +435,7 @@ function AgentCard({
   const complete = calculation !== null;
 
   // Strip "Steg N — " / "Steg N - " / "Steg N: " prefiks frå step-titlar (#3).
-  // Konstruktør A si prompt har generert numererte steg, men dei to konstruktørane
+  // Engineer A si prompt har generert numererte steg, men dei to konstruktørane
   // er likeverdige — stegnummer er meta-støy. Stripping i rendering held backend
   // uendra og lar oss reversere om vi ombestemmer oss. Robust mot ulike dash-typar
   // og kollon, og lar uberørte titlar (utan prefiks) gå gjennom uendra.
@@ -394,8 +454,8 @@ function AgentCard({
     (streaming.phase === "thinking" || streaming.phase === "streaming");
 
   // Roterande fagleg status (#8) — syklar gjennom 5 fag-spesifikke setningar
-  // medan streaming pågår. 3 sek per fase = naturleg lese-tempo.
-  const phases = MC_LABELS.fagligVenting[locale].split(" · ");
+  // while streaming pågår. 3 sek per fase = naturleg lese-tempo.
+  const phases = L.fagligVenting[locale].split(" · ");
   const [phaseIdx, setPhaseIdx] = useState(0);
   useEffect(() => {
     if (!showInProgress) return;
@@ -407,7 +467,7 @@ function AgentCard({
 
   const inProgressText = phases[phaseIdx];
 
-  // Resultat-verdiar (q_Ed osv.) er flytta til Sammenligner-kortet (#5),
+  // Resultat-verdiar (q_Ed osv.) er flytta til Comparator-kortet (#5),
   // så vi treng ikkje lenger ekstrahere dei her i AgentCard.
 
   const errorMessage = streaming.phase === "error" ? streaming.error : null;
@@ -430,7 +490,7 @@ function AgentCard({
 
       {errorMessage ? (
         <div className="mc-error" role="alert">
-          <strong>{MC_LABELS.feilPrefix[locale]}</strong> {errorMessage}
+          <strong>{L.feilPrefix[locale]}</strong> {errorMessage}
           {onRetry && (
             <div
               style={{
@@ -460,7 +520,7 @@ function AgentCard({
                 }}
               >
                 <span aria-hidden>↻</span>
-                {MC_LABELS.provPaNytt[locale]}
+                {L.provPaNytt[locale]}
               </button>
               {retryCount > 0 && (
                 <span
@@ -469,7 +529,7 @@ function AgentCard({
                     color: "var(--fg-muted, #94A3B8)",
                   }}
                 >
-                  {MC_LABELS.forsokAv[locale].replace("{n}", String(retryCount + 1))}
+                  {L.forsokAv[locale].replace("{n}", String(retryCount + 1))}
                 </span>
               )}
             </div>
@@ -491,10 +551,10 @@ function AgentCard({
             </li>
           )}
 
-          {/* Resultat-verdiar (q_Ed osv.) er flytta til Sammenligner-kortet
-              som ein samanlikningstabell (#5). Steg-lista her viser berre
+          {/* Resultat-verdiar (q_Ed osv.) er flytta til Comparator-kortet
+              som ein samanlikningstabell (#5). Steg-lista her viser only
               kva som blei gjort, ikkje siste-steg-output. Ferdig-markør i
-              staden — signaliserer at kortet leverer til Sammenligner. */}
+              staden — signaliserer at kortet leverer til Comparator. */}
           {complete && (
             <li
               key="ferdig"
@@ -502,7 +562,7 @@ function AgentCard({
             >
               <span className="mc-step-icon">✓</span>
               <span className="mc-step-text" style={{ fontStyle: "italic", color: "var(--fg-muted, #94A3B8)" }}>
-                Ferdig — leverer resultat til Sammenligner
+                Done — sending result to Comparator
               </span>
             </li>
           )}
@@ -525,12 +585,12 @@ function AgentCard({
             fontStyle: "italic",
           }}
         >
-          {MC_LABELS.ventarPaPartner[locale]}
+          {L.ventarPaPartner[locale]}
         </div>
       )}
 
       {/* Sweep-puls (#8) — subtil 1px lys-gradient som glir frå venstre til
-          høgre nedst i kortet medan streaming pågår. Erstattar "spinner"-
+          høgre nedst i kortet while streaming pågår. Erstattar "spinner"-
           aktige UI som signaliserer "noko skjer" utan å vere generisk
           progress-bar. Berre synleg når agenten faktisk produserer output. */}
       {showInProgress && (
@@ -567,10 +627,11 @@ function AgentCard({
   );
 }
 
-function SamanliknarPanel({
+function ComparatorPanel({
   bothComplete,
   comparison,
   locale,
+  labels: L,
   aErrored,
   bErrored,
   calculationA,
@@ -581,6 +642,7 @@ function SamanliknarPanel({
   bothComplete: boolean;
   comparison: ComparisonResultMin | null;
   locale: Locale;
+  labels: typeof MC_LABELS;
   aErrored: boolean;
   bErrored: boolean;
   calculationA: CalculationResultMin | null;
@@ -588,14 +650,14 @@ function SamanliknarPanel({
   streamingA: AgentStreamingState;
   streamingB: AgentStreamingState;
 }) {
-  // BLOKKERT-tilstand (#2): éin agent har feila — Sammenligner kan ikkje
+  // BLOKKERT-tilstand (#2): éin agent har feila — Comparator kan ikkje
   // køyre før retry har fullført. Erstattar stille "VENTER" som ville
-  // implisere "alt OK, berre vent".
+  // implisere "alt OK, only vent".
   if (aErrored || bErrored) {
     return (
       <div className="mc-compare mc-compare--blocked">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
+        <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div
           style={{
             marginLeft: "auto",
@@ -613,7 +675,7 @@ function SamanliknarPanel({
             textTransform: "uppercase",
           }}
         >
-          {aErrored ? MC_LABELS.blokkertARetry[locale] : MC_LABELS.blokkertBRetry[locale]}
+          {aErrored ? L.blokkertARetry[locale] : L.blokkertBRetry[locale]}
         </div>
       </div>
     );
@@ -621,7 +683,7 @@ function SamanliknarPanel({
 
   if (!bothComplete) {
     // Placeholder-stripe (#4): slank, dimma linje som signaliserer at
-    // Sammenligner finst i pipelinen men ventar på A+B. Erstattar tidlegare
+    // Comparator finst i pipelinen men ventar på A+B. Erstattar tidlegare
     // fullt "VENTER"-kort som tok plass og kjente seg som "stuck".
     return (
       <div
@@ -656,9 +718,9 @@ function SamanliknarPanel({
         >
           S
         </span>
-        <span>{MC_LABELS.samanliknar[locale]}</span>
+        <span>{L.samanliknar[locale]}</span>
         <span style={{ marginLeft: "auto", fontStyle: "italic" }}>
-          {MC_LABELS.ventarPaBegge[locale]}
+          {L.ventarPaBegge[locale]}
         </span>
       </div>
     );
@@ -668,9 +730,9 @@ function SamanliknarPanel({
     return (
       <div className="mc-compare mc-compare--working mc-compare-slide-in">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
+        <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div className="mc-compare-pill mc-compare-pill--active">
-          {MC_LABELS.reknarAvvik[locale]}
+          {L.reknarAvvik[locale]}
         </div>
       </div>
     );
@@ -688,18 +750,18 @@ function SamanliknarPanel({
     maxAvvik < 5 ? "enige" : maxAvvik < 15 ? "nesten" : "avvik";
   const badgeLabel =
     classification === "enige"
-      ? MC_LABELS.einige[locale]
+      ? L.einige[locale]
       : classification === "nesten"
-      ? MC_LABELS.nestenEinige[locale]
-      : MC_LABELS.avvikBadge[locale];
+      ? L.nestenEinige[locale]
+      : L.avvikBadge[locale];
   const terskelLabel =
     classification === "enige"
-      ? MC_LABELS.terskelEnige[locale]
+      ? L.terskelEnige[locale]
       : classification === "nesten"
-      ? MC_LABELS.terskelNestenEnige[locale]
-      : MC_LABELS.terskelAvvik[locale];
+      ? L.terskelNestenEnige[locale]
+      : L.terskelAvvik[locale];
 
-  // Bygg verdi-rader (#5): kombiner A og B sine results-objekt til ein
+  // Bygg verdi-rader (#5): kombiner Engineer A and Engineer B sine results-objekt til ein
   // tabell der kvar rad er VERDI | A | B | AVVIK. Source-of-truth for
   // talverdiar er calculation.results; comparison.numeric_differences gir
   // oss percent_diff + severity per felt.
@@ -715,7 +777,7 @@ function SamanliknarPanel({
   const resultsB = calculationB?.results ?? {};
   // Streaming-results som fallback (#5-fix): final calculation.results frå
   // agenten kan vere kortare enn det den faktisk berekna under streaming.
-  // Vi tek alle keys frå begge kjelder + brukar streaming.results om
+  // Vi tek alle keys frå begge kjelder + use streaming.results om
   // calculation.results manglar verdi.
   const streamResultsA = streamingA.results ?? {};
   const streamResultsB = streamingB.results ?? {};
@@ -743,7 +805,7 @@ function SamanliknarPanel({
     <div className="mc-compare mc-compare--ready mc-compare-slide-in">
       <header className="mc-compare-ready-header">
         <div className="mc-compare-avatar">S</div>
-        <div className="mc-compare-name">{MC_LABELS.samanliknar[locale]}</div>
+        <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
           <div
             className="mc-compare-pill"
@@ -790,10 +852,10 @@ function SamanliknarPanel({
           }}
         >
           {/* Header-rad */}
-          <div className="uk-eyebrow" style={{ fontSize: 10 }}>{MC_LABELS.tabellVerdi[locale]}</div>
+          <div className="uk-eyebrow" style={{ fontSize: 10 }}>{L.tabellVerdi[locale]}</div>
           <div className="uk-eyebrow" style={{ fontSize: 10 }}>A</div>
           <div className="uk-eyebrow" style={{ fontSize: 10 }}>B</div>
-          <div className="uk-eyebrow" style={{ fontSize: 10, textAlign: "right" }}>{MC_LABELS.tabellAvvik[locale]}</div>
+          <div className="uk-eyebrow" style={{ fontSize: 10, textAlign: "right" }}>{L.tabellAvvik[locale]}</div>
 
           {/* Data-rader */}
           {tableRows.map((row) => {
@@ -825,15 +887,15 @@ function SamanliknarPanel({
       {/* Konklusjon-blokk */}
       <div className="mc-compare-grid">
         <div className="mc-compare-cell">
-          <div className="mc-compare-cell-label">{MC_LABELS.cellKonklusjon[locale]}</div>
+          <div className="mc-compare-cell-label">{L.cellKonklusjon[locale]}</div>
           <div className="mc-compare-cell-value mc-compare-cell-value--prose">
-            {MC_LABELS.videreKontrollor[locale]}
+            {L.videreKontrollor[locale]}
           </div>
           <div className="mc-compare-cell-note">
             {(() => {
               const total = numDiffs.length;
               const utanfor = numDiffs.filter((d) => (d.percent_diff || 0) >= 5).length;
-              if (allIdentical) return MC_LABELS.toAvToEinige[locale];
+              if (allIdentical) return L.toAvToEinige[locale];
               if (utanfor === 0) return `${total} ${locale === "nn" ? "verdiar jamført" : "verdier jamført"}`;
               return `${total} ${locale === "nn" ? "jamført · " : "jamført · "}${utanfor} ${locale === "nn" ? "utanfor terskel" : "utenfor terskel"}`;
             })()}

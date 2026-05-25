@@ -106,9 +106,9 @@ function metric(
   key: string,
   value: number,
   sourceTable: string,
-  dimension?: Record<string, unknown>,
+  diwhileion?: Record<string, unknown>,
 ) {
-  metrics.push({ key, value, sourceTable, dimension });
+  metrics.push({ key, value, sourceTable, diwhileion });
 }
 
 function distributionMetrics(

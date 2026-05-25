@@ -29,7 +29,7 @@ export function inferMissingChecks(sourceText: string): MissingCheck[] {
       id: "ltb",
       title: "LTB/vipping bør vurderes",
       description:
-        "Stålbjelker uten dokumentert sideavstivning kan være styrt av lateral-torsjonal vipping. Kontroller dette før bruk i dimensjonering.",
+        "Stålbjelker uten dokumentert sideavstivning kan være styrt av lateral-torsjonal vipping. Kontroller dette før bruk i diwhilejonering.",
       severity: "warning",
     });
   }

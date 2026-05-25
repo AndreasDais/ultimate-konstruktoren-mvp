@@ -29,14 +29,14 @@ const sample: UpstreamReportData = {
     prompt_version: "agent_a_v0.1",
     structured_output: {
       confidence: "high",
-      assumptions: ["q = 8,0 kN/m er tolket som dimensjonerende last"],
+      assumptions: ["q = 8,0 kN/m er tolket som diwhilejonerende last"],
       results: { M_Ed: "25,0 kNm", V_Ed: "20,0 kN", L: "5,0 m" },
       calculation_steps: [
         { title: "Beregning av moment", text: "M_Ed = qEd · L² / 8 = 25,0 kNm", latex_formula: "M_{Ed}=q_{Ed}L^2/8" },
         { title: "Kontroll via likevekt", text: "R = qEd·L/2 = 20,0 kN", latex_formula: null },
       ],
       limitations: ["Kapasitetskontroll er ikke utført"],
-      warnings: ["q må bekreftes som dimensjonerende last"],
+      warnings: ["q må bekreftes som diwhilejonerende last"],
     },
   },
   agentB: {

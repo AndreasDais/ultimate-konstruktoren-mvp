@@ -76,7 +76,7 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
   feil_formel: "Feil formel",
   feil_standardreferanse: "Feil standardreferanse",
   feil_eining: "Feil eining",
-  feil_foresetnad: "Feil føresetnad",
+  feil_foresetnad: "Feil assumption",
   uklart_sprak: "Uklart språk",
   manglande_kontroll: "Manglande kontroll",
   anna: "Anna",
@@ -132,7 +132,7 @@ export default function ErrorReportsAdmin() {
     fetchReports();
   }, [fetchReports]);
 
-  // Hent innlogga brukars email for visning i topbar
+  // Hent innlogga uses email for visning i topbar
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -234,7 +234,7 @@ export default function ErrorReportsAdmin() {
       >
         <div className="uk-topbar__brand">
           <div className="uk-topbar__logo">UK</div>
-          Konstruktøren — Admin
+          Engineeren — Admin
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           {userEmail && (
@@ -280,7 +280,7 @@ export default function ErrorReportsAdmin() {
                 lineHeight: 1.55,
               }}
             >
-              Triage av brukarrapporterte feil. Substansielle avgjerder (Bekreft,
+              Triage av userapporterte feil. Substansielle avgjerder (Bekreft,
               Avvis, Fiksa) blir lagra i manual_reviews med notat for
               læringssløyfa.
             </p>

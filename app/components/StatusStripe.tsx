@@ -3,7 +3,7 @@
 /**
  * StatusStripe — statusvarsel-banner med farga venstrekant.
  *
- * Brukt for Kontrollør-avgjerds-kort, Sammenligner-banner, Advarsler-blokk
+ * Brukt for Controller-avgjerds-kort, Comparator-banner, Advarsler-blokk
  * og andre tilfelle der vi treng å vise eit status-varsel med ein "stripe"-
  * indikator. Klassane (.uk-stripe, .uk-stripe--info osv.) er definert i
  * tokens.css.

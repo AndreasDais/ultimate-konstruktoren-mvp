@@ -66,7 +66,7 @@ export async function GET() {
 
     const [runsToday, reportsToday, errorsToday, feedbackToday, totalFeedback] =
       await Promise.all([
-        // calculation_runs bruker started_at, ikkje created_at.
+        // calculation_runs use started_at, ikkje created_at.
         safeCount(supabase, "calculation_runs", since, "started_at"),
         safeCount(supabase, "reports", since, "created_at"),
         safeCount(supabase, "error_reports", since, "created_at"),

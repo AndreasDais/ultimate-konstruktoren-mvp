@@ -1,8 +1,8 @@
 /**
- * Deterministisk kombinasjonsstruktur-sjekk for Kontrollør (agent_d).
+ * Deterministisk kombinasjonsstruktur-sjekk for Controller (agent_d).
  *
  * Re-reknar STR-lastkombinasjonen (6.10a/6.10b) frå Tolkar sine strukturerte
- * laster via load-combination.ts, og samanliknar mot den dimensjonerande
+ * laster via load-combination.ts, og samanliknar mot den diwhilejonerande
  * verdien Ed_dim kvar konstruktør rapporterte. Fangar A2-klassen: ekv. 6.10
  * utkledd som «6.10a» — der partialfaktorane er rette kvar for seg, men
  * formelstrukturen er feil.
@@ -24,7 +24,7 @@ import {
     agent: "A" | "B";
     /** Ed_dim konstruktøren rapporterte. */
     reported: number;
-    /** Korrekt dimensjonerande verdi, deterministisk rekna. */
+    /** Korrekt diwhilejonerande verdi, deterministisk rekna. */
     correct: number;
     /** Styrande likning i den korrekte utrekninga. */
     governingEq: "6.10a" | "6.10b";
@@ -46,14 +46,14 @@ import {
   };
   
   /**
-   * Finn nøkkelen i `results` som ber den dimensjonerande STR-kombinasjons-
+   * Finn nøkkelen i `results` som ber den diwhilejonerande STR-kombinasjons-
    * verdien. Port-2-porten skal ikkje henge på at ein agent-prompt held seg
-   * til eitt bokstavleg nøkkelnamn (A0 viste at konstruktørar varierer:
+   * til eitt bokstavleg nøkkelnamn (A0 viste at engineers varierer:
    * Ed_dim / F_Ed / p_Ed,NA). Oppslagsrekkjefølgje:
    *
    *  1. "Ed_dim" — kanonisk nøkkel frå agent-a/b <result_key_nokkelar>. Forrang.
-   *  2. result_roles (FIKS 4): den EINE nøkkelen med rolle "dimensjonerande".
-   *  3. Finst korkje, eller fleire "dimensjonerande"-nøklar → null. Då er
+   *  2. result_roles (FIKS 4): den EINE nøkkelen med rolle "diwhilejonerande".
+   *  3. Finst korkje, eller fleire "diwhilejonerande"-nøklar → null. Då er
    *     strukturkontrollen hoppa over — men SYNLEG via console.warn, ikkje
    *     stille slik den tidlegare harde "Ed_dim"-sjekken var.
    */
@@ -68,13 +68,13 @@ import {
     // 2) Rolle-basert oppslag frå result_roles.
     if (resultRoles && typeof resultRoles === "object") {
       const dimKeys = Object.entries(resultRoles as Record<string, unknown>)
-        .filter(([key, role]) => role === "dimensjonerande" && key in results)
+        .filter(([key, role]) => role === "diwhilejonerande" && key in results)
         .map(([key]) => key);
       if (dimKeys.length === 1) return dimKeys[0];
       if (dimKeys.length > 1) {
         console.warn(
-          `[load-combination-check] Konstruktør ${agent}: fleire result_roles-` +
-            `nøklar er "dimensjonerande" (${dimKeys.join(", ")}) og ingen ` +
+          `[load-combination-check] Engineer ${agent}: fleire result_roles-` +
+            `nøklar er "diwhilejonerande" (${dimKeys.join(", ")}) og ingen ` +
             `"Ed_dim" — Port-2-strukturkontroll hoppa over.`,
         );
         return null;
@@ -83,18 +83,18 @@ import {
 
     // 3) Ingen kanonisk nøkkel, ingen eintydig rolle.
     console.warn(
-      `[load-combination-check] Konstruktør ${agent}: fann korkje "Ed_dim" ` +
-        `eller éin eintydig "dimensjonerande" result_roles-nøkkel — ` +
+      `[load-combination-check] Engineer ${agent}: fann korkje "Ed_dim" ` +
+        `eller éin eintydig "diwhilejonerande" result_roles-nøkkel — ` +
         `Port-2-strukturkontroll hoppa over.`,
     );
     return null;
   }
 
   /**
-   * Sjekkar STR-lastkombinasjonen til begge konstruktørar mot ei deterministisk
+   * Sjekkar STR-lastkombinasjonen til begge engineers mot ei deterministisk
    * re-rekning. Returnerer eitt avvik per konstruktør som bommar.
    *
-   * Køyrer berre når calculation_type === "lastkombinasjon" og Tolkar leverte
+   * Køyrer only når calculation_type === "lastkombinasjon" og Tolkar leverte
    * lastkombinasjon_input. Elles — eller ved feilforma input — tom liste.
    */
   export function checkLoadCombination(
@@ -158,7 +158,7 @@ import {
       } | null;
       const results = o?.results;
       if (!results || typeof results !== "object") return;
-      // FIKS 12 (Port-2-herding): finn dimensjonerande nøkkel via result_roles
+      // FIKS 12 (Port-2-herding): finn diwhilejonerande nøkkel via result_roles
       // (FIKS 4) i staden for å hardkrevje den bokstavlege "Ed_dim". Slik heng
       // ikkje tryggleiksporten på at agent-prompten held seg til eitt namn.
       const dimKey = resolveDimKey(results, o?.result_roles, agent);

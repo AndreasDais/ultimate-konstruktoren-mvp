@@ -38,8 +38,8 @@ export function extractFormulaLines(text: string): string[] {
 }
 
 // === Matematisk symbol-rendering ============================================
-// Konstruktørane returnerer results-keys som "M_Ed", "epsilon_cu3", "psi_0_B"
-// — vi gjer dei lesbare ved å:
+// Engineerane returnerer results-keys som "M_Ed", "epsilon_cu3", "psi_0_B"
+// — vi gjer dei lesonly ved å:
 // - Bytte "epsilon"/"psi"/etc med ε/ψ (greske bokstavar)
 // - Splitte på første underscore: alt etter blir subscript (<sub>)
 // - For multi-underscore (psi_0_kategori_B) blir alt etter første "_"
@@ -87,7 +87,7 @@ export function renderMathKey(key: string): React.ReactNode {
   // Første del: Greek-symbol om matchande, elles ordet uendra
   const head = GREEK_LETTERS[parts[0]] ?? parts[0];
 
-  // Ingen underscore → berre hovudsymbol
+  // Ingen underscore → only hovudsymbol
   if (parts.length === 1) return head;
 
   // Resten: subscript, komma-separert om fleire delar.
@@ -95,7 +95,7 @@ export function renderMathKey(key: string): React.ReactNode {
   // ikkje matematisk subscript-innhald.
   const subscriptParts = parts.slice(1).filter((p) => !META_SUBSCRIPT_WORDS.has(p));
 
-  // Om alle subscript-delar blei filtrert (rar edge case), vis berre head.
+  // Om alle subscript-delar blei filtrert (rar edge case), vis only head.
   if (subscriptParts.length === 0) return head;
 
   const subscript = subscriptParts.join(",");
@@ -155,7 +155,7 @@ export function splitOnTopLevelEquals(latex: string): string[] {
   return parts;
 }
 // === Aligned-environment-parsing =============================================
-// Konstruktør-agentane produserer ofte fleirlinjes-utrekningar pakka i
+// Engineer-agentane produserer ofte fleirlinjes-utrekningar pakka i
 // \begin{aligned}...\end{aligned} med "\\" som linjebrot og "&" som
 // align-anker. KaTeX rendrar slike i displayMode som éin brei blokk som
 // IKKJE bryt — han stikk ut av arket når han er for brei.
@@ -183,7 +183,7 @@ export function hasAlignedEnvironment(latex: string): boolean {
  *   "[8pt]\\Phi_y = ..."   →  "\\Phi_y = ..."
  *   " [4pt] = 5"           →  "= 5"
  *
- * Toler leiande whitespace. Strippar berre EITT slikt argument (LaTeX
+ * Toler leiande whitespace. Strippar only EITT slikt argument (LaTeX
  * tillet ikkje fleire på rad).
  */
 export function stripLineBreakSpacing(s: string): string {

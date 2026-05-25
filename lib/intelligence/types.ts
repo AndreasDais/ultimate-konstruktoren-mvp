@@ -36,7 +36,7 @@ export type DailyMetric = {
   key: string;
   value: number;
   sourceTable: string;
-  dimension?: Record<string, unknown>;
+  diwhileion?: Record<string, unknown>;
 };
 
 export type IntelligenceFinding = {

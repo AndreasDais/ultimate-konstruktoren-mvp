@@ -142,7 +142,7 @@ export function renderDailyIntelligenceMarkdown(
     `| Usikker/avvist kontrollør | ${counts.controllerUncertainOrRejected} |`,
     `| A/B-avvik | ${counts.comparisonsWithDeviation} |`,
     `| Feilrapportar | ${counts.errorReportsTotal} |`,
-    `| Ca. aktive brukarar | ${counts.activeUsersApprox} |`,
+    `| Ca. aktive usear | ${counts.activeUsersApprox} |`,
     `| Gj.snitt tillit | ${quality.avgTillitScore ?? "—"} |`,
     `| Låg tillit | ${quality.lowTillitReports} |`,
     "",

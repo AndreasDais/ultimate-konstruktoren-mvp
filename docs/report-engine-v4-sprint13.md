@@ -21,7 +21,7 @@ Siste tekniske finpuss før ekstern estetikkrunde: rapportane skal lese som ferd
   - `f_y` → `fy`
   - `t_f` → `tf`
   - `W_pl,y` → `Wpl,y`
-- Forsida brukar kort statusoppsummering utan ellipsis i staden for å klippe lang kontrollørtekst.
+- Forsida use kort statusoppsummering utan ellipsis i staden for å klippe lang kontrollørtekst.
 
 ## Designgrense
 

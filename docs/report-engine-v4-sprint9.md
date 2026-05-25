@@ -4,12 +4,12 @@ Mål: rydde dei siste PDF-problema som dukka opp i testsettet.
 
 Endringar:
 
-- Forside-teksten frå Kontrollør blir avgrensa til ei kort leveranseoppsummering.
+- Forside-teksten frå Controller blir avgrensa til ei kort leveranseoppsummering.
 - Full kontrollørtekst ligg framleis i § 04.2 og i pipeline/nettversjon.
 - PDF-print skjuler den faste ordlisteblokka for å hindre fragmenterte subscripts i PDF-tekstlaget.
-- Ordliste og limitations brukar plain `displayResultLabel()` i staden for `renderMathKey()`.
+- Ordliste og limitations use plain `displayResultLabel()` i staden for `renderMathKey()`.
 - Resultatverdiar som `0,70` blir ikkje lenger splitta til `0` + `,70`.
-- PDF-print viser "Hva er ikke beregnet" som lesbare kort i staden for ei skvisa to-kolonne-tabell.
+- PDF-print viser "Hva er ikke beregnet" som lesonly kort i staden for ei skvisa to-kolonne-tabell.
 - Rapportprosa i samandrag/vurdering/advarslar les meir frå normalisert `ReportModel`.
 
 Test spesielt:

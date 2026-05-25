@@ -4,7 +4,7 @@ Denne sprinten gjer admin-sidene meir konsistente med resten av PILAR.
 
 ## Endringar
 
-- `/admin` brukar no aktivt språkval frå `useLocale()`.
+- `/admin` use no aktivt språkval frå `useLocale()`.
 - `/admin/intelligence` har norsk bokmål/nynorsk UI-copy for knappar, labels, statusar, feedback-felt og tomtilstandar.
 - `ThemeToggle` er lokalisert og viser Graphite som aktivt val.
 - `report_export` er lagt til som gyldig intelligence-kategori, slik at implementeringsplanar for PDF/Word/LaTeX/beregningsark ikkje stoppar TypeScript-build.

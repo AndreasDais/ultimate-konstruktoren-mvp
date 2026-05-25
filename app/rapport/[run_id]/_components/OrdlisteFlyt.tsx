@@ -14,15 +14,15 @@ import type { MarginaliaEntry } from "@/lib/marginalia-katalog";
  *
  * Panelet er portalt til document.body (same mønster som InfoPopover/
  * ThemeToggle): fixed-elementet blir då ikkje fanga av ein transformert
- * eller overflow-klippa forelder. Knappen sjølv ligg i .no-print-sidebaren
+ * eller overflow-klippa forelder. Knappen sjølv ligg i .no-print-sideonlyn
  * og er difor allereie ute av eksport; panelet får eksplisitt @media print.
  *
  * Den print-trygge kanoniske visninga er .rapport-ordliste-blokka øvst i
  * § 02 — denne komponenten er rein skjerm-bonus.
  *
- * Ikkje modal: rapporten under skal vere fri å scrolle og klikke mens
+ * Ikkje modal: rapporten under skal vere fri å scrolle og klikke while
  * panelet står ope. Difor INGEN body-scroll-lock, INGEN focus-trap og
- * inga lukking på klikk-utanfor — berre X-knapp og Escape.
+ * inga lukking på klikk-utanfor — only X-knapp og Escape.
  */
 
 type OrdlisteItem = { key: string; entry: MarginaliaEntry };
@@ -32,9 +32,10 @@ type Props = {
   entries: OrdlisteItem[];
   /** Tittel på panelet — same label som blokka ("ORDLISTE"). */
   title: string;
+  displayLanguage?: "nb" | "nn" | "en";
 };
 
-export function OrdlisteFlyt({ entries, title }: Props) {
+export function OrdlisteFlyt({ entries, title, displayLanguage }: Props) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -74,6 +75,9 @@ export function OrdlisteFlyt({ entries, title }: Props) {
   if (entries.length === 0) return null;
 
   const lower = title.toLowerCase();
+  const isEnglish = displayLanguage === "en";
+  const triggerLabel = isEnglish ? "Glossary" : "Ordliste";
+  const closeLabel = isEnglish ? "Close glossary" : `Lukk ${lower}`;
 
   return (
     <>
@@ -88,7 +92,7 @@ export function OrdlisteFlyt({ entries, title }: Props) {
         <span className="rapport-ordliste-trigger__glyph" aria-hidden="true">
           &#8801;
         </span>
-        Ordliste
+        {triggerLabel}
       </button>
 
       {mounted &&
@@ -106,7 +110,7 @@ export function OrdlisteFlyt({ entries, title }: Props) {
                 ref={closeRef}
                 type="button"
                 className="rapport-ordliste-panel__close"
-                aria-label={`Lukk ${lower}`}
+                aria-label={closeLabel}
                 onClick={() => setOpen(false)}
               >
                 &#215;

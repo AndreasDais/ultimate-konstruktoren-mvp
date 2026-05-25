@@ -31,7 +31,7 @@ export function coerceLocale(s: string | null | undefined): Locale {
 const DIRECTIVE_HEADERS: Record<Locale, string> = {
   nb: `SVARSPRÅK: BOKMÅL
 Hele svaret ditt skal være på bokmål. Bruk ikke nynorsk i prosa, sammendrag,
-forutsetninger, advarsler eller andre tekstfelt. JSON-nøkler holdes på det som
+assumptioner, advarsler eller andre tekstfelt. JSON-nøkler holdes på det som
 er spesifisert i schema. Tekniske termer (MEd, fcd, kNm, σ, EC2 osv.) er
 språknøytrale og endres ikke.
 
@@ -40,7 +40,7 @@ språknøytrale og endres ikke.
 `,
   nn: `SVARSPRÅK: NYNORSK
 Heile svaret ditt skal vere på nynorsk. Bruk ikkje bokmål i prosa, samandrag,
-føresetnader, åtvaringar eller andre tekstfelt. JSON-nøklar held seg på det som
+assumptioner, åtvaringar eller andre tekstfelt. JSON-nøklar held seg på det som
 er spesifisert i schema. Tekniske termar (MEd, fcd, kNm, σ, EC2 osv.) er
 språknøytrale og endrast ikkje.
 
@@ -108,7 +108,7 @@ export function localizedLookup<T extends string>(
 
 // ═══ SERVER-SIDE COOKIE HELPER ════════════════════════════════
 // Bruk i server-komponentar (async function) for å lese aktiv
-// locale frå cookie. Klient-side bruker useLocale() i staden.
+// locale frå cookie. Klient-side use useLocale() i staden.
 //
 // Døme:
 //   import { cookies } from "next/headers";

@@ -1,31 +1,30 @@
 /**
- * PageStripe — topp-stripe over rapport-forsida.
- *
- * Layout: "BEREKNINGSNOTAT · PILAR-XXX" venstre, dato høgre.
- * Stil: mono uppercase, muted, border-bottom som skil mot serif-tittel.
- *
- * Frå Retning B-designet. Page-numerering (SIDE N AV M) er ikkje
- * inkludert sidan rapporten er ein scrollende single-page på skjerm —
- * @page-numering blir lagt til av print-stylesheet i Fase 3.
+ * PageStripe — top stripe above the report cover.
  */
 
 import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 
-const LABELS = {
-  berekningsnotat: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
+const LABELS: Record<PilarDisplayLanguage, string> = {
+  nb: "Beregningsnotat",
+  nn: "Berekningsnotat",
+  en: "CALCULATION NOTE",
 };
 
 type Props = {
   documentId: string;
   date: string;
   locale: Locale;
+  displayLanguage?: PilarDisplayLanguage;
 };
 
-export function PageStripe({ documentId, date, locale }: Props) {
+export function PageStripe({ documentId, date, locale, displayLanguage }: Props) {
+  const language = displayLanguage ?? locale;
+
   return (
-    <div className="rapport-page-stripe" role="banner" aria-label="Rapport-identitet">
+    <div className="rapport-page-stripe" role="banner" aria-label="Report identity">
       <span className="rapport-page-stripe__left">
-        <span>{LABELS.berekningsnotat[locale]}</span>
+        <span>{LABELS[language]}</span>
         <span className="rapport-page-stripe__sep" aria-hidden="true">·</span>
         <span>{documentId}</span>
       </span>

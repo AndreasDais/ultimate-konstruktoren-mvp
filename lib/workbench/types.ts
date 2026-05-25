@@ -4,7 +4,7 @@
  * Splitta ut frå app/page.tsx i refaktor-fase 5.
  */
 
-/** Output frå Tolkar (Input-agent) — vurdering av brukar sin forespurnad */
+/** Output frå Tolkar (Input-agent) — vurdering av use sin forespurnad */
 export type AgentResult = {
     status: string;
     berekningstype: string | null;

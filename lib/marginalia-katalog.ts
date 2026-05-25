@@ -7,9 +7,9 @@
  *   2. "Ikkje rekna"-tabellen (Fase 3) — viser kort omtale av kva kvar
  *      ikkje-rekna storleik ER, ved sida av kvifor han ikkje er rekna.
  *
- * Nøklane skal matche keys frå Konstruktør-agentane sine `results` og
+ * Nøklane skal matche keys frå Engineer-agentane sine `results` og
  * `assumptions`. Greek-prefix (psi/gamma/etc) blir typeset av `renderMathKey`
- * i lib/result/formula-extract — vi treng berre lagre kjelde-key her.
+ * i lib/result/formula-extract — vi treng only lagre kjelde-key her.
  *
  * Lookup-strategi: eksakt match først, så fallback til "head"-key
  * (alt før første underscore + første subscript-segment). T.d. vil
@@ -40,13 +40,13 @@ export type MarginaliaEntry = {
     psi_1:             { description: "hyppig-faktor", standard: "EC0" },
     psi_2:             { description: "kvasi-permanent-faktor", standard: "EC0" },
   
-    // === Krefter og momenter (dimensjonerande) ===
-    M_Ed:              { description: "dimensjonerande bøyemoment", unit: "kNm" },
-    V_Ed:              { description: "dimensjonerande skjærkraft", unit: "kN" },
-    N_Ed:              { description: "dimensjonerande aksialkraft", unit: "kN" },
-    T_Ed:              { description: "dimensjonerande torsjonsmoment", unit: "kNm" },
-    E_d:               { description: "dimensjonerande lastvirkning" },
-    E_d_ULS:           { description: "dimensjonerande lastvirkning, bruddgrense" },
+    // === Krefter og momenter (diwhilejonerande) ===
+    M_Ed:              { description: "diwhilejonerande bøyemoment", unit: "kNm" },
+    V_Ed:              { description: "diwhilejonerande skjærkraft", unit: "kN" },
+    N_Ed:              { description: "diwhilejonerande aksialkraft", unit: "kN" },
+    T_Ed:              { description: "diwhilejonerande torsjonsmoment", unit: "kNm" },
+    E_d:               { description: "diwhilejonerande lastvirkning" },
+    E_d_ULS:           { description: "diwhilejonerande lastvirkning, bruddgrense" },
     E_d_SLS:           { description: "lastvirkning, bruksgrense" },
     E_d_SLS_kar:       { description: "lastvirkning, karakteristisk kombinasjon" },
     E_d_SLS_karakteristisk: { description: "lastvirkning, karakteristisk kombinasjon" },
@@ -55,10 +55,10 @@ export type MarginaliaEntry = {
     E_d_SLS_qp:        { description: "lastvirkning, kvasi-permanent kombinasjon" },
     E_d_SLS_kvasi:     { description: "lastvirkning, kvasi-permanent kombinasjon" },
     E_d_SLS_kvasi_permanent: { description: "lastvirkning, kvasi-permanent kombinasjon" },
-    // Agent-konstruktørane brukar ofte samanslått "Ed" i staden for "E_d".
+    // Agent-konstruktørane use ofte samanslått "Ed" i staden for "E_d".
     // Vi listar begge variantane så lookup blir robust mot key-format.
-    Ed:                { description: "dimensjonerande lastvirkning" },
-    Ed_ULS:            { description: "dimensjonerande lastvirkning, bruddgrense" },
+    Ed:                { description: "diwhilejonerande lastvirkning" },
+    Ed_ULS:            { description: "diwhilejonerande lastvirkning, bruddgrense" },
     Ed_SLS:            { description: "lastvirkning, bruksgrense" },
     Ed_SLS_kar:        { description: "lastvirkning, karakteristisk kombinasjon" },
     Ed_SLS_karakteristisk: { description: "lastvirkning, karakteristisk kombinasjon" },
@@ -79,9 +79,9 @@ export type MarginaliaEntry = {
     NA:                { description: "nasjonalt tillegg (Norge)" },
   
     // === Kapasitetar ===
-    M_Rd:              { description: "dimensjonerande momentkapasitet", unit: "kNm" },
-    V_Rd:              { description: "dimensjonerande skjærkapasitet", unit: "kN" },
-    N_Rd:              { description: "dimensjonerande aksialkapasitet", unit: "kN" },
+    M_Rd:              { description: "diwhilejonerande momentkapasitet", unit: "kNm" },
+    V_Rd:              { description: "diwhilejonerande skjærkapasitet", unit: "kN" },
+    N_Rd:              { description: "diwhilejonerande aksialkapasitet", unit: "kN" },
     M_pl_Rd:           { description: "plastisk momentkapasitet", unit: "kNm", standard: "EC3" },
     V_pl_Rd:           { description: "plastisk skjærkapasitet", unit: "kN", standard: "EC3" },
     M_el_Rd:           { description: "elastisk momentkapasitet", unit: "kNm" },
@@ -90,7 +90,7 @@ export type MarginaliaEntry = {
   
     // === Laster ===
     q:                 { description: "fordelt last", unit: "kN/m" },
-    q_Ed:              { description: "dimensjonerande fordelt last", unit: "kN/m" },
+    q_Ed:              { description: "diwhilejonerande fordelt last", unit: "kN/m" },
     q_k:               { description: "karakteristisk fordelt last", unit: "kN/m" },
     G_k:               { description: "karakteristisk permanent last" },
     Q_k:               { description: "karakteristisk variabel last" },
@@ -117,7 +117,7 @@ export type MarginaliaEntry = {
     // === Material — stål ===
     f_y:               { description: "flytespenning, stål", unit: "N/mm²" },
     f_yk:              { description: "karakteristisk flytespenning", unit: "N/mm²" },
-    f_yd:              { description: "dimensjonerande flytespenning", unit: "N/mm²" },
+    f_yd:              { description: "diwhilejonerande flytespenning", unit: "N/mm²" },
     f_u:               { description: "strekkfastheit, stål", unit: "N/mm²" },
     E:                 { description: "elastisitetsmodul", unit: "N/mm²" },
     E_s:               { description: "elastisitetsmodul, armering", unit: "N/mm²" },
@@ -125,14 +125,14 @@ export type MarginaliaEntry = {
   
     // === Material — betong ===
     f_ck:              { description: "karakteristisk trykkfastheit, betong", unit: "N/mm²" },
-    f_cd:              { description: "dimensjonerande trykkfastheit, betong", unit: "N/mm²" },
+    f_cd:              { description: "diwhilejonerande trykkfastheit, betong", unit: "N/mm²" },
     f_ctm:             { description: "middels strekkfastheit, betong", unit: "N/mm²" },
     f_ctk:             { description: "karakteristisk strekkfastheit, betong", unit: "N/mm²" },
     E_cm:              { description: "elastisitetsmodul, betong", unit: "N/mm²" },
     epsilon_cu3:       { description: "tøyningsgrense, betong i trykk" },
     alpha_cc:          { description: "langtidsfaktor, betong" },
   
-    // === Utnyttings- og dimensjoneringsforhold ===
+    // === Utnyttings- og diwhilejoneringsforhold ===
     eta:               { description: "utnyttingsgrad" },
     mu:                { description: "relativ momentkapasitet" },
     mu_Ed:             { description: "relativ momentpåkjenning" },
@@ -188,7 +188,7 @@ export type MarginaliaEntry = {
    *   - Karakteristiske last-keys: Gk, G_k, Qk, Q_k (capital + lowercase k/subscript)
    *   - Acronymer i ord-grenser: ULS, SLS, STR, GEO, EQU, FAT, ACC, NA
    *
-   * Returnerer berre keys som finst i MARGINALIA_KATALOG — pattern-match aleine
+   * Returnerer only keys som finst i MARGINALIA_KATALOG — pattern-match aleine
    * gir for mange false-positives.
    *
    * Brukast på rapport-sida til å utvide marginalia-coverage frå results-keys
@@ -249,7 +249,7 @@ export type MarginaliaEntry = {
   
     // 3. Karakteristiske last-keys: Gk, Qk, Mk, Vk, Nk, Pk
     //    Match isolerte to-bokstav-keys (kapital + lowercase) i ord-grenser.
-    //    Forsvar mot false-positive: berre dei bokstavane som er typiske
+    //    Forsvar mot false-positive: only dei bokstavane som er typiske
     //    last-symbol (G, Q, M, V, N, P).
     const cclPattern = /\b([GQMVNP])([kdE][a-z]*)\b/g;
     while ((m = cclPattern.exec(text)) !== null) {
@@ -263,7 +263,7 @@ export type MarginaliaEntry = {
       candidates.add(m[1]);
     }
   
-    // Filtrer berre dei kandidatane som faktisk finst i katalogen (eller har
+    // Filtrer only dei kandidatane som faktisk finst i katalogen (eller har
     // ein fallback-match via lookupMarginalia).
     return Array.from(candidates).filter((k) => lookupMarginalia(k) !== null);
   }

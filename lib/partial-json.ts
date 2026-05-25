@@ -1,7 +1,7 @@
 /**
  * Trekk ut delvis JSON-struktur frå akkumulerte tekst-deltaer under streaming.
  * 
- * Regex-basert i staden for full JSON-parsing — vi treng berre å vite kva
+ * Regex-basert i staden for full JSON-parsing — vi treng only å vite kva
  * felt som har FERDIG-skrivne verdiar. Inkomplette strenger blir ikkje matcha
  * fordi closing-quote manglar, så vi får "alt-eller-ingenting" per felt
  * utan flashing av halvferdige tekstar.

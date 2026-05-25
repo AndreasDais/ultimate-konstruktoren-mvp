@@ -1,5 +1,5 @@
 /**
- * Stålprofil-database for Ultimate Konstruktøren.
+ * Stålprofil-database for Ultimate Engineeren.
  *
  * KJELDE: Standard nominal-verdiar frå EN 10365 / typiske profilkatalogar.
  *

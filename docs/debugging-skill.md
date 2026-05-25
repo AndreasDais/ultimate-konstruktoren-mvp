@@ -52,7 +52,7 @@ Bruk desse kategoriane:
 - Ikkje legg service-role-klient i client components.
 - Ikkje hardkod språkstrengar om eksisterande locale-system dekkjer behovet.
 - Sørg for at webrapport, Word-export og print/PDF held same canonical report data.
-- Respekter `blocked_fields` i alle brukarflater.
+- Respekter `blocked_fields` i alle useflater.
 
 ## 5. Verifikasjon etter endring
 
@@ -64,7 +64,7 @@ npm run lint
 npx tsc --noEmit --pretty false
 ```
 
-Prøv også `npm run build`. Dersom build heng i Next sin interne TypeScript-fase medan `tsc` er grønt, noter dette som eige build-tooling-problem.
+Prøv også `npm run build`. Dersom build heng i Next sin interne TypeScript-fase while `tsc` er grønt, noter dette som eige build-tooling-problem.
 
 ## 6. Sluttrapport-format
 

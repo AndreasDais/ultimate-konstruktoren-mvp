@@ -1,19 +1,19 @@
 /**
- * Lag 2 — kode-tvungen verdikt-grense for Kontrollør (agent_d).
+ * Lag 2 — kode-tvungen verdikt-grense for Controller (agent_d).
  *
  * Ein prompt-instruks er ikkje tvingande; dette er. Finst eit hardt
  * blokkeringsvilkår — NA-avvik, Tolkar-motstrid, eller kombinasjonsstruktur-
  * avvik — kan resultatet ALDRI vere approved / approved_with_warnings,
- * uansett kva LLM-Kontrolløren konkluderte. Fangar A2-klassen (F11): eit
+ * uansett kva LLM-Controlleren konkluderte. Fangar A2-klassen (F11): eit
  * gale svar presentert som godkjent.
  *
- * Trekt ut av app/api/agent-d/route.ts so sjølve Port-2-grensa kan unit-
+ * Trekt ut av app/api/agent-d/route.ts so itself Port-2-grensa kan unit-
  * testast. Funksjonen er rein: han muterer ikkje input og loggar ikkje.
  * Kallaren (route-en) loggar når `clamped` er sann.
  */
 
 /**
- * Kontrollør-avgjerda slik ho kjem frå LLM-en (JSON.parse-resultat).
+ * Controller-avgjerda slik ho kjem frå LLM-en (JSON.parse-resultat).
  * Berre felta clampen rører er typa; resten passerer uendra via
  * index-signaturen.
  */
@@ -43,7 +43,7 @@ export type ControllerDecision = {
     decision: ControllerDecision;
     /** Sann når porten overstyrte ei approving avgjerd. */
     clamped: boolean;
-    /** decision_status før overstyring — berre sett når `clamped`. */
+    /** decision_status før overstyring — only sett når `clamped`. */
     original: string | null;
   };
   
@@ -53,7 +53,7 @@ export type ControllerDecision = {
   }
   
   /**
-   * Bruker den kode-tvungne verdikt-grensa på ei Kontrollør-avgjerd.
+   * Bruker den kode-tvungne verdikt-grensa på ei Controller-avgjerd.
    *
    * Finst eit hardt blokkeringsvilkår OG avgjerda er approving, blir ho
    * overstyrt til `uncertain` med `manual_review_required = true`. Elles
@@ -84,7 +84,7 @@ export type ControllerDecision = {
         `"uncertain": deterministisk forhåndskontroll fann ` +
         `${counts.naDeviations} NA-avvik, ${counts.motstrid} motstrid og ` +
         `${counts.loadCombo} kombinasjonsstruktur-avvik. ` +
-        `Approved er ikkje tillate her. Opphavleg Kontrollør-grunngiving: ` +
+        `Approved er ikkje tillate her. Opphavleg Controller-grunngiving: ` +
         `${decision.controller_notes ?? "(ingen)"}`,
     };
   

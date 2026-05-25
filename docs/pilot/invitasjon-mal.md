@@ -19,7 +19,7 @@ Kva eg ber deg gjere:
 Det eg vil vite:
 
 - Forstår du kva Pilar gjer og når du kan stole på det?
-- Er rapportane lesbare og fagleg riktige?
+- Er rapportane lesonly og fagleg riktige?
 - Kva manglar, kva er forvirrande, kva fungerer ikkje?
 
 NB: Dette er ein pilot. Innhaldet er AI-generert og må IKKJE brukast

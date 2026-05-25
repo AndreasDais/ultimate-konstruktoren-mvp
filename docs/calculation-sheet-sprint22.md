@@ -22,7 +22,7 @@ Mål: gjere beregningsark-eksportane meir konsistente på tvers av web/PDF, Word
 
 1. HEB 200-knekkerapport:
    - Word: ingen `alpha_z`, `lambda_1`, `barlambda_z`, `phi_z`, `chi_z` i tabellar eller formelblokker.
-   - PDF: formelblokker skal vere lesbare, ikkje øydelagde av overlinje-/rot-rendering.
+   - PDF: formelblokker skal vere lesonly, ikkje øydelagde av overlinje-/rot-rendering.
    - LaTeX: skal framleis bruke ekte LaTeX-symbol som `\alpha_z`, `\lambda_1`, `\bar{\lambda}_z`, `\phi_z`, `\chi_z`, `N_{b,Rd}`.
 2. Lastkombinasjon:
    - Ingen `\\gamma_G`, `F_{E_{d,...}}` eller `text kN/m` i LaTeX.

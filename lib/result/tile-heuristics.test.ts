@@ -13,22 +13,22 @@ describe("getDimensjonerandeKeys — rolle-tagging (FIKS 4)", () => {
     F_Ed_6_10a: "20,18 kN/m",
   };
 
-  it("brukar eksplisitt rolle: berre 'dimensjonerande'-nøklar blir tiles", () => {
+  it("use eksplisitt rolle: only 'dimensjonerande'-nøklar blir tiles", () => {
     const roles = {
       g_k: "input",
-      gamma_G: "mellomledd",
+      gamma_G: "intermediate value",
       Ed_dim: "dimensjonerande",
-      F_Ed_6_10a: "mellomledd",
+      F_Ed_6_10a: "intermediate value",
     };
     expect(getDimensjonerandeKeys(results, "lastkombinasjon", roles)).toEqual([
       "Ed_dim",
     ]);
   });
 
-  it("rolle-tagging med fleire dimensjonerande verdiar", () => {
+  it("rolle-tagging med fleire design values", () => {
     const roles = {
       g_k: "input",
-      gamma_G: "mellomledd",
+      gamma_G: "intermediate value",
       Ed_dim: "dimensjonerande",
       F_Ed_6_10a: "dimensjonerande",
     };
@@ -49,9 +49,9 @@ describe("getDimensjonerandeKeys — rolle-tagging (FIKS 4)", () => {
   it("fell tilbake når roles finst men ingen er 'dimensjonerande'", () => {
     const rolesUtanDim = {
       g_k: "input",
-      gamma_G: "mellomledd",
-      Ed_dim: "mellomledd",
-      F_Ed_6_10a: "mellomledd",
+      gamma_G: "intermediate value",
+      Ed_dim: "intermediate value",
+      F_Ed_6_10a: "intermediate value",
     };
     const medRoles = getDimensjonerandeKeys(results, "lastkombinasjon", rolesUtanDim);
     const utanRoles = getDimensjonerandeKeys(results, "lastkombinasjon");

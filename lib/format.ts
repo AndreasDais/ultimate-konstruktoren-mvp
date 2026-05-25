@@ -15,18 +15,18 @@ import {
 
 export type Tone = "ok" | "warn" | "bad" | "info" | "neutral";
 
-// ═══ MATCH-STATUS (Samanliknar) ════════════════════════════
+// ═══ MATCH-STATUS (Comparator) ════════════════════════════
 // Verifisert mot comparisons.match_status i Supabase.
 
 const MATCH_STATUS_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
   nb: {
-    match: "Begge konstruktører er enige",
+    match: "Both engineers er enige",
     minor_differences: "Mindre forskjeller",
     significant_differences: "Betydelige forskjeller",
     critical_disagreement: "Kritisk uenighet",
   },
   nn: {
-    match: "Begge konstruktørar er einige",
+    match: "Both engineers er einige",
     minor_differences: "Mindre forskjellar",
     significant_differences: "Betydelege forskjellar",
     critical_disagreement: "Kritisk uenigheit",
@@ -50,11 +50,11 @@ const MATCH_STATUS_SHORT_BY_LOCALE: Record<Locale, Record<string, string>> = {
 
 const MATCH_PHRASES_BY_LOCALE: Record<Locale, Record<string, string>> = {
   nb: {
-    match: " De kom frem til samme resultat.",
+    match: " They reached the same result.",
     minor_differences:
       " Det er små forskjeller mellom svarene, hovedsakelig avrunding.",
     significant_differences:
-      " Det er betydelige forskjeller mellom svarene — se Kontrollørens vurdering nedenfor.",
+      " Det er betydelige forskjeller mellom svarene — se Controllerens vurdering nedenfor.",
     critical_disagreement: " Det er kritiske forskjeller mellom svarene.",
   },
   nn: {
@@ -62,7 +62,7 @@ const MATCH_PHRASES_BY_LOCALE: Record<Locale, Record<string, string>> = {
     minor_differences:
       " Det er små forskjellar mellom svara, hovudsakleg avrunding.",
     significant_differences:
-      " Det er betydelege forskjellar mellom svara — sjå Kontrolløren si vurdering nedanfor.",
+      " Det er betydelege forskjellar mellom svara — sjå Controlleren si vurdering nedanfor.",
     critical_disagreement: " Det er kritiske forskjellar mellom svara.",
   },
 };
@@ -93,7 +93,7 @@ export const MATCH_STATUS_LABELS = MATCH_STATUS_LABELS_BY_LOCALE[DEFAULT_LOCALE]
 export const MATCH_STATUS_SHORT = MATCH_STATUS_SHORT_BY_LOCALE[DEFAULT_LOCALE];
 export const MATCH_PHRASES = MATCH_PHRASES_BY_LOCALE[DEFAULT_LOCALE];
 
-// ═══ DECISION-STATUS (Kontrollør) ══════════════════════════
+// ═══ DECISION-STATUS (Controller) ══════════════════════════
 // Verifisert mot controller_decisions.decision_status i Supabase.
 
 const DECISION_STATUS_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
@@ -175,7 +175,7 @@ export function confidenceLabel(key: string, locale: Locale = DEFAULT_LOCALE): s
 
 export const CONFIDENCE_LABELS = CONFIDENCE_LABELS_BY_LOCALE[DEFAULT_LOCALE];
 
-// ═══ SEVERITY (Feilrapport + Samanliknar) ═══════════════════
+// ═══ SEVERITY (Feilrapport + Comparator) ═══════════════════
 // error_reports.severity_user har 3 nivå (low/medium/high) — verifisert.
 // consistency_issues og numeric_differences har 4 nivå med critical.
 
@@ -284,7 +284,7 @@ export const formatDateShort = (
 };
 
 /**
- * Formaterer prompt_version frå DB til brukarvennleg namn.
+ * Formaterer prompt_version frå DB til usevennleg namn.
  * agent_e_v0.3 → Rapportør v0.3.
  * Andre format passerer uendra som fallback.
  *

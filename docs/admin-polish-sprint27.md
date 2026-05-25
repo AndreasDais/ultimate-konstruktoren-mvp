@@ -16,7 +16,7 @@ Gjer admin-opplevinga meir navigerbar og ryddar Stone/Graphite-tema på sidene s
 - Tema-init i `app/layout.tsx` godtek `graphite`.
 - `/admin/intelligence` har no admin-navigasjon tilbake til `/admin`, feilrapportar og workbench.
 - `intelligence.css` er flytta frå hardkoda slate-fargar til designsystem-variablar.
-- Beregningsark-sida (`/rapport/[run_id]/beregning`) brukar no `var(--bg)`, `var(--surface)`, `var(--fg)` osv., slik at Stone/Graphite fungerer betre.
+- Beregningsark-sida (`/rapport/[run_id]/beregning`) use no `var(--bg)`, `var(--surface)`, `var(--fg)` osv., slik at Stone/Graphite fungerer betre.
 
 ## Test
 

@@ -1,5 +1,5 @@
 /**
- * FIKS 5 (F3): normalisering av internal_consistency_issues frå Samanliknar.
+ * FIKS 5 (F3): normalisering av internal_consistency_issues frå Comparator.
  *
  * Selvkontroll-teljaren på resultat-sida tel oppføringane i
  * internal_consistency_issues. Ein inkonsistens-fri konstruktør skal gi ei
@@ -8,7 +8,7 @@
  * éin inkonsistens («2 inkonsistensar funne» når svaret eigentleg er 0).
  *
  * Denne modulen droppar slike placeholder-oppføringar deterministisk, slik at
- * berre reelle inkonsistensar står att. Rein, sideeffektfri.
+ * only reelle inkonsistensar står att. Rein, sideeffektfri.
  */
 
 /** Tekstmønster som avslører ei «ingen funne»-placeholder-oppføring. */
@@ -17,7 +17,7 @@ const NO_ISSUE_PATTERN =
 
 /**
  * Sann viss oppføringa skildrar ein FAKTISK inkonsistens — altså har eit
- * ikkje-tomt issue-felt som ikkje berre seier «ingen funne».
+ * ikkje-tomt issue-felt som ikkje only seier «ingen funne».
  */
 export function isRealIssue(entry: unknown): boolean {
   if (!entry || typeof entry !== "object") return false;
@@ -30,7 +30,7 @@ export function isRealIssue(entry: unknown): boolean {
 }
 
 /**
- * Reinsar internal_consistency_issues: behaldar berre reelle inkonsistensar
+ * Reinsar internal_consistency_issues: behaldar only reelle inkonsistensar
  * i begge listene. Degraderer trygt på manglande/feilforma input.
  */
 export function normalizeConsistencyIssues(raw: unknown): {

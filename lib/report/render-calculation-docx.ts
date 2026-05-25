@@ -1,3 +1,4 @@
+import { inferCalculationEnglishDisplay } from "@/lib/international/display";
 import {
   AlignmentType,
   BorderStyle,
@@ -17,6 +18,61 @@ import type {
   CalculationFormula,
   CalculationSheetModel,
 } from "./calculation-sheet-model";
+
+function sprint339FinalNorwegianResidueText(value: string): string {
+  return String(value ?? "")
+    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
+    .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
+    .replace(/ØVRIG/g, "OTHER")
+    .replace(/GOD/g, "GOOD")
+    .replace(/Beregningen er godkjent for visning. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
+    .replace(/De kom frem til samme resultat./g, "They reached the same result.")
+    .replace(/Engineer A and B er fullstendig enige om alle dimensjonerende verdier./g, "Engineer A and Engineer B fully agree on all design values.")
+    .replace(/Engineer A og B har minor differences/g, "Engineer A and Engineer B have minor differences")
+    .replace(/Engineer B reports HIGH confidence på sin uavhengige løsning./g, "Engineer B reports HIGH confidence in its independent solution.")
+    .replace(/HIGH her betyr at B er trygg på egen metode — at A and B er enige er en separat sjekk (se verdikt over)./g, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check (see verdict above).")
+    .replace(/Self-assessment — ikke en uavhengig verifikasjon./g, "Self-assessment — not an independent verification.")
+    .replace(/Engineer A og Engineer B/g, "Engineer A and Engineer B")
+    .replace(/Engineer A og B/g, "Engineer A and Engineer B")
+    .replace(/A og B/g, "Engineer A and Engineer B")
+    .replace(/er fullstendig enige/g, "fully agree")
+    .replace(/dimensjonerende verdier/g, "design values")
+    .replace(/på sin uavhengige løsning/g, "in its independent solution")
+    .replace(/HIGH her betyr/g, "HIGH means")
+    .replace(/egen metode/g, "its own method")
+    .replace(/se verdikt over/g, "see verdict above")
+    .replace(/same grunnleggjande metode/g, "the same basic method")
+    .replace(/brukar/g, "use")
+    .replace(/bruker/g, "use")
+    .replace(/medan/g, "while")
+    .replace(/berre/g, "only")
+    .replace(/hovudformelen/g, "the main formula")
+    .replace(/utrekningsrute/g, "calculation route")
+    .replace(/ein alternativ/g, "an alternative")
+    .replace(/som ein intern kryssjekk/g, "as an internal cross-check")
+    .replace(/Dette er ei forskjell i presentasjonsform, ikkje i metode./g, "This is a presentation difference, not a methodological difference.")
+    .replace(/lastfaktorane/g, "load factors")
+    .replace(/som eigne resultatfelt/g, "as separate result fields")
+    .replace(/tekstbeskrivinga/g, "the text description")
+    .replace(/Innhaldet er likeverdig men strukturen er ulik./g, "The content is equivalent, but the structure differs.")
+    .replace(/Begge konstruktørar/g, "Both engineers")
+    .replace(/Begge konstruktører/g, "Both engineers")
+    .replace(/konstruktørar/g, "engineers")
+    .replace(/konstruktører/g, "engineers")
+    .replace(/Konstruktør A/g, "Engineer A")
+    .replace(/Konstruktør B/g, "Engineer B")
+    .replace(/Konstruktør/g, "Engineer")
+    .replace(/Cb-antaginga/g, "The Cb assumption")
+    .replace(/antaginga/g, "assumption")
+    .replace(/føresetnad/g, "assumption")
+    .replace(/føresetnader/g, "assumptions")
+    .replace(/sjølve/g, "itself")
+    .replace(/Ingen forskjell/g, "No difference")
+    .replace(/ingen forskjell/g, "no difference")
+    .replace(/mellomledd/g, "intermediate value");
+}
+
 
 const FONT_SANS = "Aptos";
 const FONT_SERIF = "Georgia";
@@ -51,6 +107,7 @@ const LABELS: Record<string, Record<PilarDisplayLanguage, string>> = {
   control: { nb: "Kontroll", nn: "Kontroll", en: "Check" },
   size: { nb: "Størrelse", nn: "Storleik", en: "Quantity" },
   value: { nb: "Verdi", nn: "Verdi", en: "Value" },
+  page: { nb: "Side", nn: "Side", en: "Page" },
 };
 
 type DocChild = Paragraph | Table;
@@ -427,7 +484,7 @@ export function mathRuns(latex: string, style: RunStyle = {}): TextRun[] {
 function formulaBlock(formula: CalculationFormula): Table {
   // mathRuns er den ekte LaTeX-parsaren: forstaar \frac, _{}-subscript,
   // ^{}-superscript, greske bokstavar OG fleirlinje aligned-blokker.
-  // formulaPlainForWord var berre tekst-strip og kollapsa aligned-blokker
+  // formulaPlainForWord var only tekst-strip og kollapsa aligned-blokker
   // til raa LaTeX-kjeldekode.
   const runs = mathRuns(formula.latex || formula.plain, {
     font: FONT_MONO,
@@ -454,7 +511,7 @@ function stepBlock(sheet: CalculationSheetModel): DocChild[] {
     children.push(new Paragraph({
       children: [
         new TextRun({
-          text: step.isControlStep ? LABELS.control[displayLanguage].toUpperCase() : `${LABELS.step[displayLanguage].toUpperCase()} ${String(step.number).padStart(2, "0")}`,
+          text: step.isControlStep ? LABELS.control[displayLanguage].toUpperCase() : `${(LABELS.step[displayLanguage] ?? "Step").toUpperCase()} ${String(step.number).padStart(2, "0")}`,
           font: FONT_SANS,
           size: 15,
           color: COLOR_GOLD,
@@ -482,13 +539,16 @@ function stepBlock(sheet: CalculationSheetModel): DocChild[] {
 }
 
 function footer(sheet: CalculationSheetModel): Footer {
+  const locale = sheet.meta.locale;
+  const displayLanguage: PilarDisplayLanguage = sheet.meta.displayLanguage ?? locale;
+
   return new Footer({
     children: [
       new Paragraph({
         children: [
           new TextRun({ text: `PILAR · ${sheet.meta.documentId}`, font: FONT_SANS, size: 16, color: COLOR_FAINT }),
           new TextRun({
-            children: [" · Side ", PageNumber.CURRENT],
+            children: [` · ${LABELS.page[displayLanguage]} `, PageNumber.CURRENT],
             font: FONT_SANS,
             size: 16,
             color: COLOR_FAINT,

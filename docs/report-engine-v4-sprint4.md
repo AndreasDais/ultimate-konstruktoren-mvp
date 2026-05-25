@@ -5,9 +5,9 @@
 Sprint 4 ryddar i rapportmodellen før meir layoutarbeid:
 
 - Betre tekniske visningsnamn for resultat (`E_d,dim`, `γ_G,6.10a`, `ψ_0,q`).
-- Deduping av like resultat frå Konstruktør A og B når agentane brukar ulike nøkkelvariantar.
+- Deduping av like resultat frå Engineer Engineer A and Engineer B når agentane use ulike nøkkelvariantar.
 - Nøkkelresultat på forsida prioriterer hovudresultat framfor interne faktorar.
-- PDF-forsida brukar enkel resultatliste i staden for pressa tabell/grid.
+- PDF-forsida use enkel resultatliste i staden for pressa tabell/grid.
 - Word fjernar dupliserte overskrifter for avgrensingar/advarslar.
 
 ## Kvifor

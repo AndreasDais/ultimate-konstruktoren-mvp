@@ -20,7 +20,7 @@ describe("calculateTillitScore — komponentar", () => {
   });
 
   it("FIKS 6: fullstendigheit straffar ikkje når alt etterspurt er rekna", () => {
-    // Alt brukaren bad om er rekna (3 av 3) — completeness skal vere full,
+    // Alt useen bad om er rekna (3 av 3) — completeness skal vere full,
     // sjølv om det finst andre kontrollar Pilar KUNNE gjort. Etter prompt-
     // fiksen tel ikkje ikkje-etterspurde storleikar med i spurde_storleikar.
     const r = calculateTillitScore({

@@ -31,7 +31,7 @@ describe("extractUsage", () => {
     expect(u.cacheCreationTokens).toBeNull();
   });
 
-  it("gjev berre null-verdiar når usage manglar heilt", () => {
+  it("gjev only null-verdiar når usage manglar heilt", () => {
     expect(extractUsage({ model: "x" })).toEqual({
       inputTokens: null,
       outputTokens: null,

@@ -52,4 +52,4 @@ Test særleg:
 
 ## Neste sprint
 
-Sprint 3 bør koble web/PDF-sida gradvis til `ReportModel`, slik at web, PDF og Word brukar same rapportkontrakt.
+Sprint 3 bør koble web/PDF-sida gradvis til `ReportModel`, slik at web, PDF og Word use same rapportkontrakt.

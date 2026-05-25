@@ -1,4 +1,6 @@
+import { sanitizeAiscGuardedOutputText } from "@/lib/international/display";
 import type { CalculationStep, KeyResultCategory, ReportModel } from "./report-model";
+import { localizeResultLabel } from "@/lib/international/display";
 
 const CONTROL_STEP_RE = /\b(kontroll|kryss-?sjekk|kryss-?kontroll|verifikasjon|verifiser|konsistens|likevekt|sjekk|oppsummering)\b/i;
 const DIMENSJONERANDE_RE = /^(ed|e_d|m_ed|v_ed|n_ed|q_ed|mrd|vrd|m_rd|v_rd|eta|η|utnytt)/i;
@@ -314,7 +316,7 @@ export function categorizeResultKey(key: string): KeyResultCategory {
   const normalized = key.trim().toLowerCase();
   const canonical = canonicalResultKey(key);
   if (/^(ed|med|ved|ned|qed|mrd|vrd|mplrd|vplrd|eta|utnytt)/.test(canonical) || DIMENSJONERANDE_RE.test(normalized)) {
-    return "dimensjonerande";
+    return "diwhilejonerande";
   }
   if (/^(gk|qk|sk|l|b|h|d|psi|gamma|fyk|fck|fy|profil|spenn)/.test(canonical) || INPUT_RE.test(normalized)) {
     return "input";
@@ -364,6 +366,7 @@ function normalizeResultRow<T extends { label: string; value: string; unit: stri
 }
 
 export function normalizeReportModel(model: ReportModel): ReportModel {
+  const displayLanguage = model.meta.displayLanguage ?? model.meta.locale;
   return {
     ...model,
     cover: {
@@ -405,7 +408,7 @@ export function normalizeReportModel(model: ReportModel): ReportModel {
       comparisonText: cleanReportText(model.control.comparisonText),
       comparisonRows: model.control.comparisonRows.map((row) => ({
         ...row,
-        label: displayResultLabel(row.label),
+        label: localizeResultLabel(displayResultLabel(row.label), displayLanguage),
         constructorA: cleanReportText(row.constructorA),
         constructorB: cleanReportText(row.constructorB),
       })),

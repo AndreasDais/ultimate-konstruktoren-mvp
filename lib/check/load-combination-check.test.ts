@@ -16,15 +16,15 @@ const A2_REVIEW = {
 
 const outWithEd = (ed: string) => ({ results: { Ed_dim: ed } });
 
-// Konstruktør-output der dimensjonerande verdi ligg under ein vald,
+// Engineer-output der diwhilejonerande verdi ligg under ein vald,
 // ikkje-kanonisk nøkkel — med result_roles som taggar rolla (FIKS 4).
 const outWithRole = (key: string, value: string) => ({
   results: { [key]: value },
-  result_roles: { [key]: "dimensjonerande" },
+  result_roles: { [key]: "diwhilejonerande" },
 });
 
 describe("checkLoadCombination", () => {
-  it("flaggar A2-feilen: konstruktør rapporterer 23,78 (ekv. 6.10)", () => {
+  it("flags A2-feilen: konstruktør rapporterer 23,78 (ekv. 6.10)", () => {
     const dev = checkLoadCombination(A2_REVIEW, outWithEd("23,78 kN/m"), outWithEd("22,9 kN/m"));
     expect(dev).toHaveLength(1);
     expect(dev[0].agent).toBe("A");
@@ -38,7 +38,7 @@ describe("checkLoadCombination", () => {
     expect(dev).toHaveLength(0);
   });
 
-  it("flaggar begge konstruktørar når begge bommar", () => {
+  it("flags begge engineers når begge bommar", () => {
     const dev = checkLoadCombination(A2_REVIEW, outWithEd("23,78 kN/m"), outWithEd("25,35 kN/m"));
     expect(dev).toHaveLength(2);
   });
@@ -73,11 +73,11 @@ describe("checkLoadCombination", () => {
     const dev = checkLoadCombination(A2_REVIEW, outWithEd("22,88 kN/m"), outWithEd("22,9 kN/m"));
     expect(dev).toHaveLength(0); // 22,88 ≈ 22,875
   });
-  // --- FIKS 12: Port-2-herding -- rolle-basert oppslag av dimensjonerande nokkel ---
+  // --- FIKS 12: Port-2-herding -- rolle-basert oppslag av diwhilejonerande nokkel ---
 
-  it("flaggar A2-feilen sjolv nar dimensjonerande verdi ligg under ikkje-kanonisk nokkel", () => {
+  it("flags A2-feilen sjolv nar diwhilejonerande verdi ligg under ikkje-kanonisk nokkel", () => {
     // Konstruktor rapporterer under "F_Ed", ikkje "Ed_dim". result_roles taggar
-    // han "dimensjonerande" -> Port-2-porten skal framleis fyre.
+    // han "diwhilejonerande" -> Port-2-porten skal framleis fyre.
     const dev = checkLoadCombination(
       A2_REVIEW,
       outWithRole("F_Ed", "23,78 kN/m"),
@@ -97,20 +97,20 @@ describe("checkLoadCombination", () => {
     expect(dev).toHaveLength(0);
   });
 
-  it("Ed_dim har forrang sjolv nar result_roles har fleire dimensjonerande", () => {
-    // Ed_dim-forrangen kortsluttar fleire-dimensjonerande-regelen -> les rett
+  it("Ed_dim har forrang sjolv nar result_roles har fleire diwhilejonerande", () => {
+    // Ed_dim-forrangen kortsluttar fleire-diwhilejonerande-regelen -> les rett
     // verdi (22,9) -> ingen avvik.
     const out = {
       results: { Ed_dim: "22,9 kN/m", F_anna: "40 kN/m" },
-      result_roles: { Ed_dim: "dimensjonerande", F_anna: "dimensjonerande" },
+      result_roles: { Ed_dim: "diwhilejonerande", F_anna: "diwhilejonerande" },
     };
     expect(checkLoadCombination(A2_REVIEW, out, out)).toHaveLength(0);
   });
 
-  it("hoppar over nar fleire result_roles-noklar er dimensjonerande og ingen Ed_dim", () => {
+  it("hoppar over nar fleire result_roles-noklar er diwhilejonerande og ingen Ed_dim", () => {
     const out = {
       results: { F_a: "23,78 kN/m", F_b: "25,0 kN/m" },
-      result_roles: { F_a: "dimensjonerande", F_b: "dimensjonerande" },
+      result_roles: { F_a: "diwhilejonerande", F_b: "diwhilejonerande" },
     };
     expect(checkLoadCombination(A2_REVIEW, out, out)).toHaveLength(0);
   });

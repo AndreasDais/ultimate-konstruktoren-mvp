@@ -151,7 +151,7 @@ export function StreamingProse({ text, isStreaming }: { text: string; isStreamin
     }
 
     // Initial mount med ferdig-strøm (resume-flyt): vis alt umiddelbart
-    // utan typewriter. Sjekk på displayed.length === 0 sikrar at vi berre
+    // utan typewriter. Sjekk på displayed.length === 0 sikrar at vi only
     // hopper når komponenten nettopp er mounta — ikkje når strømmen
     // avsluttar mid-typewriter (då skal animasjonen køyre ferdig).
     if (displayed.length === 0 && !isStreaming) {
@@ -230,7 +230,7 @@ export function MissingChipStrip({
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {fields.map((field) => {
-          // Vis berre nøkkel-delen før "(...)" som chip-label for kompakthet
+          // Vis only nøkkel-delen før "(...)" som chip-label for kompakthet
           const parenIdx = field.indexOf("(");
           const label = (parenIdx > 0 ? field.slice(0, parenIdx) : field).trim();
           return (

@@ -1,6 +1,6 @@
-import type { Locale } from "@/lib/locale";
-import { localizeResultLabel, polishEnglishGeneratedText } from "@/lib/international/display";
+import { localizeResultLabel, polishEnglishGeneratedText, inferCalculationEnglishDisplay } from "@/lib/international/display";
 import type { PilarDisplayLanguage } from "@/lib/international/display";
+import type { Locale } from "@/lib/locale";
 import type { CalculationStep, ReportModel } from "./report-model";
 import {
   cleanReportText,
@@ -264,8 +264,52 @@ function normalizeCalculationSheetPlainText(value: string): string {
     .trim();
 }
 
+function plainTextFromLatexFormula(value: string): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  return raw
+    .replace(/\\begin\{aligned\}|\\end\{aligned\}/g, "")
+    .replace(/\\begin\{align\}|\\end\{align\}/g, "")
+    .replace(/\\begin\{array\}[^]*?\}/g, "")
+    .replace(/\\end\{array\}/g, "")
+    .replace(/\\\\/g, "\n")
+    .replace(/&/g, "")
+    .replace(/\\text\{([^{}]*)\}/g, "$1 ")
+    .replace(/\\mathrm\{([^{}]*)\}/g, "$1")
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1) / ($2)")
+    .replace(/\{,\}/g, ".")
+    .replace(/(?<=\d),(?=\d)/g, ".")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\times/g, "×")
+    .replace(/\\quad/g, " ")
+    .replace(/\\,/g, " ")
+    .replace(/\\left|\\right/g, "")
+    .replace(/[{}]/g, "")
+    .replace(/\\/g, "")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function looksLikeBrokenLatexPlain(value: string): boolean {
+  return /\bbeginaligned\b|\bendaligned\b|\bfrac[0-9A-Za-z]|\btext[A-Z]/.test(value);
+}
+
 function normalizeFormulaPlain(value: string): string {
-  return normalizeEngineeringFormulaPlain(value)
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  if (/\\begin\{|\\frac\{|\\text\{|\\mathrm\{/.test(raw)) {
+    const plain = plainTextFromLatexFormula(raw);
+    if (plain && !looksLikeBrokenLatexPlain(plain)) return plain;
+  }
+
+  const normalized = normalizeEngineeringFormulaPlain(raw)
     .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1) / ($2)")
     .replace(/\\cdot/g, "·")
     .replace(/\\times/g, "×")
@@ -277,9 +321,16 @@ function normalizeFormulaPlain(value: string): string {
     .replace(/\\,/g, " ")
     .replace(/\\left|\\right/g, "")
     .replace(/\\/g, "")
+    .replace(/\{,\}/g, ".")
+    .replace(/(?<=\d),(?=\d)/g, ".")
     .replace(/\s+/g, " ")
     .trim();
+
+  return looksLikeBrokenLatexPlain(normalized)
+    ? plainTextFromLatexFormula(raw)
+    : normalized;
 }
+
 
 function collapseDoubleLatexCommands(value: string): string {
   return value
@@ -419,7 +470,7 @@ function looksLikeEquation(line: string): boolean {
   if (!startsLikeCalculationExpression(lhs)) return false;
 
   // Avoid treating ordinary prose with one incidental equality as display math.
-  if (/\b(dette|den|det|styrende|ligning|likning|innsetting|for|ved|norsk|brukeren|maksimal|maksimalt|kontrollør|tolkar)\b/i.test(lhs)) return false;
+  if (/\b(dette|den|det|styrende|ligning|likning|innsetting|for|ved|norsk|useen|maksimal|maksimalt|kontrollør|tolkar)\b/i.test(lhs)) return false;
   if (!hasMathDensity(text)) return false;
 
   const words = text.split(/\s+/).filter(Boolean);
@@ -518,7 +569,26 @@ function alignedLatexFromLines(lines: string[]): string {
 }
 
 function plainFromEquationLines(lines: string[]): string {
-  return lines.map((line) => normalizeEngineeringFormulaPlain(line)).join("\n");
+  return lines.map((line) => normalizeFormulaPlain(line)).join("\n");
+}
+
+
+function isBrokenCalculationSheetFormula(formula: CalculationFormula): boolean {
+  const plain = String(formula.plain ?? "");
+  const latex = String(formula.latex ?? "");
+
+  // Hide known failed LaTeX-to-plain conversions in calculation sheets.
+  // Better to show no extra formula block than leaking "frac1.6..." text.
+  if (/\bbeginaligned\b|\bendaligned\b|\btextLive\b|\btextDead\b/i.test(plain)) return true;
+  if (/\bfrac[0-9A-Za-z]/i.test(plain)) return true;
+
+  // Guard against aligned text-fraction blocks that may still render poorly
+  // in the plain calculation-sheet view.
+  if (/\\begin\{aligned\}/.test(latex) && /\\text\{/.test(latex) && /\\frac\{/.test(latex)) {
+    return true;
+  }
+
+  return false;
 }
 
 function buildFormulas(step: CalculationStep): CalculationFormula[] {
@@ -547,11 +617,21 @@ function buildFormulas(step: CalculationStep): CalculationFormula[] {
     }
   }
 
-  return formulas.slice(0, 6);
+  return formulas.filter((formula) => !isBrokenCalculationSheetFormula(formula)).slice(0, 6);
 }
 
 export function buildCalculationSheetModel(model: ReportModel): CalculationSheetModel {
-  const displayLanguage = model.meta.displayLanguage ?? model.meta.locale;
+  const displayProbe = [
+    model.cover.title,
+    model.cover.subtitle,
+    ...model.interpretation.assumptions,
+    ...model.assessment.warnings,
+    ...model.assessment.limitations,
+  ].join("\n");
+
+  const displayLanguage: PilarDisplayLanguage =
+    (model.meta.displayLanguage ??
+      (inferCalculationEnglishDisplay(displayProbe) ? "en" : model.meta.locale)) as PilarDisplayLanguage;
   const inputRows = uniqueByLabel(
     model.calculation.resultRows
       .filter((row) => row.category === "input")
@@ -560,7 +640,7 @@ export function buildCalculationSheetModel(model: ReportModel): CalculationSheet
 
   const resultRows = uniqueByLabel(
     model.calculation.resultRows
-      .filter((row) => row.category === "dimensjonerande" || row.category === "kontroll")
+      .filter((row) => row.category === "diwhilejonerande" || row.category === "kontroll")
       .map((row) => resultToCalculationResult(row, displayLanguage)),
   );
 
@@ -576,6 +656,7 @@ export function buildCalculationSheetModel(model: ReportModel): CalculationSheet
       subtitle: model.cover.subtitle,
       date: model.meta.displayDate,
       status: model.meta.status,
+      displayLanguage,
       locale: model.meta.locale,
       reportUrl: model.meta.reportUrl,
     },

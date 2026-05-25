@@ -1,14 +1,14 @@
 /**
  * Deterministisk samanlikning av to konstruktør-resultatsett.
  *
- * Same rolle for Samanliknar (agent_c) som load-combination.ts har for
- * Kontrollør: taljamføringa skal reknast i kode, ikkje av ein språkmodell.
- * Ein LLM som «samanliknar» tal kan finne på semje på ein nøkkel berre éin
+ * Same rolle for Comparator (agent_c) som load-combination.ts har for
+ * Controller: taljamføringa skal reknast i kode, ikkje av ein språkmodell.
+ * Ein LLM som «samanliknar» tal kan finne på semje på ein nøkkel only éin
  * konstruktør rapporterte (F1), eller behandle avrundingsformat ulikt (F9).
  *
  * Funksjonen parar nøklar på tvers av skrivemåte-variantar (F_Ed,6.10a vs
  * F_Ed_6_10a), reknar eit ekte relativt avvik for kvar para nøkkel, og
- * skil ut nøklar berre éin side rapporterte. Rein, sideeffektfri.
+ * skil ut nøklar only éin side rapporterte. Rein, sideeffektfri.
  */
 
 /**
@@ -16,7 +16,7 @@
  * mellomrom, komma, punktum, underscore og bindestrek. Slik blir
  * "F_Ed,6.10a", "F_Ed_6_10a" og "FEd6.10a" same nøkkel.
  *
- * Konservativ med vilje — fjernar berre skiljeteikn, ikkje bokstavar/tal —
+ * Konservativ med vilje — fjernar only skiljeteikn, ikkje bokstavar/tal —
  * så distinkte nøklar (M_Ed vs M_Rd, gamma_G vs gamma_Q) held seg distinkte.
  */
 export function normalizeResultKey(key: string): string {
@@ -31,11 +31,11 @@ export function normalizeResultKey(key: string): string {
     return m ? parseFloat(m[0]) : null;
   }
   
-  /** Eitt para felt — rapportert av BEGGE konstruktørar. */
+  /** Eitt para felt — rapportert av BEGGE engineers. */
   export type PairedDifference = {
-    /** Konstruktør A si skrivemåte av nøkkelen (kanonisk for visning). */
+    /** Engineer A si skrivemåte av nøkkelen (kanonisk for visning). */
     key: string;
-    /** Rå verdi frå A og B (slik konstruktøren skreiv dei). */
+    /** Rå verdi frå Engineer A and Engineer B (slik konstruktøren skreiv dei). */
     aValue: string;
     bValue: string;
     /** Parsa talverdiar, eller null når verdien ikkje er numerisk. */
@@ -51,16 +51,16 @@ export function normalizeResultKey(key: string): string {
   export type ResultComparison = {
     /** Nøklar rapportert av begge — med ekte, kode-rekna avvik. */
     paired: PairedDifference[];
-    /** Nøklar berre Konstruktør A rapporterte (A si skrivemåte). */
+    /** Nøklar only Engineer A rapporterte (A si skrivemåte). */
     onlyA: string[];
-    /** Nøklar berre Konstruktør B rapporterte (B si skrivemåte). */
+    /** Nøklar only Engineer B rapporterte (B si skrivemåte). */
     onlyB: string[];
   };
   
   /**
-   * Samanliknar to results-objekt deterministisk.
+   * Comparator to results-objekt deterministisk.
    *
-   * Para nøklar får eit ekte relativt avvik. Nøklar berre éin side rapporterte
+   * Para nøklar får eit ekte relativt avvik. Nøklar only éin side rapporterte
    * hamnar i onlyA / onlyB — dei er IKKJE avvik, og skal aldri presenterast som
    * «0,0 % semje». Degraderer trygt på null/udefinert input (tomt resultat).
    */

@@ -12,8 +12,8 @@ Mål: rapporttekst skal lese som eit ferdig fagnotat, ikkje som rå kode-/agent-
   - `γ_G` → `γG`
   - `ψ_0,q` → `ψ0,q`
   - `M_pl,Rd` → `Mpl,Rd`
-- Forespørsel-blokka brukar no normalisert ReportModel-tekst, ikkje rå brukarinput.
-- Konklusjon og beregningssteg brukar normalisert ReportModel-tekst.
+- Forespørsel-blokka use no normalisert ReportModel-tekst, ikkje rå useinput.
+- Konklusjon og beregningssteg use normalisert ReportModel-tekst.
 - LaTeX-formlar blir framleis haldne interne for rendering, men Word-fallback/formeltekst blir normalisert før vising.
 - Test oppdatert slik at rapportmodellen ikkje skal eksponere `_` i prosa.
 

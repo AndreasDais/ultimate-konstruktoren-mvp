@@ -1,12 +1,12 @@
 /**
  * Visningsprofil (#03) — beregnar profilen for Resultat-sida basert
- * på Kontrollør si avgjerd, Samanliknar sin match_status, og Konstruktør
+ * på Controller si avgjerd, Comparator sin match_status, og Engineer
  * sine warnings + tal-steg.
  *
  * Profilen styrer kva blokker som er utvida/kollapsa default når studenten
  * landar på sida:
- * - "trygg": A og B fullt einige + ingen advarsler + ≤4 steg → minimal
- *   visning, brukar kan utvide manuelt
+ * - "trygg": Engineer A and Engineer B fullt einige + ingen advarsler + ≤4 steg → minimal
+ *   visning, use kan utvide manuelt
  * - "standard": vanleg visning (default for det meste)
  * - "krev_gjennomgang": avvik eller usikkerheit → utvida visning med
  *   avvik-rader auto-opna
@@ -26,7 +26,7 @@ import type {
     comparison: ComparisonResult | null,
     calculationA: CalculationResult | null,
   ): Profile {
-    // Krev gjennomgang — uakseptabelt risiko-nivå eller usemje mellom A og B
+    // Krev gjennomgang — uakseptabelt risiko-nivå eller usemje mellom Engineer A and Engineer B
     if (
       comparison?.match_status === "significant_differences" ||
       comparison?.match_status === "critical_disagreement" ||

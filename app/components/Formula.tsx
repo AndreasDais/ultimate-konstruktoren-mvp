@@ -15,13 +15,13 @@ function FormulaMarkup({ html }: { html: string }) {
     // Ytre wrapper med overflow-x: auto er siste sikkerheitsnett mot
     // overflyt. FormulaStack pakkar opp aligned-formlar og splittar lange
     // utrekningar, men eit ENKELT segment kan framleis vere for breitt
-    // (digert \frac, lang \sqrt e.l.). Då kan brukaren scrolle segmentet
+    // (digert \frac, lang \sqrt e.l.). Då kan useen scrolle segmentet
     // horisontalt i staden for at det stikk ut av arket.
     <div className="rapport-formula-scroll">
       <div
         className="rapport-formula"
         // Trygt fordi katex sanitiserar output-en sin sjølv,
-        // og kjelda (våre eigne agentar) er ikkje brukar-input.
+        // og kjelda (våre eigne agentar) er ikkje use-input.
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>
@@ -40,7 +40,7 @@ function FormulaInner({ latex, fallbackText }: Props) {
     html = katex.renderToString(latex, {
       displayMode: true,
       throwOnError: true,
-      strict: "warn", // Ikkje krasj på ukjende kommandoar, berre logg
+      strict: "warn", // Ikkje krasj på ukjende kommandoar, only logg
       output: "html",
     });
   } catch (e) {

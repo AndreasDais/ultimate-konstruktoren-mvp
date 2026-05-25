@@ -1,23 +1,8 @@
-import {
-  AlignmentType,
-  BorderStyle,
-  convertInchesToTwip,
-  Document,
-  ExternalHyperlink,
-  Footer,
-  Header,
-  ImageRun,
-  PageNumber,
-  Paragraph,
-  ShadingType,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-  WidthType,
-} from "docx";
+import { AlignmentType, BorderStyle, convertInchesToTwip, Document, ExternalHyperlink, Footer, Header, ImageRun, PageNumber, Paragraph, ShadingType, Table, TableCell, TableRow, TextRun, WidthType, } from "docx";
 import QRCode from "qrcode";
+import { polishEnglishGeneratedText, sprint335PolishEnglishText } from "@/lib/international/display";
 import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 import type {
   KeyResult,
   PipelineStatusRow,
@@ -25,6 +10,61 @@ import type {
   ReportValidationResult,
 } from "./report-model";
 import { normalizeCalculationSyntaxText } from "./normalize-report-model";
+
+function sprint339FinalNorwegianResidueText(value: string): string {
+  return String(value ?? "")
+    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
+    .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
+    .replace(/ØVRIG/g, "OTHER")
+    .replace(/GOD/g, "GOOD")
+    .replace(/Beregningen er godkjent for visning. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
+    .replace(/De kom frem til samme resultat./g, "They reached the same result.")
+    .replace(/Engineer A and B er fullstendig enige om alle dimensjonerende verdier./g, "Engineer A and Engineer B fully agree on all design values.")
+    .replace(/Engineer A og B har minor differences/g, "Engineer A and Engineer B have minor differences")
+    .replace(/Engineer B reports HIGH confidence på sin uavhengige løsning./g, "Engineer B reports HIGH confidence in its independent solution.")
+    .replace(/HIGH her betyr at B er trygg på egen metode — at A and B er enige er en separat sjekk (se verdikt over)./g, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check (see verdict above).")
+    .replace(/Self-assessment — ikke en uavhengig verifikasjon./g, "Self-assessment — not an independent verification.")
+    .replace(/Engineer A og Engineer B/g, "Engineer A and Engineer B")
+    .replace(/Engineer A og B/g, "Engineer A and Engineer B")
+    .replace(/A og B/g, "Engineer A and Engineer B")
+    .replace(/er fullstendig enige/g, "fully agree")
+    .replace(/dimensjonerende verdier/g, "design values")
+    .replace(/på sin uavhengige løsning/g, "in its independent solution")
+    .replace(/HIGH her betyr/g, "HIGH means")
+    .replace(/egen metode/g, "its own method")
+    .replace(/se verdikt over/g, "see verdict above")
+    .replace(/same grunnleggjande metode/g, "the same basic method")
+    .replace(/brukar/g, "use")
+    .replace(/bruker/g, "use")
+    .replace(/medan/g, "while")
+    .replace(/berre/g, "only")
+    .replace(/hovudformelen/g, "the main formula")
+    .replace(/utrekningsrute/g, "calculation route")
+    .replace(/ein alternativ/g, "an alternative")
+    .replace(/som ein intern kryssjekk/g, "as an internal cross-check")
+    .replace(/Dette er ei forskjell i presentasjonsform, ikkje i metode./g, "This is a presentation difference, not a methodological difference.")
+    .replace(/lastfaktorane/g, "load factors")
+    .replace(/som eigne resultatfelt/g, "as separate result fields")
+    .replace(/tekstbeskrivinga/g, "the text description")
+    .replace(/Innhaldet er likeverdig men strukturen er ulik./g, "The content is equivalent, but the structure differs.")
+    .replace(/Begge konstruktørar/g, "Both engineers")
+    .replace(/Begge konstruktører/g, "Both engineers")
+    .replace(/konstruktørar/g, "engineers")
+    .replace(/konstruktører/g, "engineers")
+    .replace(/Konstruktør A/g, "Engineer A")
+    .replace(/Konstruktør B/g, "Engineer B")
+    .replace(/Konstruktør/g, "Engineer")
+    .replace(/Cb-antaginga/g, "The Cb assumption")
+    .replace(/antaginga/g, "assumption")
+    .replace(/føresetnad/g, "assumption")
+    .replace(/føresetnader/g, "assumptions")
+    .replace(/sjølve/g, "itself")
+    .replace(/Ingen forskjell/g, "No difference")
+    .replace(/ingen forskjell/g, "no difference")
+    .replace(/mellomledd/g, "intermediate value");
+}
+
 
 const FONT_SANS = "Aptos";
 const FONT_SERIF = "Georgia";
@@ -55,43 +95,43 @@ type RenderDocxOptions = {
   validation?: ReportValidationResult;
 };
 
-const LABELS: Record<string, Record<Locale, string>> = {
-  eyebrow: { nb: "BEREGNINGSNOTAT", nn: "BEREKNINGSNOTAT" },
-  documentId: { nb: "Dokument-ID", nn: "Dokument-ID" },
-  date: { nb: "Dato", nn: "Dato" },
-  status: { nb: "Status", nn: "Status" },
-  version: { nb: "Versjon", nn: "Versjon" },
-  netPipeline: { nb: "Nettversjon + pipeline", nn: "Nettversjon + pipeline" },
-  reportUrl: { nb: "Rapportlenke", nn: "Rapportlenkje" },
-  keyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
-  trustScore: { nb: "Tillit-skår", nn: "Tillit-skår" },
-  pipelineStatus: { nb: "Pipeline-status", nn: "Pipeline-status" },
-  importantNote: { nb: "Viktig merknad", nn: "Viktig merknad" },
-  summary: { nb: "Sammendrag", nn: "Samandrag" },
-  request: { nb: "Forespørsel", nn: "Førespurnad" },
-  input: { nb: "Input og forutsetninger", nn: "Input og føresetnader" },
-  assumptions: { nb: "Forutsetninger", nn: "Føresetnader" },
-  results: { nb: "Resultat", nn: "Resultat" },
-  calculation: { nb: "Stegvis beregning", nn: "Stegvis utrekning" },
-  assessment: { nb: "Faglig vurdering", nn: "Fagleg vurdering" },
-  limitations: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna" },
-  warnings: { nb: "Advarsler", nn: "Åtvaringar" },
-  control: { nb: "Kontroll", nn: "Kontroll" },
-  constructorControl: { nb: "Konstruktørkontroll", nn: "Konstruktørkontroll" },
-  decision: { nb: "Kontrollørens avgjørelse", nn: "Kontrollør si avgjerd" },
-  conclusion: { nb: "Konklusjon", nn: "Konklusjon" },
-  signature: { nb: "Kontroll og signatur", nn: "Kontroll og signatur" },
-  checkedBy: { nb: "Kontrollert av", nn: "Kontrollert av" },
-  signed: { nb: "Signatur", nn: "Signatur" },
-  manualSignature: { nb: "Manuell signering", nn: "Manuell signering" },
-  generatedBy: { nb: "Generert av Pilar", nn: "Generert av Pilar" },
-  notControlled: { nb: "Må kontrolleres av fagperson før bruk i prosjektering.", nn: "Må kontrollerast av fagperson før bruk i prosjektering." },
-  validation: { nb: "Rapportmodell-varsel", nn: "Rapportmodell-varsel" },
-  size: { nb: "Størrelse", nn: "Storleik" },
-  value: { nb: "Verdi", nn: "Verdi" },
-  a: { nb: "Konstruktør A", nn: "Konstruktør A" },
-  b: { nb: "Konstruktør B", nn: "Konstruktør B" },
-  match: { nb: "Samsvar", nn: "Samsvar" },
+const LABELS: Record<string, Record<PilarDisplayLanguage, string>> = {
+  eyebrow: { nb: "BEREGNINGSNOTAT", nn: "BEREKNINGSNOTAT", en: "CALCULATION NOTE" },
+  documentId: { nb: "Dokument-ID", nn: "Dokument-ID", en: "DOCUMENT ID" },
+  date: { nb: "Dato", nn: "Dato", en: "DATE" },
+  status: { nb: "Status", nn: "Status", en: "STATUS" },
+  version: { nb: "Versjon", nn: "Versjon", en: "VERSION" },
+  netPipeline: { nb: "Nettversjon + pipeline", nn: "Nettversjon + pipeline", en: "Web version + pipeline" },
+  reportUrl: { nb: "Rapportlenke", nn: "Rapportlenkje", en: "Report link" },
+  keyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat", en: "Key results" },
+  trustScore: { nb: "Tillit-skår", nn: "Tillit-skår", en: "TRUST SCORE" },
+  pipelineStatus: { nb: "Pipeline-status", nn: "Pipeline-status", en: "PIPELINE STATUS" },
+  importantNote: { nb: "Viktig merknad", nn: "Viktig merknad", en: "IMPORTANT NOTE" },
+  summary: { nb: "Sammendrag", nn: "Samandrag", en: "Summary" },
+  request: { nb: "Forespørsel", nn: "Førespurnad", en: "Request" },
+  input: { nb: "Input og assumptioner", nn: "Input og assumptioner", en: "Input and assumptions" },
+  assumptions: { nb: "Forutsetninger", nn: "Føresetnader", en: "Assumptions" },
+  results: { nb: "Resultat", nn: "Resultat", en: "Results" },
+  calculation: { nb: "Stegvis beregning", nn: "Stegvis utrekning", en: "Step-by-step calculation" },
+  assessment: { nb: "Faglig vurdering", nn: "Fagleg vurdering", en: "Engineering assessment" },
+  limitations: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna", en: "What is not calculated" },
+  warnings: { nb: "Advarsler", nn: "Åtvaringar", en: "Warnings" },
+  control: { nb: "Kontroll", nn: "Kontroll", en: "Review" },
+  constructorControl: { nb: "Engineerkontroll", nn: "Engineerkontroll", en: "Engineer comparison" },
+  decision: { nb: "Controllerens avgjørelse", nn: "Controller si avgjerd", en: "Controller decision" },
+  conclusion: { nb: "Konklusjon", nn: "Konklusjon", en: "Conclusion" },
+  signature: { nb: "Kontroll og signatur", nn: "Kontroll og signatur", en: "Review and signature" },
+  checkedBy: { nb: "Kontrollert av", nn: "Kontrollert av", en: "REVIEWED BY" },
+  signed: { nb: "Signatur", nn: "Signatur", en: "SIGNATURE" },
+  manualSignature: { nb: "Manuell signering", nn: "Manuell signering", en: "Manual signature" },
+  generatedBy: { nb: "Generert av Pilar", nn: "Generert av Pilar", en: "Generated by Pilar" },
+  notControlled: { nb: "Må kontrolleres av fagperson før bruk i prosjektering.", nn: "Må kontrollerast av fagperson før bruk i prosjektering.", en: "Must be checked by a qualified professional before use in design work." },
+  validation: { nb: "Rapportmodell-varsel", nn: "Rapportmodell-varsel", en: "Report model warning" },
+  size: { nb: "Størrelse", nn: "Storleik", en: "Quantity" },
+  value: { nb: "Verdi", nn: "Verdi", en: "Value" },
+  a: { nb: "Engineer A", nn: "Engineer A", en: "Engineer A" },
+  b: { nb: "Engineer B", nn: "Engineer B", en: "Engineer B" },
+  match: { nb: "Samsvar", nn: "Samsvar", en: "Match" },
 };
 
 function cleanText(value: string | null | undefined): string {
@@ -202,11 +242,12 @@ function calloutTable(children: DocChild[], opts: { fill: string; border: string
 
 function metaTable(model: ReportModel): Table {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   const rows: [string, string][] = [
-    [LABELS.documentId[locale], model.meta.documentId],
-    [LABELS.date[locale], model.meta.displayDate],
-    [LABELS.status[locale], model.meta.status],
-    [LABELS.version[locale], model.meta.version],
+    [LABELS.documentId[displayLanguage], model.meta.documentId],
+    [LABELS.date[displayLanguage], model.meta.displayDate],
+    [LABELS.status[displayLanguage], model.meta.status],
+    [LABELS.version[displayLanguage], model.meta.version],
   ];
 
   return new Table({
@@ -259,6 +300,7 @@ function linkParagraph(label: string, url: string): Paragraph {
 
 function shareCard(model: ReportModel, qrSvg: Buffer): Table {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   const url = model.cover.qrUrl || model.meta.reportUrl;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -276,10 +318,10 @@ function shareCard(model: ReportModel, qrSvg: Buffer): Table {
             },
             margins: { top: 185, bottom: 185, left: 250, right: 210 },
             children: [
-              new Paragraph({ children: [labelRun(LABELS.netPipeline[locale], COLOR_GOLD)], spacing: { after: 70 } }),
+              new Paragraph({ children: [labelRun(LABELS.netPipeline[displayLanguage], COLOR_GOLD)], spacing: { after: 70 } }),
               new Paragraph({ children: [new TextRun({ text: model.cover.qrLabel, font: FONT_SANS, size: 25, bold: true, color: COLOR_INK })], spacing: { after: 80 } }),
               new Paragraph({ children: [new TextRun({ text: model.cover.qrDescription, font: FONT_SANS, size: 18, color: COLOR_INK })], spacing: { after: 115 } }),
-              linkParagraph(LABELS.reportUrl[locale], url),
+              linkParagraph(LABELS.reportUrl[displayLanguage], url),
             ],
           }),
           new TableCell({
@@ -318,24 +360,28 @@ function keyResultLine(result: KeyResult): Paragraph {
 
 function keyResultsCard(model: ReportModel): Table | null {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   const rows = model.keyResults.slice(0, 6);
   if (rows.length === 0) return null;
   return calloutTable([
-    new Paragraph({ children: [labelRun(LABELS.keyResults[locale], COLOR_GOLD)], spacing: { after: 95 } }),
+    new Paragraph({ children: [labelRun(LABELS.keyResults[displayLanguage], COLOR_GOLD)], spacing: { after: 95 } }),
     ...rows.map(keyResultLine),
   ], { fill: "FFFFFF", border: COLOR_BORDER, stripe: COLOR_DARK });
 }
 
 function trustCard(model: ReportModel): Table | null {
+  const locale = model.meta.locale;
+  const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? locale;
+
   if (model.trust.score === null) return null;
   const breakdown = model.trust.breakdown;
   const children: DocChild[] = [
-    new Paragraph({ children: [labelRun(LABELS.trustScore[model.meta.locale], COLOR_GOLD)], spacing: { after: 60 } }),
+    new Paragraph({ children: [labelRun(LABELS.trustScore[displayLanguage], COLOR_GOLD)], spacing: { after: 60 } }),
     new Paragraph({
       children: [
         new TextRun({ text: `${model.trust.score}`, font: FONT_SANS, size: 38, bold: true, color: COLOR_INK }),
         new TextRun({ text: "/100  ", font: FONT_SANS, size: 20, color: COLOR_INK }),
-        new TextRun({ text: model.trust.label.toUpperCase(), font: FONT_MONO, size: 16, bold: true, color: COLOR_MUTED }),
+        new TextRun({ text: displayLanguage === "en" ? sprint335PolishEnglishText(sprint339FinalNorwegianResidueText(model.trust.label)).toUpperCase() : sprint339FinalNorwegianResidueText(model.trust.label).toUpperCase(), font: FONT_MONO, size: 16, bold: true, color: COLOR_MUTED }),
       ],
       spacing: { after: breakdown ? 95 : 0 },
     }),
@@ -346,9 +392,9 @@ function trustCard(model: ReportModel): Table | null {
       children: [
         new TextRun({ text: `A/B ${breakdown.ab_agreement}/35`, font: FONT_SANS, size: 17, color: COLOR_INK }),
         new TextRun({ text: "  ·  ", font: FONT_SANS, size: 17, color: COLOR_FAINT }),
-        new TextRun({ text: `Kontrollør ${breakdown.controller_verdict}/35`, font: FONT_SANS, size: 17, color: COLOR_INK }),
+        new TextRun({ text: `Controller ${breakdown.controller_verdict}/35`, font: FONT_SANS, size: 17, color: COLOR_INK }),
         new TextRun({ text: "  ·  ", font: FONT_SANS, size: 17, color: COLOR_FAINT }),
-        new TextRun({ text: `Fullstendighet ${String(breakdown.completeness).replace(".", ",")}/30`, font: FONT_SANS, size: 17, color: COLOR_INK }),
+        new TextRun({ text: `Completeness ${String(breakdown.completeness).replace(".", ",")}/30`, font: FONT_SANS, size: 17, color: COLOR_INK }),
       ],
       spacing: { after: 0 },
     }));
@@ -366,14 +412,15 @@ function statusColor(status: PipelineStatusRow["status"]): string {
 
 function pipelineStatusCard(model: ReportModel): Table | null {
   const locale = model.meta.locale;
+  const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? locale;
   if (model.control.pipelineStatus.length === 0) return null;
   return calloutTable([
-    new Paragraph({ children: [labelRun(LABELS.pipelineStatus[locale], COLOR_GOLD)], spacing: { after: 85 } }),
+    new Paragraph({ children: [labelRun(LABELS.pipelineStatus[displayLanguage], COLOR_GOLD)], spacing: { after: 85 } }),
     ...model.control.pipelineStatus.map((row) => new Paragraph({
       children: [
         new TextRun({ text: "● ", font: FONT_SANS, size: 16, color: statusColor(row.status) }),
-        new TextRun({ text: `${row.label}: `, font: FONT_SANS, size: 18, color: COLOR_MUTED }),
-        new TextRun({ text: row.value || "-", font: FONT_SANS, size: 18, bold: true, color: COLOR_INK }),
+        new TextRun({ text: `${displayLanguage === "en" ? sprint335PolishEnglishText(row.label) : row.label}: `, font: FONT_SANS, size: 18, color: COLOR_MUTED }),
+        new TextRun({ text: displayLanguage === "en" ? sprint335PolishEnglishText(row.value || "-") : row.value || "-", font: FONT_SANS, size: 18, bold: true, color: COLOR_INK }),
       ],
       spacing: { after: 60 },
     })),
@@ -402,6 +449,7 @@ function monoBox(text: string, opts: { fill?: string; stripe?: string; size?: nu
 
 function resultRowsTable(model: ReportModel): Table | null {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   const rows = model.calculation.resultRows;
   if (rows.length === 0) return null;
   return new Table({
@@ -409,8 +457,8 @@ function resultRowsTable(model: ReportModel): Table | null {
     rows: [
       new TableRow({
         children: [
-          cell([new Paragraph({ children: [labelRun(LABELS.size[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 42, fill: COLOR_DARK }),
-          cell([new Paragraph({ children: [labelRun(LABELS.value[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 58, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.size[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 42, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.value[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 58, fill: COLOR_DARK }),
         ],
       }),
       ...rows.map((row) => new TableRow({
@@ -485,7 +533,7 @@ function calculationSteps(model: ReportModel): DocChild[] {
     children.push(new Paragraph({
       children: [
         new TextRun({
-          text: `${step.isControlStep ? "KONTROLL" : `STEG ${String(step.number).padStart(2, "0")}`}  `,
+          text: `${step.isControlStep ? "KONTROLL" : `STEP ${String(step.number).padStart(2, "0")}`}  `,
           font: FONT_MONO,
           size: 16,
           bold: true,
@@ -528,6 +576,7 @@ function bulletCallout(title: string, items: string[], kind: "warning" | "info" 
 
 function comparisonTable(model: ReportModel): Table | null {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   // Word should be a readable control summary, not a raw dump of every
   // intermediate variable. The full trace belongs in the online pipeline.
   const rows = model.control.comparisonRows.slice(0, 8);
@@ -537,10 +586,10 @@ function comparisonTable(model: ReportModel): Table | null {
     rows: [
       new TableRow({
         children: [
-          cell([new Paragraph({ children: [labelRun(LABELS.size[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 25, fill: COLOR_DARK }),
-          cell([new Paragraph({ children: [labelRun(LABELS.a[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 30, fill: COLOR_DARK }),
-          cell([new Paragraph({ children: [labelRun(LABELS.b[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 30, fill: COLOR_DARK }),
-          cell([new Paragraph({ children: [labelRun(LABELS.match[locale], "FFFFFF")], spacing: { after: 0 } })], { width: 15, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.size[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 25, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.a[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 30, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.b[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 30, fill: COLOR_DARK }),
+          cell([new Paragraph({ children: [labelRun(LABELS.match[displayLanguage], "FFFFFF")], spacing: { after: 0 } })], { width: 15, fill: COLOR_DARK }),
         ],
       }),
       ...rows.map((row) => new TableRow({
@@ -556,24 +605,26 @@ function comparisonTable(model: ReportModel): Table | null {
 }
 
 function decisionBox(model: ReportModel): Table {
+  const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? model.meta.locale;
   return calloutTable([
     new Paragraph({
       children: [
-        new TextRun({ text: "AVGJØRELSE  ", font: FONT_MONO, size: 16, bold: true, color: COLOR_BLUE_BORDER }),
-        new TextRun({ text: model.control.decision.toUpperCase(), font: FONT_SANS, size: 19, bold: true, color: COLOR_INK }),
+        new TextRun({ text: "DECISION  ", font: FONT_MONO, size: 16, bold: true, color: COLOR_BLUE_BORDER }),
+        new TextRun({ text: displayLanguage === "en" ? sprint335PolishEnglishText(model.control.decision).toUpperCase() : model.control.decision.toUpperCase(), font: FONT_SANS, size: 19, bold: true, color: COLOR_INK }),
       ],
       spacing: { after: 100 },
     }),
-    p(model.control.controllerText || LABELS.notControlled[model.meta.locale], { font: FONT_SANS, size: 19, after: 0, line: 280 }),
+    p(displayLanguage === "en" ? sprint335PolishEnglishText(model.control.controllerText || LABELS.notControlled[displayLanguage]) : model.control.controllerText || LABELS.notControlled[model.meta.locale], { font: FONT_SANS, size: 19, after: 0, line: 280 }),
   ], { fill: COLOR_BLUE_BG, border: "CADBFF", stripe: COLOR_BLUE_BORDER });
 }
 
 function signatureTable(model: ReportModel): Table {
   const locale = model.meta.locale;
+  const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? locale;
   const rows: [string, string][] = [
-    [LABELS.checkedBy[locale], "Navn · stilling · foretak"],
-    [LABELS.signed[locale], LABELS.manualSignature[locale]],
-    [LABELS.date[locale], "DD.MM.ÅÅÅÅ"],
+    [LABELS.checkedBy[displayLanguage], "Name · title · company"],
+    [LABELS.signed[displayLanguage], LABELS.manualSignature[displayLanguage]],
+    [LABELS.date[displayLanguage], "MM/DD/YYYY"],
   ];
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -590,9 +641,10 @@ function signatureTable(model: ReportModel): Table {
 }
 
 function disclaimerBox(model: ReportModel): Table {
+  const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? model.meta.locale;
   return calloutTable([
-    new Paragraph({ children: [labelRun(LABELS.importantNote[model.meta.locale], COLOR_GOLD)], spacing: { after: 90 } }),
-    p(model.disclaimer, { font: FONT_SANS, size: 18, after: 0, line: 270 }),
+    new Paragraph({ children: [labelRun(LABELS.importantNote[displayLanguage], COLOR_GOLD)], spacing: { after: 90 } }),
+    p(displayLanguage === "en" ? sprint335PolishEnglishText(model.disclaimer) : model.disclaimer, { font: FONT_SANS, size: 18, after: 0, line: 270 }),
   ], { fill: COLOR_WARN_BG, border: "F0D690", stripe: COLOR_WARN_BORDER });
 }
 
@@ -607,12 +659,13 @@ function validationBox(model: ReportModel, validation?: ReportValidationResult):
 
 function header(model: ReportModel): Header {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   return new Header({
     children: [
       new Paragraph({
         children: [
           new TextRun({ text: "Pilar", font: FONT_SERIF, size: 17, bold: true, color: COLOR_INK }),
-          new TextRun({ text: `   ${LABELS.eyebrow[locale]}   ·   `, font: FONT_MONO, size: 14, color: COLOR_MUTED }),
+          new TextRun({ text: `   ${LABELS.eyebrow[displayLanguage]}   ·   `, font: FONT_MONO, size: 14, color: COLOR_MUTED }),
           new TextRun({ text: model.meta.documentId, font: FONT_MONO, size: 14, color: COLOR_INK }),
         ],
         border: { bottom: { color: COLOR_BORDER, style: BorderStyle.SINGLE, size: 4, space: 6 } },
@@ -623,12 +676,13 @@ function header(model: ReportModel): Header {
 
 function footer(model: ReportModel): Footer {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   return new Footer({
     children: [
       new Paragraph({
         children: [
-          new TextRun({ text: `${LABELS.generatedBy[locale]} · ${model.meta.documentId} · ${model.meta.displayDate}`, font: FONT_SANS, size: 14, color: COLOR_MUTED }),
-          new TextRun({ text: "     Side ", font: FONT_SANS, size: 14, color: COLOR_MUTED }),
+          new TextRun({ text: `${LABELS.generatedBy[displayLanguage]} · ${model.meta.documentId} · ${model.meta.displayDate}`, font: FONT_SANS, size: 14, color: COLOR_MUTED }),
+          new TextRun({ text: "     Page ", font: FONT_SANS, size: 14, color: COLOR_MUTED }),
           new TextRun({ children: [PageNumber.CURRENT], font: FONT_SANS, size: 14, color: COLOR_MUTED }),
         ],
         alignment: AlignmentType.CENTER,
@@ -643,12 +697,13 @@ export async function renderReportModelDocx(
   options: RenderDocxOptions = {},
 ): Promise<Document> {
   const locale = model.meta.locale;
+  const displayLanguage = model.meta.displayLanguage ?? locale;
   const children: DocChild[] = [];
   const qrUrl = model.cover.qrUrl || model.meta.reportUrl;
   const qrSvg = await qrSvgBuffer(qrUrl || model.meta.documentId);
 
   children.push(
-    new Paragraph({ children: [labelRun(LABELS.eyebrow[locale], COLOR_GOLD)], spacing: { after: 70 } }),
+    new Paragraph({ children: [labelRun(LABELS.eyebrow[displayLanguage], COLOR_GOLD)], spacing: { after: 70 } }),
     new Paragraph({
       children: [new TextRun({ text: model.cover.title, font: FONT_SANS, size: 42, bold: true, color: COLOR_INK })],
       spacing: { after: 80 },
@@ -665,7 +720,7 @@ export async function renderReportModelDocx(
 
   if (model.cover.shortSummary) {
     children.push(calloutTable([
-      new Paragraph({ children: [labelRun(LABELS.summary[locale], COLOR_GOLD)], spacing: { after: 75 } }),
+      new Paragraph({ children: [labelRun(LABELS.summary[displayLanguage], COLOR_GOLD)], spacing: { after: 75 } }),
       p(model.cover.shortSummary, { font: FONT_SANS, size: 19, after: 0, line: 280 }),
     ], { fill: "FFFFFF", border: COLOR_BORDER, stripe: COLOR_GOLD }), spacer(150));
   }
@@ -681,10 +736,10 @@ export async function renderReportModelDocx(
   const validation = validationBox(model, options.validation);
   if (validation) children.push(spacer(120), validation);
 
-  children.push(sectionHeading("01", LABELS.summary[locale]), p(model.summary.text));
-  if (model.summary.request) children.push(subHeading(LABELS.request[locale]), monoBox(model.summary.request, { size: 17 }));
+  children.push(sectionHeading("01", LABELS.summary[displayLanguage]), p(model.summary.text));
+  if (model.summary.request) children.push(subHeading(LABELS.request[displayLanguage]), monoBox(model.summary.request, { size: 17 }));
 
-  children.push(sectionHeading("02", LABELS.input[locale]));
+  children.push(sectionHeading("02", LABELS.input[displayLanguage]));
   children.push(new Paragraph({
     children: [
       labelRun("STATUS", COLOR_MUTED),
@@ -694,43 +749,45 @@ export async function renderReportModelDocx(
     spacing: { after: 120 },
   }));
   if (model.interpretation.assumptions.length > 0) {
-    children.push(subHeading(LABELS.assumptions[locale]));
+    children.push(subHeading(LABELS.assumptions[displayLanguage]));
     model.interpretation.assumptions.forEach((assumption, index) => children.push(numberedItem(index + 1, assumption)));
   }
 
   const resultTable = resultRowsTable(model);
-  if (resultTable) children.push(subHeading(LABELS.results[locale]), resultTable);
+  if (resultTable) children.push(subHeading(LABELS.results[displayLanguage]), resultTable);
 
   if (model.calculation.steps.length > 0) {
-    children.push(sectionHeading("03", LABELS.calculation[locale]));
+    children.push(sectionHeading("03", LABELS.calculation[displayLanguage]));
     children.push(...calculationSteps(model));
   }
 
-  children.push(sectionHeading("04", LABELS.assessment[locale]), p(model.assessment.professionalAssessment));
+  children.push(sectionHeading("04", LABELS.assessment[displayLanguage]), p(model.assessment.professionalAssessment));
 
-  const limitations = bulletCallout(LABELS.limitations[locale], model.assessment.limitations, "info");
+  const limitations = bulletCallout(LABELS.limitations[displayLanguage], model.assessment.limitations, "info");
   if (limitations) children.push(limitations);
 
-  const warnings = bulletCallout(LABELS.warnings[locale], model.assessment.warnings, "warning");
+  const warnings = bulletCallout(LABELS.warnings[displayLanguage], model.assessment.warnings, "warning");
   if (warnings) children.push(warnings);
 
-  children.push(sectionHeading("05", LABELS.control[locale]));
-  if (model.control.comparisonText) children.push(p(model.control.comparisonText, { font: FONT_SANS, size: 19 }));
+  children.push(sectionHeading("05", LABELS.control[displayLanguage]));
+  if (model.control.comparisonText) children.push(p(displayLanguage === "en" ? sprint335PolishEnglishText(model.control.comparisonText) : model.control.comparisonText, { font: FONT_SANS, size: 19 }));
 
   const compare = comparisonTable(model);
   if (compare) {
-    children.push(subHeading(LABELS.constructorControl[locale]), compare);
+    children.push(subHeading(LABELS.constructorControl[displayLanguage]), compare);
     if (model.control.comparisonRows.length > 8) {
       children.push(p(
-        `Tabellen viser de viktigste kontrollpunktene. Full variabel-/pipeline-sporing finnes i nettversjonen: ${model.meta.reportUrl}`,
+        displayLanguage === "en"
+          ? `The table shows the most important control points. Full variable and pipeline trace is available in the web version: ${model.meta.reportUrl}`
+          : `Tabellen viser de viktigste kontrollpunktene. Full variabel-/pipeline-sporing finnes i nettversjonen: ${model.meta.reportUrl}`,
         { font: FONT_SANS, size: 17, color: COLOR_MUTED, after: 180 },
       ));
     }
   }
 
-  children.push(subHeading(LABELS.decision[locale]), decisionBox(model));
-  children.push(subHeading(LABELS.conclusion[locale]), p(model.conclusion));
-  children.push(subHeading(LABELS.signature[locale]), signatureTable(model));
+  children.push(subHeading(LABELS.decision[displayLanguage]), decisionBox(model));
+  children.push(subHeading(LABELS.conclusion[displayLanguage]), p(model.conclusion));
+  children.push(subHeading(LABELS.signature[displayLanguage]), signatureTable(model));
 
   return new Document({
     creator: "Pilar",

@@ -33,9 +33,9 @@ export const PHASE_HEADERS: Record<
     },
     calculating: {
       eyebrow: "REGNER",
-      title: "Konstruktørene jobber",
+      title: "Engineerene jobber",
       description:
-        "Dobbel-kontroll med to uavhengige konstruktører, sammenligning og kontrolløravgjørelse.",
+        "Dobbel-kontroll med to uavhengige engineers, sammenligning og kontrolløravgjørelse.",
     },
     calculation_result: {
       eyebrow: "STEG 3 AV 3 · RESULTAT",
@@ -53,9 +53,9 @@ export const PHASE_HEADERS: Record<
     },
     calculating: {
       eyebrow: "REKNAR",
-      title: "Konstruktørane jobbar",
+      title: "Engineerane jobbar",
       description:
-        "Dobbel-kontroll med to uavhengige konstruktørar, samanlikning og kontrolløravgjerd.",
+        "Dobbel-kontroll med to uavhengige engineers, samanlikning og kontrolløravgjerd.",
     },
     calculation_result: {
       eyebrow: "STEG 3 AV 3 · RESULTAT",

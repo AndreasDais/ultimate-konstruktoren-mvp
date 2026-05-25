@@ -39,7 +39,7 @@ const PHASE_LABELS_BY_LOCALE: Record<Locale, Record<MineRow["phase"], PhaseLabel
     mission_control: {
       label: "Mission Control",
       explanation:
-        "Konstruktør A og B er ferdige med utregningen. Klikk for å se sammenligning, kontrollør-vurdering og generere rapporten.",
+        "Engineer Engineer A and Engineer B er ferdige med utregningen. Klikk for å se sammenligning, kontrollør-vurdering og generere rapporten.",
     },
     rapport: {
       label: "Rapport",
@@ -61,7 +61,7 @@ const PHASE_LABELS_BY_LOCALE: Record<Locale, Record<MineRow["phase"], PhaseLabel
     mission_control: {
       label: "Mission Control",
       explanation:
-        "Konstruktør A og B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
+        "Engineer Engineer A and Engineer B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
     },
     rapport: {
       label: "Rapport",

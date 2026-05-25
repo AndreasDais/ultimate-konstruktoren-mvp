@@ -6,7 +6,7 @@ import {
 } from "@/lib/result/kontrollor-chips";
 import type { CalculationResult } from "@/lib/result/types";
 
-// Minimal Konstruktør-output der berre `warnings` varierer per test.
+// Minimal Engineer-output der only `warnings` varierer per test.
 function calc(warnings: string[]): CalculationResult {
   return {
     short_conclusion: "",
@@ -32,7 +32,7 @@ function warningChips(aWarnings: string[], bWarnings: string[]) {
   ).filter((c) => c.prefix === "⚠");
 }
 
-// Faktiske advarsel-tekstar frå A2-køyringa (PILAR-993D2E4C). A og B reiser
+// Faktiske advarsel-tekstar frå A2-køyringa (PILAR-993D2E4C). Engineer A and Engineer B reiser
 // uavhengig SAME åtvaring om forenklingsformelen, med ulik ordlyd.
 const A2_WARN_A_LEADING =
   "For 6.10b er det avgjørende å identifisere riktig ledende variabel last. " +
@@ -74,14 +74,14 @@ describe("FIKS 11 (F15) — kryss-A/B nær-dedup av advarsler", () => {
     expect(chips).toHaveLength(2);
   });
 
-  it("verbatim-identiske A/B-advarsler blir vist berre éin gong", () => {
+  it("verbatim-identiske A/B-advarsler blir vist only éin gong", () => {
     const chips = warningChips([A2_WARN_A_SIMPLIFIED], [A2_WARN_A_SIMPLIFIED]);
     expect(chips).toHaveLength(1);
   });
 
-  it("nær-dedup gjeld berre kryss A↔B, ikkje to liknande frå same konstruktør", () => {
+  it("nær-dedup gjeld only kryss A↔B, ikkje to liknande frå same konstruktør", () => {
     // Begge nær-duplikat-variantane ligg hos B → fuzzy-dedup skal IKKJE slå
-    // til; begge skal stå att (berre verbatim-dedup innan ein konstruktør).
+    // til; begge skal stå att (only verbatim-dedup innan ein konstruktør).
     const chips = warningChips([], [A2_WARN_A_SIMPLIFIED, A2_WARN_B_SIMPLIFIED]);
     expect(chips).toHaveLength(2);
   });

@@ -222,7 +222,7 @@ export async function GET() {
       recommendation:
         qaGreen && dangerousFindingsClear
           ? "Pilot-readiness ser god ut. Hald fram med manuell kontroll før ekstern pilot."
-          : "Køyr test-agenten og sjekk eventuelle feila case før du inviterer fleire pilotbrukarar.",
+          : "Køyr test-agenten og sjekk eventuelle feila case før du inviterer fleire pilotusear.",
     },
     errors,
   };

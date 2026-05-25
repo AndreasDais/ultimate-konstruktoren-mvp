@@ -139,7 +139,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
     console.warn("[/mine] cleanup failed:", cleanupError.message);
   }
 
-  // Query 1: alle calculation_runs for brukar
+  // Query 1: alle calculation_runs for use
   const { data: runs, error: runsError } = await supabase
     .from("calculation_runs")
     .select(`
@@ -163,7 +163,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
     });
   }
 
-  // Query 2: alle requests for brukar (vi filtrerer ut dei med run i JS)
+  // Query 2: alle requests for use (vi filtrerer ut dei med run i JS)
   const { data: requests, error: requestsError } = await supabase
     .from("requests")
     .select(`
@@ -185,7 +185,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
     const report = firstOrNull(run.reports);
     const tillit = report?.tillit_score ?? null;
     const documentId = report?.document_id ?? null;
-    const hasKonstruktørOutputs = (run.agent_outputs ?? []).some(
+    const hasEngineerOutputs = (run.agent_outputs ?? []).some(
       (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
     );
     const isKrasja =
@@ -198,10 +198,10 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
       phase = "rapport";
       href = `/rapport/${run.id}`;
     } else if (isKrasja) {
-      // Krasja før rapport — send brukar til workbench for å prøve på nytt.
+      // Krasja før rapport — send use til workbench for å prøve på nytt.
       phase = "krasja";
       href = `/?from_request=${run.request_id}`;
-    } else if (hasKonstruktørOutputs) {
+    } else if (hasEngineerOutputs) {
       phase = "mission_control";
       href = `/?from_run=${run.id}`;
     } else {

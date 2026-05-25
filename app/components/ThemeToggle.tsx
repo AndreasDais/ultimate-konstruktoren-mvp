@@ -79,7 +79,7 @@ export default function ThemeToggle() {
     }
     calcPosition();
     setOpen(true);
-    // Lukk andre popovers (gjenbrukar InfoPopover si event)
+    // Lukk andre popovers (gjenuse InfoPopover si event)
     window.dispatchEvent(new CustomEvent("info-popover-open"));
   };
 

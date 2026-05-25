@@ -17,7 +17,7 @@
  * Levande element:
  * - Steg 3 viser den faktiske streama prosaen i sanntid med blinkande cursor
  * - Felt-label endrar seg per JSON-felt (Samandrag / Fagleg vurdering /
- *   Konklusjon) slik at brukar ser kva del Claude skriv
+ *   Konklusjon) slik at use ser kva del Claude skriv
  * - Progress-bar baserer seg på akkumulert text-lengd i steg 3
  *
  * Cache-hit: `cached`-event kjem først, så `complete` umiddelbart. Vi hoppar
@@ -29,6 +29,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/locale";
 import { streamAgent } from "@/lib/stream-agent";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
 
 // Forventa text-output frå Rapportør (3 prosa-felt). Brukast for å rekne
 // progresjon-prosent i steg 3. Realistisk: 1500-3000 teikn samanlagt.
@@ -138,6 +140,8 @@ export function RapportLoadingPilelinja({
     value: string;
   } | null>(null);
   const [isCached, setIsCached] = useState(false);
+  const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  const [engineeringContextLoaded, setEngineeringContextLoaded] = useState(false);
   const L = LABELS[locale];
 
   // Bruk ref for callbacks slik at streamAgent ikkje må re-startast ved
@@ -149,14 +153,21 @@ export function RapportLoadingPilelinja({
     onErrorRef.current = onError;
   });
 
-  // Start streaming på mount. Bruk AbortController for å avbryte om brukar
+  useEffect(() => {
+    setEngineeringContext(loadEngineeringContextFromStorage());
+    setEngineeringContextLoaded(true);
+  }, []);
+
+  // Start streaming på mount. Bruk AbortController for å avbryte om use
   // navigerer vekk før responsen er klar.
   useEffect(() => {
+    if (!engineeringContextLoaded) return;
+
     const abortController = new AbortController();
 
     streamAgent(
       "/api/agent-e",
-      { run_id: runId, locale },
+      { run_id: runId, locale, engineering_context: engineeringContext },
       {
         onCached: () => {
           setIsCached(true);
@@ -167,7 +178,7 @@ export function RapportLoadingPilelinja({
         onDelta: (_delta, accumulated) => {
           setAccumulatedLength(accumulated.length);
           // Pluck ut nuvarande felt + verdi for live-preview. Sjeldan
-          // returnerer null (berre i første få teikn før første field-key).
+          // returnerer null (only i første få teikn før første field-key).
           const preview = extractCurrentField(accumulated);
           if (preview && preview.value.length > 0) {
             setCurrentPreview(preview);
@@ -175,7 +186,7 @@ export function RapportLoadingPilelinja({
         },
         onComplete: (data) => {
           setPhase("finalizing");
-          // Liten delay slik at brukar ser steg 4 vise seg kort
+          // Liten delay slik at use ser steg 4 vise seg kort
           // før navigering. Føles meir kontrollert enn brå hopp.
           setTimeout(() => {
             onCompleteRef.current(data);
@@ -189,7 +200,7 @@ export function RapportLoadingPilelinja({
     );
 
     return () => abortController.abort();
-  }, [runId, locale]);
+  }, [runId, locale, engineeringContext, engineeringContextLoaded]);
 
   const activeStep = PHASE_TO_STEP[phase];
 
@@ -448,7 +459,7 @@ export function RapportLoadingPilelinja({
             const isDone = step.index < activeStep;
             const isActive = step.index === activeStep;
             const isPending = step.index > activeStep;
-            // Live-preview vises berre under aktiv writing-step
+            // Live-preview vises only under aktiv writing-step
             const showPreview =
               isActive && phase === "writing" && currentPreview;
 

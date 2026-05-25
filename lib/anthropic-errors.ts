@@ -1,11 +1,11 @@
 // lib/anthropic-errors.ts
 //
-// Oversetter Anthropic API-feil til brukarvennlege norske meldingar.
+// Oversetter Anthropic API-feil til usevennlege norske meldingar.
 //
 // Bruk i agent-route catch-blokker:
 //   } catch (err) {
 //     console.error("[agent-X] error:", err);
-//     const { message, status } = formatAnthropicError(err, "Konstruktør A", locale);
+//     const { message, status } = formatAnthropicError(err, "Engineer A", locale);
 //     return Response.json({ error: message }, { status });
 //   }
 //
@@ -59,10 +59,10 @@ const ERROR_MESSAGES = {
 
 /**
  * Oversetter ein vilkårleg feil frå Anthropic SDK (eller andre) til ei
- * brukarvennleg norsk melding + passande HTTP-status for å returnere.
+ * usevennleg norsk melding + passande HTTP-status for å returnere.
  *
  * @param err   Feilen fanga i ein catch-blokk
- * @param agentName Norsk namn på agenten ("Konstruktør A", "Tolkar", ...)
+ * @param agentName Norsk namn på agenten ("Engineer A", "Tolkar", ...)
  *                  brukt i generisk fallback-melding
  * @param locale Språk for meldinga (default "nb")
  *

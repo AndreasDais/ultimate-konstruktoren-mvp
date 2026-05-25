@@ -1,32 +1,34 @@
-/**
- * ForebelStripe — DNA-element som signaliserer at rapporten er førebels.
- *
- * Mono "FØREBELS"-label + sans-tekst "Må kontrollerast av fagperson...".
- * Skal sjå identisk ut overalt (designer-tilråding: "DNA-element som
- * koplar rapporten til Pilar-merket og må alltid stå sterkt").
- *
- * Brukast over signatur-blokken i § 04 Kontroll. Frå Retning B/C-designa.
- */
-
 import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 
-const LABELS = {
-  label: { nb: "FORELØPIG", nn: "FØREBELS" },
-  text: {
-    nb: "Må kontrolleres av fagperson før bruk i prosjektering.",
-    nn: "Må kontrollerast av fagperson før bruk i prosjektering.",
+const LABELS: Record<PilarDisplayLanguage, { label: string; text: string }> = {
+  nb: {
+    label: "PRELIMINARY",
+    text: "Must be checked by a qualified professional before use in design work.",
+  },
+  nn: {
+    label: "FØREBELS",
+    text: "Må kontrollerast av fagperson før bruk i prosjektering.",
+  },
+  en: {
+    label: "PRELIMINARY",
+    text: "Must be checked by a qualified professional before use in design work.",
   },
 };
 
 type Props = {
   locale: Locale;
+  displayLanguage?: PilarDisplayLanguage;
 };
 
-export function ForebelStripe({ locale }: Props) {
+export function ForebelStripe({ locale, displayLanguage }: Props) {
+  const language = displayLanguage ?? locale;
+  const label = LABELS[language];
+
   return (
     <div className="rapport-forebel-stripe" role="note">
-      <span className="rapport-forebel-stripe__label">{LABELS.label[locale]}</span>
-      <span className="rapport-forebel-stripe__text">{LABELS.text[locale]}</span>
+      <span className="rapport-forebel-stripe__label">{label.label}</span>
+      <span className="rapport-forebel-stripe__text">{label.text}</span>
     </div>
   );
 }

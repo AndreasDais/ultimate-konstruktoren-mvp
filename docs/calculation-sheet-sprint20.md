@@ -14,4 +14,4 @@ Endringar:
   - `Lcr`, `iz`, `Iz`, `gammaM1`
 - Pakkar einslege `&=`-formlar i `aligned` slik at LaTeX ikkje får feil matematikkmiljø.
 - Konverterer enkle `sqrt(...)`, `pi`, `²` og `³` meir robust i LaTeX.
-- Normaliserer tekst i føresetnader og merknader for fleire stål-/knekkesymbol.
+- Normaliserer tekst i assumptioner og merknader for fleire stål-/knekkesymbol.

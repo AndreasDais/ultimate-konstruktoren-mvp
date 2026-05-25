@@ -21,7 +21,7 @@ export type StepUsage = {
 };
 
 /**
- * Minimal form av SDK-message-objektet — berre felta vi treng. SDK-typen
+ * Minimal form av SDK-message-objektet — only felta vi treng. SDK-typen
  * er breiare; dette held kontrakta smal og testbar.
  */
 export type MetricMessage = {

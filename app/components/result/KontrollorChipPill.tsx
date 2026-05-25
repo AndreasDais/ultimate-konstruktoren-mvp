@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * KontrollorChipPill (#02) — kompakt chip for fag-flagg i Kontrollør-kortet.
+ * KontrollorChipPill (#02) — kompakt chip for fag-flagg i Controller-kortet.
  *
  * Klikk på chip utvidar han inline til å vise full tekst (multi-linje,
  * wrappa). Klikk igjen kollapsar tilbake til truncert form. Multiple
@@ -36,7 +36,7 @@ export function KontrollorChipPill({
 }) {
   const [expanded, setExpanded] = useState(false);
   // hasAppeared (#anim-02): triggrar stagger-animasjonen først når chipen
-  // er minst 10% synleg i viewporten. Brukar sin auga er på Kontrollør-
+  // er minst 10% synleg i viewporten. Brukar sin auga er på Controller-
   // kortet øvst først, så animasjonen må vente til dei faktisk ser raden.
   const [hasAppeared, setHasAppeared] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -83,7 +83,7 @@ export function KontrollorChipPill({
     },
   };
   const s = toneStyles[chip.tone];
-  // Chip er klikkbar berre om det finst meir tekst å vise — dvs. body
+  // Chip er klikkbar only om det finst meir tekst å vise — dvs. body
   // eksisterer og er forskjellig frå den synlege chip-teksten.
   const isExpandable =
     !!chip.body && chip.body.trim() !== chip.text.trim();
@@ -127,7 +127,7 @@ export function KontrollorChipPill({
         cursor: isExpandable ? "pointer" : "default",
         fontFamily: "inherit",
         textAlign: "left",
-        // Full bredde berre når fullWidth-prop er sett (vertikal liste).
+        // Full bredde only når fullWidth-prop er sett (vertikal liste).
         // maxWidth begrenser utvida prosa-blokk til ~720px for lesbarheit.
         width: fullWidth ? "100%" : undefined,
         maxWidth: expanded
@@ -139,7 +139,7 @@ export function KontrollorChipPill({
         // hover sin transform/box-shadow får same smooth easing utan å bli
         // overskriven av inline-style.
         // Stagger-forsinking: 80ms per chip-index. Klampes til 800ms max
-        // for store chip-lister. Køyrer berre når --visible-klassen er sett.
+        // for store chip-lister. Køyrer only når --visible-klassen er sett.
         animationDelay: `${Math.min(index * 80, 800)}ms`,
         // Aura-bølge nedover: kvar chip startar sin aura-puls litt etter
         // forrige, slik at pulsen renner frå topp til bunn av lista.
@@ -173,9 +173,9 @@ export function KontrollorChipPill({
         >
           {chip.text}
         </span>
-        {/* Body — berre når utvida. Prosa-tekst splitta i avsnitt på
+        {/* Body — only når utvida. Prosa-tekst splitta i avsnitt på
             setningsgrenser (punktum + space + stor bokstav) for å gjere
-            lange forklaringar lettare å skanne. Konstruktør-namn vert markert
+            lange forklaringar lettare å skanne. Engineer-namn vert markert
             fed slik at lesaren raskt kan sjå kva som gjeld kva agent. */}
         {expanded && chip.body && (
           <span
@@ -200,7 +200,7 @@ export function KontrollorChipPill({
                 <span key={i}>
                   {/* Detekter konstruktør-prefix og marker fed for skanning */}
                   {(() => {
-                    const m = sentence.match(/^(Konstruktør [AB]s?|Begge konstruktørar?|Begge tilnærminger?)/);
+                    const m = sentence.match(/^(Engineer [AB]s?|Both engineers?|Begge tilnærminger?)/);
                     if (!m) return sentence;
                     return (
                       <>

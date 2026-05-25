@@ -14,6 +14,9 @@ import { streamAgent } from "@/lib/stream-agent";
 import { extractStreamingState, extractTolkarState, type PartialTolkarState } from "@/lib/partial-json";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
+import { buildLocalizedLabelProxy, displayLanguageForContext } from "@/lib/international/display";
 import {
   type CalculationStep,
   type CalculationResult,
@@ -24,7 +27,7 @@ import {
   type Profile,
   type KontrollorChip,
 } from "@/lib/result/types";
-import { WB_LABELS } from "@/lib/result/labels";
+import { WB_LABELS as BASE_WB_LABELS } from "@/lib/result/labels";
 import { computeProfile } from "@/lib/result/profile";
 import {
   isInputKey,
@@ -84,6 +87,75 @@ import {
 
 export default function Home() {
   const { locale } = useLocale();
+  const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  const WB_LABELS = buildLocalizedLabelProxy(BASE_WB_LABELS, locale, engineeringContext, {
+    skrivInnOppgave: "Describe a structural engineering task",
+    placeholderEksempel: "For example: Evaluate a simply supported W12x26 steel beam with L = 20 ft, D = 0.45 kip/ft and L = 0.80 kip/ft...",
+    lastOppFil: "Upload file",
+    filopplasting: "File upload",
+    filopplastingP1: "Upload an image, PDF or Word document containing the task.",
+    fjernFil: "Remove file",
+    eksempel: "Examples",
+    tolkarLoading: "Interpreting...",
+    tolkPaNytt: "Interpret again →",
+    tolkOppgava: "Interpret task →",
+    feil: "Error",
+    tolking: "Interpretation",
+    tolkarBadge: "Interpreter",
+    berekningstype: "Calculation type",
+    tolkteVerdiar: "Interpreted values",
+    manglandeData: "Missing data",
+    antakingar: "Assumptions",
+    kvaKanReknast: "What can be calculated now",
+    krevMeirInput: "needs more input",
+    status: "Status",
+    fagomraade: "Discipline",
+    bannerKlarDetail: "all {n} checks ready",
+    bannerDelvisDetail: "{n} items need more input",
+    bannerMangelfullDetail: "{n} fields must be filled before calculation",
+    bannerIkkjeStottaDetail: "not supported in the pilot version",
+    bannerAvvistDetail: "not a structural engineering task",
+    bannerUklartDetail: "PILAR needs more context",
+    lavTillit: "Low confidence in interpretation — check the values below before starting",
+    visFullTolkning: "Show full interpretation and parsed values",
+    skjulFullTolkning: "Hide full interpretation",
+    tolkarTreng: "PILAR needs {n} more fields — click to insert",
+    tolkarTrengAvvist: "PILAR rejected the task — see explanation below",
+    startMedMangler: "Start calculation · {n} assumptions used",
+    aiDisclaimerKort: "AI-generated · requires professional verification",
+    seEksempel: "▸ See 3 examples",
+    tabResultat: "Result",
+    tabTolkning: "Interpretation",
+    tabStatus: "Status",
+    stemmerTolkinga: "Does the interpretation look right? Then start the calculation.",
+    avbryt: "Cancel",
+    startBerekning: "Start calculation →",
+    scrollTilStart: "Scroll to Start calculation",
+    klarTilStart: "Ready to start calculation",
+    kontrollorAvgjerd: "Controller — final decision",
+    kontrollor: "Controller",
+    kortSvar: "Short answer",
+    resultat: "Results",
+    visMellomledd: "Show {n} intermediate values",
+    skjulMellomledd: "Hide intermediate values",
+    foresetnaderBrukt: "Assumptions used",
+    stegvisUtrekning: "Step-by-step calculation",
+    stegvisBerreFormel: "Formulas only",
+    stegvisAlleSteg: "All steps",
+    kvaErIkkjeRekna: "What is not calculated",
+    atvaringar: "Warnings",
+    konstruktorAKonfidens: "Engineer A confidence",
+    konstruktorBKonfidens: "Engineer B confidence",
+    konstruktorKonfidens: "Engineer confidence",
+    konstruktorBIndependent: "Engineer B — independent check",
+    samanliknarTittel: "Comparator — differences found",
+    tabellFelt: "Field",
+    tabellSkilnad: "Difference",
+    tabellAlvor: "Severity",
+    resultatetForebels: "The result is preliminary and must be checked by a qualified professional.",
+    tilbake: "← Back",
+    generRapport: "Generate report →",
+  });
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -138,6 +210,17 @@ export default function Home() {
 
   // Fil-opplasting (chunk 2 dag 14)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    setEngineeringContext(loadEngineeringContextFromStorage());
+
+    const handleFocus = () => {
+      setEngineeringContext(loadEngineeringContextFromStorage());
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -170,39 +253,39 @@ export default function Home() {
   // Eksempel-kollaps (#07): etter første gong Tolkar gir resultat,
   // kollapsast eksempel-chips til ein liten "Sjå 3 eksempel"-lenke.
   // Studenten har då lært input-formatet. hasAutoCollapsedRef hindrar
-  // re-kollapse om brukar manuelt utvidar igjen.
+  // re-kollapse om use manuelt utvidar igjen.
   const [examplesCollapsed, setExamplesCollapsed] = useState(false);
   const hasAutoCollapsedRef = useRef(false);
 
   // Mellomledd-disclosure (#06): Resultat-tabellen splittast i to —
-  // dimensjonerande verdiar (alltid synleg, fag-typografi) + mellomledd
-  // (kollapsa under "Vis X mellomledd"). Default false: studenten ser
-  // svaret først, mellomledd er eitt klikk unna for sporbarheit.
+  // design values (alltid synleg, fag-typografi) + intermediate value
+  // (kollapsa under "Vis X intermediate value"). Default false: studenten ser
+  // svaret først, intermediate value er eitt klikk unna for sporbarheit.
   const [aMellomleddExpanded, setAMellomleddExpanded] = useState(false);
 
-  // Kontrollør-vurdering-toggle (#02): Lang prosa frå Kontrolløren er
+  // Controller-vurdering-toggle (#02): Lang prosa frå Controlleren er
   // kollapsa bak "Les heile vurderinga ▸". Default false så studenten
   // ser status + verdikt + chips først, prosa er eitt klikk unna.
   const [kontrollorProsaExpanded, setKontrollorProsaExpanded] = useState(false);
 
   // Sjølvkontroll-disclosure (#09): Intern inkonsistens-blokka flytta inn
-  // i Kontrollør-kortet. State er null = follow-auto (utvida om issues finst,
-  // kollapsa elles). Etter brukar-overstyring: true/false.
+  // i Controller-kortet. State er null = follow-auto (utvida om issues finst,
+  // kollapsa elles). Etter use-overstyring: true/false.
   const [selvkontrollExpanded, setSelvkontrollExpanded] = useState<boolean | null>(null);
 
-  // Konstruktør B-disclosure (#04): Heile B-blokka kollapsast til ein-linjes
+  // Engineer B-disclosure (#04): Heile B-blokka kollapsast til ein-linjes
   // disclosure med summary (ENIGE/AVVIK + konfidens). State er null = follow-
   // auto: utvida ved significant_differences/critical_disagreement, kollapsa
-  // elles. Etter brukar-overstyring: true/false.
+  // elles. Etter use-overstyring: true/false.
   const [kontrollorBExpanded, setKontrollorBExpanded] = useState<boolean | null>(null);
 
-  // Sammenligner-rad-disclosure (#05): kvar rad i numerisk-tabellen kan
+  // Comparator-rad-disclosure (#05): kvar rad i numerisk-tabellen kan
   // utvidast for å vise "Kvifor"-detaljar (likely_cause + A/B-verdiar).
   // Multiple rader kan vere utvida samtidig — Set<index>.
   const [expandedComparisonRows, setExpandedComparisonRows] = useState<Set<number>>(
     new Set(),
   );
-  // Generelle merknader nedst i Sammenligner (#05) — method_differences +
+  // Generelle merknader nedst i Comparator (#05) — method_differences +
   // assumption_differences som ikkje knytt til ein konkret rad.
   const [comparisonGeneralExpanded, setComparisonGeneralExpanded] = useState(false);
 
@@ -257,11 +340,11 @@ export default function Home() {
 
   // Resume frå tidlegare berekning: les ?from_request=X eller ?from_run=X
   // frå URL ved mount, hent data frå API, og pre-fyll state.
-  //  - ?from_request=X → berre workbench-state (input + tolking). Bruker
+  //  - ?from_request=X → only workbench-state (input + tolking). Bruker
   //    klikkar Start berekning for å køyre på nytt.
   //  - ?from_run=X     → FULL state inkl. Mission Control-resultat. Hopper
   //    rett til calculation_result-fasen viss agentar har køyrt.
-  // Køyrer berre ein gong.
+  // Køyrer only ein gong.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -289,7 +372,7 @@ export default function Home() {
           if (data.tolking) {
             setResult(data.tolking as AgentResult);
           }
-          // Set requestId så handleStartCalculation finn han når brukar
+          // Set requestId så handleStartCalculation finn han når use
           // trykker Start berekning frå resume-state.
           if (data.run?.request_id) {
             setRequestId(data.run.request_id);
@@ -326,7 +409,7 @@ export default function Home() {
           return;
         }
 
-        // from_request — berre workbench-state
+        // from_request — only workbench-state
         const res = await fetch(`/api/requests/${fromRequest}`);
         if (!res.ok) {
           console.error("Klarte ikkje hente request:", res.status);
@@ -341,7 +424,7 @@ export default function Home() {
         if (data.tolking) {
           setResult(data.tolking as AgentResult);
         }
-        // Set requestId så handleStartCalculation finn han når brukar
+        // Set requestId så handleStartCalculation finn han når use
         // trykker Start berekning frå resume-state.
         setRequestId(fromRequest);
 
@@ -381,7 +464,7 @@ export default function Home() {
         }
       : null);
 
-  // Last state tilbake frå sessionStorage når brukar kjem tilbake frå /rapport.
+  // Last state tilbake frå sessionStorage når use kjem tilbake frå /rapport.
   // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
   //
   // VIKTIG: hopp over sessionStorage-restore når URL har ?from_run= eller
@@ -410,6 +493,7 @@ export default function Home() {
       setComparison(state.comparison ?? null);
       setControllerDecision(state.controllerDecision ?? null);
       setCurrentRunId(state.currentRunId);
+      setEngineeringContext(state.engineeringContext ?? loadEngineeringContextFromStorage());
 
       // Map legacy phase names for bakoverkompatibilitet med pågåande sessions
       const legacyPhase = state.phase;
@@ -441,6 +525,7 @@ export default function Home() {
           controllerDecision,
           currentRunId,
           phase: "calculation_result",
+          engineeringContext,
         })
       );
     } catch (e) {
@@ -457,7 +542,7 @@ const statusCardRef = useRef<HTMLDivElement | null>(null);
 
 // AbortController for å avbryte aktive SSE-streams ved cancel/unmount.
 // Hindrar zombie-streams som held fram å bruke Anthropic-tokens etter
-// at brukaren ikkje lenger ser resultatet.
+// at useen ikkje lenger ser resultatet.
 const abortControllerRef = useRef<AbortController | null>(null);
 
 // Avbryt aktive streams når komponenten unmountar (rute-navigasjon e.l.)
@@ -470,8 +555,8 @@ useEffect(() => {
   // Auto-scroll for Tolkar-panelet (dag 10):
   // Berre éin scroll når streaming startar — panel-overskriftene kjem til
   // topps og blir ståande der. Innhaldet veks UNDER overskriftene, og
-  // brukar les i sitt eige tempo. Hvis panelet veks forbi viewport-en
-  // (sjeldan — krev veldig lang antakingar-liste), kan brukar scrolle
+  // use les i sitt eige tempo. Hvis panelet veks forbi viewport-en
+  // (sjeldan — krev veldig lang antakingar-liste), kan use scrolle
   // manuelt for å sjå botnen.
   //
   // NB: padding-bottom på workbench-seksjonen gir document nok scroll-rom
@@ -489,8 +574,8 @@ useEffect(() => {
   }, [streamingTolkar.phase]);
 
   // Eksempel-kollaps (#07): når Tolkar gir første gangs resultat, kollaps
-  // eksempel-chips. Ref-flagg hindrar at vi re-kollapsar om brukar manuelt
-  // utvidar igjen og deretter Tolk-ar på nytt (respekterer brukar-val).
+  // eksempel-chips. Ref-flagg hindrar at vi re-kollapsar om use manuelt
+  // utvidar igjen og deretter Tolk-ar på nytt (respekterer use-val).
   useEffect(() => {
     if (result !== null && !hasAutoCollapsedRef.current) {
       setExamplesCollapsed(true);
@@ -498,9 +583,9 @@ useEffect(() => {
     }
   }, [result]);
 
-  // Første-gongs-guide (#09): på mount, sjekk om brukar har sett guiden før.
+  // Første-gongs-guide (#09): på mount, sjekk om use har sett guiden før.
   // Om ikkje, vis han. Vi gjer dette i useEffect (ikkje initial state) for å
-  // unngå SSR-mismatch — localStorage er klient-berre.
+  // unngå SSR-mismatch — localStorage er klient-only.
   useEffect(() => {
     try {
       const onboarded = window.localStorage.getItem("pilar-onboarded-v1");
@@ -529,7 +614,7 @@ useEffect(() => {
 
   // Visningsprofil → default-state (#03). Ved profil-endring setter vi
   // default for blokker som ikkje har eigen "null = auto"-state. Sida si
-  // visning følgjer alltid agent-output — ingen brukar-overstyring (det er
+  // visning følgjer alltid agent-output — ingen use-overstyring (det er
   // designval: indikatoren skal kommunisere kvifor sida ser ut som den gjer).
   useEffect(() => {
     if (phase !== "calculation_result") return;
@@ -539,7 +624,7 @@ useEffect(() => {
     // Generelle merknader: utvida ved krev_gjennomgang, kollapsa elles
     setComparisonGeneralExpanded(krev);
 
-    // Sammenligner-rader: ved krev_gjennomgang, auto-utvid rader med
+    // Comparator-rader: ved krev_gjennomgang, auto-utvid rader med
     // severity high/critical. Elles: ingen pre-utvida (Set tom).
     if (krev && comparison?.numeric_differences?.length) {
       const criticalIndices = new Set<number>();
@@ -555,7 +640,7 @@ useEffect(() => {
   }, [phase, controllerDecision, comparison, calculationA]);
 
   // Sticky decision-bar (#07): synleg når studenten har scrolla forbi
-  // Kontrollør-kortet men ikkje nådd Action bar nedst. Sentinel-divs vert
+  // Controller-kortet men ikkje nådd Action bar nedst. Sentinel-divs vert
   // observerte av IntersectionObserver.
   const kontrollorSentinelRef = useRef<HTMLDivElement>(null);
   const actionBarSentinelRef = useRef<HTMLDivElement>(null);
@@ -574,8 +659,8 @@ useEffect(() => {
   }, []);
 
   // Sticky decision-bar synlegheit (#07). IntersectionObserver på to
-  // sentinel-divs: éin under Kontrollør-kortet, éin over Action bar.
-  // - Kontrollør-sentinel ute av view (top) → studenten har scrolla forbi
+  // sentinel-divs: éin under Controller-kortet, éin over Action bar.
+  // - Controller-sentinel ute av view (top) → studenten har scrolla forbi
   //   det viktigaste, og treng ein quick-reference-bar
   // - Action-bar-sentinel i view → studenten har nådd botnen, bar'en
   //   forsvinn fordi action bar er synleg uansett
@@ -615,7 +700,7 @@ useEffect(() => {
   // - MANGELFULL → "resultat" så studenten ser kva som kan/ikkje kan
   //   beregnes (sjølv om chips er over tab-en, gir det kontekst)
   // - AVVIST / UKLART → "status" så feilmeldinga er synleg
-  // - KLAR / DELVIS_KLAR → "status" som default (men brukar kan bytte)
+  // - KLAR / DELVIS_KLAR → "status" som default (men use kan bytte)
   useEffect(() => {
     if (!result) return;
     if (result.status === "mangelfull") {
@@ -641,16 +726,17 @@ useEffect(() => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // Bygg payload basert på om brukar har valt ei fil
+    // Bygg payload basert på om use har valt ei fil
     let payload: Record<string, unknown> | FormData;
     if (selectedFile) {
       const formData = new FormData();
       formData.append("file", selectedFile);
       if (input.trim()) formData.append("text", input);
       formData.append("locale", locale);
+      if (engineeringContext) formData.append("engineering_context", JSON.stringify(engineeringContext));
       payload = formData;
     } else {
-      payload = { text: input, locale };
+      payload = { text: input, locale, engineering_context: engineeringContext };
     }
 
     try {
@@ -719,7 +805,7 @@ useEffect(() => {
   // (input, result, calculationA/B, comparison, controllerDecision, currentRunId)
   // — handleStartCalculation samanliknar med lastCompletedRef og avgjer om
   // ny beregning skal startast eller om vi skal hoppe tilbake til eksisterande
-  // resultat. Slik unngår vi spell av tokens når brukar berre vil sjå rapport
+  // resultat. Slik unngår vi spell av tokens når use only vil sjå rapport
   // på nytt, men startar fersk når input/Tolkar-resultat har endra seg.
   const handleBackToWorkbench = () => {
     setRestoredFrom(null);
@@ -727,9 +813,9 @@ useEffect(() => {
     setPhase("workbench");
   };
 
-  // Mangelfull-chips (#03): set inn ein mal-tekst i textarea-en når brukar
+  // Mangelfull-chips (#03): set inn ein mal-tekst i textarea-en når use
   // klikkar på ein chip. Studenten må sjølv erstatte [verdi?] før Tolk køyrer.
-  // Vi tek berre "nøkkelen" frå Tolkar sitt manglande-felt (alt før første "(")
+  // Vi tek only "nøkkelen" frå Tolkar sitt manglande-felt (alt før første "(")
   // — Tolkar sine strenger kan vere lange ("last (qEd eller punktlast PEd)"),
   // og vi vil ha kort, redigerbart mal-format.
   const insertMissingFieldTemplate = (fieldText: string) => {
@@ -767,7 +853,7 @@ useEffect(() => {
 
     // Hopp rett til resultatet viss berekninga allereie er gjort OG verken
     // input eller Tolkar-resultatet har endra seg sidan sist. Bug-fiks:
-    // tidlegare sjekk var berre `calculationA && currentRunId`, som førte til
+    // tidlegare sjekk var only `calculationA && currentRunId`, som førte til
     // at modifisert input + Tolk-på-nytt likevel viste original beregning.
     // No samanliknar vi mot snapshot lagra i pipelinen ved fullført beregning.
     if (
@@ -807,6 +893,7 @@ useEffect(() => {
         body: JSON.stringify({
           request_id: requestId,
           calculation_type: result.berekningstype,
+          engineering_context: engineeringContext,
         }),
       });
 
@@ -821,12 +908,12 @@ useEffect(() => {
       const runId: string = initData.run_id;
       setCurrentRunId(runId);
 
-      // === STEG 1: Konstruktør A og B parallelt via SSE-streaming ===
+      // === STEG 1: Engineer Engineer A and Engineer B parallelt via SSE-streaming ===
       // Begge agentar streamar samtidig. onComplete setter calculationA/B
-      // i state — useEffect under Promise.all triggar deretter Sammenligner+
-      // Kontrollør-pipeline. Om éin agent feilar, viser MissionControl
-      // retry-UI og brukar kan re-prøve den agenten åleine.
-      const agentBody = { run_id: runId, input_review: result, locale };
+      // i state — useEffect under Promise.all triggar deretter Comparator+
+      // Controller-pipeline. Om éin agent feilar, viser MissionControl
+      // retry-UI og use kan re-prøve den agenten åleine.
+      const agentBody = { run_id: runId, input_review: result, locale, engineering_context: engineeringContext };
 
       await Promise.all([
         streamAgent("/api/agent-a", agentBody, {
@@ -877,12 +964,12 @@ useEffect(() => {
       // - errB → setError + setPhase("calculation_result") (hoppar over samanlikning)
       //
       // No: vi let begge agentar etterlate seg state — om éin har feila,
-      // viser MissionControl retry-UI og brukar kan re-prøve. Sammenligner +
-      // Kontrollør-pipeline blir trigga av useEffect under når BÅDE
+      // viser MissionControl retry-UI og use kan re-prøve. Comparator +
+      // Controller-pipeline blir trigga av useEffect under når BÅDE
       // calculationA OG calculationB er sett (anten frå original køyring
       // eller etter retry).
       //
-      // Om begge feilar samtidig: ingen useEffect-trigger, brukar kan retry
+      // Om begge feilar samtidig: ingen useEffect-trigger, use kan retry
       // begge separat. Om begge OK: useEffect triggar automatisk.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ukjent feil");
@@ -896,7 +983,7 @@ useEffect(() => {
   const pipelineRunningRef = useRef(false);
 
   // Snapshot av siste fullførte beregning (bug-fiks: "Tilbake"-flyt).
-  // Når brukar går tilbake til Workbench og klikkar Start beregning UTAN
+  // Når use går tilbake til Workbench og klikkar Start beregning UTAN
   // å endre input eller Tolkar-resultat, skal vi hoppe rett til rapport-
   // visning av den eksisterande beregninga i staden for å bruke tokens på
   // ein identisk re-køyring. Sjekkast i handleStartCalculation før init-run.
@@ -906,9 +993,9 @@ useEffect(() => {
     runId: string;
   } | null>(null);
 
-  // Sammenligner + Kontrollør-pipeline (#2): trigga automatisk når begge
-  // konstruktørar har levert resultat. Dette gjer retry-flyten transparent
-  // — brukar klikkar "Prøv på nytt" → den agenten re-køyrer → setCalculation
+  // Comparator + Controller-pipeline (#2): trigga automatisk når begge
+  // engineers har levert resultat. Dette gjer retry-flyten transparent
+  // — use klikkar "Prøv på nytt" → den agenten re-køyrer → setCalculation
   // når den fullfører → useEffect triggar → pipeline fullfører.
   useEffect(() => {
     if (
@@ -926,7 +1013,7 @@ useEffect(() => {
     pipelineRunningRef.current = true;
     (async () => {
       try {
-        // STEG 2: Samanliknar
+        // STEG 2: Comparator
         const responseC = await fetch("/api/agent-c", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -935,18 +1022,19 @@ useEffect(() => {
             agent_a_output: calculationA,
             agent_b_output: calculationB,
             locale,
+            engineering_context: engineeringContext,
           }),
         });
         const dataC = await responseC.json();
         if (!responseC.ok) {
-          console.error("Samanliknar feila:", dataC.error);
-          setError(`Samanliknar feila: ${dataC.error}. Viser A og B utan samanlikning.`);
+          console.error("Comparator feila:", dataC.error);
+          setError(`Comparator feila: ${dataC.error}. Viser Engineer A and Engineer B utan samanlikning.`);
           setPhase("calculation_result");
           return;
         }
         setComparison(dataC.result);
 
-        // STEG 3: Kontrolløren
+        // STEG 3: Controlleren
         const responseD = await fetch("/api/agent-d", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -957,11 +1045,12 @@ useEffect(() => {
             agent_b_output: calculationB,
             comparison_result: dataC.result,
             locale,
+            engineering_context: engineeringContext,
           }),
         });
         const dataD = await responseD.json();
         if (!responseD.ok) {
-          console.error("Kontrollør feila:", dataD.error);
+          console.error("Controller feila:", dataD.error);
           setPhase("calculation_result");
           return;
         }
@@ -983,11 +1072,11 @@ useEffect(() => {
         pipelineRunningRef.current = false;
       }
     })();
-  }, [phase, calculationA, calculationB, comparison, currentRunId, result, locale]);
+  }, [phase, calculationA, calculationB, comparison, currentRunId, result, locale, engineeringContext, input]);
 
-  // Retry-handler (#2): re-køyrer berre den feila agenten utan å røre den
+  // Retry-handler (#2): re-køyrer only den feila agenten utan å røre den
   // andre. Når retry fullfører OG partner er complete, vil useEffect-en
-  // over automatisk trigge Sammenligner+Kontrollør-pipeline.
+  // over automatisk trigge Comparator+Controller-pipeline.
   const handleRetryAgent = async (letter: "A" | "B") => {
     if (!currentRunId || !result) {
       console.warn("handleRetryAgent: manglar runId eller result");
@@ -1009,7 +1098,7 @@ useEffect(() => {
     setError(null);
 
     const endpoint = letter === "A" ? "/api/agent-a" : "/api/agent-b";
-    const body = { run_id: currentRunId, input_review: result, locale };
+    const body = { run_id: currentRunId, input_review: result, locale, engineering_context: engineeringContext };
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -1058,7 +1147,25 @@ useEffect(() => {
     );
   };
 
-  const pageHeader = PHASE_HEADERS[locale][phase];
+  const pageDisplayLanguage = displayLanguageForContext(locale, engineeringContext);
+  const englishPhaseHeaders: Record<Phase, { eyebrow: string; title: string; description: string }> = {
+    workbench: {
+      eyebrow: "NEW CALCULATION",
+      title: "Describe the task",
+      description: "Enter the request. PILAR reads it and shows the interpretation here — you can edit and interpret again before starting the calculation.",
+    },
+    calculating: {
+      eyebrow: "STEP · CALCULATING",
+      title: "Two independent engineers solve the same problem",
+      description: "Engineer A and Engineer B use independent methods. The Comparator checks agreement before the result is presented.",
+    },
+    calculation_result: {
+      eyebrow: "STEP 3 OF 3 · RESULT",
+      title: "Calculation note",
+      description: "Preliminary result with agent control. Must be checked by a qualified professional before use.",
+    },
+  };
+  const pageHeader = pageDisplayLanguage === "en" ? englishPhaseHeaders[phase] : PHASE_HEADERS[locale][phase];
 
   const isBlocked = (key: string): boolean =>
     !!controllerDecision?.blocked_outputs?.includes(key);
@@ -1269,9 +1376,9 @@ useEffect(() => {
           transform: rotate(90deg);
         }
 
-        /* === Hover-feedback for klikkbare element (#anim-06) ===
+        /* === Hover-feedback for klikkonly element (#anim-06) ===
            Signaliserer at element er klikkbart ved å lette løfte og forsterke
-           skugge på hover. Tiles og chips bruker subtilt ulik intensitet —
+           skugge på hover. Tiles og chips use subtilt ulik intensitet —
            tiles større rørsle sidan dei er større, chips litt scale så pille-
            formen kjenner endringen. */
         .pilar-tile-clickable {
@@ -1295,7 +1402,7 @@ useEffect(() => {
           box-shadow: 0 6px 22px rgba(15, 23, 42, 0.28);
         }
 
-        /* Hover på chips — berre når stagger er ferdig (--visible aktivert).
+        /* Hover på chips — only når stagger er ferdig (--visible aktivert).
            Litt scale + lyft for å vise at pille-formen er klikkbar.
            Transition på --visible-klassen sikrar at hover-endringen får
            smooth easing utan å konflikte med stagger-animasjonen (animation
@@ -1375,7 +1482,7 @@ useEffect(() => {
             </header>
           )}
 
-          {/* Resume-banner — viser når brukar held fram frå tidlegare berekning.
+          {/* Resume-banner — viser når use held fram frå tidlegare berekning.
               Plassert OVER alle phase-conditionals så han er synleg uansett fase
               (workbench, calculating, calculation_result). Lenke tilbake til
               original-rapport hvis han finst. Klargjer at redigering opprettar
@@ -1383,8 +1490,14 @@ useEffect(() => {
           {restoredFrom && (
             <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span>
-                <strong style={{ color: "var(--fg, #1a1a1a)" }}>{WB_LABELS.fortsetterFra[locale]}</strong>{" "}
-                {WB_LABELS.endringerOpprett[locale]}
+                <strong style={{ color: "var(--fg, #1a1a1a)" }}>
+                  {pageDisplayLanguage === "en"
+                    ? "Continuing from a previous calculation."
+                    : WB_LABELS.fortsetterFra[locale]}
+                </strong>{" "}
+                {pageDisplayLanguage === "en"
+                  ? "Changes create a new calculation — the original remains unchanged."
+                  : WB_LABELS.endringerOpprett[locale]}
               </span>
               {restoredFrom.documentId && restoredFrom.runId && (
                 <a href={`/rapport/${restoredFrom.runId}`} style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline", whiteSpace: "nowrap" }}>{restoredFrom.documentId} ↗</a>
@@ -1411,7 +1524,7 @@ useEffect(() => {
               }}
             >
               {/* Første-gongs-guide (#09) — éi-setnings forklaring av kva
-                  Workbench er. Synleg berre første gong studenten besøker
+                  Workbench er. Synleg only første gong studenten besøker
                   sida, persistert i localStorage. Auto-skjult når dei har
                   fullført ein berekning. */}
               {showFirstTimeGuide && (
@@ -1640,7 +1753,7 @@ useEffect(() => {
                 <div ref={tolkingPanelRef} className="tolkar-stream pilar-block-appear" style={{ scrollMarginTop: "24px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
 
-                    {/* === Mobil-tabs (#08) — viste berre på viewport < 720px ===
+                    {/* === Mobil-tabs (#08) — viste only på viewport < 720px ===
                         Segmentert tab-kontroll med count/state-badges.
                         Klikk byter aktiv tab; auto-switch basert på status. */}
                     {isMobile && result && (() => {
@@ -1877,7 +1990,7 @@ useEffect(() => {
                             style={{ display: "flex", flexDirection: "column", gap: 16 }}
                           >
                             {/* Skeleton-shimmer (animasjon a): synleg første sekund
-                                medan vi ventar på første delta frå Tolkar. */}
+                                while vi ventar på første delta frå Tolkar. */}
                             {isStreaming && !tolkingView.tolkings_oppsummering && (
                               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                                 <div className="pilar-skeleton-bar" style={{ width: "92%" }} />
@@ -1889,7 +2002,7 @@ useEffect(() => {
                             {/* Oppsummering — typewriter-effekt via StreamingProse.
                                 partial-JSON-parser leverer felt-verdien som heilskap, så
                                 vi gradvis avslører teksten på frontend i 20ms-tikk.
-                                Blinkande markør (animasjon b) på slutten medan typing/streaming. */}
+                                Blinkande markør (animasjon b) på slutten while typing/streaming. */}
                             {tolkingView.tolkings_oppsummering && (
                               <StreamingProse
                                 text={tolkingView.tolkings_oppsummering}
@@ -2037,6 +2150,7 @@ useEffect(() => {
               onRetry={handleRetryAgent}
               retryCountA={retryCountA}
               retryCountB={retryCountB}
+              engineeringContext={engineeringContext}
             />
           )}
 
@@ -2050,6 +2164,7 @@ useEffect(() => {
               result={result}
               currentRunId={currentRunId}
               locale={locale}
+              engineeringContext={engineeringContext}
               kontrollorBelowFold={kontrollorBelowFold}
               actionBarVisible={actionBarVisible}
               isMobile={isMobile}
@@ -2080,7 +2195,7 @@ useEffect(() => {
         {/* Sticky CTA-bar (#05) — synleg når Start beregning-CTA er under
             viewport. Inneheld den faktiske Start beregning-knappen, slik at
             studenten ikkje må scrolle for å handle. Erstattar tidlegare
-            flytande "Klar"-pille som berre var ein scroll-hint. */}
+            flytande "Klar"-pille som only var ein scroll-hint. */}
         {showScrollHint && (
           <div
             className="pilar-block-appear"

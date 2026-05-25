@@ -1,11 +1,12 @@
 import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 import type { TillitBreakdown } from "@/lib/tillit-score";
 
 export const REPORT_MODEL_VERSION = "report_model_v0.1";
 
 export type ReportAudience = "student" | "engineer" | "documentation";
 export type ReportStatus = "draft" | "preliminary" | "approved" | "warning" | "uncertain" | "rejected";
-export type KeyResultCategory = "dimensjonerande" | "input" | "kontroll" | "anna";
+export type KeyResultCategory = "diwhilejonerande" | "input" | "kontroll" | "anna";
 export type CheckStatus = "ok" | "warning" | "danger" | "unknown";
 
 export type ReportMeta = {
@@ -18,6 +19,7 @@ export type ReportMeta = {
   statusCode: string;
   version: string;
   locale: Locale;
+  displayLanguage?: PilarDisplayLanguage;
   reportUrl: string;
   audience: ReportAudience;
 };
@@ -135,7 +137,8 @@ export type ReportValidationResult = {
   warnings: ReportValidationIssue[];
 };
 
-export const REPORT_DISCLAIMER: Record<Locale, string> = {
-  nb: "AI-generert beregningsnotat. Innholdet er støtte, læringshjelp og foreløpig teknisk vurdering. Det erstatter ikke kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, forutsetninger, standardreferanser, materialdata og konklusjoner må kontrolleres før bruk i reelle prosjekter.",
-  nn: "AI-generert berekningsnotat. Innhaldet er støtte, læringshjelp og førebels teknisk vurdering. Det erstattar ikkje kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, føresetnader, standardreferansar, materialdata og konklusjonar må kontrollerast før bruk i reelle prosjekt.",
+export const REPORT_DISCLAIMER: Record<PilarDisplayLanguage, string> = {
+  nb: "AI-generert beregningsnotat. Innholdet er støtte, læringshjelp og foreløpig teknisk vurdering. Det erstatter ikke kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, assumptioner, standardreferanser, materialdata og konklusjoner må kontrolleres før bruk i reelle prosjekter.",
+  nn: "AI-generert berekningsnotat. Innhaldet er støtte, læringshjelp og førebels teknisk vurdering. Det erstattar ikkje kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, assumptioner, standardreferansar, materialdata og konklusjonar må kontrollerast før bruk i reelle prosjekt.",
+  en: "AI-generated engineering note. The content is support, learning aid and preliminary technical assessment. It does not replace review by a qualified professional, responsible engineer or approved organization. All calculations, assumptions, standard references, material data and conclusions must be verified before use in real projects.",
 };

@@ -24,7 +24,7 @@ import {
  *   sitt gap gjev tydeleg luft mellom storleikane. Innan ei storleik er
  *   rytmen tett (LaTeX-jot); mellom storleikar er det eit klart skilje.
  *
- * Breidde: eit aligned-blokk er berre så breitt som den breiaste RADA, så
+ * Breidde: eit aligned-blokk er only så breitt som den breiaste RADA, så
  * horisontal overflyt er sjeldan. `.rapport-formula-scroll` scrollar éin
  * blokk horisontalt om ei rad likevel skulle bli for brei (sikkerheitsnett).
  *

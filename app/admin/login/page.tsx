@@ -8,7 +8,7 @@ import { useLocale } from "@/lib/locale-context";
 
 
 const ADMIN_LOGIN_LABELS: Record<string, Record<Locale, string>> = {
-  errorNotAdmin: { nb: "Innlogging vellykket, men brukeren har ikke admin-tilgang. Du er logget ut.", nn: "Innlogging vellukka, men brukaren har ikkje admin-tilgang. Du er logga ut." },
+  errorNotAdmin: { nb: "Innlogging vellykket, men useen har ikke admin-tilgang. Du er logget ut.", nn: "Innlogging vellukka, men useen har ikkje admin-tilgang. Du er logga ut." },
   errorLookupFailed: { nb: "Klarte ikke verifisere admin-tilgang. Prøv igjen.", nn: "Klarte ikkje verifisere admin-tilgang. Prøv igjen." },
   adminInnlogging: { nb: "Admin-innlogging", nn: "Admin-innlogging" },
   loggInn: { nb: "Logg inn", nn: "Logg inn" },

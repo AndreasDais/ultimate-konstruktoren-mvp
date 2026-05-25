@@ -11,7 +11,7 @@ import { useLocale } from "@/lib/locale-context";
  *
  * Tre states:
  * - idle: viss score er null (rapport laga før migrasjon eller berekning feila)
- * - collapsed: viss expanded=false, viser berre tal + label
+ * - collapsed: viss expanded=false, viser only tal + label
  * - expanded: viser breakdown med tre komponentar (35/35/30)
  *
  * Fagperson-status vises separat i Kontrollstatus-panelet — ikkje i denne gauge'n.
@@ -29,10 +29,10 @@ const TG_LABELS: Record<string, Record<Locale, string>> = {
   ariaMid: { nb: " av 100 (", nn: " av 100 (" },
   ariaPost: { nb: "). Klikk for å se breakdown.", nn: "). Klikk for å sjå breakdown." },
   // Komponent-rader
-  konstruktorSemje: { nb: "Konstruktør-enighet", nn: "Konstruktør-semje" },
-  konstruktorSemjeExpl: { nb: "Speiler Sammenligner sin vurdering av om Konstruktør A og B kom frem til samme svar. Full enighet gir høyeste verdi; metodiske eller numeriske avvik trekker ned.", nn: "Speglar Samanliknar si vurdering av om Konstruktør A og B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned." },
-  kontrollorVerdict: { nb: "Kontrollør-verdict", nn: "Kontrollør-verdict" },
-  kontrollorVerdictExpl: { nb: "Speiler Kontrollørens endelige avgjørelse. Godkjent gir høyeste verdi; godkjent med advarsler litt lavere; usikker mye lavere; avvist nuller ut.", nn: "Speglar Kontrollør si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut." },
+  konstruktorSemje: { nb: "Engineer-enighet", nn: "Engineer-semje" },
+  konstruktorSemjeExpl: { nb: "Speiler Comparator sin vurdering av om Engineer Engineer A and Engineer B kom frem til samme svar. Full enighet gir høyeste verdi; metodiske eller numeriske avvik trekker ned.", nn: "Speglar Comparator si vurdering av om Engineer Engineer A and Engineer B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned." },
+  kontrollorVerdict: { nb: "Controller-verdict", nn: "Controller-verdict" },
+  kontrollorVerdictExpl: { nb: "Speiler Controllerens endelige avgjørelse. Godkjent gir høyeste verdi; godkjent med advarsler litt lavere; usikker mye lavere; avvist nuller ut.", nn: "Speglar Controller si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut." },
   fullstendigheit: { nb: "Fullstendighet", nn: "Fullstendigheit" },
   fullstendigheitExpl: { nb: "Måler hvor mange av de forespurte størrelsene som faktisk ble beregnet i pipeline. Full pott når alle er dekket.", nn: "Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt." },
   formulaNote: { nb: "Gauge'en måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2." },
@@ -82,6 +82,7 @@ interface TillitBreakdown {
 interface TillitGaugeProps {
   score: number | null | undefined;
   breakdown?: TillitBreakdown | null;
+  displayLanguage?: Locale | "en";
 }
 
 const SVG_SIZE = 180;
@@ -90,7 +91,14 @@ const RADIUS = 72;
 const STROKE = 10;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
+const EN_TILLIT_LABELS: Record<string, string> = {
+  high: "HIGH",
+  good: "GOOD",
+  medium: "MEDIUM",
+  low: "LOW",
+};
+
+export function TillitGauge({ score, breakdown, displayLanguage }: TillitGaugeProps) {
   const { locale } = useLocale();
   const [expanded, setExpanded] = useState(false);
 
@@ -104,7 +112,12 @@ export function TillitGauge({ score, breakdown }: TillitGaugeProps) {
     );
   }
 
-  const { label, color } = tillitVisuals(score, locale);
+  const visuals = tillitVisuals(score, locale);
+  const label =
+    displayLanguage === "en"
+      ? EN_TILLIT_LABELS[visuals.labelKey] ?? visuals.label
+      : visuals.label;
+  const color = visuals.color;
   const dashOffset = CIRCUMFERENCE * (1 - score / 100);
 
   return (
@@ -230,7 +243,7 @@ function ComponentRow({ label, value, max, detail, explanation }: ComponentRowPr
 }
 
 /**
- * Mappar snake_case enum-verdiar til lesbare etikettar.
+ * Mappar snake_case enum-verdiar til lesonly etikettar.
  * Returnerer undefined viss input er undefined/tom.
  */
 function prettifyEnum(raw: string | undefined, locale: Locale): string | undefined {

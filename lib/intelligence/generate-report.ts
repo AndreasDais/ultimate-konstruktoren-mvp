@@ -119,7 +119,7 @@ function buildFindingsAndRecommendations(
       finding(
         "pipeline",
         "Input-agenten stoppa eller avgrensa fleire saker",
-        `${snapshot.counts.inputBlockedOrIncomplete} av ${snapshot.counts.inputReviewsTotal} input-vurderingar var mangelfulle, avviste eller berre delvis klare (${inputIssueRate} %).`,
+        `${snapshot.counts.inputBlockedOrIncomplete} av ${snapshot.counts.inputReviewsTotal} input-vurderingar var mangelfulle, avviste eller only delvis klare (${inputIssueRate} %).`,
         inputIssueRate > 25 ? "high" : "medium",
         "input_reviews.total",
       ),
@@ -130,7 +130,7 @@ function buildFindingsAndRecommendations(
         "Forbetre input-hjelp før køyring",
         "Legg til meir målretta eksempel og mangellister for dei oppgåvetypane som oftast blir stoppa av Tolkar. Målet er færre avviste køyringar og betre datagrunnlag før agent A/B startar.",
         inputIssueRate > 25 ? "high" : "medium",
-        "Færre blokkeringar, høgare fullføringsrate og betre brukaroppleving.",
+        "Færre blokkeringar, høgare fullføringsrate og betre useoppleving.",
         "medium",
         "low",
       ),
@@ -164,7 +164,7 @@ function buildFindingsAndRecommendations(
     pipelineFindings.push(
       finding(
         "pipeline",
-        "Konstruktør A/B hadde avvik",
+        "Engineer A/B hadde avvik",
         `${snapshot.counts.comparisonsWithDeviation} av ${snapshot.counts.comparisonsTotal} samanlikningar hadde avvik (${deviationRate} %).`,
         deviationRate > 20 ? "high" : "medium",
         "comparisons.with_deviation",
@@ -174,7 +174,7 @@ function buildFindingsAndRecommendations(
       recommendation(
         "pipeline",
         "Lag avviksoversikt for A/B",
-        "Samle dei vanlegaste variablane der Konstruktør A og B er usamde. Prioriter variablar som materialfaktorar, lastkombinasjonar, skjærareal og LTB-relaterte antakingar.",
+        "Samle dei vanlegaste variablane der Engineer Engineer A and Engineer B er usamde. Prioriter variablar som materialfaktorar, lastkombinasjonar, skjærareal og LTB-relaterte antakingar.",
         deviationRate > 20 ? "high" : "medium",
         "Gir raskare fagleg debugging og betre prompt-/regelgrunnlag.",
         "medium",
@@ -278,7 +278,7 @@ function buildFindingsAndRecommendations(
       recommendation(
         "pricing",
         "Start enkel prisingslogg",
-        "Logg rapportvolum per brukar, eksportbruk og estimert kostnad per brukar. Dette er grunnlaget for å setje gratisgrenser og student-/proff-prising.",
+        "Logg rapportvolum per use, eksportbruk og estimert kostnad per use. Dette er grunnlaget for å setje gratisgrenser og student-/proff-prising.",
         "medium",
         "Gjer framtidig prising meir datadriven og mindre gjetting.",
         "small",
@@ -364,11 +364,11 @@ async function saveMetricSnapshots(
     metric_key: m.key,
     metric_value: m.value,
     source_table: m.sourceTable,
-    dimension: m.dimension ?? {},
+    diwhileion: m.diwhileion ?? {},
   }));
 
   const { error } = await supabase.from("daily_metrics_snapshots").upsert(rows, {
-    onConflict: "snapshot_date,metric_key,source_table,dimension",
+    onConflict: "snapshot_date,metric_key,source_table,diwhileion",
   });
 
   if (error) {

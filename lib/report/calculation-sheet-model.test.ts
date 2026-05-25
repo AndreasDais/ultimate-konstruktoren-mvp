@@ -36,7 +36,7 @@ describe("normalizeFormulaLatex — brøk, trygge tilfelle (Fiks 2)", () => {
     expect(ut).not.toContain("\\frac");
   });
 
-  it("lèt ordet 'Ledd' stå — berre tala blir brøk", () => {
+  it("lèt ordet 'Ledd' stå — only tala blir brøk", () => {
     const ut = normalizeFormulaLatex("Ledd 1 / Ledd 2 = 225,3 / 175,5");
     // Tal-paret blir brøk; "Ledd 1 / Ledd 2" er ord+tal, ikkje rein tal/tal.
     expect(ut).toContain("Ledd");

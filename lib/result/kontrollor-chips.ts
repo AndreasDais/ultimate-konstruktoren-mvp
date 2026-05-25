@@ -1,8 +1,8 @@
 /**
- * Hjelpefunksjonar for Kontrollør-kortet på Resultat-sida.
+ * Hjelpefunksjonar for Controller-kortet på Resultat-sida.
  *
  * Inkluderer:
- * - getVerdiktForMatchStatus: 1-linjers verdikt frå Samanliknar sin match_status
+ * - getVerdiktForMatchStatus: 1-linjers verdikt frå Comparator sin match_status
  * - getFirstSentence: pluk første setning av lang prosa (til chip-summary)
  * - splitChipText: del kolon-separert tekst i overskrift + body
  * - buildKontrollorChips: bygger chip-arrayet frå agent-output (klient-side)
@@ -73,7 +73,7 @@ export function splitChipText(raw: string): { text: string; body?: string } {
 
 // === FIKS 11 (F15): kryss-konstruktør nær-dedup av advarsler ================
 //
-// Verbatim-dedupen i steg 3 fangar berre identisk ordlyd. Når Konstruktør A
+// Verbatim-dedupen i steg 3 fangar only identisk ordlyd. Når Engineer A
 // og B uavhengig reiser SAME åtvaring med ulik formulering (same faktum, ulik
 // setningsbygnad), slepp begge gjennom og same åtvaring blir vist to gonger i
 // «Antakingar & åtvaringar»-gruppa på Resultat-sida (observert i A2-køyringa).
@@ -84,8 +84,8 @@ export function splitChipText(raw: string): { text: string; body?: string } {
 // med at den kanoniske rapporten alt er A-only).
 //
 // Heuristikken er medvite konservativ og deterministisk:
-//  - berre kryss A↔B. To liknande advarsler frå SAME konstruktør er truleg
-//    meint og blir aldri fuzzy-kollapsa — berre verbatim.
+//  - only kryss A↔B. To liknande advarsler frå SAME konstruktør er truleg
+//    meint og blir aldri fuzzy-kollapsa — only verbatim.
 //  - korte advarsler (< WARNING_NEAR_DUP_MIN_TOKENS token) blir aldri fuzzy-
 //    matcha; for lite tekst til trygt signal. Verbatim-dedupen dekkjer dei.
 //  - terskelen er kalibrert mot A2-køyringa og pinna i kontrollor-chips.test.ts.
@@ -205,7 +205,7 @@ export function buildKontrollorChips(
     }
   }
 
-  // 3) Warnings frå begge konstruktørar → warn-chip.
+  // 3) Warnings frå begge engineers → warn-chip.
   //    Verbatim-dedup (trim+lowercase) fangar identisk ordlyd. FIKS 11 (F15)
   //    legg til kryss-A/B nær-dedup for ulikt formulerte, men like advarsler.
   const seenWarnings = new Set<string>();
@@ -221,7 +221,7 @@ export function buildKontrollorChips(
     });
   };
 
-  // 3a) Konstruktør A — verbatim-dedup. Hugs token-sett for nær-dedup i 3b.
+  // 3a) Engineer A — verbatim-dedup. Hugs token-sett for nær-dedup i 3b.
   for (const w of calculationA?.warnings ?? []) {
     const t = w.trim();
     if (!t) continue;
@@ -232,8 +232,8 @@ export function buildKontrollorChips(
     pushWarningChip(w);
   }
 
-  // 3b) Konstruktør B — verbatim-dedup + nær-dedup mot behaldne A-advarsler.
-  //     Nær-dedup gjeld berre kryss A↔B; B mot B er framleis verbatim-only.
+  // 3b) Engineer B — verbatim-dedup + nær-dedup mot behaldne A-advarsler.
+  //     Nær-dedup gjeld only kryss A↔B; B mot B er framleis verbatim-only.
   for (const w of calculationB?.warnings ?? []) {
     const t = w.trim();
     if (!t) continue;

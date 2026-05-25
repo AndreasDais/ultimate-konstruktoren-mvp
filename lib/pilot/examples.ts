@@ -17,22 +17,22 @@ export const PILOT_EXAMPLES: PilotExample[] = [
     prompt: {
       nb: `Fritt opplagd stålbjelke med spennvidde L = 5,0 m.
 
-Bjelken har en jevnt fordelt dimensjonerende last:
+Bjelken har en jevnt fordelt diwhilejonerende last:
 qEd = 8,0 kN/m.
 
 Regn ut:
-1. Maksimalt dimensjonerende bøyemoment MEd
-2. Maksimal dimensjonerende skjærkraft VEd
+1. Maksimalt diwhilejonerende bøyemoment MEd
+2. Maksimal diwhilejonerende skjærkraft VEd
 3. Vis stegvis utregning
 4. Forklar hvor moment og skjærkraft er størst`,
       nn: `Fritt opplagd stålbjelke med spennvidde L = 5,0 m.
 
-Bjelken har ei jamt fordelt dimensjonerande last:
+Bjelken har ei jamt fordelt diwhilejonerande last:
 qEd = 8,0 kN/m.
 
 Rekn ut:
-1. Maksimalt dimensjonerande bøyemoment MEd
-2. Maksimal dimensjonerande skjerkraft VEd
+1. Maksimalt diwhilejonerande bøyemoment MEd
+2. Maksimal diwhilejonerande skjerkraft VEd
 3. Vis stegvis utrekning
 4. Forklar kvar moment og skjerkraft er størst`,
     },
@@ -63,7 +63,7 @@ Kategori B, kontor
 Snølast:
 sk = 3,5 kN/m
 
-Finn dimensjonerende lastkombinasjon i bruddgrense etter NS-EN 1990 / EC0 med norsk NA.
+Finn diwhilejonerende lastkombinasjon i bruddgrense etter NS-EN 1990 / EC0 med norsk NA.
 
 Bruk:
 gammaG = 1,35 for 6.10a
@@ -89,7 +89,7 @@ Kategori B, kontor
 Snølast:
 sk = 3,5 kN/m
 
-Finn dimensjonerande lastkombinasjon i brotgrense etter NS-EN 1990 / EC0 med norsk NA.
+Finn diwhilejonerande lastkombinasjon i brotgrense etter NS-EN 1990 / EC0 med norsk NA.
 
 Bruk:
 gammaG = 1,35 for 6.10a
@@ -125,7 +125,7 @@ Data:
 Spennvidde L = 6,0 m
 Profil: IPE 300
 Stålkvalitet: S355
-Dimensjonerende jevnt fordelt last qEd = 18,0 kN/m
+Diwhilejonerende jevnt fordelt last qEd = 18,0 kN/m
 
 Anta:
 Wpl,y = 628 cm3
@@ -149,7 +149,7 @@ Data:
 Spennvidde L = 6,0 m
 Profil: IPE 300
 Stålkvalitet: S355
-Dimensjonerande jamt fordelt last qEd = 18,0 kN/m
+Diwhilejonerande jamt fordelt last qEd = 18,0 kN/m
 
 Anta:
 Wpl,y = 628 cm3

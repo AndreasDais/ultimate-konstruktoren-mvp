@@ -48,7 +48,7 @@ describe("computeStrCombination — STR-lastkombinasjon EC0/NA", () => {
     expect(Math.abs(r.designValue - 23.775)).toBeGreaterThan(0.5);
   });
 
-  it("berre permanente laster: 6.10a styrer (1,35 > 1,20)", () => {
+  it("only permanente laster: 6.10a styrer (1,35 > 1,20)", () => {
     const r = computeStrCombination({ permanent: [{ value: 10.0 }], variable: [] });
     expect(r.governing.equation).toBe("6.10a");
     expect(r.designValue).toBeCloseTo(13.5, 4);
@@ -62,7 +62,7 @@ describe("computeStrCombination — STR-lastkombinasjon EC0/NA", () => {
     expect(r.designValue).toBeCloseTo(11.7, 4); // SG=6 → 6.10b = 1,20·6 + 1,5·3
   });
 
-  it("vind-kategori brukar psi0 = 0,6", () => {
+  it("vind-kategori use psi0 = 0,6", () => {
     const r = computeStrCombination({
       permanent: [{ value: 0 }],
       variable: [
@@ -74,7 +74,7 @@ describe("computeStrCombination — STR-lastkombinasjon EC0/NA", () => {
     expect(a.value).toBeCloseTo(15.0, 4); // 1,5·0,7·10 + 1,5·0,6·5
   });
 
-  it("imposed_E (lager) brukar psi0 = 1,0", () => {
+  it("imposed_E (lager) use psi0 = 1,0", () => {
     const r = computeStrCombination({
       permanent: [{ value: 0 }],
       variable: [{ value: 10, category: "imposed_E" }],

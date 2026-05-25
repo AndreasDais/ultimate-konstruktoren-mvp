@@ -48,7 +48,7 @@ describe("compareResults", () => {
     expect(cmp.paired[0].percentDiff!).toBeGreaterThan(0);
   });
 
-  it("F1: nøkkel berre A rapporterte hamnar i onlyA — ikkje som para 0 %", () => {
+  it("F1: nøkkel only A rapporterte hamnar i onlyA — ikkje som para 0 %", () => {
     const cmp = compareResults(
       { g_k: "6,0 kN/m", Ed_dim: "22,88 kN/m" },
       { Ed_dim: "22,88 kN/m" },
@@ -59,7 +59,7 @@ describe("compareResults", () => {
     expect(cmp.paired.some((p) => p.key === "g_k")).toBe(false);
   });
 
-  it("F1: nøkkel berre B rapporterte hamnar i onlyB", () => {
+  it("F1: nøkkel only B rapporterte hamnar i onlyB", () => {
     const cmp = compareResults(
       { Ed_dim: "22,88 kN/m" },
       { Ed_dim: "22,88 kN/m", s_k: "3,5 kN/m" },

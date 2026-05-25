@@ -38,7 +38,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     try {
       const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
       setLocaleState(coerceLocale(stored));
-      // Migration: om cookie manglar men localStorage har verdi (brukar har
+      // Migration: om cookie manglar men localStorage har verdi (use har
       // toggla før cookie-feature kom inn), synk cookie så server-SSR får
       // riktig språk neste navigasjon.
       const hasCookie = document.cookie
@@ -62,7 +62,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       // Oppdater <html lang> for tilgjengelegheit + skjermlesarar
       document.documentElement.lang = next;
     } catch {
-      // ignore — om localStorage feilar held vi berre React-state
+      // ignore — om localStorage feilar held vi only React-state
     }
   };
 

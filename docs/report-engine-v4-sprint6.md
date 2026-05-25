@@ -26,4 +26,4 @@ Koble web/PDF-visinga tettare på `ReportModel`, spesielt dei delane som gir mes
 
 ## Kvifor dette er viktig
 
-Sprint 6 flyttar meir av rapportvisinga frå rå agentdata til stabil `ReportModel`. Dette gjer rapportane meir føreseielege, lettare å style og mindre sårbare for at agentane brukar ulike nøkkelnamn.
+Sprint 6 flyttar meir av rapportvisinga frå rå agentdata til stabil `ReportModel`. Dette gjer rapportane meir føreseielege, lettare å style og mindre såronly for at agentane use ulike nøkkelnamn.

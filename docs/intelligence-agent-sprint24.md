@@ -16,7 +16,7 @@ Sprint 24 gjer PILAR Intelligence Agent meir nyttig ved å legge til ein kontrol
 - Admin kan legge inn rating, feedback og faktisk resultat.
 - Feedback blir lagra i `agent_learning_feedback`.
 - Neste dag les agenten feedback og opne forslag før han lagar ny rapport.
-- Dagleg rapport bruker opne forslag som carryover, ikkje berre rå JSON frå gårsdagens rapport.
+- Dagleg rapport use opne forslag som carryover, ikkje only rå JSON frå gårsdagens rapport.
 
 ## Nye / endra filer
 
@@ -30,7 +30,7 @@ Sprint 24 gjer PILAR Intelligence Agent meir nyttig ved å legge til ein kontrol
 
 ## Sikkerheitsmodell
 
-Agenten er framleis ikkje autonom. Han kan berre:
+Agenten er framleis ikkje autonom. Han kan only:
 
 1. samle data
 2. lage rapport

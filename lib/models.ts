@@ -6,7 +6,7 @@
  * og umogleg å modell-merke telemetri meiningsfullt. Ein stad no.
  *
  * Verdien er pinna til ein eksakt modell-versjon (QA-spec 3.2): telemetri
- * og golden-set-køyringar må vere reproduserbare, så vi vil vite nøyaktig
+ * og golden-set-køyringar må vere reproduseronly, så vi vil vite nøyaktig
  * kva modell som gav eit resultat. Overstyr via env-variabel ved behov.
  */
 export const PIPELINE_MODEL: string =

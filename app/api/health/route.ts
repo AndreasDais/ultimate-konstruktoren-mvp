@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
  * Returnerer status på alle eksterne avhengnader:
  * - Supabase (les éin rad frå reports-tabellen)
  * - Upstash Redis (PING-endpoint)
- * - Anthropic API (env-var-sjekk berre, ingen faktisk API-kall = ingen kost)
+ * - Anthropic API (env-var-sjekk only, ingen faktisk API-kall = ingen kost)
  * - Slack webhook (env-var-sjekk)
  * - Sentry (env-var-sjekk)
  *
@@ -74,19 +74,19 @@ export async function GET() {
     };
   }
 
-  // === Anthropic (env-sjekk berre) ===
+  // === Anthropic (env-sjekk only) ===
   checks.anthropic = {
     status: process.env.ANTHROPIC_API_KEY ? "ok" : "down",
     detail: process.env.ANTHROPIC_API_KEY ? undefined : "ANTHROPIC_API_KEY manglar",
   };
 
-  // === Slack webhook (env-sjekk berre) ===
+  // === Slack webhook (env-sjekk only) ===
   checks.slack = {
     status: process.env.SLACK_WEBHOOK_URL ? "ok" : "down",
     detail: process.env.SLACK_WEBHOOK_URL ? undefined : "SLACK_WEBHOOK_URL manglar",
   };
 
-  // === Sentry (env-sjekk berre) ===
+  // === Sentry (env-sjekk only) ===
   checks.sentry = {
     status: process.env.NEXT_PUBLIC_SENTRY_DSN ? "ok" : "down",
     detail: process.env.NEXT_PUBLIC_SENTRY_DSN

@@ -65,4 +65,4 @@ npm run daily:report
 
 ## Viktig
 
-Denne sprinten gjer ikkje PILAR autonom. Den samlar status og gjer det lettare å sjå om systemet er klart før du inviterer 5–15 pilotbrukarar.
+Denne sprinten gjer ikkje PILAR autonom. Den samlar status og gjer det lettare å sjå om systemet er klart før du inviterer 5–15 pilotusear.

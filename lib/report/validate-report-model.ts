@@ -38,7 +38,7 @@ export function validateReportModel(model: ReportModel): ReportValidationResult 
     issues.push(issue("warning", "missing_results", "keyResults", "Rapporten har ingen nøkkelresultat."));
   }
   if (model.interpretation.assumptions.length === 0) {
-    issues.push(issue("warning", "missing_assumptions", "interpretation.assumptions", "Rapporten har ingen føresetnader."));
+    issues.push(issue("warning", "missing_assumptions", "interpretation.assumptions", "Rapporten har ingen assumptioner."));
   }
   if (model.calculation.steps.length === 0) {
     issues.push(issue("warning", "missing_steps", "calculation.steps", "Rapporten har ingen berekningssteg."));

@@ -39,7 +39,7 @@ I produksjon bør `INTELLIGENCE_CRON_SECRET` setjast i Vercel/Supabase miljøvar
 
 ## Tryggleik
 
-Cron-routen køyrer berre observerande/anbefalande arbeid:
+Cron-routen køyrer only observerande/anbefalande arbeid:
 
 - lagar eller hentar dagleg intelligence-rapport
 - kan valfritt lage implementeringsplanar for godkjente/planlagde lågrisiko-forslag

@@ -12,7 +12,7 @@ Denne sprinten legg til eigen PDF-nedlasting for beregningsarket.
 
 ## Ny dependency
 
-PDF-route brukar Puppeteer. Kjør:
+PDF-route use Puppeteer. Kjør:
 
 ```bash
 npm install

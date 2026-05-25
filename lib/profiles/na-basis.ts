@@ -8,7 +8,7 @@
  *
  * GJELD BEGGE KONSTRUKTØRAR. B vel framleis sjølv løysingsmetode (numerisk,
  * fritt legeme, alternativ utleiing) — men verdiane her er bindande for både
- * A og B. Ein partialfaktor er ikkje ein "metode".
+ * Engineer A and Engineer B. Ein partialfaktor er ikkje ein "metode".
  *
  * VERIFISERT 21.05.2026 mot NS-EN 1990/1992/1993 + norske nasjonale tillegg.
  * Pilotomfang: EC0 lastkombinasjon, EC3 stål (tverrsnitt + knekking),
@@ -32,7 +32,7 @@ export type BucklingCurve = "a0" | "a" | "b" | "c" | "d";
 //  EC0 — laster (NS-EN 1990 + NA)
 // ─────────────────────────────────────────────────────────────
 /**
- * STR-lastkombinasjon, tabell NA.A1.2(B) — dimensjonerande er den
+ * STR-lastkombinasjon, tabell NA.A1.2(B) — diwhilejonerande er den
  * ugunstigaste av:
  *   6.10a:  1,35·ΣG + Σ(1,5·ψ0,i·Q_i)
  *   6.10b:  1,20·ΣG + 1,5·Q_1 + Σ(1,5·ψ0,i·Q_i)   for i ≠ 1
@@ -79,7 +79,7 @@ const FY_TABLE: Record<SteelGrade, { tle40: number; tle80: number }> = {
 /**
  * Flytespenning f_y (N/mm²) etter EC3 tabell 3.1, varmvalsa konstruksjonsstål.
  * t = relevant tjukkleik (mm), normalt flenstjukkleik t_f.
- * MERK: EC3 tabell 3.1 brukar banda ≤40 mm / 40-80 mm — IKKJE EN 10025-2 sitt
+ * MERK: EC3 tabell 3.1 use banda ≤40 mm / 40-80 mm — IKKJE EN 10025-2 sitt
  * ≤16 mm-band. Pilar skal bruke tabell 3.1 konsekvent.
  */
 export function yieldStrength(grade: SteelGrade, t: number): number {
@@ -96,7 +96,7 @@ export function yieldStrength(grade: SteelGrade, t: number): number {
  * Vel knekkekurve + imperfeksjonsfaktor α for VALSA I-/H-profil etter
  * EC3 tabell 6.2.
  *
- * Gjeld berre valsa I-/H-tverrsnitt. For sveisa profil, hulprofil, vinkel
+ * Gjeld only valsa I-/H-tverrsnitt. For sveisa profil, hulprofil, vinkel
  * osv. skal funksjonen IKKJE brukast — orkestreringa må då flagge, ikkje
  * gjette. Funksjonen er ein reint deterministisk oppslag: agenten skal
  * aldri velje kurve sjølv.
@@ -152,7 +152,7 @@ export const EC2 = {
     epsCu3: 0.0035,
   },
   // ξ pinna som x/d (nøytralakse-djupne / effektiv høgd), EC2 §3.1.7.
-  // Begge konstruktørar OG ξ_lim-sjekken skal bruke denne normaliseringa.
+  // Both engineers OG ξ_lim-sjekken skal bruke denne normaliseringa.
   xiDefinition: "x/d" as const,
   shear: {
     // skjær utan skjærarmering, EC2 6.2.2
@@ -168,7 +168,7 @@ export const EC2 = {
 // ─────────────────────────────────────────────────────────────
 
 const NA_BASIS_HEADER =
-  "NA-GRUNNLAG — AUTORITATIVE VERDIAR (gjeld både Konstruktør A og B)\n" +
+  "NA-GRUNNLAG — AUTORITATIVE VERDIAR (gjeld både Engineer Engineer A and Engineer B)\n" +
   "Verdiane under er nasjonalt bestemte parametrar og kodefesta\n" +
   "klassifiseringsreglar (NS-EN 1990/1992/1993 + norsk NA). Det finst\n" +
   "nøyaktig éin rett verdi for kvar.\n" +
@@ -178,7 +178,7 @@ const NA_BASIS_HEADER =
   "    alternativ utleiing). Metoden er din — verdiane er det ikkje.\n" +
   "  - Manglar utrekninga ein NA-verdi som ikkje står her: stopp og\n" +
   "    flagg det. Ikkje fyll holet frå minnet.\n" +
-  "  - Oppgi NA-grunnlag-referanse for kvar konstant du brukar.\n";
+  "  - Oppgi NA-grunnlag-referanse for kvar konstant du use.\n";
 
 function fmtEC0(): string {
   return [

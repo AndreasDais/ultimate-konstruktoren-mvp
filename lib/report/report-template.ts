@@ -38,10 +38,10 @@ export const PILAR_REPORT_TEMPLATE: ReportTemplateSection[] = [
   },
   {
     id: "interpretation",
-    label: "Input og forutsetninger",
+    label: "Input og assumptioner",
     required: false,
     pagePolicy: "allow-break",
-    printHint: "Kan bryte over sider ved lang føresetnadsliste.",
+    printHint: "Kan bryte over sider ved lang assumptionsliste.",
   },
   {
     id: "key-results",
@@ -83,7 +83,7 @@ export const PILAR_REPORT_TEMPLATE: ReportTemplateSection[] = [
     label: "Kontroll",
     required: true,
     pagePolicy: "allow-break",
-    printHint: "Kontrolløravgjerd, samanlikning og pipeline-status.",
+    printHint: "Controlleravgjerd, samanlikning og pipeline-status.",
   },
   {
     id: "conclusion",

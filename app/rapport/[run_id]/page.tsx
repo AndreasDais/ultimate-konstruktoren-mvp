@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { polishEnglishGeneratedText, sprint335PolishEnglishText } from "@/lib/international/display";
 import { useParams, useRouter } from "next/navigation";
 import {
   decisionStatusLabel,
@@ -35,6 +36,7 @@ import {
 } from "@/lib/result/tile-heuristics";
 import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
+import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage } from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
@@ -47,7 +49,7 @@ import {
  * Avgjer om eit berekningssteg er eit KONTROLL-/konsistens-steg heller enn
  * eit reelt utrekningssteg.
  *
- * Konstruktørane avsluttar ofte med eit steg som ikkje reknar ut noko nytt,
+ * Engineerane avsluttar ofte med eit steg som ikkje reknar ut noko nytt,
  * men som verifiserer at tidlegare resultat heng saman — likevektssjekk,
  * kryssjekk via alternativ metode, eller relasjon mellom kombinasjonar.
  * Slike steg fortener eit anna visuelt uttrykk enn "STEG NN" (dei er ikkje
@@ -67,8 +69,8 @@ function isControlStep(title: string): boolean {
  * Normaliserer ein variabel-key til ein samanliknbar kanonisk form.
  *
  * Brukast til å matche keys på tvers av kjelder som kan formatere ulikt:
- *   - Konstruktør A: "Ed_ULS_ugunstig_permanent"
- *   - Konstruktør B: "E_d_ULS_ugunstig" eller "Ed,ULS,ugunstig,permanent"
+ *   - Engineer A: "Ed_ULS_ugunstig_permanent"
+ *   - Engineer B: "E_d_ULS_ugunstig" eller "Ed,ULS,ugunstig,permanent"
  *   - Agent C field: "E_d,ULS (ugunstig)"
  *
  * Strategi: lowercase, fjern alle ikkje-alfanumeriske teikn. Resultatet er
@@ -151,7 +153,7 @@ function parseLimitationString(raw: string): { subject: string; reason: string |
     };
   }
 
-  // Kolon-splitt — men berre om kolon ikkje er del av eit tal/forhold
+  // Kolon-splitt — men only om kolon ikkje er del av eit tal/forhold
   const colonMatch = text.match(/^([^:]+):\s+(.+)$/);
   if (colonMatch) {
     return {
@@ -208,7 +210,7 @@ function coverStatusSummary(decisionStatus: string | undefined, locale: Locale):
       nn: "Berekninga er førebels godkjend. Resultatet skal kontrollerast av ansvarleg fagperson før bruk.",
     },
     approved_with_warnings: {
-      nb: "Beregningen er foreløpig godkjent med advarsler. Forbeholdene må avklares før prosjekteringsbruk.",
+      nb: "The calculation is preliminarily approved with warnings. The reservations must be resolved before use in design work.",
       nn: "Berekninga er førebels godkjend med åtvaringar. Atterhalda må avklarast før prosjekteringsbruk.",
     },
     uncertain: {
@@ -223,7 +225,7 @@ function coverStatusSummary(decisionStatus: string | undefined, locale: Locale):
   return summaries[decisionStatus ?? ""]?.[locale] ?? "";
 }
 
-const RP_LABELS: Record<string, Record<Locale, string>> = {
+const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   // Loading + error
   generererRapport: { nb: "Genererer rapport...", nn: "Genererer rapport..." },
   kunneIkkjeGenerere: { nb: "Kunne ikke generere rapport", nn: "Kunne ikkje generere rapport" },
@@ -245,7 +247,7 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   metaDato: { nb: "Dato", nn: "Dato" },
   metaVersjon: { nb: "Versjon", nn: "Versjon" },
   // Forside / cover
-  berekningsnotat: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
+  berekningsnotat: { nb: "Calculation note", nn: "Berekningsnotat" },
   dokumentID: { nb: "Dokument-ID:", nn: "Dokument-ID:" },
   forsideDato: { nb: "Dato:", nn: "Dato:" },
   forsideStatus: { nb: "Status:", nn: "Status:" },
@@ -253,7 +255,7 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   viktigMerknad: { nb: "VIKTIG MERKNAD", nn: "VIKTIG MERKNAD" },
   // Fase 2 — § 01 + § 02 (B-redesign)
   forespurselLabel: { nb: "FORESPØRSEL", nn: "FORESPØRSEL" },
-  bandDimensjonerande: { nb: "DIMENSJONERENDE", nn: "DIMENSJONERANDE" },
+  bandDiwhilejonerande: { nb: "DIMENSJONERENDE", nn: "DIMENSJONERANDE" },
   bandBruksgrense: { nb: "BRUKSGRENSE", nn: "BRUKSGRENSE" },
   bandInputGeometri: { nb: "INPUT OG GEOMETRI", nn: "INPUT OG GEOMETRI" },
   sub21Forutsetninger: { nb: "02.1 — FORUTSETNINGER", nn: "02.1 — FØRESETNADER" },
@@ -280,7 +282,7 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   signDatoCaption: { nb: "DD.MM.ÅÅÅÅ", nn: "DD.MM.ÅÅÅÅ" },
   // Fase 4 — Marginalia
   marginaliaTitle: { nb: "ORDLISTE", nn: "ORDLISTE" },
-  // P3 — Konstruktørkontroll-berikning (§ 04.1)
+  // P3 — Engineerkontroll-berikning (§ 04.1)
   kontrollSammeResultatKort: {
     nb: "Begge kom frem til numerisk identiske verdier, vist i tabellen under.",
     nn: "Begge kom fram til numerisk identiske verdiar, vist i tabellen under.",
@@ -290,25 +292,25 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Tabellen under viser samanlikninga rad-for-rad. Avvik er markerte.",
   },
   kontrollFallback: {
-    nb: "De kom frem til samme resultat.",
+    nb: "They reached the same result.",
     nn: "Dei kom fram til same resultat.",
   },
   verifikasjonKolStorleik: { nb: "Størrelse", nn: "Storleik" },
-  verifikasjonKolKonstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
-  verifikasjonKolKonstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  verifikasjonKolKonstruktorA: { nb: "Engineer A", nn: "Engineer A" },
+  verifikasjonKolKonstruktorB: { nb: "Engineer B", nn: "Engineer B" },
   verifikasjonKolSamsvar: { nb: "Samsvar", nn: "Samsvar" },
   verifikasjonManglar: { nb: "—", nn: "—" },
   verifikasjonAvvikKort: { nb: "Avvik", nn: "Avvik" },
   verifikasjonSamsvarAria: { nb: "Samsvar mellom konstruktørene", nn: "Samsvar mellom konstruktørane" },
   verifikasjonAvvikAria: { nb: "Avvik mellom konstruktørene", nn: "Avvik mellom konstruktørane" },
-  verifikasjonUkjentAria: { nb: "Verdi ikke tilgjengelig fra Konstruktør B", nn: "Verdi ikkje tilgjengeleg frå Konstruktør B" },
+  verifikasjonUkjentAria: { nb: "Verdi ikke tilgjengelig fra Engineer B", nn: "Verdi ikkje tilgjengeleg frå Engineer B" },
   // Forside-tabular metadata (Fase 1, B-redesign — utan kolon)
   forsideMetaDokumentID: { nb: "Dokument-ID", nn: "Dokument-ID" },
   forsideMetaBrukar: { nb: "Bruker", nn: "Brukar" },
   forsideMetaDato: { nb: "Dato", nn: "Dato" },
   forsideMetaStatus: { nb: "Status", nn: "Status" },
   forsideMetaVersjon: { nb: "Versjon", nn: "Versjon" },
-  forsideFallbackTittel: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
+  forsideFallbackTittel: { nb: "Calculation note", nn: "Berekningsnotat" },
   forsideTillitOverskrift: { nb: "Tillit", nn: "Tillit" },
   forsideAITekst: { nb: "AI-generert dokument", nn: "AI-generert dokument" },
   qrAccessTitle: { nb: "Skann for nettversjon", nn: "Skann for nettversjon" },
@@ -321,9 +323,9 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   coverKeyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
   disclaimerKort: {
     nb: "Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.",
-    nn: "Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Ikkje ein erstatning for kontroll av kvalifisert fagperson.",
+    nn: "Innhaldet skal only brukast som støtte, læringshjelp eller førebels teknisk vurdering. Ikkje ein erstatning for kontroll av kvalifisert fagperson.",
   },
-  disclaimer: { nb: "Dette dokumentet er generert av et AI-basert beregnings- og dokumentasjonsverktøy. Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Dokumentet er ikke en erstatning for kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, forutsetninger, standardreferanser, materialdata og konklusjoner må kontrolleres av en kompetent byggingeniør før de blir brukt i reelle prosjekter, byggesøknader, produksjon eller utføring.", nn: "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, føresetnader, standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring." },
+  disclaimer: { nb: "Dette dokumentet er generert av et AI-basert beregnings- og dokumentasjonsverktøy. Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Dokumentet er ikke en erstatning for kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, assumptioner, standardreferanser, materialdata og konklusjoner må kontrolleres av en kompetent byggingeniør før de blir brukt i reelle prosjekter, byggesøknader, produksjon eller utføring.", nn: "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. Innhaldet skal only brukast som støtte, læringshjelp eller førebels teknisk vurdering. Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, assumptioner, standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring." },
   // Samandrag-seksjon
   samandragH2: { nb: "Sammendrag", nn: "Samandrag" },
   forespurnadH3: { nb: "Forespørsel", nn: "Forespurnad" },
@@ -342,9 +344,9 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   atvaringarH3: { nb: "Advarsler", nn: "Åtvaringar" },
   // Kontroll-seksjon
   kontrollH2: { nb: "Kontroll", nn: "Kontroll" },
-  konstruktorkontrollH3: { nb: "Konstruktørkontroll", nn: "Konstruktørkontroll" },
-  berekningaLoyst: { nb: "Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B).", nn: "Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør A og Konstruktør B)." },
-  kontrollorAvgjerd: { nb: "Kontrollørens avgjørelse:", nn: "Kontrolløren si avgjerd:" },
+  konstruktorkontrollH3: { nb: "Engineerkontroll", nn: "Engineerkontroll" },
+  berekningaLoyst: { nb: "Beregningen er løst uavhengig av to AI-engineers (Engineer A and Engineer B).", nn: "Berekninga er løyst uavhengig av to AI-engineers (Engineer A and Engineer B)." },
+  kontrollorAvgjerd: { nb: "Controllerens avgjørelse:", nn: "Controlleren si avgjerd:" },
   konklusjonH3: { nb: "Konklusjon", nn: "Konklusjon" },
   // Footer
   forebelsBerekning: { nb: "Foreløpig beregning — må kontrolleres av fagperson før bruk i prosjektering.", nn: "Førebels berekning — må kontrollerast av fagperson før bruk i prosjektering." },
@@ -363,13 +365,13 @@ const RP_LABELS: Record<string, Record<Locale, string>> = {
   kontrollstatus: { nb: "Kontrollstatus", nn: "Kontrollstatus" },
   statusInputTolking: { nb: "Input-tolkning", nn: "Input-tolking" },
   statusInputExplanation: { nb: "Tolkerens vurdering av hvor klar oppgaven var til å beregnes. 'Klar' = all info på plass; andre statuser = Tolkeren gjorde rimelige antakelser eller manglet info.", nn: "Tolkar si vurdering av kor klar oppgåva var til å reknast. 'Klar' = all info på plass; andre statusar = Tolkar gjorde rimelege antakingar eller mangla info." },
-  statusKonstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
-  statusKonstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
-  statusKonstruktorExplanation: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (high/medium/low). Måler bare én agents tillit til seg selv, ikke den samlede rapporten.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar berre éin agent sin tillit til seg sjølv, ikkje den samla rapporten." },
+  statusKonstruktorA: { nb: "Engineer A", nn: "Engineer A" },
+  statusKonstruktorB: { nb: "Engineer B", nn: "Engineer B" },
+  statusKonstruktorExplanation: { nb: "Engineerens egenrapporterte sikkerhet på eget svar (high/medium/low). Måler only én agents tillit til seg selv, ikke den samlede rapporten.", nn: "Engineeren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar only éin agent sin tillit til seg sjølv, ikkje den samla rapporten." },
   statusSamanlikning: { nb: "Sammenligning", nn: "Samanlikning" },
-  statusSamanlikningExplanation: { nb: "Sammenligner-agenten sjekker om Konstruktør A og B kom frem til samme svar. 'Enige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krever nærmere ettersyn.", nn: "Samanliknar-agenten sjekkar om Konstruktør A og B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn." },
-  statusKontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
-  statusKontrollorExplanation: { nb: "Kontrollør-agenten leser både konstruktører og Sammenligner, og avgjør om resultatet er trygt nok å vise. Erstatter ikke fagperson-kontroll.", nn: "Kontrollør-agenten les både konstruktørar og Samanliknar, og avgjer om resultatet er trygt nok å vise. Erstattar ikkje fagperson-kontroll." },
+  statusSamanlikningExplanation: { nb: "Comparator-agenten sjekker om Engineer A and Engineer B kom frem til samme svar. 'Enige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krever nærmere ettersyn.", nn: "Comparator-agenten sjekkar om Engineer A and Engineer B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn." },
+  statusKontrollor: { nb: "Controller", nn: "Controller" },
+  statusKontrollorExplanation: { nb: "Controller-agenten leser både engineers og Comparator, og avgjør om resultatet er trygt nok å vise. Erstatter ikke fagperson-kontroll.", nn: "Controller-agenten les både engineers og Comparator, og avgjer om resultatet er trygt nok å vise. Erstattar ikkje fagperson-kontroll." },
   statusFagperson: { nb: "Fagperson", nn: "Fagperson" },
   ikkjeKontrollert: { nb: "Ikke kontrollert", nn: "Ikkje kontrollert" },
   statusFagpersonExplanation: { nb: "Sjekker om en kvalifisert byggingeniør har signert rapporten. I pilot-versjonen er dette alltid 'Ikke kontrollert' — du må selv få en fagperson til å gjennomgå før bruk i reelle prosjekter.", nn: "Sjekkar om ein kvalifisert byggingeniør har signert rapporten. I pilot-versjonen er dette alltid 'Ikkje kontrollert' — du må sjølv få ein fagperson til å gjennomgå før bruk i reelle prosjekt." },
@@ -380,6 +382,61 @@ import { QRCodeSVG } from "qrcode.react";
 import { TillitGauge } from "@/app/components/TillitGauge";
 import type { TillitBreakdown } from "@/lib/tillit-score";
 import { InfoPopover } from "@/app/components/InfoPopover";
+
+function sprint339FinalNorwegianResidueText(value: string): string {
+  return String(value ?? "")
+    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
+    .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
+    .replace(/ØVRIG/g, "OTHER")
+    .replace(/GOD/g, "GOOD")
+    .replace(/Beregningen er godkjent for visning. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
+    .replace(/De kom frem til samme resultat./g, "They reached the same result.")
+    .replace(/Engineer A and B er fullstendig enige om alle dimensjonerende verdier./g, "Engineer A and Engineer B fully agree on all design values.")
+    .replace(/Engineer A og B har minor differences/g, "Engineer A and Engineer B have minor differences")
+    .replace(/Engineer B reports HIGH confidence på sin uavhengige løsning./g, "Engineer B reports HIGH confidence in its independent solution.")
+    .replace(/HIGH her betyr at B er trygg på egen metode — at A and B er enige er en separat sjekk (se verdikt over)./g, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check (see verdict above).")
+    .replace(/Self-assessment — ikke en uavhengig verifikasjon./g, "Self-assessment — not an independent verification.")
+    .replace(/Engineer A og Engineer B/g, "Engineer A and Engineer B")
+    .replace(/Engineer A og B/g, "Engineer A and Engineer B")
+    .replace(/A og B/g, "Engineer A and Engineer B")
+    .replace(/er fullstendig enige/g, "fully agree")
+    .replace(/dimensjonerende verdier/g, "design values")
+    .replace(/på sin uavhengige løsning/g, "in its independent solution")
+    .replace(/HIGH her betyr/g, "HIGH means")
+    .replace(/egen metode/g, "its own method")
+    .replace(/se verdikt over/g, "see verdict above")
+    .replace(/same grunnleggjande metode/g, "the same basic method")
+    .replace(/brukar/g, "use")
+    .replace(/bruker/g, "use")
+    .replace(/medan/g, "while")
+    .replace(/berre/g, "only")
+    .replace(/hovudformelen/g, "the main formula")
+    .replace(/utrekningsrute/g, "calculation route")
+    .replace(/ein alternativ/g, "an alternative")
+    .replace(/som ein intern kryssjekk/g, "as an internal cross-check")
+    .replace(/Dette er ei forskjell i presentasjonsform, ikkje i metode./g, "This is a presentation difference, not a methodological difference.")
+    .replace(/lastfaktorane/g, "load factors")
+    .replace(/som eigne resultatfelt/g, "as separate result fields")
+    .replace(/tekstbeskrivinga/g, "the text description")
+    .replace(/Innhaldet er likeverdig men strukturen er ulik./g, "The content is equivalent, but the structure differs.")
+    .replace(/Begge konstruktørar/g, "Both engineers")
+    .replace(/Begge konstruktører/g, "Both engineers")
+    .replace(/konstruktørar/g, "engineers")
+    .replace(/konstruktører/g, "engineers")
+    .replace(/Konstruktør A/g, "Engineer A")
+    .replace(/Konstruktør B/g, "Engineer B")
+    .replace(/Konstruktør/g, "Engineer")
+    .replace(/Cb-antaginga/g, "The Cb assumption")
+    .replace(/antaginga/g, "assumption")
+    .replace(/føresetnad/g, "assumption")
+    .replace(/føresetnader/g, "assumptions")
+    .replace(/sjølve/g, "itself")
+    .replace(/Ingen forskjell/g, "No difference")
+    .replace(/ingen forskjell/g, "no difference")
+    .replace(/mellomledd/g, "intermediate value");
+}
+
 
 type AgentOutput = {
   agent_name: string;
@@ -404,7 +461,7 @@ type ControllerDecision = {
 };
 
 /**
- * Talavvik mellom Konstruktør A og B for eit gjeve felt, frå Samanliknar
+ * Talavvik mellom Engineer A and Engineer B for eit gjeve felt, frå Comparator
  * (Agent C). field-namnet er Agent C sitt fritekst-namn og matchar ikkje
  * nødvendigvis A/B sine result-keys ein-til-ein — krev fuzzy matching.
  */
@@ -466,7 +523,7 @@ export default function RapportPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
-  // Etter konsolidering ser observer berre på dei 4 outer-sections.
+  // Etter konsolidering ser observer only på dei 4 outer-sections.
   useEffect(() => {
     if (!data) return;
     const observer = new IntersectionObserver(
@@ -532,10 +589,10 @@ export default function RapportPage() {
   if (error) {
     return (
       <div className="rapport-loading">
-        <h1>{RP_LABELS.feilVedGenerering[locale]}</h1>
+        <h1>{BASE_RP_LABELS.feilVedGenerering[locale]}</h1>
         <p>{error}</p>
         <button onClick={() => router.push("/")} className="uk-btn">
-          {RP_LABELS.tilbakeStart[locale]}
+          {BASE_RP_LABELS.tilbakeStart[locale]}
         </button>
       </div>
     );
@@ -557,34 +614,158 @@ export default function RapportPage() {
   const isBlocked = (field: string) => blocked.includes(field);
   const primary = data.agentA;
 
-  const reportDate = formatDate(data.report.created_at, locale);
+  const reportDisplayLanguage = inferReportDisplayLanguage({
+    locale,
+    text: [data.run.request.raw_text, data.report.executive_summary, data.report.technical_assessment, data.report.conclusion].join("\n"),
+  });
+  const reportDate = reportDisplayLanguage === "en"
+    ? new Date(data.report.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : formatDate(data.report.created_at, locale);
+  const reportPromptVersion = reportDisplayLanguage === "en"
+    ? formatPromptVersion(data.report.prompt_version).replace(/\bRapportør\b/g, "Reporter")
+    : formatPromptVersion(data.report.prompt_version);
+  const polishReportText = (value: string) => reportDisplayLanguage === "en" ? sprint335PolishEnglishText(value) : value;
+  const maybeEnglish = (value: string) => reportDisplayLanguage === "en" ? polishEnglishGeneratedText(value) : value;
 
-  const decisionLabel =
-    decisionStatusLabel(data.controllerDecision?.decision_status ?? "", locale) ??
-    RP_LABELS.ukjent[locale];
+  const RP_LABELS = buildLocalizedLabelProxyForLanguage(BASE_RP_LABELS, locale, reportDisplayLanguage, {
+    samandrag: "Summary",
+    berekningTOC: "Calculation",
+    vurdering: "Assessment",
+    kontroll: "Review",
+    tilbake: "← Back",
+    innhald: "Contents",
+    metadata: "Metadata",
+    metaDato: "Date",
+    metaVersjon: "Version",
+    berekningsnotat: "Calculation note",
+    dokumentID: "Document ID:",
+    forsideDato: "Date:",
+    forsideStatus: "Status:",
+    forsideRapportVersjon: "Report version:",
+    viktigMerknad: "IMPORTANT NOTE",
+    forespurselLabel: "REQUEST",
+    bandDiwhilejonerande: "DEMAND / DESIGN VALUES",
+    bandBruksgrense: "SERVICEABILITY",
+    bandInputGeometri: "INPUT AND GEOMETRY",
+    sub21Forutsetninger: "02.1 — ASSUMPTIONS",
+    sub22Resultat: "02.2 — RESULTS",
+    sub23Stegvis: "02.3 — STEP-BY-STEP CALCULATION",
+    stegPrefix: "STEP",
+    stegKontroll: "CHECK",
+    chapter01Title: "Summary",
+    chapter02Title: "Calculation",
+    chapter03Title: "Assessment",
+    chapter04Title: "Review",
+    sub31FagleVurdering: "03.1 — ENGINEERING ASSESSMENT",
+    sub32IkkjeBerekna: "03.2 — WHAT IS NOT CALCULATED",
+    sub33Advarsler: "03.3 — WARNINGS",
+    sub41Konstruktorkontroll: "04.1 — ENGINEER COMPARISON",
+    sub42KontrollorAvgjerd: "04.2 — CONTROLLER DECISION",
+    sub43Konklusjon: "04.3 — CONCLUSION",
+    bandIkkjeDekka: "NOT COVERED BY THIS REPORT",
+    advarselLabel: "WARNING",
+    avgjerdLabel: "DECISION",
+    signKontrollertCaption: "Name · title · company",
+    signSignaturCaption: "Manual signature",
+    signDatoCaption: "MM/DD/YYYY",
+    kontrollSammeResultatKort: "Both engineers reached numerically identical values, shown in the table below.",
+    kontrollMedAvvikKort: "The table below compares the independent results row by row. Differences are marked.",
+    kontrollFallback: "They reached the same result.",
+    verifikasjonKolStorleik: "Quantity",
+    verifikasjonKolKonstruktorA: "Engineer A",
+    verifikasjonKolKonstruktorB: "Engineer B",
+    verifikasjonKolSamsvar: "Match",
+    verifikasjonSamsvarAria: "Match between the engineers",
+    verifikasjonAvvikAria: "Difference between the engineers",
+    verifikasjonUkjentAria: "Value unavailable from Engineer B",
+    forsideMetaDato: "Date",
+    forsideMetaStatus: "Status",
+    forsideMetaVersjon: "Version",
+    forsideFallbackTittel: "Calculation note",
+    forsideAITekst: "AI-generated document",
+    qrAccessTitle: "Scan for web version",
+    qrAccessText: "Opens the report online with control status, pipeline trace and shareable link for classmates or colleagues.",
+    qrAccessUrlLabel: "Report link",
+    qrAccessPipeline: "Web version + pipeline",
+    coverKeyResults: "Key results",
+    disclaimerKort: "The content is support, learning aid or preliminary technical assessment only. It does not replace review by a qualified professional.",
+    samandragH2: "Summary",
+    forespurnadH3: "Request",
+    berekningH2: "Calculation",
+    inputTolkingH3: "Input interpretation",
+    statusPrefix: "Status:",
+    foresetnaderH3: "Assumptions",
+    resultatH3: "Results",
+    stegvisUtrekningH3: "Step-by-step calculation",
+    visProsaUtrekning: "Show prose calculation",
+    vurderingH2: "Assessment",
+    fagleVurderingH3: "Engineering assessment",
+    kvaErIkkjeReknaH3: "What is not calculated",
+    atvaringarH3: "Warnings",
+    kontrollH2: "Review",
+    konstruktorkontrollH3: "Engineer comparison",
+    berekningaLoyst: "The calculation was solved independently by two AI engineers (Engineer A and Engineer B).",
+    kontrollorAvgjerd: "Controller decision:",
+    konklusjonH3: "Conclusion",
+    forebelsBerekning: "Preliminary calculation — must be checked by a qualified professional before use in design work.",
+    kontrollertAv: "Reviewed by",
+    signatur: "Signature",
+    footerDato: "Date",
+    generert: "Generated",
+    handlingar: "Actions",
+    lastNedPDF: "Download PDF",
+    lastNedWord: "Download Word",
+    lagNyBerekning: "Create new calculation from this →",
+    saMissionControl: "See Mission Control →",
+    sendTilbakemelding: "Send feedback",
+    kontrollstatus: "Control status",
+    statusInputTolking: "Input interpretation",
+    statusInputExplanation: "The interpreter’s assessment of how ready the task was for calculation. ‘Ready’ means the required information is present; other statuses mean the interpreter used reasonable assumptions or identified missing information.",
+    statusKonstruktorExplanation: "The independent engineer’s self-assessed confidence in its own calculation method and result. This is not a professional verification.",
+    statusSamanlikningExplanation: "The comparator’s assessment of agreement between Engineer A and Engineer B. Differences may be numerical, methodological, or due to assumptions.",
+    statusKontrollorExplanation: "The controller’s final AI decision for whether the result may be shown, shown with warnings, blocked, or sent back for more input.",
+    statusFagpersonExplanation: "Shows whether a qualified structural engineer has reviewed and signed the report. In the pilot version this is normally not reviewed; a qualified professional must verify the report before real design use.",
+    statusKonstruktorA: "Engineer A",
+    statusKonstruktorB: "Engineer B",
+    statusSamanlikning: "Comparison",
+    statusKontrollor: "Controller",
+    statusFagperson: "Professional reviewer",
+    ikkjeKontrollert: "Not reviewed",
+  });
+
+  const decisionLabel = reportDisplayLanguage === "en"
+    ? (({
+        approved: "Preliminarily approved",
+        approved_with_warnings: "Approved with warnings",
+        uncertain: "Uncertain",
+        rejected: "Rejected — requires review",
+        needs_more_input: "Needs more input",
+      } as Record<string, string>)[data.controllerDecision?.decision_status ?? ""] ?? RP_LABELS.ukjent[locale])
+    : decisionStatusLabel(data.controllerDecision?.decision_status ?? "", locale) ??
+      RP_LABELS.ukjent[locale];
   const matchPhraseText =
     matchPhrase(data.comparison?.match_status ?? "", locale) ?? "";
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
   const calculationSheetUrl = `/rapport/${runId}/beregning`;
-  const calculationSheetLabel = locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
+  const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
   const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
   // Sprint 6: bruk ReportModel som kjelde for dei delane som er mest
-  // sårbare i PDF/Word: resultat- og kontrolltabellar. Dette gir stabile,
+  // såronly i PDF/Word: resultat- og kontrolltabellar. Dette gir stabile,
   // normaliserte labels (E_d,dim, ψ_0,q, γ_G,6.10a) i staden for rå
   // agent-keys/renderMathKey-output som kan bryte i print.
   const reportDimRows = reportModel.calculation.resultRows.filter(
-    (row) => row.category === "dimensjonerande",
+    (row) => row.category === "diwhilejonerande",
   );
   const reportInputRows = reportModel.calculation.resultRows.filter(
     (row) => row.category === "input",
   );
   const reportOtherRows = reportModel.calculation.resultRows.filter(
-    (row) => row.category !== "dimensjonerande" && row.category !== "input",
+    (row) => row.category !== "diwhilejonerande" && row.category !== "input",
   );
   const reportControlRows = reportModel.control.comparisonRows.slice(0, 8);
   const hasReportControlRows = reportControlRows.length > 0;
@@ -592,12 +773,20 @@ export default function RapportPage() {
 
   // Sprint 9: forsida skal vere roleg og ikkje bere heile
   // kontrollørprosaen. Den fulle vurderinga ligg i § 04.2 og i
-  // nettversjonen/pipeline. På forsida viser vi berre ei kort
+  // nettversjonen/pipeline. På forsida viser vi only ei kort
   // leveranseoppsummering. Dette hindrar tekstklipping i PDF, særleg
   // ved usikker/blokkert rapport.
-  const coverControllerMessage =
-    coverStatusSummary(data.controllerDecision?.decision_status, locale) ||
-    limitText(reportModel.control.controllerText || data.controllerDecision?.user_message || "", 230);
+  const coverControllerMessage = reportDisplayLanguage === "en"
+    ? limitText(
+        sprint335PolishEnglishText(
+          reportModel.control.controllerText ||
+            data.controllerDecision?.user_message ||
+            (decisionLabel ? "The calculation is " + decisionLabel.toLowerCase() + ". It must be checked by a qualified professional before use in design work." : "")
+        ),
+        230,
+      )
+    : coverStatusSummary(data.controllerDecision?.decision_status, locale) ||
+      limitText(reportModel.control.controllerText || data.controllerDecision?.user_message || "", 230);
 
   // === TOC entries — fire konsoliderte seksjonar ===
   const tocEntries: Array<{ id: string; label: string }> = [
@@ -610,7 +799,7 @@ export default function RapportPage() {
   // === Kontrollstatus-mapping ===
   const inputStatus = data.inputReview?.input_status ?? "";
   const inputTone: Tone = INPUT_STATUS_TONES[inputStatus] ?? "neutral";
-  const inputLabel = inputStatusLabel(inputStatus, locale);
+  const inputLabel = reportDisplayLanguage === "en" ? (({ klar: "Ready", delvis_klar: "Partly ready", mangelfull: "Incomplete", avvist: "Rejected", uklar: "Unclear", uklart: "Unclear", relevant_ikkje_stotta: "Not supported" } as Record<string, string>)[inputStatus] ?? inputStatusLabel(inputStatus, locale)) : inputStatusLabel(inputStatus, locale);
 
   const agentAConf = primary.structured_output.confidence ?? "";
   const agentATone: Tone = CONFIDENCE_TONES[agentAConf] ?? "neutral";
@@ -620,12 +809,12 @@ export default function RapportPage() {
 
   const matchStatus = data.comparison?.match_status ?? "";
   const matchTone: Tone = MATCH_STATUS_TONES[matchStatus] ?? "neutral";
-  const matchLabel = matchStatusShort(matchStatus, locale);
+  const matchLabel = reportDisplayLanguage === "en" ? (({ match: "Match", minor_differences: "Minor differences", significant_differences: "Significant differences", critical_disagreement: "Critical disagreement" } as Record<string, string>)[matchStatus] ?? matchStatusShort(matchStatus, locale)) : matchStatusShort(matchStatus, locale);
 
   const decisionStatus = data.controllerDecision?.decision_status ?? "";
   const controllerTone: Tone =
     DECISION_STATUS_TONES[decisionStatus] ?? "neutral";
-  const controllerShort = decisionStatusShort(decisionStatus, locale);
+  const controllerShort = reportDisplayLanguage === "en" ? (({ approved: "Approved", approved_with_warnings: "Warnings", uncertain: "Uncertain", rejected: "Rejected", needs_more_input: "Needs input" } as Record<string, string>)[decisionStatus] ?? decisionStatusShort(decisionStatus, locale)) : decisionStatusShort(decisionStatus, locale);
 
   // Berekning-seksjonen har innhald viss minst éin subsection har data
   const hasBerekningContent =
@@ -647,7 +836,7 @@ export default function RapportPage() {
 
   // === Forside-data ===
   // Tittel og undertittel kjem no frå ReportModel, slik at web, PDF og Word
-  // bruker same rapportkontrakt. ReportModel les report_title/report_subtitle
+  // use same rapportkontrakt. ReportModel les report_title/report_subtitle
   // frå Tolkar når dei finst, og byggjer fagleg fallback frå calculation_type
   // og resultata når eldre run manglar desse felta.
   const parsedData = data.inputReview?.parsed_data as
@@ -678,11 +867,11 @@ export default function RapportPage() {
   // Held forsida som tillit-narrativ, verdict-box som beslutning.
   const VERDICT_SHORT: Record<string, Record<Locale, string>> = {
     approved: {
-      nb: "Beregningen er godkjent for visning. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering.",
+      nb: "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.",
       nn: "Berekninga er godkjend for visning. Føreset manuell verifisering av ansvarleg fagperson før bruk i prosjektering.",
     },
     approved_with_warnings: {
-      nb: "Beregningen er foreløpig godkjent med advarsler. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering.",
+      nb: "The calculation is preliminarily approved with warnings and must be verified by a qualified professional before use in design work.",
       nn: "Berekninga er førebels godkjend med åtvaringar. Skal verifiserast av ansvarleg fagperson før bruk i prosjektering.",
     },
     uncertain: {
@@ -712,16 +901,16 @@ export default function RapportPage() {
   // tabellen, og den reelle måleverdien finst som regel under ein eigen
   // numerisk key.
   const rawResultsObj = primary.structured_output.results ?? {};
-  const resultsObj: Record<string, string> = Object.fromEntries(
+  const resultsObj = Object.fromEntries(
     Object.entries(rawResultsObj).filter(
       ([k, v]) => typeof v === "string" && !isSetningResult(k, v),
     ),
-  );
+  ) as Record<string, string>;
   const allDimKeys = getDimensjonerandeKeys(resultsObj, calculationType);
   // P1: Splitt allDimKeys i true-ULS-dim og SLS-bruksgrense. Lastkombinasjon-
   // pattern matchar både Ed_ULS_* og Ed_SLS_*, så vi får begge i allDimKeys —
   // men dei skal stå i ulike band fordi SLS er bruksgrensetilstand, ikkje
-  // dimensjonerande på same måte som ULS. Klassifisering på band-nivå er
+  // diwhilejonerande på same måte som ULS. Klassifisering på band-nivå er
   // fagleg nødvendig for at studentar ikkje skal lære feil terminologi.
   const dimKeys = allDimKeys.filter((k) => !isBruksgrenseKey(k));
   const bruksgrenseKeys = allDimKeys.filter((k) => isBruksgrenseKey(k));
@@ -768,7 +957,7 @@ export default function RapportPage() {
   //   - `seenMarginaliaKeys` på rå-key (psi_1 vs psi_2 er ulike)
   //   - `seenCatalogEntries` på katalog-entry-object-referanse
   //     (psi_1_kategori_B og psi_1 mappar til SAME object i katalogen, så
-  //     skal berre vises éin gong — vi behaldar den med mest spesifikk
+  //     skal only vises éin gong — vi behaldar den med mest spesifikk
   //     subscript, dvs. den frå result-keys som kjem først).
   type MarginaliaItem = { key: string; entry: MarginaliaEntry };
   const seenMarginaliaKeys = new Set<string>();
@@ -790,7 +979,7 @@ export default function RapportPage() {
   // (gamma_G, psi_0, G_k, ULS, SLS osb.) som ikkje er result-keys men som
   // studenten støyter på i rapport-tekst. Inkluderer executive_summary,
   // assumptions, technical_assessment, conclusion og warnings — heile
-  // sjølve rapport-prosaen.
+  // itself rapport-prosaen.
   const scanCorpusParts: string[] = [];
   if (typeof data.report.executive_summary === "string") {
     scanCorpusParts.push(data.report.executive_summary);
@@ -815,7 +1004,7 @@ export default function RapportPage() {
       if (seenMarginaliaKeys.has(k)) continue;
       seenMarginaliaKeys.add(k);
       const entry = lookupMarginalia(k);
-      // Catalog-entry-dedup: berre ta med text-scan-keys som ikkje
+      // Catalog-entry-dedup: only ta med text-scan-keys som ikkje
       // allereie er dekt av ein result-key (eller tidlegare text-scan).
       if (entry && !seenCatalogEntries.has(entry)) {
         marginaliaEntries.push({ key: k, entry });
@@ -826,14 +1015,75 @@ export default function RapportPage() {
 
   const hasMarginalia = marginaliaEntries.length > 0;
 
-  // P3 — § 04.1 Konstruktørkontroll: verifikasjonstabell.
-  // Byggjer rader med Storleik | Konstruktør A | Konstruktør B | Samsvar.
+  const marginaliaTitle =
+    reportDisplayLanguage === "en" ? "GLOSSARY" : RP_LABELS.marginaliaTitle[locale];
+
+  const englishMarginaliaOverrides: Record<string, MarginaliaEntry> = {
+    D: { description: "dead load", unit: "kip/ft" },
+    L: { description: "span length", unit: "ft" },
+    L_eff: { description: "effective span length", unit: "ft" },
+    Lb: { description: "unbraced length", unit: "ft" },
+    w: { description: "distributed load or deflection depending on context", unit: "kip/ft or in" },
+    w_max: { description: "maximum deflection", unit: "in" },
+    w_lim: { description: "allowable deflection", unit: "in" },
+    M: { description: "bending moment", unit: "kip-ft" },
+    V: { description: "shear force", unit: "kips" },
+    Mu: { description: "factored bending moment", unit: "kip-ft" },
+    Vu: { description: "factored shear force", unit: "kips" },
+    M_u: { description: "factored bending moment", unit: "kip-ft" },
+    V_u: { description: "factored shear force", unit: "kips" },
+    wu: { description: "factored distributed load", unit: "kip/ft" },
+    w_u: { description: "factored distributed load", unit: "kip/ft" },
+    Fy: { description: "yield stress", unit: "ksi" },
+    fy: { description: "yield stress", unit: "ksi" },
+    f_y: { description: "yield stress", unit: "ksi" },
+    Fu: { description: "tensile strength", unit: "ksi" },
+    f_u: { description: "tensile strength", unit: "ksi" },
+    E: { description: "modulus of elasticity", unit: "ksi" },
+    eta_M: { description: "flexural utilization ratio" },
+    eta_V: { description: "shear utilization ratio" },
+  };
+
+  const marginaliaEntriesForDisplay = marginaliaEntries.map(({ key, entry }) => {
+    if (reportDisplayLanguage !== "en") return { key, entry };
+
+    const compactKey = key.replace(/[{}\\]/g, "").replace(/_/g, "");
+    const override =
+      englishMarginaliaOverrides[key] ??
+      englishMarginaliaOverrides[compactKey];
+
+    if (override) return { key, entry: { ...entry, ...override } };
+
+    return {
+      key,
+      entry: {
+        ...entry,
+        description: entry.description
+          .replace(/spennvidde/gi, "span length")
+          .replace(/nedbøying|nedb├©ying/gi, "deflection")
+          .replace(/bøyemoment|b├©yemoment/gi, "bending moment")
+          .replace(/skjærkraft|skj├ªrkraft/gi, "shear force")
+          .replace(/fordelt last/gi, "distributed load"),
+        unit:
+          entry.unit === "m" ? "ft" :
+          entry.unit === "mm" ? "in" :
+          entry.unit === "kN" ? "kips" :
+          entry.unit === "kNm" ? "kip-ft" :
+          entry.unit === "kN/m" ? "kip/ft" :
+          entry.unit,
+      },
+    };
+  });
+
+
+  // P3 — § 04.1 Engineerkontroll: verifikasjonstabell.
+  // Byggjer rader med Storleik | Engineer A | Engineer B | Samsvar.
   //
-  // Utfordring: A og B kan bruke ulike key-namn for same storleik
+  // Utfordring: Engineer A and Engineer B kan bruke ulike key-namn for same storleik
   // (Ed_ULS_ugunstig vs E_d_ULS_ugunstig). Vi byggjer difor ein
   // normalisert lookup-tabell over B sine results og fuzzy-matchar.
   //
-  // Samsvar-dom: Agent C (Samanliknar) er den faglege autoriteten på
+  // Samsvar-dom: Agent C (Comparator) er den faglege autoriteten på
   // A-vs-B. numeric_differences[] listar felt der C fann avvik. Ein key
   // som IKKJE er i numeric_differences er i samsvar etter C si vurdering.
   // Som backup samanliknar vi numerisk (normalizeNumeric) for å fange
@@ -848,7 +1098,7 @@ export default function RapportPage() {
     avvikPct?: number;
   };
 
-  // Bygg normalisert lookup over Konstruktør B sine results
+  // Bygg normalisert lookup over Engineer B sine results
   const agentBResults = data.agentB.structured_output.results ?? {};
   const agentBNormalized = new Map<string, string>();
   for (const [k, v] of Object.entries(agentBResults)) {
@@ -887,9 +1137,9 @@ export default function RapportPage() {
     const diff = diffByNormalizedField.get(normKey);
 
     // B-verdi: når Agent C har eit avvik for keyen, har han ALLEREIE
-    // para A og B i numeric_differences — bruk hans agent_b_value. Det
+    // para Engineer A and Engineer B i numeric_differences — bruk hans agent_b_value. Det
     // er meir påliteleg enn å fuzzy-matche B sine rå results på nytt;
-    // den matchen feilar når B brukar ein annan key (slik som for
+    // den matchen feilar når B use ein annan key (slik som for
     // ξ_lim). Reins ein eventuell leiande "=" frå agent-verdien.
     const diffValueB =
       diff?.agent_b_value?.replace(/^\s*=\s*/, "").trim() || null;
@@ -897,10 +1147,10 @@ export default function RapportPage() {
 
     // R3 — inga B-verdi nokon stad → ikkje ein reell kryss-sjekk; hopp
     // over rada (eit avvik-% skal aldri visast mot ei tom B-celle).
-    // MERK: rader der A og B er UEINIGE skal IKKJE filtrerast bort —
+    // MERK: rader der Engineer A and Engineer B er UEINIGE skal IKKJE filtrerast bort —
     // eit reelt avvik (t.d. 27,1 % på ξ_lim, der A reknar frå
-    // tøyningskompatibilitet og B brukar praktisk B500NC-verdi) er
-    // sjølve poenget med konstruktørkontrollen og skal stå synleg.
+    // tøyningskompatibilitet og B use praktisk B500NC-verdi) er
+    // itself poenget med konstruktørkontrollen og skal stå synleg.
     if (valueB === null) continue;
 
     let samsvar: VerifikasjonRow["samsvar"];
@@ -972,7 +1222,7 @@ export default function RapportPage() {
           </div>
           <div className="rapport-meta-row">
           <span>{RP_LABELS.metaVersjon[locale]}</span>
-          <span className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</span>
+          <span className="uk-mono">{reportPromptVersion}</span>
           </div>
         </div>
       </aside>
@@ -995,6 +1245,7 @@ export default function RapportPage() {
               documentId={data.report.document_id}
               date={reportDate}
               locale={locale}
+              displayLanguage={reportDisplayLanguage}
             />
 
             <header className="rapport-forside__head">
@@ -1031,7 +1282,7 @@ export default function RapportPage() {
               </div>
               <div className="rapport-forside__meta-row">
                 <dt>{RP_LABELS.forsideMetaVersjon[locale]}</dt>
-                <dd className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</dd>
+                <dd className="uk-mono">{reportPromptVersion}</dd>
               </div>
             </dl>
 
@@ -1086,7 +1337,7 @@ export default function RapportPage() {
 
             {!reportModelValidation.ok && (
               <aside className="rapport-model-warning no-print" role="note">
-                Rapportmodellen manglar nokre felt. PDF/Word bruker fallback-verdiar.
+                Rapportmodellen manglar nokre felt. PDF/Word use fallback-verdiar.
               </aside>
             )}
 
@@ -1095,6 +1346,7 @@ export default function RapportPage() {
                 <TillitGauge
                   score={data.report.tillit_score}
                   breakdown={data.report.tillit_breakdown}
+                  displayLanguage={reportDisplayLanguage}
                 />
               </div>
               {coverControllerMessage && (
@@ -1166,13 +1418,13 @@ export default function RapportPage() {
                 <div
                   className="rapport-ordliste"
                   role="group"
-                  aria-label={RP_LABELS.marginaliaTitle[locale]}
+                  aria-label={marginaliaTitle}
                 >
                   <div className="rapport-ordliste__title">
-                    {RP_LABELS.marginaliaTitle[locale]}
+                    {marginaliaTitle}
                   </div>
                   <dl className="rapport-ordliste__list">
-                    {marginaliaEntries.map(({ key, entry }) => (
+                    {marginaliaEntriesForDisplay.map(({ key, entry }) => (
                       <div key={key} className="rapport-ordliste-item">
                         <dt className="rapport-ordliste-item__key">
                           {displayResultLabel(key)}
@@ -1226,7 +1478,7 @@ export default function RapportPage() {
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--dim">
                               <td colSpan={2} className="rapport-results-table__band-cell">
-                                {RP_LABELS.bandDimensjonerande[locale]}
+                                {RP_LABELS.bandDiwhilejonerande[locale]}
                               </td>
                             </tr>
                             {reportDimRows.map((row) => (
@@ -1278,7 +1530,7 @@ export default function RapportPage() {
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--input">
                               <td colSpan={2} className="rapport-results-table__band-cell">
-                                {locale === "nn" ? "ANNA" : "ØVRIG"}
+                                {locale === "nn" ? "ANNA" : "OTHER"}
                               </td>
                             </tr>
                             {reportOtherRows.map((row) => (
@@ -1408,7 +1660,7 @@ export default function RapportPage() {
                   Kvar rad har subject (kva) + reason (kvifor). Subject
                   parsast frå string-format limitations (pilot) eller frå
                   key/subject-felt (post-5a). renderMathKey brukast på
-                  subject berre når den ser ut som ein variabel-key
+                  subject only når den ser ut som ein variabel-key
                   (har underscore og ingen mellomrom). */}
               {limitations.length > 0 && (
                 <div id="ikkje-rekna" className="rapport-subchapter">
@@ -1513,10 +1765,10 @@ export default function RapportPage() {
           >
             <ChapterHeading num="04" title={RP_LABELS.chapter04Title[locale]} />
 
-            {/* 04.1 Konstruktørkontroll — kort prosa + verifikasjonstabell.
+            {/* 04.1 Engineerkontroll — kort prosa + verifikasjonstabell.
                 Tabellen viser A-verdi, B-verdi (fuzzy-matcha frå B sine
                 results sjølv om key-namna skil seg), og samsvar-dom driven
-                av Agent C (Samanliknar) sine numeric_differences med
+                av Agent C (Comparator) sine numeric_differences med
                 numerisk backup-samanlikning. Lèt studenten kryssjekke
                 den uavhengige dobbeltberekninga rad-for-rad. */}
             <div id="agentkontroll" className="rapport-subchapter">
@@ -1602,7 +1854,7 @@ export default function RapportPage() {
               )}
             </div>
 
-            {/* 04.2 Kontrollørens avgjørelse — verdict-box med mørk header
+            {/* 04.2 Controllerens avgjørelse — verdict-box med mørk header
                 + statusspesifikk gold/ok/warn/bad badge + KORT verdict-tekst.
                 P3-fiks: erstattar full controller.user_message (som vart
                 duplisert med forside-prosa) med ein statusspesifikk avgjerd-
@@ -1640,7 +1892,7 @@ export default function RapportPage() {
             </div>
 
             {/* Foreløpig-stripe — DNA-element før signatur. */}
-            <ForebelStripe locale={locale} />
+            <ForebelStripe locale={locale} displayLanguage={reportDisplayLanguage} />
 
             {/* Manuell signatur — 3 kolonner med stiplet linje + caption */}
             <div className="rapport-signatur-grid">
@@ -1675,7 +1927,7 @@ export default function RapportPage() {
           </section>
 
           {/* Pilar-footer — brand + meta + URL + QR. Behaldt frå før med
-              same struktur, berre uten den frittliggande "forebels"-stripa
+              same struktur, only uten den frittliggande "forebels"-stripa
               (no rendra som ForebelStripe inni § 04 over signaturen). */}
           <footer className="rapport-footer">
             <div className="rapport-footer__signature">
@@ -1690,7 +1942,7 @@ export default function RapportPage() {
                   <span className="rapport-footer__sep">·</span>
                   <span>{RP_LABELS.generert[locale]} {reportDate}</span>
                   <span className="rapport-footer__sep">·</span>
-                  <span className="uk-mono">{formatPromptVersion(data.report.prompt_version)}</span>
+                  <span className="uk-mono">{reportPromptVersion}</span>
                 </div>
                 {stableRapportUrl && (
                   <div className="rapport-footer__url uk-mono">{stableRapportUrl}</div>
@@ -1783,12 +2035,13 @@ export default function RapportPage() {
             explanation={RP_LABELS.statusFagpersonExplanation[locale]}
           />
           {/* ORDLISTE — opnar ordliste-panelet. Skjerm-snarveg:
-              sidebaren er .no-print. Notasjon-blokka øvst i § 02
+              sideonlyn er .no-print. Notasjon-blokka øvst i § 02
               er den print-trygge kanoniske visninga. */}
           {hasMarginalia && (
             <OrdlisteFlyt
-              entries={marginaliaEntries}
-              title={RP_LABELS.marginaliaTitle[locale]}
+              entries={marginaliaEntriesForDisplay}
+              title={marginaliaTitle}
+              displayLanguage={reportDisplayLanguage}
             />
           )}
         </div>

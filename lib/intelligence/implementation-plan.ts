@@ -165,7 +165,7 @@ export function buildImplementationPlan(action: ImprovementAction): Implementati
     },
     {
       title: "Implementer minste trygge endring",
-      detail: "Lag ein liten, isolert patch. Unngå store refaktoreringar dersom tiltaket berre krev ein regel, tekst, prompt eller UI-justering.",
+      detail: "Lag ein liten, isolert patch. Unngå store refaktoreringar dersom tiltaket only krev ein regel, tekst, prompt eller UI-justering.",
       files: filesToInspect.slice(0, 6),
       doneWhen: "Patchen er liten nok til å reviewast raskt og kan reverserast lett.",
     },
@@ -193,7 +193,7 @@ export function buildImplementationPlan(action: ImprovementAction): Implementati
     tests.push("Test ein komplett input og ein mangelfull input. Mangelfull input skal stoppast eller få tydeleg forbehold.");
   }
   if (touchedAreas.includes("quality_control")) {
-    tests.push("Test eit tilfelle med A/B-avvik og sjekk at Kontrollør ikkje overgodkjenner.");
+    tests.push("Test eit tilfelle med A/B-avvik og sjekk at Controller ikkje overgodkjenner.");
   }
   if (touchedAreas.includes("unit_economics")) {
     tests.push("Sjekk at manglande kostnadstabellar ikkje krasjar intelligence-rapporten.");

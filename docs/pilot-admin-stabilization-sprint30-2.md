@@ -4,7 +4,7 @@ Denne sprinten stabiliserer pilot- og adminflyten før internasjonal versjon.
 
 ## Endringar
 
-- `/pilot` bruker aktiv locale (`nb`/`nn`) i staden for manuell query-parameter.
+- `/pilot` use aktiv locale (`nb`/`nn`) i staden for manuell query-parameter.
 - `/admin/pilot` har bokmål/nynorsk og fungerer med Stone/Graphite.
 - `/rapport/[run_id]/feedback` har bokmål/nynorsk og lagrar aktiv locale i feedback-metadata.
 - Pilot-CSS støttar både `data-palette` og `data-theme` for Graphite/Stone.

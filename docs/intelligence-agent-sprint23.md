@@ -99,7 +99,7 @@ npm run dev
 ### Sprint 24 — Feedback loop
 
 - Admin kan godkjenne, avvise og kommentere forslag.
-- Agenten bruker feedback til å prioritere framtidige forslag betre.
+- Agenten use feedback til å prioritere framtidige forslag betre.
 
 ### Sprint 25 — Cost / export / event instrumentation
 

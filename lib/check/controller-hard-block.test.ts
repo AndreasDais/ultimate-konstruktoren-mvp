@@ -11,7 +11,7 @@ const NO_FUNN: HardBlockCounts = { naDeviations: 0, motstrid: 0, loadCombo: 0 };
 const approved: ControllerDecision = {
   decision_status: "approved",
   risk_level: "low",
-  controller_notes: "Begge konstruktørar samde, NA-verdiar korrekte.",
+  controller_notes: "Both engineers samde, NA-verdiar korrekte.",
 };
 
 describe("applyControllerHardBlock", () => {
@@ -110,7 +110,7 @@ describe("applyControllerHardBlock", () => {
     expect(notes).toContain("2 NA-avvik");
     expect(notes).toContain("1 motstrid");
     expect(notes).toContain("3 kombinasjonsstruktur-avvik");
-    expect(notes).toContain("Begge konstruktørar samde");
+    expect(notes).toContain("Both engineers samde");
   });
 
   it("controller_notes taklar manglande opphavleg grunngiving", () => {

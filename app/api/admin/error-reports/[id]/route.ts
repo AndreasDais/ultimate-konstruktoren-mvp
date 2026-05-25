@@ -39,8 +39,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Ugyldig status" }, { status: 400 });
     }
 
-    // Hent innlogga brukar frå session.
-    // Middleware har allereie verifisert at brukaren er admin, men vi
+    // Hent innlogga use frå session.
+    // Middleware har allereie verifisert at useen er admin, men vi
     // dobbel-sjekkar her for defense in depth.
     const cookieStore = await cookies();
     const supabaseSSR = createServerClient(

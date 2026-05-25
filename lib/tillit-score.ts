@@ -4,7 +4,7 @@ import type { Locale } from "./locale";
  * Tillit-score-kalkulator for Pilar.
  *
  * Score-formelen måler AI-PIPELINE-TILLIT — kor mykje vi kan stole på
- * AI-agentane sitt arbeid. Fagperson-signering er ein separat dimensjon
+ * AI-agentane sitt arbeid. Fagperson-signering er ein separat diwhilejon
  * (vises i Kontrollstatus-panelet, ikkje i gauge'n).
  *
  * Total = ab_agreement + controller_verdict + completeness
@@ -48,9 +48,9 @@ export interface TillitInput {
 }
 
 export interface TillitBreakdown {
-  /** Komponent 1 — Konstruktør-semje, 0-35 */
+  /** Komponent 1 — Engineer-semje, 0-35 */
   ab_agreement: number;
-  /** Komponent 2 — Kontrollør-verdict, 0-35 */
+  /** Komponent 2 — Controller-verdict, 0-35 */
   controller_verdict: number;
   /** Komponent 3 — Fullstendigheit, 0-30 (kan vere desimal) */
   completeness: number;
