@@ -171,7 +171,7 @@ const KEY_TILE_LABELS: Record<string, Record<Locale, string>> = {
   M_Ed: { nb: "MOMENT · M_Ed", nn: "MOMENT · M_Ed" },
   V_Ed: { nb: "SKJÆR · V_Ed", nn: "SKJÆR · V_Ed" },
   N_Ed: { nb: "AKSIAL · N_Ed", nn: "AKSIAL · N_Ed" },
-  q_Ed: { nb: "DESIGN-LAST · q_Ed", nn: "DESIGN-LAST · q_Ed" },
+  q_Ed: { nb: "DIMENSJONERENDE LAST · q_Ed", nn: "DIMENSJONERANDE LAST · q_Ed" },
   // Kapasitet
   N_Rd: { nb: "AKSIAL · N_Rd", nn: "AKSIAL · N_Rd" },
   M_Rd: { nb: "MOMENT · M_Rd", nn: "MOMENT · M_Rd" },

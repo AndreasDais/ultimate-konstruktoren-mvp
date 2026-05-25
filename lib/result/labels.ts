@@ -104,6 +104,8 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   konstruktorAKonfidens: { nb: "Konstruktør A konfidens", nn: "Konstruktør A konfidens" },
   konstruktorBKonfidens: { nb: "Konstruktør B konfidens", nn: "Konstruktør B konfidens" },
   konstruktorKonfidens: { nb: "Konstruktørkonfidens", nn: "Konstruktørkonfidens" },
+  konstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  konstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
   konstruktorKonfidensPopover: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (høy/middels/lav). Ikke det samme som Tillit-skåren — måler bare én agents tillit til seg selv.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (høg/middels/lav). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv." },
   // Per-nivå forklaringar for konfidens-chips (#09)
   konfidensHighA: { nb: "Konstruktør A rapporterer HØY konfidens: metoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen. Egenvurdering — ikke en uavhengig verifikasjon.", nn: "Konstruktør A rapporterer HØG konfidens: metoden er etablert, alle naudsynte input er gitt, og resultatet er konsistent gjennom utrekninga. Eigenvurdering — ikkje ei uavhengig verifisering." },

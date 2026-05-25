@@ -164,16 +164,26 @@ export function buildKontrollorChips(
     if (c === "medium") return WB_LABELS.konfidensMediumB[locale];
     return WB_LABELS.konfidensLowB[locale];
   };
-  if (calculationA?.confidence) {
+  const confidenceLabel = (c: "high" | "medium" | "low"): string => {
+
+    if (c === "high") return locale === "nn" ? "HØG" : "HØY";
+
+    if (c === "medium") return "MIDDELS";
+
+    return "LAV";
+
+  };
+
+if (calculationA?.confidence) {
     chips.push({
-      text: `A · ${calculationA.confidence.toUpperCase()}`,
+      text: `A · ${confidenceLabel(calculationA.confidence)}`,
       body: confidenceTooltip("A", calculationA.confidence),
       tone: confidenceTone(calculationA.confidence),
     });
   }
   if (calculationB?.confidence) {
     chips.push({
-      text: `B · ${calculationB.confidence.toUpperCase()}`,
+      text: `B · ${confidenceLabel(calculationB.confidence)}`,
       body: confidenceTooltip("B", calculationB.confidence),
       tone: confidenceTone(calculationB.confidence),
     });
