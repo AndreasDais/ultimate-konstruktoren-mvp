@@ -505,7 +505,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 const chips = isEnglishResult
                   ? rawChips.map((chip) => ({
                       ...chip,
-                      text: uiText(chip.text),
+                      text: uiText(sanitizeAiscGuardedOutputText(chip.text)),
                       body: chip.body ? uiText(chip.body) : chip.body,
                     }))
                   : rawChips;
@@ -1779,10 +1779,10 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                         {renderMathKey(diff.field)}
                                       </td>
                                       <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
-                                        {diff.agent_a_value}
+                                        {uiText(String(diff.agent_a_value ?? ""))}
                                       </td>
                                       <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
-                                        {diff.agent_b_value}
+                                        {uiText(String(diff.agent_b_value ?? ""))}
                                       </td>
                                       <td className="uk-mono" style={{ padding: "8px 10px 8px 0", color: "var(--fg)" }}>
                                         {diff.percent_diff?.toFixed(1)}%
@@ -1826,13 +1826,13 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                               <span>
                                                 {WB_LABELS.samanliknarAVerdi[locale]}:{" "}
                                                 <span className="uk-mono" style={{ color: "var(--fg-2)", fontWeight: 500 }}>
-                                                  {diff.agent_a_value}
+                                                  {uiText(String(diff.agent_a_value ?? ""))}
                                                 </span>
                                               </span>
                                               <span>
                                                 {WB_LABELS.samanliknarBVerdi[locale]}:{" "}
                                                 <span className="uk-mono" style={{ color: "var(--fg-2)", fontWeight: 500 }}>
-                                                  {diff.agent_b_value}
+                                                  {uiText(String(diff.agent_b_value ?? ""))}
                                                 </span>
                                               </span>
                                               <span>

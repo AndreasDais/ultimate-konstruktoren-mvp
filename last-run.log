@@ -11,20 +11,15 @@
 
 [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/rayma/Code/ultimate-konstruktoren-mvp[39m
 
- [32m✓[39m lib/compare/result-compare.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 10[2mms[22m[39m
- [32m✓[39m lib/check/controller-hard-block.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 8[2mms[22m[39m
- [32m✓[39m lib/compare/consistency-issues.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 10[2mms[22m[39m
- [32m✓[39m funn/detectors.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 9[2mms[22m[39m
- [32m✓[39m lib/result/tile-heuristics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
- [32m✓[39m qa/grade.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 8[2mms[22m[39m
- [32m✓[39m funn/funn-register.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/compare/result-compare.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m lib/compare/consistency-issues.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m golden/golden-set.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m lib/report/render-calculation-docx.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
 [90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mhoppar over når lastkombinasjon_input manglar
 [22m[39m[load-combination-check] calculation_type=lastkombinasjon utan lastkombinasjon_input — strukturkontroll hoppa over.
 
- [32m✓[39m daily/aggregate.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 12[2mms[22m[39m
- [32m✓[39m lib/report/render-calculation-docx.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
- [32m✓[39m lib/result/kontrollor-chips.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
- [32m✓[39m golden/golden-set.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m funn/detectors.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/calc/load-combination.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 9[2mms[22m[39m
 [90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mdegraderer trygt ved ugyldig lastkategori frå Tolkar
 [22m[39m[load-combination-check] kunne ikkje re-rekne lastkombinasjon — strukturkontroll hoppa over: Error: Variabel last #1 (unamngitt): ukjend lastkategori "jordskjelv". Gyldige: imposed_A_D, imposed_E, snow, wind.
     at [90mC:\Users\rayma\Code\ultimate-konstruktoren-mvp\[39mlib\calc\load-combination.ts:149:13
@@ -38,27 +33,32 @@
     at new Promise (<anonymous>)
     at runWithTimeout [90m(file:///C:/Users/rayma/Code/ultimate-konstruktoren-mvp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
 
- [32m✓[39m lib/calc/load-combination.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m qa/grade.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 10[2mms[22m[39m
 [90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mingen avvik når konstruktøren ikkje rapporterte Ed_dim
 [22m[39m[load-combination-check] Engineer A: fann korkje "Ed_dim" eller éin eintydig "diwhilejonerande" result_roles-nøkkel — Port-2-strukturkontroll hoppa over.
 [load-combination-check] Engineer B: fann korkje "Ed_dim" eller éin eintydig "diwhilejonerande" result_roles-nøkkel — Port-2-strukturkontroll hoppa over.
 
+ [32m✓[39m funn/funn-register.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m daily/aggregate.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 10[2mms[22m[39m
 [90mstderr[2m | lib/check/load-combination-check.test.ts[2m > [22m[2mcheckLoadCombination[2m > [22m[2mhoppar over nar fleire result_roles-noklar er diwhilejonerande og ingen Ed_dim
 [22m[39m[load-combination-check] Engineer A: fleire result_roles-nøklar er "diwhilejonerande" (F_a, F_b) og ingen "Ed_dim" — Port-2-strukturkontroll hoppa over.
 [load-combination-check] Engineer B: fleire result_roles-nøklar er "diwhilejonerande" (F_a, F_b) og ingen "Ed_dim" — Port-2-strukturkontroll hoppa over.
 
- [32m✓[39m lib/check/load-combination-check.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 17[2mms[22m[39m
- [32m✓[39m lib/report/calculation-sheet-model.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 10[2mms[22m[39m
- [32m✓[39m lib/report/build-report-model.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 61[2mms[22m[39m
- [32m✓[39m lib/json/extract-json.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m lib/check/controller-hard-block.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m lib/check/load-combination-check.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m lib/result/tile-heuristics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/result/kontrollor-chips.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m lib/report/calculation-sheet-model.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m lib/report/build-report-model.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 64[2mms[22m[39m
  [32m✓[39m lib/tillit-score.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 6[2mms[22m[39m
- [32m✓[39m lib/step-metrics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 4[2mms[22m[39m
- [32m✓[39m lib/shadow/shadow-check.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m lib/json/extract-json.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m lib/step-metrics.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m lib/shadow/shadow-check.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 [2m      Tests [22m [1m[32m173 passed[39m[22m[90m (173)[39m
-[2m   Start at [22m 04:30:10
-[2m   Duration [22m 1.34s[2m (transform 1.94s, setup 0ms, collect 3.53s, tests 219ms, environment 5ms, prepare 4.13s)[22m
+[2m   Start at [22m 05:29:25
+[2m   Duration [22m 1.32s[2m (transform 1.80s, setup 0ms, collect 3.53s, tests 224ms, environment 5ms, prepare 3.75s)[22m
 
 
 === npm run lint ===
@@ -545,17 +545,17 @@ Import trace:
     ./app/api/admin/pilot/qa-status/route.ts
 
 
-✓ Compiled successfully in 7.6s
+✓ Compiled successfully in 7.3s
   Running next.config.js provided runAfterProductionCompile ...
-✓ Completed runAfterProductionCompile in 380ms
+✓ Completed runAfterProductionCompile in 391ms
   Running TypeScript ...
-  Finished TypeScript in 6.1s ...
+  Finished TypeScript in 6.0s ...
   Collecting page data using 15 workers ...
   Generating static pages using 15 workers (0/32) ...
   Generating static pages using 15 workers (8/32) 
   Generating static pages using 15 workers (16/32) 
   Generating static pages using 15 workers (24/32) 
-✓ Generating static pages using 15 workers (32/32) in 310ms
+✓ Generating static pages using 15 workers (32/32) in 300ms
   Finalizing page optimization ...
 
 Route (app)
