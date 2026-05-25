@@ -40,13 +40,13 @@ export type MarginaliaEntry = {
     psi_1:             { description: "hyppig-faktor", standard: "EC0" },
     psi_2:             { description: "kvasi-permanent-faktor", standard: "EC0" },
   
-    // === Krefter og momenter (diwhilejonerande) ===
-    M_Ed:              { description: "diwhilejonerande bøyemoment", unit: "kNm" },
-    V_Ed:              { description: "diwhilejonerande skjærkraft", unit: "kN" },
-    N_Ed:              { description: "diwhilejonerande aksialkraft", unit: "kN" },
-    T_Ed:              { description: "diwhilejonerande torsjonsmoment", unit: "kNm" },
-    E_d:               { description: "diwhilejonerande lastvirkning" },
-    E_d_ULS:           { description: "diwhilejonerande lastvirkning, bruddgrense" },
+    // === Krefter og momenter (dimensjonerande) ===
+    M_Ed:              { description: "dimensjonerande bøyemoment", unit: "kNm" },
+    V_Ed:              { description: "dimensjonerande skjærkraft", unit: "kN" },
+    N_Ed:              { description: "dimensjonerande aksialkraft", unit: "kN" },
+    T_Ed:              { description: "dimensjonerande torsjonsmoment", unit: "kNm" },
+    E_d:               { description: "dimensjonerande lastvirkning" },
+    E_d_ULS:           { description: "dimensjonerande lastvirkning, bruddgrense" },
     E_d_SLS:           { description: "lastvirkning, bruksgrense" },
     E_d_SLS_kar:       { description: "lastvirkning, karakteristisk kombinasjon" },
     E_d_SLS_karakteristisk: { description: "lastvirkning, karakteristisk kombinasjon" },
@@ -57,8 +57,8 @@ export type MarginaliaEntry = {
     E_d_SLS_kvasi_permanent: { description: "lastvirkning, kvasi-permanent kombinasjon" },
     // Agent-konstruktørane use ofte samanslått "Ed" i staden for "E_d".
     // Vi listar begge variantane så lookup blir robust mot key-format.
-    Ed:                { description: "diwhilejonerande lastvirkning" },
-    Ed_ULS:            { description: "diwhilejonerande lastvirkning, bruddgrense" },
+    Ed:                { description: "dimensjonerande lastvirkning" },
+    Ed_ULS:            { description: "dimensjonerande lastvirkning, bruddgrense" },
     Ed_SLS:            { description: "lastvirkning, bruksgrense" },
     Ed_SLS_kar:        { description: "lastvirkning, karakteristisk kombinasjon" },
     Ed_SLS_karakteristisk: { description: "lastvirkning, karakteristisk kombinasjon" },
@@ -79,9 +79,9 @@ export type MarginaliaEntry = {
     NA:                { description: "nasjonalt tillegg (Norge)" },
   
     // === Kapasitetar ===
-    M_Rd:              { description: "diwhilejonerande momentkapasitet", unit: "kNm" },
-    V_Rd:              { description: "diwhilejonerande skjærkapasitet", unit: "kN" },
-    N_Rd:              { description: "diwhilejonerande aksialkapasitet", unit: "kN" },
+    M_Rd:              { description: "dimensjonerande momentkapasitet", unit: "kNm" },
+    V_Rd:              { description: "dimensjonerande skjærkapasitet", unit: "kN" },
+    N_Rd:              { description: "dimensjonerande aksialkapasitet", unit: "kN" },
     M_pl_Rd:           { description: "plastisk momentkapasitet", unit: "kNm", standard: "EC3" },
     V_pl_Rd:           { description: "plastisk skjærkapasitet", unit: "kN", standard: "EC3" },
     M_el_Rd:           { description: "elastisk momentkapasitet", unit: "kNm" },
@@ -90,7 +90,7 @@ export type MarginaliaEntry = {
   
     // === Laster ===
     q:                 { description: "fordelt last", unit: "kN/m" },
-    q_Ed:              { description: "diwhilejonerande fordelt last", unit: "kN/m" },
+    q_Ed:              { description: "dimensjonerande fordelt last", unit: "kN/m" },
     q_k:               { description: "karakteristisk fordelt last", unit: "kN/m" },
     G_k:               { description: "karakteristisk permanent last" },
     Q_k:               { description: "karakteristisk variabel last" },
@@ -117,7 +117,7 @@ export type MarginaliaEntry = {
     // === Material — stål ===
     f_y:               { description: "flytespenning, stål", unit: "N/mm²" },
     f_yk:              { description: "karakteristisk flytespenning", unit: "N/mm²" },
-    f_yd:              { description: "diwhilejonerande flytespenning", unit: "N/mm²" },
+    f_yd:              { description: "dimensjonerande flytespenning", unit: "N/mm²" },
     f_u:               { description: "strekkfastheit, stål", unit: "N/mm²" },
     E:                 { description: "elastisitetsmodul", unit: "N/mm²" },
     E_s:               { description: "elastisitetsmodul, armering", unit: "N/mm²" },
@@ -125,14 +125,14 @@ export type MarginaliaEntry = {
   
     // === Material — betong ===
     f_ck:              { description: "karakteristisk trykkfastheit, betong", unit: "N/mm²" },
-    f_cd:              { description: "diwhilejonerande trykkfastheit, betong", unit: "N/mm²" },
+    f_cd:              { description: "dimensjonerande trykkfastheit, betong", unit: "N/mm²" },
     f_ctm:             { description: "middels strekkfastheit, betong", unit: "N/mm²" },
     f_ctk:             { description: "karakteristisk strekkfastheit, betong", unit: "N/mm²" },
     E_cm:              { description: "elastisitetsmodul, betong", unit: "N/mm²" },
     epsilon_cu3:       { description: "tøyningsgrense, betong i trykk" },
     alpha_cc:          { description: "langtidsfaktor, betong" },
   
-    // === Utnyttings- og diwhilejoneringsforhold ===
+    // === Utnyttings- og dimensjoneringsforhold ===
     eta:               { description: "utnyttingsgrad" },
     mu:                { description: "relativ momentkapasitet" },
     mu_Ed:             { description: "relativ momentpåkjenning" },

@@ -23,13 +23,13 @@ export type CalculationResult = {
   results: Record<string, string>;
   /**
    * Rolle per result-nøkkel, sett av konstruktøren (FIKS 4):
-   *  - "diwhilejonerande": eit diwhilejonerande sluttresultat / styrande verdi
+   *  - "dimensjonerande": eit dimensjonerande sluttresultat / styrande verdi
    *  - "intermediate value": delsteg, faktor, geometri eller kapasitet brukt undervegs
    *  - "input": ein gitt inngangsverdi som only er ekko-a
    * Valfri — eldre køyringar manglar feltet, og tile-heuristikken fell
    * då tilbake til den regelbaserte gjettinga.
    */
-  result_roles?: Record<string, "diwhilejonerande" | "intermediate value" | "input">;
+  result_roles?: Record<string, "dimensjonerande" | "intermediate value" | "input">;
   limitations: string[];
   warnings: string[];
   confidence: "high" | "medium" | "low";

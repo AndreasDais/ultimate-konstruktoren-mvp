@@ -472,9 +472,17 @@ function buildCoverText(
     titleFromResults(rows, rawRequest, locale, displayLanguage);
 
   return {
-    title: normalizeTitleTypography(explicitTitle || fallbackTitle || LABELS.title[displayLanguage]),
-    subtitle: normalizeTitleTypography(explicitSubtitle || subtitleFromResults(rows) || LABELS.subtitle[displayLanguage]),
+    title: sprint3310hTitleDashSpacing(normalizeTitleTypography(explicitTitle || fallbackTitle || LABELS.title[displayLanguage])),
+    subtitle: sprint3310hTitleDashSpacing(normalizeTitleTypography(explicitSubtitle || subtitleFromResults(rows) || LABELS.subtitle[displayLanguage])),
   };
+}
+
+
+function sprint3310hTitleDashSpacing(value: string): string {
+  return String(value ?? "")
+    .replace(/\s*(?:\u2014|\u2013|ÔÇö|–|—)\s*/g, " — ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function reportText(value: string, displayLanguage: "nb" | "nn" | "en"): string {

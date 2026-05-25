@@ -1,7 +1,7 @@
 /**
  * Deterministisk STR-lastkombinasjon etter EC0 (NS-EN 1990 + norsk NA).
  *
- * Reknar 6.10a og 6.10b og finn den diwhilejonerande (største) verdien.
+ * Reknar 6.10a og 6.10b og finn den dimensjonerande (største) verdien.
  * Rein, sideeffektfri funksjon — same rolle for lastkombinasjon som
  * na-basis.ts har for NDP-verdiar: éitt rett svar, rekna i kode, ikkje
  * gjetta av ein språkmodell.
@@ -17,7 +17,7 @@
  * STR-kombinasjon, tabell NA.A1.2(B):
  *   6.10a:  1,35·SG + S(1,5·psi0,i·Q_i)            — alle variable laster psi0-reduserte
  *   6.10b:  1,20·SG + 1,5·Q_1 + S(1,5·psi0,i·Q_i)  — leiande last Q_1 uredusert, resten psi0
- *   Diwhilejonerande = max(6.10a ; alle 6.10b-variantar)
+ *   Dimensjonerande = max(6.10a ; alle 6.10b-variantar)
  *
  * Ekv. 6.10 (1,35·SG + 1,5·SQ) er ei konservativ FORENKLING, ikkje
  * NA-kombinasjonen, og blir med vilje ikkje rekna her.
@@ -66,9 +66,9 @@ export type CombinationTerm = {
 export type CombinationResult = {
   /** 6.10a + eitt 6.10b-ledd per val av leiande last. */
   terms: CombinationTerm[];
-  /** Det diwhilejonerande (største) leddet. */
+  /** Det dimensjonerande (største) leddet. */
   governing: CombinationTerm;
-  /** = governing.value. Den diwhilejonerande lastverknaden. */
+  /** = governing.value. Den dimensjonerande lastverknaden. */
   designValue: number;
 };
 
@@ -115,7 +115,7 @@ function labelFor(load: VariableLoad, index: number): string {
 
 /**
  * Reknar STR-lastkombinasjonen og returnerer 6.10a, alle 6.10b-variantar,
- * og den diwhilejonerande verdien.
+ * og den dimensjonerande verdien.
  *
  * Kastar ved ugyldig input — modulen gjettar aldri.
  */
@@ -189,7 +189,7 @@ export function computeStrCombination(input: CombinationInput): CombinationResul
     });
   }
 
-  // ── Diwhilejonerande = største ledd. Stabilt val ved likskap (fyrste vinn).
+  // ── Dimensjonerande = største ledd. Stabilt val ved likskap (fyrste vinn).
   let governing = terms[0];
   for (const term of terms) {
     if (term.value > governing.value) governing = term;

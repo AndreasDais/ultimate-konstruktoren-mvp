@@ -456,7 +456,11 @@ function hasMathDensity(text: string): boolean {
   return operatorCount >= 1 && symbolCount >= 2;
 }
 
-function looksLikeEquation(line: string): boolean {
+/**
+ * Heuristikk: er denne prosa-linja ei likning som skal display-
+ * rendrast? Eksportert for testing.
+ */
+export function looksLikeEquation(line: string): boolean {
   const text = line.trim();
   if (text.length < 3) return false;
 
@@ -473,9 +477,24 @@ function looksLikeEquation(line: string): boolean {
   if (/\b(dette|den|det|styrende|ligning|likning|innsetting|for|ved|norsk|useen|maksimal|maksimalt|kontrollør|tolkar)\b/i.test(lhs)) return false;
   if (!hasMathDensity(text)) return false;
 
+  // Prosa-innleiingar endar ofte paa kolon ("Med bt = 300 mm og d = 450
+  // mm:"). Ei ekte likning gjer aldri det. Spraak-uavhengig.
+  if (text.endsWith(":")) return false;
+
   const words = text.split(/\s+/).filter(Boolean);
   const hasMathOperators = /[\\^_{}·×/*+]|\d\s*[=≤≥<>]|[=≤≥<>]\s*\d/.test(text);
   if (words.length > 26 && !hasMathOperators) return false;
+
+  // Ord-dominert lang linje er prosa, ikkje likning — sjølv med innbaka
+  // "=". Ekte likningar er symbol-dominerte; setningar er ord-dominerte.
+  // Maaler forholdet ord-token (>=2 bokstavar, ingen siffer) mot total.
+  // Spraak-uavhengig — fangar baade norsk og engelsk.
+  const wordishCount = words.filter((w) =>
+    /^[A-Za-zæøåÆØÅ]{2,}$/.test(w),
+  ).length;
+  if (words.length >= 12 && wordishCount / words.length > 0.6) {
+    return false;
+  }
 
   return true;
 }
@@ -640,7 +659,7 @@ export function buildCalculationSheetModel(model: ReportModel): CalculationSheet
 
   const resultRows = uniqueByLabel(
     model.calculation.resultRows
-      .filter((row) => row.category === "diwhilejonerande" || row.category === "kontroll")
+      .filter((row) => row.category === "dimensjonerande" || row.category === "kontroll")
       .map((row) => resultToCalculationResult(row, displayLanguage)),
   );
 

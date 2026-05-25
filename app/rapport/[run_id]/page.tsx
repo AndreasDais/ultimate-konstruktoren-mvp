@@ -257,7 +257,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   viktigMerknad: { nb: "VIKTIG MERKNAD", nn: "VIKTIG MERKNAD" },
   // Fase 2 — § 01 + § 02 (B-redesign)
   forespurselLabel: { nb: "FORESPØRSEL", nn: "FORESPØRSEL" },
-  bandDiwhilejonerande: { nb: "DIMENSJONERENDE", nn: "DIMENSJONERANDE" },
+  bandDimensjonerande: { nb: "DIMENSJONERENDE", nn: "DIMENSJONERANDE" },
   bandBruksgrense: { nb: "BRUKSGRENSE", nn: "BRUKSGRENSE" },
   bandInputGeometri: { nb: "INPUT OG GEOMETRI", nn: "INPUT OG GEOMETRI" },
   sub21Forutsetninger: { nb: "02.1 — FORUTSETNINGER", nn: "02.1 — FØRESETNADER" },
@@ -362,7 +362,8 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   lastNedWord: { nb: "Last ned Word", nn: "Last ned Word" },
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
-  sendTilbakemelding: { nb: "Send tilbakemelding", nn: "Send tilbakemelding" },
+  sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
+  giPilotFeedback: { nb: "Gi tilbakemelding på piloten", nn: "Gi tilbakemelding på piloten" },
   // Kontrollstatus-panel
   kontrollstatus: { nb: "Kontrollstatus", nn: "Kontrollstatus" },
   statusInputTolking: { nb: "Input-tolkning", nn: "Input-tolking" },
@@ -646,7 +647,7 @@ export default function RapportPage() {
     forsideRapportVersjon: "Report version:",
     viktigMerknad: "IMPORTANT NOTE",
     forespurselLabel: "REQUEST",
-    bandDiwhilejonerande: "DEMAND / DESIGN VALUES",
+    bandDimensjonerande: "DEMAND / DESIGN VALUES",
     bandBruksgrense: "SERVICEABILITY",
     bandInputGeometri: "INPUT AND GEOMETRY",
     sub21Forutsetninger: "02.1 — ASSUMPTIONS",
@@ -719,7 +720,8 @@ export default function RapportPage() {
     lastNedWord: "Download Word",
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
-    sendTilbakemelding: "Send feedback",
+    sendTilbakemelding: "Report an error",
+    giPilotFeedback: "Give pilot feedback",
     kontrollstatus: "Control status",
     statusInputTolking: "Input interpretation",
     statusInputExplanation: "The interpreter’s assessment of how ready the task was for calculation. ‘Ready’ means the required information is present; other statuses mean the interpreter used reasonable assumptions or identified missing information.",
@@ -761,13 +763,13 @@ export default function RapportPage() {
   // normaliserte labels (E_d,dim, ψ_0,q, γ_G,6.10a) i staden for rå
   // agent-keys/renderMathKey-output som kan bryte i print.
   const reportDimRows = reportModel.calculation.resultRows.filter(
-    (row) => row.category === "diwhilejonerande",
+    (row) => row.category === "dimensjonerande",
   );
   const reportInputRows = reportModel.calculation.resultRows.filter(
     (row) => row.category === "input",
   );
   const reportOtherRows = reportModel.calculation.resultRows.filter(
-    (row) => row.category !== "diwhilejonerande" && row.category !== "input",
+    (row) => row.category !== "dimensjonerande" && row.category !== "input",
   );
   const reportControlRows = reportModel.control.comparisonRows.slice(0, 8);
   const hasReportControlRows = reportControlRows.length > 0;
@@ -912,7 +914,7 @@ export default function RapportPage() {
   // P1: Splitt allDimKeys i true-ULS-dim og SLS-bruksgrense. Lastkombinasjon-
   // pattern matchar både Ed_ULS_* og Ed_SLS_*, så vi får begge i allDimKeys —
   // men dei skal stå i ulike band fordi SLS er bruksgrensetilstand, ikkje
-  // diwhilejonerande på same måte som ULS. Klassifisering på band-nivå er
+  // dimensjonerande på same måte som ULS. Klassifisering på band-nivå er
   // fagleg nødvendig for at studentar ikkje skal lære feil terminologi.
   const dimKeys = allDimKeys.filter((k) => !isBruksgrenseKey(k));
   const bruksgrenseKeys = allDimKeys.filter((k) => isBruksgrenseKey(k));
@@ -1483,7 +1485,7 @@ export default function RapportPage() {
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--dim">
                               <td colSpan={2} className="rapport-results-table__band-cell">
-                                {RP_LABELS.bandDiwhilejonerande[locale]}
+                                {RP_LABELS.bandDimensjonerande[locale]}
                               </td>
                             </tr>
                             {reportDimRows.map((row) => (
@@ -1999,6 +2001,12 @@ export default function RapportPage() {
           >
             {RP_LABELS.sendTilbakemelding[locale]}
           </button>
+          <a
+            href={`/rapport/${runId}/feedback`}
+            className="uk-btn"
+          >
+            {RP_LABELS.giPilotFeedback[locale]}
+          </a>
         </div>
 
         <div className="rapport-status-panel">

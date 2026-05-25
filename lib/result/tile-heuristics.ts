@@ -200,23 +200,23 @@ const KEY_TILE_LABELS: Record<string, Record<Locale, string>> = {
 export const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   // === Lastkombinasjonar (EC0, NS-EN 1990) ===
   Ed_ULS_styrende: {
-    nb: "Diwhilejonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
+    nb: "Dimensjonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
     nn: "Dimensjonerande ULS-last i styrande kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkeleg tryggleik. Berekna etter EC0 ekv. 6.10 eller 6.10a/b.",
   },
   Ed_ULS_styrande: {
-    nb: "Diwhilejonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
+    nb: "Dimensjonerende ULS-last i styrende kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkelig sikkerhet. Beregnet etter EC0 ekv. 6.10 eller 6.10a/b.",
     nn: "Dimensjonerande ULS-last i styrande kombinasjon. ULS (Ultimate Limit State) er bruddgrensetilstand — den lastkombinasjonen som gir størst påkjenning og som bæresystemet må motstå med tilstrekkeleg tryggleik. Berekna etter EC0 ekv. 6.10 eller 6.10a/b.",
   },
   Ed_ULS_dominerende: {
-    nb: "Diwhilejonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
+    nb: "Dimensjonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
     nn: "Dimensjonerande ULS-last med dominerande variabel last (kategori-Q med faktor 1,5). Andre variable laster vert reduserte med ψ₀-faktor. Samanlikning mellom ulike Ed_ULS-kombinasjonar viser kva som er styrande.",
   },
   Ed_ULS_dominerande: {
-    nb: "Diwhilejonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
+    nb: "Dimensjonerende ULS-last med dominerende variabel last (kategori-Q med faktor 1,5). Andre variable laster reduseres med ψ₀-faktor. Sammenligning mellom ulike Ed_ULS-kombinasjoner viser hvilken som er styrende.",
     nn: "Dimensjonerande ULS-last med dominerande variabel last (kategori-Q med faktor 1,5). Andre variable laster vert reduserte med ψ₀-faktor. Samanlikning mellom ulike Ed_ULS-kombinasjonar viser kva som er styrande.",
   },
   Ed_ULS_kombo: {
-    nb: "Diwhilejonerende ULS-kombinasjon etter EC0. Brukes som referanse for sammenligning med alternative kombinasjoner (6.10a/b).",
+    nb: "Dimensjonerende ULS-kombinasjon etter EC0. Brukes som referanse for sammenligning med alternative kombinasjoner (6.10a/b).",
     nn: "Dimensjonerande ULS-kombinasjon etter EC0. Brukast som referanse for samanlikning med alternative kombinasjonar (6.10a/b).",
   },
   Ed_ULS_psi0: {
@@ -245,19 +245,19 @@ export const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   },
   // === Bjelke-lastverknad ===
   M_Ed: {
-    nb: "Diwhilejonerende moment i kritisk snitt etter ULS. Skal sammenlignes med kapasiteten M_Rd. For fritt opplagt bjelke med jevnt fordelt last: M_Ed = q_Ed · L²/8.",
+    nb: "Dimensjonerende moment i kritisk snitt etter ULS. Skal sammenlignes med kapasiteten M_Rd. For fritt opplagt bjelke med jevnt fordelt last: M_Ed = q_Ed · L²/8.",
     nn: "Dimensjonerande moment i kritisk snitt etter ULS. Skal samanliknast med kapasiteten M_Rd. For fritt opplagd bjelke med jamt fordelt last: M_Ed = q_Ed · L²/8.",
   },
   V_Ed: {
-    nb: "Diwhilejonerende skjær, typisk ved opplegg. Skal sammenlignes med skjærkapasitet V_Rd. For fritt opplagt bjelke: V_Ed = q_Ed · L/2.",
+    nb: "Dimensjonerende skjær, typisk ved opplegg. Skal sammenlignes med skjærkapasitet V_Rd. For fritt opplagt bjelke: V_Ed = q_Ed · L/2.",
     nn: "Dimensjonerande skjær, typisk ved opplegg. Skal samanliknast med skjærkapasitet V_Rd. For fritt opplagd bjelke: V_Ed = q_Ed · L/2.",
   },
   N_Ed: {
-    nb: "Diwhilejonerende aksialkraft (trykk eller strekk). For søyler og strekkstaver. Skal sammenlignes med N_Rd. For trykkstaver inkluderer dette knekkpåvirkning via χ-faktor.",
+    nb: "Dimensjonerende aksialkraft (trykk eller strekk). For søyler og strekkstaver. Skal sammenlignes med N_Rd. For trykkstaver inkluderer dette knekkpåvirkning via χ-faktor.",
     nn: "Dimensjonerande aksialkraft (trykk eller strekk). For søyler og strekkstaver. Skal samanliknast med N_Rd. For trykkstaver inkluderer dette knekkpåverknad via χ-faktor.",
   },
   q_Ed: {
-    nb: "Diwhilejonerende designlast per meter etter at karakteristiske laster er multiplisert med partialfaktorer. Forenklet: q_Ed = γ_G · g_k + γ_Q · q_k (1,35·G + 1,5·Q i ULS).",
+    nb: "Dimensjonerende designlast per meter etter at karakteristiske laster er multiplisert med partialfaktorer. Forenklet: q_Ed = γ_G · g_k + γ_Q · q_k (1,35·G + 1,5·Q i ULS).",
     nn: "Dimensjonerande designlast per meter etter at karakteristiske laster er multiplisert med partialfaktorar. Forenkla: q_Ed = γ_G · g_k + γ_Q · q_k (1,35·G + 1,5·Q i ULS).",
   },
   // === Kapasitet ===
@@ -275,11 +275,11 @@ export const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   },
   // === Armering (EC2) ===
   As_req: {
-    nb: "Nødvendig strekkarmering for å motstå diwhilejonerende moment. Beregnet fra momentlikevekt med diwhilejonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+    nb: "Nødvendig strekkarmering for å motstå dimensjonerende moment. Beregnet fra momentlikevekt med dimensjonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
     nn: "Naudsynt strekkarmering for å motstå dimensjonerande moment. Berekna frå momentlikevekt med dimensjonerande materialdata. Skal vere ≥ A_s,min og ≤ A_s,max. Vel standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
   },
   A_s_req: {
-    nb: "Nødvendig strekkarmering for å motstå diwhilejonerende moment. Beregnet fra momentlikevekt med diwhilejonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
+    nb: "Nødvendig strekkarmering for å motstå dimensjonerende moment. Beregnet fra momentlikevekt med dimensjonerende materialdata. Skal være ≥ A_s,min og ≤ A_s,max. Velg standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
     nn: "Naudsynt strekkarmering for å motstå dimensjonerande moment. Berekna frå momentlikevekt med dimensjonerande materialdata. Skal vere ≥ A_s,min og ≤ A_s,max. Vel standardprogram (t.d. 4ø16 = 804 mm²) som dekker dette.",
   },
   As_min: {
@@ -308,19 +308,19 @@ export const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   },
   // === Utnytting og grenseverdiar ===
   mu_Ed: {
-    nb: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Diwhilejonsløs parameter brukt i armeringsdesign — bestemmer om bjelken er underarmert (μ_Ed < μ_lim) eller om du trenger trykkarmering. Lavere er bedre fra utnyttings-perspektiv.",
-    nn: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Diwhilejonslaus parameter brukt i armeringsdesign — avgjer om bjelken er underarmert (μ_Ed < μ_lim) eller om du treng trykkarmering. Lågare er betre frå utnyttings-perspektiv.",
+    nb: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonsløs parameter brukt i armeringsdesign — bestemmer om bjelken er underarmert (μ_Ed < μ_lim) eller om du trenger trykkarmering. Lavere er bedre fra utnyttings-perspektiv.",
+    nn: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonslaus parameter brukt i armeringsdesign — avgjer om bjelken er underarmert (μ_Ed < μ_lim) eller om du treng trykkarmering. Lågare er betre frå utnyttings-perspektiv.",
   },
   mu_lim: {
-    nb: "Grensen for μ_Ed der enkel-armert tverrsnitt (kun strekkarmering) er tilstrekkelig. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller øke tverrsnittsdiwhilejoner.",
-    nn: "Grensa for μ_Ed der enkelt-armert tverrsnitt (only strekkarmering) er tilstrekkeleg. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller auke tverrsnittsdiwhilejonar.",
+    nb: "Grensen for μ_Ed der enkel-armert tverrsnitt (kun strekkarmering) er tilstrekkelig. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller øke tverrsnittsdimensjoner.",
+    nn: "Grensa for μ_Ed der enkelt-armert tverrsnitt (only strekkarmering) er tilstrekkeleg. Avhenger av betong- og stålkvalitet. Over μ_lim må du legge til trykkarmering eller auke tverrsnittsdimensjonar.",
   },
   xi_lim: {
     nb: "Grensen for relativ trykksone-høyde ξ = x/d, der x er nøytralaksens dybde. Sikrer duktilitetskrav etter EC2 §5.6.3 (vanligvis ξ_lim ≈ 0,45–0,5). Lavere ξ gir mer duktil oppførsel og varsel før brudd.",
     nn: "Grensa for relativ trykksone-høgd ξ = x/d, der x er nøytralaksens djupne. Sikrar duktilitetskrav etter EC2 §5.6.3 (vanlegvis ξ_lim ≈ 0,45–0,5). Lågare ξ gir meir duktil oppførsel og varsel før brudd.",
   },
   zeta_Ed: {
-    nb: "Diwhilejonerende utnyttingsgrad — forholdet mellom diwhilejonerende påkjenning og kapasitet. Verdier < 1,0 indikerer at tverrsnittet har tilstrekkelig kapasitet. Lavere er bedre, men for lav verdi (< 0,5) kan indikere overdesign.",
+    nb: "Dimensjonerende utnyttingsgrad — forholdet mellom dimensjonerende påkjenning og kapasitet. Verdier < 1,0 indikerer at tverrsnittet har tilstrekkelig kapasitet. Lavere er bedre, men for lav verdi (< 0,5) kan indikere overdesign.",
     nn: "Dimensjonerande utnyttingsgrad — forholdet mellom dimensjonerande påkjenning og kapasitet. Verdiar < 1,0 indikerer at tverrsnittet har tilstrekkeleg kapasitet. Lågare er betre, men for låg verdi (< 0,5) kan indikere overdesign.",
   },
 };

@@ -24,7 +24,7 @@ const BLOCKED_REASONS: Record<
   nb: {
     avvist: "Inputen er ikke byggfaglig. Beregning kan ikke startes.",
     relevant_ikkje_stotta:
-      "Forespørselen er byggfaglig relevant, men ligger utenfor det Pilar støtter ennå (typisk brann, dynamikk, seismisk eller geoteknisk diwhilejonering). Prøv en annen formulering eller en annen beregningstype.",
+      "Forespørselen er byggfaglig relevant, men ligger utenfor det Pilar støtter ennå (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv en annen formulering eller en annen beregningstype.",
     uklart:
       "Forespørselen er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med mer konkret informasjon om geometri, last og materiale.",
     no_kalkulator:
@@ -33,7 +33,7 @@ const BLOCKED_REASONS: Record<
   nn: {
     avvist: "Inputen er ikkje byggfagleg. Berekning kan ikkje startast.",
     relevant_ikkje_stotta:
-      "Forespurnaden er byggfagleg relevant, men ligg utanfor det Pilar støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk diwhilejonering). Prøv ei anna formulering eller ein annan berekningstype.",
+      "Forespurnaden er byggfagleg relevant, men ligg utanfor det Pilar støttar enno (typisk brann, dynamikk, seismisk eller geoteknisk dimensjonering). Prøv ei anna formulering eller ein annan berekningstype.",
     uklart:
       "Forespurnaden er for vag til å tolke trygt. Rediger forespørselen og tolk på nytt med meir konkret informasjon om geometri, last og materiale.",
     no_kalkulator:

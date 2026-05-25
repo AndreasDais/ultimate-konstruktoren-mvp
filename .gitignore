@@ -42,3 +42,4 @@ next-env.d.ts
 
 qa/reports/
 daily/reports/
+last-run.log

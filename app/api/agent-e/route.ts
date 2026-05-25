@@ -64,14 +64,14 @@ Når du har svart, skriv prosaen.
 **executive_summary (3-5 setningar):**
 Oppsummer kva oppgåva var og kva som vart funne. Lesaren skal kunne forstå essensen utan å lese resten. Start med kontekst (kva berekninga gjeld), så hovudresultat, så viktigaste åtvaring viss relevant.
 
-GOOD: "Berekninga gjeld diwhilejonering av strekkarmering i ein enkeltarmert betongbjelke (b = 250 mm, d = 450 mm, C25/30) for eit diwhilejonerande bøyemoment M_Ed = 120 kNm. Engineer Engineer A and Engineer B er fullt einige om at nødvendig armeringsareal er A_s,req = 751 mm² og at enkeltarmering er tilstrekkeleg. Controller har godkjent berekninga som førebels grunnlag, og resultatet skal kontrollerast av ansvarleg fagperson før bruk i prosjektering."
+GOOD: "Berekninga gjeld dimensjonering av strekkarmering i ein enkeltarmert betongbjelke (b = 250 mm, d = 450 mm, C25/30) for eit dimensjonerande bøyemoment M_Ed = 120 kNm. Engineer Engineer A and Engineer B er fullt einige om at nødvendig armeringsareal er A_s,req = 751 mm² og at enkeltarmering er tilstrekkeleg. Controller har godkjent berekninga som førebels grunnlag, og resultatet skal kontrollerast av ansvarleg fagperson før bruk i prosjektering."
 
 DÅRLEG: "Brukaren har spurt om armering i ein betongbjelke. Vi har rekna ut at det trengs 751 mm². Alt ser fint ut. Sjå rapporten for detaljar." (Pratsam, usikker stemme, ikkje fagleg.)
 
 **technical_assessment (4-7 setningar):**
 Fagleg tolking av resultata i kontekst. Forklarer KVIFOR resultata ser ut som dei gjer, kva som er kritisk i assumptionene, korleis ein erfaren ingeniør ville lese tala. IKKJE only referer kva agentane gjorde — tolke det.
 
-Døme på fagleg tolking: "Utnyttingsgraden på 56 % er moderat — det er god margin før kapasiteten er nådd, utan at tverrsnittet er overdiwhilejonert." Eller: "At μ_Ed ligg langt under μ_lim betyr at tverrsnittet har god duktilitet og at enkeltarmering er metodisk forsvarleg."
+Døme på fagleg tolking: "Utnyttingsgraden på 56 % er moderat — det er god margin før kapasiteten er nådd, utan at tverrsnittet er overdimensjonert." Eller: "At μ_Ed ligg langt under μ_lim betyr at tverrsnittet har god duktilitet og at enkeltarmering er metodisk forsvarleg."
 
 **conclusion (2-4 setningar):**
 Praktisk vegvising. Kva skal lesaren gjere vidare? Ikkje overstyr Controller — viss han har gitt "approved_with_warnings", reflekter det. Viss han har gitt "uncertain" eller "rejected", ver tydeleg om at useen må kontrollere på nytt eller søke fagperson FØR vidare bruk.

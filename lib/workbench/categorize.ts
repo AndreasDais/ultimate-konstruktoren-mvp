@@ -72,7 +72,7 @@ export function categorizeKey(key: string): ValueCategory {
     return "serviceability";
   }
 
-  // 8. Geometri — lengder, diwhilejonar, opplegg
+  // 8. Geometri — lengder, dimensjonar, opplegg
   if (/^(l$|l_|h$|b$|d$|h_|b_|d_|span|spennvidde|knekklengde|oppleggs|sideavstiving|geometri|skive)/.test(k)) {
     return "geometry";
   }

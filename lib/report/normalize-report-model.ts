@@ -44,7 +44,7 @@ export function cleanFormulaText(value: unknown): string {
 
 export function normalizeTitleTypography(value: unknown): string {
   return cleanReportText(value)
-    .replace(/\s*—\s*/g, " — ")
+    .replace(/\s*[—–]\s*/g, " - ")
     .replace(/\b(IPE|HEA|HEB|HEM|UNP|UPN)\s*(\d{2,4})\b/gi, (_, profile: string, number: string) => `${profile.toUpperCase()} ${number}`)
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -326,7 +326,7 @@ export function categorizeResultKey(key: string): KeyResultCategory {
   const normalized = key.trim().toLowerCase();
   const canonical = canonicalResultKey(key);
   if (/^(ed|med|ved|ned|qed|mrd|vrd|mplrd|vplrd|eta|utnytt)/.test(canonical) || DIMENSJONERANDE_RE.test(normalized)) {
-    return "diwhilejonerande";
+    return "dimensjonerande";
   }
   if (/^(gk|qk|sk|l|b|h|d|psi|gamma|fyk|fck|fy|profil|spenn)/.test(canonical) || INPUT_RE.test(normalized)) {
     return "input";

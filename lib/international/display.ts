@@ -25,7 +25,7 @@ export const SPRINT336_ENGLISH_LABEL_BY_KEY: Record<string, string> = {
   forsideRapportVersjon: "Report version:",
   viktigMerknad: "IMPORTANT NOTE",
   forespurselLabel: "REQUEST",
-  bandDiwhilejonerande: "DEMAND / DESIGN VALUES",
+  bandDimensjonerande: "DEMAND / DESIGN VALUES",
   bandBruksgrense: "SERVICEABILITY",
   bandInputGeometri: "INPUT AND GEOMETRY",
   sub21Forutsetninger: "02.1 — ASSUMPTIONS",

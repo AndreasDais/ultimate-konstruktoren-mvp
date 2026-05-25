@@ -3,12 +3,12 @@ import type { PilarDisplayLanguage } from "@/lib/international/display";
 
 const LABELS: Record<PilarDisplayLanguage, { label: string; text: string }> = {
   nb: {
-    label: "PRELIMINARY",
-    text: "Must be checked by a qualified professional before use in design work.",
+    label: "FORELØPIG",
+    text: "Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.",
   },
   nn: {
     label: "FØREBELS",
-    text: "Må kontrollerast av fagperson før bruk i prosjektering.",
+    text: "Må kontrollerast av kvalifisert fagperson før bruk i prosjektering.",
   },
   en: {
     label: "PRELIMINARY",

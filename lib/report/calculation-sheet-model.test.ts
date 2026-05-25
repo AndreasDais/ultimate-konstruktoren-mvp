@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { normalizeFormulaLatex } from "@/lib/report/calculation-sheet-model";
+import {
+  normalizeFormulaLatex,
+  looksLikeEquation,
+} from "@/lib/report/calculation-sheet-model";
 
 describe("normalizeFormulaLatex — eksponent med parentes (Fiks 1)", () => {
   it("gjer fck^(2/3) om til ^{2/3}, ikkje brøk", () => {
@@ -69,5 +72,52 @@ describe("normalizeFormulaLatex — rører ikkje gyldig LaTeX", () => {
 
   it("toler tom input", () => {
     expect(normalizeFormulaLatex("")).toBe("");
+  });
+});
+
+describe("looksLikeEquation — prosa skal IKKJE bli display-matte", () => {
+  it("avviser norsk setning med innbaka verdi", () => {
+    expect(looksLikeEquation("Med bt = 300 mm og d = 450 mm:")).toBe(false);
+  });
+
+  it("avviser engelsk setning med innbaka verdi", () => {
+    expect(
+      looksLikeEquation("With wu = 1.820 (kip) / (ft) and L = 20 ft:"),
+    ).toBe(false);
+  });
+
+  it("avviser linje som endar paa kolon", () => {
+    expect(looksLikeEquation("Substituting D = 0.45 and L = 0.80:")).toBe(
+      false,
+    );
+  });
+
+  it("avviser ord-dominert lang linje sjølv med innbaka =", () => {
+    expect(
+      looksLikeEquation(
+        "Her ser vi at den totale lasten paa bjelken er lik 12 og at " +
+          "dette gjeld over heile spennet",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("looksLikeEquation — ekte likningar skal passere", () => {
+  it("godtek enkel likning med subscript", () => {
+    expect(looksLikeEquation("M_Ed = 54,0 kNm")).toBe(true);
+  });
+
+  it("godtek framhalds-linje som startar med =", () => {
+    expect(looksLikeEquation("= 0{,}26 \\cdot 866{,}7")).toBe(true);
+  });
+
+  it("godtek likning med fleire ledd og cdot", () => {
+    expect(
+      looksLikeEquation("Ed = 1{,}20 \\cdot g_k + 1{,}5 \\cdot q_k"),
+    ).toBe(true);
+  });
+
+  it("godtek likning med eksponent", () => {
+    expect(looksLikeEquation("fctm = 0{,}30 \\cdot 35^{2/3}")).toBe(true);
   });
 });

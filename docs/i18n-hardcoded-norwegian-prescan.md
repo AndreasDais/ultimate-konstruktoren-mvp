@@ -13,7 +13,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 57: - Tillit is AI-pipeline confidence, not professional approval.
 58: - Do not show "Godkjent" alone in a way that implies final engineering approval.
 59: - Prefer "Foreløpig godkjent" / "Førebels godkjent".
-60: - Fagperson-signering is a separate future diwhileion.
+60: - Fagperson-signering is a separate future dimension.
 
 ## app/page.tsx
 119: lavTillit: "Low confidence in interpretation — check the values below before starting",
@@ -134,12 +134,12 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 19: Du jobbar i ein pipeline der Comparator og Controller seinare verifiserer arbeidet ditt mot Engineer B sitt uavhengige svar. Du leverer RIKTIG arbeid, ikkje only LIKANDE — faglege feil får konsekvensar nedstrøms.
 39: "assumptions": ["alle assumptioner brukt"],
 55: "Konkret sjekk Engineer A har utført før finalisering. Sjå <verification_checklist>."
-65: results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktørane. Inkluder ALLE diwhilejonerande verdier du rekna gjennom oppgåva — ikkje only hovudsvaret:
+65: results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktørane. Inkluder ALLE dimensjonerande verdier du rekna gjennom oppgåva — ikkje only hovudsvaret:
 74: Nøkkel-namngiving og verdiformat: følg <result_key_nokkelar> og <results_verdiformat> strengt — det er dette som lèt Comparator para Engineer A and Engineer B rad-for-rad.
 76: results skal IKKJE filtrere ned til only "hovudsvaret". Comparator treng kvart namngitt intermediate value for å gjere uavhengig sjekk.
 88: results-nøklane MÅ vere identiske mellom Engineer A og Engineer B for SAME fysiske storleik — elles klarar ikkje Comparator å para verdiane rad-for-rad i rapporten. Følg desse reglane strengt:
 113: Tilnærmingsteikn, atterhald og parentes-forklaringar går i assumptions, limitations eller warnings — ALDRI inn i verdistrengen. Comparator les verdistrengen numerisk; leiande "=" eller "≈" og forklarande hale øydelegg paringa.
-164: I prosa-felta (calculation_steps.text, limitations, warnings, short_conclusion, verification_notes): referer til deg sjølv som "Engineer A" i tredjeperson, eller bruk passivform — aldri "eg". Døme: "Engineer A har valt formel M = qL²/8" eller "Lasten er antatt som diwhilejonerande", ikkje "Eg har valt...".
+164: I prosa-felta (calculation_steps.text, limitations, warnings, short_conclusion, verification_notes): referer til deg sjølv som "Engineer A" i tredjeperson, eller bruk passivform — aldri "eg". Døme: "Engineer A har valt formel M = qL²/8" eller "Lasten er antatt som dimensjonerande", ikkje "Eg har valt...".
 253: // knekkekurve-val), bindande for både Engineer Engineer A and Engineer B. Stålkvaliteten
 363: ? "Engineer A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
 364: : "Klarte ikkje parse Engineer A sitt svar som JSON",
@@ -152,12 +152,12 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 19: Det finst ein anna konstruktør (Engineer A) som også løyser same oppgåve. Du har IKKJE sett hennar/hans svar. Oppgåva di er å løyse problemet uavhengig — ditt arbeid blir samanlikna mot A si løysing av Comparator.
 60: "assumptions": ["alle assumptioner brukt"],
 76: "Konkret sjekk Engineer B har utført før finalisering. Sjå <verification_checklist>."
-86: results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktørane. Inkluder ALLE diwhilejonerande verdier du rekna gjennom oppgåva — ikkje only hovudsvaret:
+86: results-objektet er Pilar sitt kontrakt-punkt for jamføring mellom konstruktørane. Inkluder ALLE dimensjonerande verdier du rekna gjennom oppgåva — ikkje only hovudsvaret:
 95: Nøkkel-namngiving og verdiformat: følg <result_key_nokkelar> og <results_verdiformat> strengt — det er dette som lèt Comparator para Engineer A and Engineer B rad-for-rad.
 97: results skal IKKJE filtrere ned til only "hovudsvaret". Comparator treng kvart namngitt intermediate value for å gjere uavhengig sjekk. Som uavhengig kontroll-løysar er det særleg viktig at DU også produserer alle intermediate value — om du only leverer sluttsvaret, kan ikkje Comparator verifisere mellomstega.
 109: results-nøklane MÅ vere identiske mellom Engineer A og Engineer B for SAME fysiske storleik — elles klarar ikkje Comparator å para verdiane rad-for-rad i rapporten. Følg desse reglane strengt:
 134: Tilnærmingsteikn, atterhald og parentes-forklaringar går i assumptions, limitations eller warnings — ALDRI inn i verdistrengen. Comparator les verdistrengen numerisk; leiande "=" eller "≈" og forklarande hale øydelegg paringa.
-181: I prosa-felta: referer til deg sjølv som "Engineer B" i tredjeperson, eller passivform — aldri "eg". Døme: "Engineer B har valt formel M = qL²/8" eller "Lasten er antatt som diwhilejonerande", ikkje "Eg har valt...".
+181: I prosa-felta: referer til deg sjølv som "Engineer B" i tredjeperson, eller passivform — aldri "eg". Døme: "Engineer B har valt formel M = qL²/8" eller "Lasten er antatt som dimensjonerande", ikkje "Eg har valt...".
 265: // knekkekurve-val), bindande for både Engineer Engineer A and Engineer B. Stålkvaliteten
 372: ? "Engineer B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
 373: : "Klarte ikkje parse Engineer B sitt svar som JSON",
@@ -219,7 +219,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 96: - Comparator har funne "significant_differences" (5-15% talavvik eller klare metodiske usemje)
 98: - Engineerane har ulike kritiske antakingar som gir vesentleg ulike svar
 100: - Konsistens-issue som ikkje er kritisk men som svekkjer tilliten til heile svaret
-104: - Comparator har funne "critical_disagreement" (>15% talavvik på diwhilejonerande storleik)
+104: - Comparator har funne "critical_disagreement" (>15% talavvik på dimensjonerande storleik)
 106: - Engineerane gir motstridande engineering-konklusjon (godkjent vs ikkje godkjent på same sak)
 107: - Tal i sluttkonklusjon stemmer ikkje med konstruktøren sine eigne mellomresultat
 116: Sluttuseen les short_conclusion FØRST. Viss ein konstruktør har hallusinasjon med severity "high" eller "critical" i sin short_conclusion, skal den blokkast. Bruk desse identifikatorane (interne kode-identifikatorar som downstream-koden les):
@@ -258,7 +258,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 34: - Comparator-blokk og Controller-avgjerd (rendrast direkte frå DB)
 46: 1. Kva er Controller si avgjerd? (approved / approved_with_warnings / uncertain / rejected) Den styrer tonen.
 48: 3. Er det kritisk usemje mellom Engineer Engineer A and Engineer B som Comparator har fanga opp?
-67: GOOD: "Berekninga gjeld diwhilejonering av strekkarmering i ein enkeltarmert betongbjelke (b = 250 mm, d = 450 mm, C25/30) for eit diwhilejonerande bøyemoment M_Ed = 120 kNm. Engineer Engineer A and Engineer B er fullt einige om at nødvendig armeringsareal er A_s,req = 751 mm² og at enkeltarmering er tilstrekkeleg. Controller har godkjent berekninga som førebels grunnlag, og resultatet skal kontrollerast av ansvarleg fagperson før bruk i prosjektering."
+67: GOOD: "Berekninga gjeld dimensjonering av strekkarmering i ein enkeltarmert betongbjelke (b = 250 mm, d = 450 mm, C25/30) for eit dimensjonerande bøyemoment M_Ed = 120 kNm. Engineer Engineer A and Engineer B er fullt einige om at nødvendig armeringsareal er A_s,req = 751 mm² og at enkeltarmering er tilstrekkeleg. Controller har godkjent berekninga som førebels grunnlag, og resultatet skal kontrollerast av ansvarleg fagperson før bruk i prosjektering."
 77: Praktisk vegvising. Kva skal lesaren gjere vidare? Ikkje overstyr Controller — viss han har gitt "approved_with_warnings", reflekter det. Viss han har gitt "uncertain" eller "rejected", ver tydeleg om at useen må kontrollere på nytt eller søke fagperson FØR vidare bruk.
 83: - ALDRI inkluder NS-EN- eller EC-paragrafnummer i prosaen din. Engineerane har allereie referert dei i sin output — referer generisk til "EC2-metode" eller "etter Eurokode", ikkje spesifikke §-nummer. Du står langt frå utleiinga og kan ikkje verifisere referansane sjølv.
 84: - ALDRI inkluder tal eller resultat som ikkje står eksplisitt i Engineer A eller B sitt results-felt eller short_conclusion. Viss du vil nemne eit tal, kopier det eksakt frå upstream — ikkje skriv om frå minnet.
@@ -310,7 +310,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 ## app/api/input-agent/route.ts
 26: Tryggleiken ligg ikkje i deg åleine — Engineer A og Engineer B løyser uavhengig, Comparator finn avvik mellom dei, og Controller har stoppmandat. Du er første ledd, ikkje einaste ledd.
 28: VIKTIG: velvilje gjeld SCOPE — ikkje data. Du skal vere romsleg med kva slags fagområde du slepp gjennom, men streng på at dei oppgitte dataa faktisk heng saman. Velvilje på scope gir deg ikkje løyve til å oversjå sjølvmotseiande input (sjå MOTSTRID-DETEKSJON).
-36: - "relevant_ikkje_stotta" — BERRE for fagområde der vi ikkje har metodisk grunnlag overhodet: brannprosjektering, seismisk diwhilejonering, dynamisk respons og utmatting, geoteknisk diwhilejonering (utover enkel jordtrykk-modell). IKKJE bruk denne for vanlege strukturberekningar i stål/betong/tre — la heller agentane prøve.
+36: - "relevant_ikkje_stotta" — BERRE for fagområde der vi ikkje har metodisk grunnlag overhodet: brannprosjektering, seismisk dimensjonering, dynamisk respons og utmatting, geoteknisk dimensjonering (utover enkel jordtrykk-modell). IKKJE bruk denne for vanlege strukturberekningar i stål/betong/tre — la heller agentane prøve.
 58: Tolkar tolkar forespurnaden. Tolkar reknar ikkje, og Tolkar vel ikkje faglege parametrar. Følgjande er konstruktørane sin jobb — dei slår det opp frå sitt autoritative NA-grunnlag — og skal ALDRI fastsetjast av Tolkar:
 67: Skriv ALDRI noko som "knekkingskurve b antatt", "gamma_M1 = 1,0 antatt" eller "tverrsnittsklasse 1 antatt" i antakingar eller tolkte_verdiar — og finn ALDRI på paragrafreferansar for slike val. Det er å gjere konstruktøren sin jobb, og ein feil der forplantar seg til BEGGE engineers samtidig, slik at Comparator og Controller ser ein falsk konsensus. Oppgi profil og stålkvalitet i tolkte_verdiar slik useen gav dei; konstruktørane finn kurve, faktorar og fasthet itself.
 88: - Sett konfidens til 0,45 eller lågare.
@@ -502,7 +502,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 ## app/components/result/CountUp.tsx
 9: * useen si auga er på Controller-kortet på toppen først, og når dei
 
-## app/components/result/DiwhilejonerandeTile.tsx
+## app/components/result/DimensjonerandeTile.tsx
 163: // På smale viewports (mobile) reduserar minmax(0, 1fr) tiles til lågare
 
 ## app/components/result/KontrollorChipPill.tsx
@@ -859,7 +859,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 13: 57: - Tillit is AI-pipeline confidence, not professional approval.
 14: 58: - Do not show "Godkjent" alone in a way that implies final engineering approval.
 15: 59: - Prefer "Foreløpig godkjent" / "Førebels godkjent".
-16: 60: - Fagperson-signering is a separate future diwhileion.
+16: 60: - Fagperson-signering is a separate future dimension.
 19: 119: lavTillit: "Low confidence in interpretation — check the values below before starting",
 20: 151: samanliknarTittel: "Comparator — differences found",
 21: 266: // Controller-vurdering-toggle (#02): Lang prosa frå Controlleren er
@@ -1152,7 +1152,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 ## lib/tillit-score.ts
 4: * Tillit-score-kalkulator for Pilar.
 6: * Score-formelen måler AI-PIPELINE-TILLIT — kor mykje vi kan stole på
-7: * AI-agentane sitt arbeid. Fagperson-signering er ein separat diwhilejon
+7: * AI-agentane sitt arbeid. Fagperson-signering er ein separat dimensjon
 19: *   50-74   Middels  okrer     (#B0822E)
 20: *   0-49    Låg      raud      (#8B2331)
 23: export const FORMULA_VERSION = "v0.2-no-fagperson";
@@ -1190,14 +1190,14 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 87: `Approved er ikkje tillate her. Opphavleg Controller-grunngiving: ` +
 
 ## lib/check/load-combination-check.test.ts
-19: // Engineer-output der diwhilejonerande verdi ligg under ein vald,
+19: // Engineer-output der dimensjonerande verdi ligg under ein vald,
 27: it("flags A2-feilen: konstruktør rapporterer 23,78 (ekv. 6.10)", () => {
 41: it("flags begge engineers når begge bommar", () => {
 67: it("ingen avvik når konstruktøren ikkje rapporterte Ed_dim", () => {
 
 ## lib/check/load-combination-check.ts
 2: * Deterministisk kombinasjonsstruktur-sjekk for Controller (agent_d).
-5: * laster via load-combination.ts, og samanliknar mot den diwhilejonerande
+5: * laster via load-combination.ts, og samanliknar mot den dimensjonerande
 6: * verdien Ed_dim kvar konstruktør rapporterte. Fangar A2-klassen: ekv. 6.10
 25: /** Ed_dim konstruktøren rapporterte. */
 51: * til eitt bokstavleg nøkkelnamn (A0 viste at engineers varierer:
@@ -1355,7 +1355,7 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 26: if (result.ok) expect(result.value).toEqual({ text: "value with { brace } inside", status: "klar" });
 
 ## lib/pilot/completeness.ts
-32: "Stålbjelker uten dokumentert sideavstivning kan være styrt av lateral-torsjonal vipping. Kontroller dette før bruk i diwhilejonering.",
+32: "Stålbjelker uten dokumentert sideavstivning kan være styrt av lateral-torsjonal vipping. Kontroller dette før bruk i dimensjonering.",
 
 ## lib/profiles/na-basis.ts
 2: * NA-grunnlag for Pilar-konstruktørane (agent_a / agent_b).
@@ -1572,21 +1572,21 @@ Rough grep-style scan for likely hardcoded Norwegian text. False positives are e
 8: * - "trygg": Engineer A and Engineer B fullt einige + ingen advarsler + ≤4 steg → minimal
 
 ## lib/result/tile-heuristics.test.ts
-4: // FIKS 4: getDiwhilejonerandeKeys skal bruke konstruktøren si eksplisitte
+4: // FIKS 4: getDimensjonerandeKeys skal bruke konstruktøren si eksplisitte
 
 ## lib/result/tile-heuristics.ts
 4: * Backend (Engineer A/B) har IKKJE primary-flagg per result-key i
-5: * pilot-skjema. Vi avgjer klient-side kva som er "diwhilejonerande" (det
+5: * pilot-skjema. Vi avgjer klient-side kva som er "dimensjonerande" (det
 14: * Post-pilot bør structured_output utvidast med primary_keys i konstruktør-
 107: // Patterns for keys som høyrer heime i BRUKSGRENSETILSTAND (SLS), ikkje
 127: * Returnerer true om ein key høyrer i BRUKSGRENSE-band (SLS) heller enn
 142: // agent-variantar fordi konstruktørane use begge.
-300: nb: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Diwhilejonsløs parameter brukt i armeringsdesign — bestemmer om bjelken er underarmert (μ_Ed < μ_lim) eller om du trenger trykkarmering. Lavere er bedre fra utnyttings-perspektiv.",
-301: nn: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Diwhilejonslaus parameter brukt i armeringsdesign — avgjer om bjelken er underarmert (μ_Ed < μ_lim) eller om du treng trykkarmering. Lågare er betre frå utnyttings-perspektiv.",
+300: nb: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonsløs parameter brukt i armeringsdesign — bestemmer om bjelken er underarmert (μ_Ed < μ_lim) eller om du trenger trykkarmering. Lavere er bedre fra utnyttings-perspektiv.",
+301: nn: "Relativt moment μ_Ed = M_Ed / (b · d² · f_cd). Dimensjonslaus parameter brukt i armeringsdesign — avgjer om bjelken er underarmert (μ_Ed < μ_lim) eller om du treng trykkarmering. Lågare er betre frå utnyttings-perspektiv.",
 308: nb: "Grensen for relativ trykksone-høyde ξ = x/d, der x er nøytralaksens dybde. Sikrer duktilitetskrav etter EC2 §5.6.3 (vanligvis ξ_lim ≈ 0,45–0,5). Lavere ξ gir mer duktil oppførsel og varsel før brudd.",
 309: nn: "Grensa for relativ trykksone-høgd ξ = x/d, der x er nøytralaksens djupne. Sikrar duktilitetskrav etter EC2 §5.6.3 (vanlegvis ξ_lim ≈ 0,45–0,5). Lågare ξ gir meir duktil oppførsel og varsel før brudd.",
-312: nb: "Diwhilejonerende utnyttingsgrad — forholdet mellom diwhilejonerende påkjenning og kapasitet. Verdier < 1,0 indikerer at tverrsnittet har tilstrekkelig kapasitet. Lavere er bedre, men for lav verdi (< 0,5) kan indikere overdesign.",
-313: nn: "Diwhilejonerande utnyttingsgrad — forholdet mellom diwhilejonerande påkjenning og kapasitet. Verdiar < 1,0 indikerer at tverrsnittet har tilstrekkeleg kapasitet. Lågare er betre, men for låg verdi (< 0,5) kan indikere overdesign.",
+312: nb: "Dimensjonerende utnyttingsgrad — forholdet mellom dimensjonerende påkjenning og kapasitet. Verdier < 1,0 indikerer at tverrsnittet har tilstrekkelig kapasitet. Lavere er bedre, men for lav verdi (< 0,5) kan indikere overdesign.",
+313: nn: "Dimensjonerande utnyttingsgrad — forholdet mellom dimensjonerande påkjenning og kapasitet. Verdiar < 1,0 indikerer at tverrsnittet har tilstrekkeleg kapasitet. Lågare er betre, men for låg verdi (< 0,5) kan indikere overdesign.",
 345: // === Controller-kort helpers (#02) ===
 348: // (Comparator feila), fallbackar kallaren til getFirstSentence på
 358: // Steg 0 (FIKS 4): eksplisitt rolle frå konstruktøren. Har konstruktøren

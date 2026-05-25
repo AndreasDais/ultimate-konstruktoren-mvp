@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CountUp (#anim-01) — animert tal-teljing for diwhilejonerande tiles.
+ * CountUp (#anim-01) — animert tal-teljing for dimensjonerande tiles.
  *
  * Tellast opp frå 0 til endeverdi over 1100ms med ease-out cubic. Animasjonen
  * triggrast når tile-en KJEM I VIEW (via IntersectionObserver), ikkje ved

@@ -6,7 +6,7 @@ export const REPORT_MODEL_VERSION = "report_model_v0.1";
 
 export type ReportAudience = "student" | "engineer" | "documentation";
 export type ReportStatus = "draft" | "preliminary" | "approved" | "warning" | "uncertain" | "rejected";
-export type KeyResultCategory = "diwhilejonerande" | "input" | "kontroll" | "anna";
+export type KeyResultCategory = "dimensjonerande" | "input" | "kontroll" | "anna";
 export type CheckStatus = "ok" | "warning" | "danger" | "unknown";
 
 export type ReportMeta = {

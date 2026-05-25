@@ -42,8 +42,8 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
   },
   s2P1Bold: { nb: "ikke sertifisert", nn: "ikkje sertifisert" },
   s2P1Post: {
-    nb: " for diwhilejonering av reelle byggverk, og resultatene skal ikke brukes som eneste grunnlag for konstruksjonsavgjørelser.",
-    nn: " for diwhilejonering av reelle byggverk, og resultata skal ikkje brukast som einaste grunnlag for konstruksjonsavgjerder.",
+    nb: " for dimensjonering av reelle byggverk, og resultatene skal ikke brukes som eneste grunnlag for konstruksjonsavgjørelser.",
+    nn: " for dimensjonering av reelle byggverk, og resultata skal ikkje brukast som einaste grunnlag for konstruksjonsavgjerder.",
   },
   s2P2: {
     nb: "Vi gir ingen garanti for at AI-genererte beregninger er korrekte, komplette eller i samsvar med gjeldende regelverk. Bruk av Pilar skjer på eget ansvar.",

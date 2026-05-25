@@ -32,7 +32,7 @@ export type BucklingCurve = "a0" | "a" | "b" | "c" | "d";
 //  EC0 — laster (NS-EN 1990 + NA)
 // ─────────────────────────────────────────────────────────────
 /**
- * STR-lastkombinasjon, tabell NA.A1.2(B) — diwhilejonerande er den
+ * STR-lastkombinasjon, tabell NA.A1.2(B) — dimensjonerande er den
  * ugunstigaste av:
  *   6.10a:  1,35·ΣG + Σ(1,5·ψ0,i·Q_i)
  *   6.10b:  1,20·ΣG + 1,5·Q_1 + Σ(1,5·ψ0,i·Q_i)   for i ≠ 1

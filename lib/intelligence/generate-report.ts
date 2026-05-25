@@ -364,11 +364,11 @@ async function saveMetricSnapshots(
     metric_key: m.key,
     metric_value: m.value,
     source_table: m.sourceTable,
-    diwhileion: m.diwhileion ?? {},
+    dimension: m.dimension ?? {},
   }));
 
   const { error } = await supabase.from("daily_metrics_snapshots").upsert(rows, {
-    onConflict: "snapshot_date,metric_key,source_table,diwhileion",
+    onConflict: "snapshot_date,metric_key,source_table,dimension",
   });
 
   if (error) {

@@ -101,12 +101,12 @@ Merk: klar/delvis_klar/mangelfull-statusen i seg sjølv påverkar ikkje denne av
 - Eit hardt blokkeringsvilkår gjeld (NA-avvik, motstrid, FORHÅNDSKONTROLL ikkje-tom) — minimum uncertain
 
 "rejected" — output skal IKKJE visast:
-- Comparator har funne "critical_disagreement" (>15% talavvik på diwhilejonerande storleik)
+- Comparator har funne "critical_disagreement" (>15% talavvik på dimensjonerande storleik)
 - Critical-severity inkonsistens (klare hallusinasjonar, motseiing av eigne tal)
 - Engineerane gir motstridande engineering-konklusjon (godkjent vs ikkje godkjent på same sak)
 - Tal i sluttkonklusjon stemmer ikkje med konstruktøren sine eigne mellomresultat
 
-NUMERISKE TERSKEL-VERDIAR (rettleiande, gjeld diwhilejonerande sluttverdiar):
+NUMERISKE TERSKEL-VERDIAR (rettleiande, gjeld dimensjonerande sluttverdiar):
 - < 1% : match-nivå, ingen warning
 - 1-5% : minor — vurder om det er reint avrundings-presisjon eller metode-skilnad
 - 5-15% : significant — bør utløyse "uncertain"
@@ -296,7 +296,7 @@ export async function POST(request: Request) {
       if (loadComboDeviations.length > 0) {
         lines.push(
           "Kombinasjonsstruktur-avvik — konstruktør har rapportert feil " +
-            "diwhilejonerande lastverknad (Ed_dim):"
+            "dimensjonerande lastverknad (Ed_dim):"
         );
         for (const d of loadComboDeviations) {
           lines.push(
