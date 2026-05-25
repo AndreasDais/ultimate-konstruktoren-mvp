@@ -27,7 +27,7 @@ import type { AgentResult } from "@/lib/workbench/types";
 import { WB_LABELS as BASE_WB_LABELS } from "@/lib/result/labels";
 import { isRealIssue } from "@/lib/compare/consistency-issues";
 import type { EngineeringContext } from "@/lib/engineering-context";
-import { buildLocalizedLabelProxy, displayLanguageForContext, polishEnglishGeneratedText, localizeResultLabel,
+import { buildLocalizedLabelProxy, displayLanguageForContext, polishEnglishGeneratedText, localizeResultLabel, polishNorwegianRoleText,
   sanitizeAiscGuardedOutputText,
 } from "@/lib/international/display";
 import { computeProfile } from "@/lib/result/profile";
@@ -361,7 +361,9 @@ export function CalculationResultView(props: CalculationResultViewProps) {
   const displayLanguage = displayLanguageForContext(locale, engineeringContext);
   const isEnglishResult = displayLanguage === "en";
   const uiText = (value: string | null | undefined): string =>
-    isEnglishResult ? sanitizeAiscGuardedOutputText(sprint3310aResultViewResidueText(sanitizeAiscGuardedOutputText(sprint339FinalNorwegianResidueText(sprint338ResultUiText(String(value ?? "")))))) : String(value ?? "");
+    isEnglishResult
+      ? sanitizeAiscGuardedOutputText(sprint3310aResultViewResidueText(sanitizeAiscGuardedOutputText(sprint339FinalNorwegianResidueText(sprint338ResultUiText(String(value ?? ""))))))
+      : polishNorwegianRoleText(String(value ?? ""), displayLanguage);
 
   const WB_LABELS = buildLocalizedLabelProxy(BASE_WB_LABELS, locale, engineeringContext, {
     konstruktorA: "Engineer A",

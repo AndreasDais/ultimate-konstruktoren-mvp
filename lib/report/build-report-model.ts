@@ -1,6 +1,8 @@
 import { confidenceLabel, decisionStatusLabel, decisionStatusShort, formatPromptVersion, inputStatusLabel, matchPhrase, matchStatusShort, } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
-import { polishEnglishGeneratedText, sprint335PolishEnglishText } from "@/lib/international/display";
+import { polishEnglishGeneratedText, sprint335PolishEnglishText,
+  polishNorwegianRoleText
+} from "@/lib/international/display";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import {
   inferReportDisplayLanguage,
@@ -476,13 +478,15 @@ function buildCoverText(
 }
 
 function reportText(value: string, displayLanguage: "nb" | "nn" | "en"): string {
-  return displayLanguage === "en" ? polishEnglishGeneratedText(value) : value;
+  return displayLanguage === "en" ? polishEnglishGeneratedText(value) : polishNorwegianRoleText(value, displayLanguage);
 }
 
 
 function polishForDisplay(text: string, displayLanguage: string = "nb"): string {
   const base = displayLanguage === "en" ? sprint335PolishEnglishText(text) : text;
-  return displayLanguage === "en" ? sprint339FinalNorwegianResidueText(base) : base;
+  return displayLanguage === "en"
+    ? sprint339FinalNorwegianResidueText(base)
+    : polishNorwegianRoleText(base, displayLanguage as "nb" | "nn" | "en");
 }
 
 export function buildReportModel(data: UpstreamReportData, options: BuildReportModelOptions): ReportModel {

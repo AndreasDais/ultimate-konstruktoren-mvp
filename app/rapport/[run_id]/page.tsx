@@ -38,7 +38,7 @@ import {
 } from "@/lib/result/tile-heuristics";
 import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
-import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage } from "@/lib/international/display";
+import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polishNorwegianRoleText } from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
@@ -298,21 +298,21 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Dei kom fram til same resultat.",
   },
   verifikasjonKolStorleik: { nb: "Størrelse", nn: "Storleik" },
-  verifikasjonKolKonstruktorA: { nb: "Engineer A", nn: "Engineer A" },
-  verifikasjonKolKonstruktorB: { nb: "Engineer B", nn: "Engineer B" },
+  verifikasjonKolKonstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  verifikasjonKolKonstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
   verifikasjonKolSamsvar: { nb: "Samsvar", nn: "Samsvar" },
   verifikasjonManglar: { nb: "—", nn: "—" },
   verifikasjonAvvikKort: { nb: "Avvik", nn: "Avvik" },
   verifikasjonSamsvarAria: { nb: "Samsvar mellom konstruktørene", nn: "Samsvar mellom konstruktørane" },
   verifikasjonAvvikAria: { nb: "Avvik mellom konstruktørene", nn: "Avvik mellom konstruktørane" },
-  verifikasjonUkjentAria: { nb: "Verdi ikke tilgjengelig fra Engineer B", nn: "Verdi ikkje tilgjengeleg frå Engineer B" },
+  verifikasjonUkjentAria: { nb: "Verdi ikke tilgjengelig fra Konstruktør B", nn: "Verdi ikkje tilgjengeleg frå Konstruktør B" },
   // Forside-tabular metadata (Fase 1, B-redesign — utan kolon)
   forsideMetaDokumentID: { nb: "Dokument-ID", nn: "Dokument-ID" },
   forsideMetaBrukar: { nb: "Bruker", nn: "Brukar" },
   forsideMetaDato: { nb: "Dato", nn: "Dato" },
   forsideMetaStatus: { nb: "Status", nn: "Status" },
   forsideMetaVersjon: { nb: "Versjon", nn: "Versjon" },
-  forsideFallbackTittel: { nb: "Calculation note", nn: "Berekningsnotat" },
+  forsideFallbackTittel: { nb: "Beregningsnotat", nn: "Berekningsnotat" },
   forsideTillitOverskrift: { nb: "Tillit", nn: "Tillit" },
   forsideAITekst: { nb: "AI-generert dokument", nn: "AI-generert dokument" },
   qrAccessTitle: { nb: "Skann for nettversjon", nn: "Skann for nettversjon" },
@@ -346,9 +346,9 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   atvaringarH3: { nb: "Advarsler", nn: "Åtvaringar" },
   // Kontroll-seksjon
   kontrollH2: { nb: "Kontroll", nn: "Kontroll" },
-  konstruktorkontrollH3: { nb: "Engineerkontroll", nn: "Engineerkontroll" },
-  berekningaLoyst: { nb: "Beregningen er løst uavhengig av to AI-engineers (Engineer A and Engineer B).", nn: "Berekninga er løyst uavhengig av to AI-engineers (Engineer A and Engineer B)." },
-  kontrollorAvgjerd: { nb: "Controllerens avgjørelse:", nn: "Controlleren si avgjerd:" },
+  konstruktorkontrollH3: { nb: "Konstruktørkontroll", nn: "Konstruktørkontroll" },
+  berekningaLoyst: { nb: "Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B).", nn: "Berekninga er løyst uavhengig av to AI-konstruktørar (Konstruktør A og Konstruktør B)." },
+  kontrollorAvgjerd: { nb: "Kontrollørens avgjørelse:", nn: "Kontrolløren si avgjerd:" },
   konklusjonH3: { nb: "Konklusjon", nn: "Konklusjon" },
   // Footer
   forebelsBerekning: { nb: "Foreløpig beregning — må kontrolleres av fagperson før bruk i prosjektering.", nn: "Førebels berekning — må kontrollerast av fagperson før bruk i prosjektering." },
@@ -367,13 +367,13 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   kontrollstatus: { nb: "Kontrollstatus", nn: "Kontrollstatus" },
   statusInputTolking: { nb: "Input-tolkning", nn: "Input-tolking" },
   statusInputExplanation: { nb: "Tolkerens vurdering av hvor klar oppgaven var til å beregnes. 'Klar' = all info på plass; andre statuser = Tolkeren gjorde rimelige antakelser eller manglet info.", nn: "Tolkar si vurdering av kor klar oppgåva var til å reknast. 'Klar' = all info på plass; andre statusar = Tolkar gjorde rimelege antakingar eller mangla info." },
-  statusKonstruktorA: { nb: "Engineer A", nn: "Engineer A" },
-  statusKonstruktorB: { nb: "Engineer B", nn: "Engineer B" },
+  statusKonstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  statusKonstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
   statusKonstruktorExplanation: { nb: "Engineerens egenrapporterte sikkerhet på eget svar (high/medium/low). Måler only én agents tillit til seg selv, ikke den samlede rapporten.", nn: "Engineeren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar only éin agent sin tillit til seg sjølv, ikkje den samla rapporten." },
   statusSamanlikning: { nb: "Sammenligning", nn: "Samanlikning" },
-  statusSamanlikningExplanation: { nb: "Comparator-agenten sjekker om Engineer A and Engineer B kom frem til samme svar. 'Enige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krever nærmere ettersyn.", nn: "Comparator-agenten sjekkar om Engineer A and Engineer B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn." },
-  statusKontrollor: { nb: "Controller", nn: "Controller" },
-  statusKontrollorExplanation: { nb: "Controller-agenten leser både engineers og Comparator, og avgjør om resultatet er trygt nok å vise. Erstatter ikke fagperson-kontroll.", nn: "Controller-agenten les både engineers og Comparator, og avgjer om resultatet er trygt nok å vise. Erstattar ikkje fagperson-kontroll." },
+  statusSamanlikningExplanation: { nb: "Sammenligner-agenten sjekker om Konstruktør A og Konstruktør B kom frem til samme svar. 'Enige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krever nærmere ettersyn.", nn: "Samanliknar-agenten sjekkar om Konstruktør A og Konstruktør B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn." },
+  statusKontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+  statusKontrollorExplanation: { nb: "Kontrollør-agenten leser både konstruktørene og sammenligneren, og avgjør om resultatet er trygt nok å vise. Erstatter ikke fagperson-kontroll.", nn: "Kontrollør-agenten les både konstruktørane og samanliknaren, og avgjer om resultatet er trygt nok å vise. Erstatter ikkje fagperson-kontroll." },
   statusFagperson: { nb: "Fagperson", nn: "Fagperson" },
   ikkjeKontrollert: { nb: "Ikke kontrollert", nn: "Ikkje kontrollert" },
   statusFagpersonExplanation: { nb: "Sjekker om en kvalifisert byggingeniør har signert rapporten. I pilot-versjonen er dette alltid 'Ikke kontrollert' — du må selv få en fagperson til å gjennomgå før bruk i reelle prosjekter.", nn: "Sjekkar om ein kvalifisert byggingeniør har signert rapporten. I pilot-versjonen er dette alltid 'Ikkje kontrollert' — du må sjølv få ein fagperson til å gjennomgå før bruk i reelle prosjekt." },
@@ -626,7 +626,7 @@ export default function RapportPage() {
   const reportPromptVersion = reportDisplayLanguage === "en"
     ? formatPromptVersion(data.report.prompt_version).replace(/\bRapportør\b/g, "Reporter")
     : formatPromptVersion(data.report.prompt_version);
-  const polishReportText = (value: string) => reportDisplayLanguage === "en" ? sanitizeAiscGuardedOutputText(sprint335PolishEnglishText(value)) : value;
+  const polishReportText = (value: string) => reportDisplayLanguage === "en" ? sanitizeAiscGuardedOutputText(sprint335PolishEnglishText(value)) : polishNorwegianRoleText(value, reportDisplayLanguage);
   const maybeEnglish = (value: string) => reportDisplayLanguage === "en" ? polishEnglishGeneratedText(value) : value;
 
   const RP_LABELS = buildLocalizedLabelProxyForLanguage(BASE_RP_LABELS, locale, reportDisplayLanguage, {

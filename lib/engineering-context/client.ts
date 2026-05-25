@@ -6,13 +6,26 @@ import {
 } from "@/lib/engineering-context";
 import type { EngineeringContext } from "@/lib/engineering-context";
 
+
+function isNorwayEngineeringContext(context: EngineeringContext | null | undefined): boolean {
+  return context?.region?.countryCode === "NO";
+}
+
 export function loadEngineeringContextFromStorage(): EngineeringContext | null {
   if (typeof window === "undefined") return null;
 
   try {
     const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
     if (!raw) return null;
-    return buildEngineeringContext(JSON.parse(raw) as Partial<EngineeringContext>);
+    const context = buildEngineeringContext(JSON.parse(raw) as Partial<EngineeringContext>);
+
+    // Norway / NO uses the default Norwegian PILAR flow, not international mode.
+    if (isNorwayEngineeringContext(context)) {
+      window.localStorage.removeItem(ENGINEERING_CONTEXT_STORAGE_KEY);
+      return null;
+    }
+
+    return context;
   } catch (error) {
     console.warn("[engineering-context] Could not read local context:", error);
     return null;
@@ -20,6 +33,11 @@ export function loadEngineeringContextFromStorage(): EngineeringContext | null {
 }
 
 export function saveEngineeringContextToStorage(context: EngineeringContext): void {
+  if (isNorwayEngineeringContext(context)) {
+    window.localStorage.removeItem(ENGINEERING_CONTEXT_STORAGE_KEY);
+    return;
+  }
+
   if (typeof window === "undefined") return;
 
   try {

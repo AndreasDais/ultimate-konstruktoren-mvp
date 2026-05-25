@@ -786,9 +786,61 @@ export function isInternationalEnglishContext(context: EngineeringContext | null
   return false;
 }
 
+
+export function hasNorwegianDefaultDisplaySignal(text: string | null | undefined): boolean {
+  const value = String(text ?? "").toLowerCase();
+  if (!value.trim()) return false;
+
+  const norwegianSignals = [
+    "norsk",
+    "norske",
+    "nynorsk",
+    "bokmål",
+    "bokmal",
+    "eurokode-kontekst",
+    "norsk/eurokode",
+    "spennvidde",
+    "dimensjonerande",
+    "dimensjonerende",
+    "fritt opplagd",
+    "fritt opplagret",
+    "jamt fordelt",
+    "jevnt fordelt",
+    "rekn ut",
+    "beregn",
+    "berekne",
+    "beregning",
+    "berekning",
+  ];
+
+  const negativeInternationalSignals = [
+    "ikkje gjer aisc",
+    "ikkje gjør aisc",
+    "ikke gjer aisc",
+    "ikke gjør aisc",
+    "ikkje bruk aisc",
+    "ikke bruk aisc",
+    "ikkje gjer asce",
+    "ikke gjør asce",
+    "ikkje gjer amerikansk",
+    "ikke gjør amerikansk",
+    "ikkje amerikansk",
+    "ikke amerikansk",
+  ];
+
+  return (
+    norwegianSignals.some((signal) => value.includes(signal)) ||
+    negativeInternationalSignals.some((signal) => value.includes(signal))
+  );
+}
+
 export function inferEnglishEngineeringText(text: string | null | undefined): boolean {
   const value = (text ?? "").toLowerCase();
   if (!value.trim()) return false;
+
+  // Norwegian/default PILAR runs may mention AISC/ASCE negatively
+  // ("ikkje gjer AISC..."). That must not switch the report/export language to English.
+  if (hasNorwegianDefaultDisplaySignal(value)) return false;
 
   const internationalSignals = [
     "aisc",
@@ -834,11 +886,93 @@ export function localized<T extends string>(
   return map[language] ?? map.nb;
 }
 
+
+export function polishNorwegianRoleText(
+  value: string | null | undefined,
+  language: PilarDisplayLanguage = "nb",
+): string {
+  const isNn = language === "nn";
+
+  const engineerA = "Konstruktør A";
+  const engineerB = "Konstruktør B";
+  const engineers = isNn ? "konstruktørane" : "konstruktørene";
+  const bothEngineers = isNn ? "Begge konstruktørane" : "Begge konstruktørene";
+  const comparator = isNn ? "Samanliknar" : "Sammenligner";
+  const comparatorDef = isNn ? "Samanliknaren" : "Sammenligneren";
+  const controller = "Kontrollør";
+  const controllerDef = "Kontrolløren";
+  const controllerGen = isNn ? "Kontrolløren si" : "Kontrollørens";
+  const qualified = "kvalifisert fagperson";
+  const approved = isNn ? "FØREBELS GODKJENT" : "FORELØPIG GODKJENT";
+  const high = isNn ? "HØG" : "HØY";
+
+  return sanitizeAiscGuardedOutputText(String(value ?? "")
+    .replace(/\bThe calculation is approved for display as a preliminary result\.\s*Manual verification by a qualified professional is required before use in design work\./gi,
+      isNn
+        ? "Berekninga er godkjend for visning som førebels resultat. Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering."
+        : "Beregningen er godkjent for visning som foreløpig resultat. Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering.")
+    .replace(/\bThe calculation is preliminarily approved\.\s*The result must be checked by a qualified professional before use\./gi,
+      isNn
+        ? "Berekninga er førebels godkjend. Resultatet må kontrollerast av kvalifisert fagperson før bruk."
+        : "Beregningen er foreløpig godkjent. Resultatet må kontrolleres av kvalifisert fagperson før bruk.")
+    .replace(/\bPreliminary calculation\s*[—–-]\s*must be checked by a qualified professional before use in design work\.?/gi,
+      isNn
+        ? "Førebels berekning — må kontrollerast av kvalifisert fagperson før bruk i prosjektering."
+        : "Foreløpig beregning — må kontrolleres av kvalifisert fagperson før bruk i prosjektering.")
+    .replace(/\bThe result is preliminary and must be checked by a qualified professional\.?/gi,
+      isNn
+        ? "Resultatet er førebels og må kontrollerast av kvalifisert fagperson."
+        : "Resultatet er foreløpig og må kontrolleres av kvalifisert fagperson.")
+    .replace(/\bManual verification by a qualified professional is required before use in design work\.?/gi,
+      isNn
+        ? "Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering."
+        : "Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering.")
+    .replace(/\bqualified professional\b/gi, qualified)
+    .replace(/\blicensed structural engineer\b/gi, qualified)
+    .replace(/\bdesign work\b/gi, "prosjektering")
+
+    .replace(/\bEngineer A and Engineer B\b/g, `${engineerA} og ${engineerB}`)
+    .replace(/\bEngineer A og Engineer B\b/g, `${engineerA} og ${engineerB}`)
+    .replace(/\bEngineer A and B\b/g, `${engineerA} og ${engineerB}`)
+    .replace(/\bBoth engineers are\b/gi, `${bothEngineers} er`)
+    .replace(/\bBoth engineers er\b/gi, `${bothEngineers} er`)
+    .replace(/\bBoth engineers\b/gi, bothEngineers)
+    .replace(/\btwo AI engineers\b/gi, isNn ? "to AI-konstruktørar" : "to AI-konstruktører")
+    .replace(/\bAI engineers\b/gi, isNn ? "AI-konstruktørar" : "AI-konstruktører")
+    .replace(/\bEngineer A\b/g, engineerA)
+    .replace(/\bEngineer B\b/g, engineerB)
+    .replace(/\bengineers\b/gi, engineers)
+    .replace(/\bEngineer\b/g, "Konstruktør")
+
+    .replace(/\bControllerens\b/g, controllerGen)
+    .replace(/\bControlleren\b/g, controllerDef)
+    .replace(/\bController\b/g, controller)
+    .replace(/\bComparatoren\b/g, comparatorDef)
+    .replace(/\bComparator\b/g, comparator)
+
+    .replace(/\bBOTH ENGINEERS AGREE\b/g, isNn ? "BEGGE KONSTRUKTØRAR ER EINIGE" : "BEGGE KONSTRUKTØRER ER ENIGE")
+    .replace(/\bBOTH ENGINEERS ER ENIGE\b/g, isNn ? "BEGGE KONSTRUKTØRAR ER EINIGE" : "BEGGE KONSTRUKTØRER ER ENIGE")
+    .replace(/\bPRELIMINARILY APPROVED\b/g, approved)
+    .replace(/\bApproved with warnings\b/g, isNn ? "Godkjent med åtvaringar" : "Godkjent med advarsler")
+    .replace(/\bLOW\b/g, "LAV")
+    .replace(/\bHIGH\b/g, high)
+    .replace(/\bMEDIUM\b/g, "MIDDELS")
+    .replace(/\bGOOD\b/g, isNn ? "GOD" : "GOD")
+
+    .replace(/\bENGINEER B SIN KONKLUSJON\b/g, "KONSTRUKTØR B SIN KONKLUSJON")
+    .replace(/\bENGINEER B SINE RESULTATER\b/g, isNn ? "KONSTRUKTØR B SINE RESULTAT" : "KONSTRUKTØR B SINE RESULTATER")
+    .replace(/\bENGINEER B SINE RESULTAT\b/g, "KONSTRUKTØR B SINE RESULTAT")
+    .replace(/\bFORSKJELLER I ASSUMPTIONER\b/g, isNn ? "SKILNADER I FØRESETNADER" : "FORSKJELLER I FORUTSETNINGER")
+    .replace(/\bassumptioner\b/gi, isNn ? "føresetnader" : "forutsetninger")
+    .replace(/\bassumptions\b/gi, isNn ? "føresetnader" : "forutsetninger")
+  );
+}
+
 export function localizeGeneratedEngineeringText(
   value: string,
   language: PilarDisplayLanguage,
 ): string {
-  if (language !== "en") return sanitizeAiscGuardedOutputText(value);
+  if (language !== "en") return polishNorwegianRoleText(value, language);
   value = sprint335PolishEnglishText(value);
   value = englishProductPolish(value);
   return sanitizeAiscGuardedOutputText(polishEnglishGeneratedText(value)
