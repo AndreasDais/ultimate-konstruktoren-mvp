@@ -43,3 +43,6 @@ next-env.d.ts
 qa/reports/
 daily/reports/
 last-run.log
+
+.patch-backup/
+pilar-current.zip

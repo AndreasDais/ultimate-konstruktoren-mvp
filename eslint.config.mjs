@@ -22,6 +22,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated patch/debug artifacts - not product source.
+    ".patch-backup/**",
+    "scripts/patch-sprint-*.mjs",
   ]),
 ]);
 
