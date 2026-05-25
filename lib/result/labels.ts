@@ -81,17 +81,17 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   scrollTilStart: { nb: "Scroll til Start beregning", nn: "Scroll til Start berekning" },
   klarTilStart: { nb: "Klar til å starte beregningen", nn: "Klar til å starte berekninga" },
   // Result-fase
-  kontrollorAvgjerd: { nb: "Controller — endelig avgjørelse", nn: "Controller — endeleg avgjerd" },
-  kontrollor: { nb: "Controller", nn: "Controller" },
-  kontrollorPopover1: { nb: "Controller-agenten leser både engineers og Comparator, og avgjør om resultatet er trygt nok å vise. Erstatter", nn: "Controller-agenten les både engineers og Comparator, og avgjer om resultatet er trygt nok å vise. Erstattar" },
+  kontrollorAvgjerd: { nb: "Kontrollør — endelig avgjørelse", nn: "Kontrollør — endeleg avgjerd" },
+  kontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
+  kontrollorPopover1: { nb: "Kontrollør-agenten leser både konstruktørene og sammenligneren, og avgjør om resultatet er trygt nok å vise. Erstatter", nn: "Kontrollør-agenten les både konstruktørane og samanliknaren, og avgjer om resultatet er trygt nok å vise. Erstattar" },
   kontrollorPopover2: { nb: "ikke", nn: "ikkje" },
   kontrollorPopover3: { nb: "fagperson-kontroll.", nn: "fagperson-kontroll." },
-  sluttkonklusjonUtelaten: { nb: "Sluttkonklusjon utelatt av Controlleren.", nn: "Sluttkonklusjon utelaten av Controlleren." },
-  hallusinasjonarTekst: { nb: "Controlleren identifiserte hallusinasjoner i konstruktørenes kortform-konklusjon. Se Resultat-felt og full utregning under for korrekte verdier.", nn: "Controlleren identifiserte hallusinasjonar i konstruktørane sin kortform-konklusjon. Sjå Resultat-felt og full utrekning under for korrekte verdiar." },
+  sluttkonklusjonUtelaten: { nb: "Sluttkonklusjon utelatt av kontrolløren.", nn: "Sluttkonklusjon utelaten av kontrolløren." },
+  hallusinasjonarTekst: { nb: "Kontrolløren identifiserte hallusinasjoner i konstruktørenes kortform-konklusjon. Se Resultat-felt og full utregning under for korrekte verdier.", nn: "Kontrolløren identifiserte hallusinasjonar i konstruktørane sin kortform-konklusjon. Sjå Resultat-felt og full utrekning under for korrekte verdiar." },
   kortSvar: { nb: "Kort svar", nn: "Kort svar" },
   resultat: { nb: "Resultat", nn: "Resultat" },
-  visMellomledd: { nb: "Vis {n} intermediate value", nn: "Sjå {n} intermediate value" },
-  skjulMellomledd: { nb: "Skjul intermediate value", nn: "Skjul intermediate value" },
+  visMellomledd: { nb: "Vis {n} mellomverdi", nn: "Sjå {n} mellomverdi" },
+  skjulMellomledd: { nb: "Skjul mellomverdi", nn: "Skjul mellomverdi" },
   foresetnaderBrukt: { nb: "Forutsetninger brukt", nn: "Føresetnader brukt" },
   stegvisUtrekning: { nb: "Stegvis utregning", nn: "Stegvis utrekning" },
   // Stegvis view-toggle (#08)
@@ -101,62 +101,32 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   kvaErIkkjeRekna: { nb: "Hva er ikke beregnet", nn: "Kva er ikkje rekna" },
   atvaringar: { nb: "Advarsler", nn: "Åtvaringar" },
   // Konfidens-card
-  konstruktorAKonfidens: { nb: "Engineer A konfidens", nn: "Engineer A konfidens" },
-  konstruktorBKonfidens: { nb: "Engineer B konfidens", nn: "Engineer B konfidens" },
-  konstruktorKonfidens: { nb: "Engineer-konfidens", nn: "Engineer-konfidens" },
-  konstruktorKonfidensPopover: { nb: "Engineerens egenrapporterte sikkerhet på eget svar (high/medium/low). Ikke det samme som Tillit-skåren — måler only én agents tillit til seg selv.", nn: "Engineeren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Ikkje det same som Tillit-skåren — målar only éin agent sin tillit til seg sjølv." },
+  konstruktorAKonfidens: { nb: "Konstruktør A konfidens", nn: "Konstruktør A konfidens" },
+  konstruktorBKonfidens: { nb: "Konstruktør B konfidens", nn: "Konstruktør B konfidens" },
+  konstruktorKonfidens: { nb: "Konstruktørkonfidens", nn: "Konstruktørkonfidens" },
+  konstruktorKonfidensPopover: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (høy/middels/lav). Ikke det samme som Tillit-skåren — måler bare én agents tillit til seg selv.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (høg/middels/lav). Ikkje det same som Tillit-skåren — målar berre éin agent sin tillit til seg sjølv." },
   // Per-nivå forklaringar for konfidens-chips (#09)
-  konfidensHighA: {
-    nb: "Engineer A rapporterer HIGH-konfidens: metoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen. Egenvurdering — ikke en uavhengig verifikasjon.",
-    nn: "Engineer A rapporterer HIGH-konfidens: metoden er etablert, alle naudsynte input er gitt, og resultatet er konsistent gjennom utrekninga. Eigenvurdering — ikkje ei uavhengig verifisering.",
-  },
-  konfidensHighB: {
-    nb: "Engineer B rapporterer HIGH-konfidens in its independent solution. B løste oppgaven uten å se A sitt svar. HIGH means at B er trygg på its own method — at Engineer A and Engineer B er enige er en separat sjekk (see verdict above).",
-    nn: "Engineer B rapporterer HIGH-konfidens in its independent solution. B løyste oppgåva utan å sjå A sitt svar. HIGH her tyder at B er trygg på its own method — at Engineer A and Engineer B er samde er ein separat sjekk (sjå verdikt over).",
-  },
-  konfidensMediumA: {
-    nb: "Engineer A rapporterer MEDIUM-konfidens: metoden er korrekt, men en eller flere input er antatt eller ekstrapolert. Sjekk assumptionene før du stoler på resultatet.",
-    nn: "Engineer A rapporterer MEDIUM-konfidens: metoden er korrekt, men ein eller fleire input er antatt eller ekstrapolert. Sjekk assumptionene før du stolar på resultatet.",
-  },
-  konfidensMediumB: {
-    nb: "Engineer B rapporterer MEDIUM-konfidens: B løste oppgaven, men minst én assumption er usikker. Se assumptionene i Engineer B-blokka.",
-    nn: "Engineer B rapporterer MEDIUM-konfidens: B løyste oppgåva, men minst éin assumption er usikker. Sjå assumptionene i Engineer B-blokka.",
-  },
-  konfidensLowA: {
-    nb: "Engineer A rapporterer LOW-konfidens: vesentlig usikkerhet i metode eller input. Resultatet bør ikke brukes uten manuell verifikasjon — start gjerne på nytt med mer presise inndata.",
-    nn: "Engineer A rapporterer LOW-konfidens: vesentleg usikkerheit i metode eller input. Resultatet bør ikkje brukast utan manuell verifisering — start gjerne på nytt med meir presise inndata.",
-  },
-  konfidensLowB: {
-    nb: "Engineer B rapporterer LOW-konfidens på egen løsning. B er usikker på metode eller input. Manuell faglig kontroll anbefales sterkt.",
-    nn: "Engineer B rapporterer LOW-konfidens på eiga løysing. B er usikker på metode eller input. Manuell fagleg kontroll vert sterkt anbefalt.",
-  },
+  konfidensHighA: { nb: "Konstruktør A rapporterer HØY konfidens: metoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen. Egenvurdering — ikke en uavhengig verifikasjon.", nn: "Konstruktør A rapporterer HØG konfidens: metoden er etablert, alle naudsynte input er gitt, og resultatet er konsistent gjennom utrekninga. Eigenvurdering — ikkje ei uavhengig verifisering." },
+  konfidensHighB: { nb: "Konstruktør B rapporterer HØY konfidens i sin uavhengige løsning. B løste oppgaven uten å se A sitt svar. HØY betyr at B er trygg på egen metode — at Konstruktør A og Konstruktør B er enige er en separat sjekk.", nn: "Konstruktør B rapporterer HØG konfidens i si uavhengige løysing. B løyste oppgåva utan å sjå A sitt svar. HØG betyr at B er trygg på eigen metode — at Konstruktør A og Konstruktør B er samde er ein separat sjekk." },
+  konfidensMediumA: { nb: "Konstruktør A rapporterer MIDDELS konfidens: metoden er korrekt, men en eller flere input er antatt eller ekstrapolert. Sjekk forutsetningene før du stoler på resultatet.", nn: "Konstruktør A rapporterer MIDDELS konfidens: metoden er korrekt, men ein eller fleire input er antatt eller ekstrapolert. Sjekk føresetnadene før du stolar på resultatet." },
+  konfidensMediumB: { nb: "Konstruktør B rapporterer MIDDELS konfidens: B løste oppgaven, men minst én forutsetning er usikker. Se forutsetningene i Konstruktør B-blokka.", nn: "Konstruktør B rapporterer MIDDELS konfidens: B løyste oppgåva, men minst éin føresetnad er usikker. Sjå føresetnadene i Konstruktør B-blokka." },
+  konfidensLowA: { nb: "Konstruktør A rapporterer LAV konfidens: vesentlig usikkerhet i metode eller input. Resultatet bør ikke brukes uten manuell verifikasjon — start gjerne på nytt med mer presise inndata.", nn: "Konstruktør A rapporterer LAV konfidens: vesentleg usikkerheit i metode eller input. Resultatet bør ikkje brukast utan manuell verifisering — start gjerne på nytt med meir presise inndata." },
+  konfidensLowB: { nb: "Konstruktør B rapporterer LAV konfidens på egen løsning. B er usikker på metode eller input. Manuell faglig kontroll anbefales sterkt.", nn: "Konstruktør B rapporterer LAV konfidens på eiga løysing. B er usikker på metode eller input. Manuell fagleg kontroll vert sterkt anbefalt." },
   // Engineer B-panel
-  konstruktorBUavhengig: { nb: "Engineer B — uavhengig kontroll", nn: "Engineer B — uavhengig kontroll" },
-  loysteOppgavaUtan: { nb: "Løste oppgaven uten å se Engineer A sitt svar", nn: "Løyste oppgåva utan å sjå Engineer A sitt svar" },
-  konstruktorBKonklusjon: { nb: "Engineer B sin konklusjon", nn: "Engineer B sin konklusjon" },
-  konstruktorBResultat: { nb: "Engineer B sine resultater", nn: "Engineer B sine resultat" },
+  konstruktorBUavhengig: { nb: "Konstruktør B — uavhengig kontroll", nn: "Konstruktør B — uavhengig kontroll" },
+  loysteOppgavaUtan: { nb: "Løste oppgaven uten å se Konstruktør A sitt svar", nn: "Løyste oppgåva utan å sjå Konstruktør A sitt svar" },
+  konstruktorBKonklusjon: { nb: "Konstruktør B sin konklusjon", nn: "Konstruktør B sin konklusjon" },
+  konstruktorBResultat: { nb: "Konstruktør B sine resultater", nn: "Konstruktør B sine resultat" },
   // Controller-kort (#02) — verdikt-setningar per match_status og toggle-labels
-  verdiktMatch: {
-    nb: "Engineer A and Engineer B fully agree on all design values.",
-    nn: "Engineer A and Engineer B fully agree on all design values.",
-  },
-  verdiktMinor: {
-    nb: "Engineer A and Engineer B har små forskjeller — ingen kritiske avvik.",
-    nn: "Engineer A and Engineer B har små skilnader — ingen kritiske avvik.",
-  },
-  verdiktSignificant: {
-    nb: "Engineer A and Engineer B har vesentlige avvik på design values.",
-    nn: "Engineer A and Engineer B har vesentlege avvik på design values.",
-  },
-  verdiktCritical: {
-    nb: "Engineer A and Engineer B er ikke enige — manuell gjennomgang trengs.",
-    nn: "Engineer A and Engineer B er ikkje samde — manuell gjennomgang trengst.",
-  },
+  verdiktMatch: { nb: "Konstruktør A og Konstruktør B er enige om alle dimensjonerende verdier.", nn: "Konstruktør A og Konstruktør B er samde om alle dimensjonerande verdiar." },
+  verdiktMinor: { nb: "Konstruktør A og Konstruktør B har små forskjeller — ingen kritiske avvik.", nn: "Konstruktør A og Konstruktør B har små skilnader — ingen kritiske avvik." },
+  verdiktSignificant: { nb: "Konstruktør A og Konstruktør B har vesentlige avvik på dimensjonerende verdier.", nn: "Konstruktør A og Konstruktør B har vesentlege avvik på dimensjonerande verdiar." },
+  verdiktCritical: { nb: "Konstruktør A og Konstruktør B er ikke enige — manuell gjennomgang trengs.", nn: "Konstruktør A og Konstruktør B er ikkje samde — manuell gjennomgang trengst." },
   fagligMerknad: { nb: "Faglig merknad", nn: "Fagleg merknad" },
   // Grupper-overskrifter for fag-chips (delt frå #lettlese5)
   fagligGruppeMetode: { nb: "Metode", nn: "Metode" },
   fagligGruppeAntakelser: { nb: "Antakelser & advarsler", nn: "Antakingar & åtvaringar" },
-  lesHeileVurderinga: { nb: "Les hele vurderingen fra Controlleren", nn: "Les heile vurderinga frå Controlleren" },
+  lesHeileVurderinga: { nb: "Les hele vurderingen fra kontrolløren", nn: "Les heile vurderinga frå kontrolløren" },
   skjulVurderinga: { nb: "Skjul vurderingen", nn: "Skjul vurderinga" },
   krevFagligGjennomgang: { nb: "Krever faglig gjennomgang", nn: "Krev fagleg gjennomgang" },
   // Sjølvkontroll-disclosure (#09) — viser internal_consistency_issues
@@ -187,7 +157,7 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Vesentlege avvik — avvik-rader og merknader er pre-ekspandert.",
   },
   // Engineer B-disclosure (#04) — éin-linjes summary i kollapsa state
-  bUavhengigKontroll: { nb: "Engineer B — uavhengig kontroll", nn: "Engineer B — uavhengig kontroll" },
+  bUavhengigKontroll: { nb: "Konstruktør B — uavhengig kontroll", nn: "Konstruktør B — uavhengig kontroll" },
   bEnigeMedA: { nb: "ENIGE med A", nn: "ENIGE med A" },
   bMindreSkilnader: { nb: "Mindre forskjeller fra A", nn: "Mindre skilnader frå A" },
   bVesentlegAvvik: { nb: "Vesentlig avvik fra A", nn: "Vesentleg avvik frå A" },
@@ -195,10 +165,10 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   bKonfidens: { nb: "konfidens", nn: "konfidens" },
   bUtanComparison: { nb: "ingen sammenligning tilgjengelig", nn: "inga samanlikning tilgjengeleg" },
   // Comparator
-  samanliknarSkilnader: { nb: "Comparator — forskjeller funnet", nn: "Comparator — skilnader funne" },
+  samanliknarSkilnader: { nb: "Sammenligner — forskjeller funnet", nn: "Samanliknar — skilnader funne" },
   numeriskeSkilnader: { nb: "Numeriske forskjeller", nn: "Numeriske skilnader" },
   metodiskeSkilnader: { nb: "Metodiske forskjeller", nn: "Metodiske skilnader" },
-  forskjellarForesetnader: { nb: "Forskjeller i assumptioner", nn: "Forskjellar i assumptioner" },
+  forskjellarForesetnader: { nb: "Forskjeller i forutsetninger", nn: "Skilnader i føresetnader" },
   internInkonsistens: { nb: "Intern inkonsistens", nn: "Intern inkonsistens" },
   // Tabell-headers (Felt, Engineer A, Engineer B, Skilnad, Alvor)
   tabellFelt: { nb: "Felt", nn: "Felt" },
@@ -206,9 +176,9 @@ export const WB_LABELS: Record<string, Record<Locale, string>> = {
   tabellAlvor: { nb: "Alvor", nn: "Alvor" },
   // Comparator ekspander-rad (#05)
   samanliknarKvifor: { nb: "Hvorfor:", nn: "Kvifor:" },
-  samanliknarAVerdi: { nb: "Engineer A", nn: "Engineer A" },
-  samanliknarBVerdi: { nb: "Engineer B", nn: "Engineer B" },
-  generelleMerknader: { nb: "Generelle merknader fra Comparator", nn: "Generelle merknader frå Comparator" },
+  samanliknarAVerdi: { nb: "Konstruktør A", nn: "Konstruktør A" },
+  samanliknarBVerdi: { nb: "Konstruktør B", nn: "Konstruktør B" },
+  generelleMerknader: { nb: "Generelle merknader fra sammenligner", nn: "Generelle merknader frå samanliknar" },
   skjulMerknader: { nb: "Skjul merknader", nn: "Skjul merknader" },
   // Action bar
   resultatetForebels: { nb: "Resultatet er foreløpig og må kontrolleres av fagperson.", nn: "Resultatet er førebels og må kontrollerast av fagperson." },

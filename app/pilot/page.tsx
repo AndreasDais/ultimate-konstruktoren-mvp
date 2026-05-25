@@ -52,14 +52,14 @@ export default function PilotPage() {
   return (
     <main className="pilot-page">
       <section className="pilot-hero">
-        <p className="pilot-eyebrow">{T.eyebrow}</p>
+        <p className="uk-eyebrow">{T.eyebrow}</p>
         <h1>{T.title}</h1>
         <p className="pilot-lead">{T.lead}</p>
         <div className="pilot-actions">
-          <Link href="/" className="pilot-button primary">
+          <Link href="/" className="uk-btn uk-btn--primary">
             {T.startOwn}
           </Link>
-          <Link href="/mine" className="pilot-button secondary">
+          <Link href="/mine" className="uk-btn">
             {T.mine}
           </Link>
         </div>
@@ -68,7 +68,7 @@ export default function PilotPage() {
       <section className="pilot-grid" aria-label={T.examplesLabel}>
         {PILOT_EXAMPLES.map((example) => (
           <article className="pilot-example-card" key={example.id}>
-            <div className="pilot-card-topline">
+            <div className="pilot-card-topline uk-eyebrow">
               <span>{example.difficulty}</span>
               <span>{example.tags.slice(0, 2).join(" · ")}</span>
             </div>

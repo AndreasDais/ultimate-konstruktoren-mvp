@@ -426,16 +426,16 @@ export default function AdminPilotPage() {
     <main className="admin-pilot-page">
       <section className="admin-pilot-hero">
         <div>
-          <p className="admin-pilot-eyebrow">{T.eyebrow}</p>
+          <p className="uk-eyebrow">{T.eyebrow}</p>
           <h1>{T.title}</h1>
           <p>{T.intro}</p>
         </div>
         <div className="admin-pilot-actions">
-          <button onClick={() => void load()} disabled={loading}>{loading ? T.loading : T.refresh}</button>
-          <Link href="/pilot">{T.pilotStart}</Link>
-          <Link href="/admin/intelligence">{T.intelligence}</Link>
-          <Link href="/admin/error-reports">{T.errorReports}</Link>
-          <Link href="/admin">{T.admin}</Link>
+          <button className="uk-btn" onClick={() => void load()} disabled={loading}>{loading ? T.loading : T.refresh}</button>
+          <Link className="uk-btn" href="/pilot">{T.pilotStart}</Link>
+          <Link className="uk-btn" href="/admin/intelligence">{T.intelligence}</Link>
+          <Link className="uk-btn" href="/admin/error-reports">{T.errorReports}</Link>
+          <Link className="uk-btn" href="/admin">{T.admin}</Link>
         </div>
       </section>
 
@@ -451,7 +451,7 @@ export default function AdminPilotPage() {
       <section className={`admin-pilot-final-readiness ${finalReadiness.status}`}>
         <div className="admin-pilot-final-summary">
           <div>
-            <p className="admin-pilot-eyebrow">{T.finalTitle}</p>
+            <p className="uk-eyebrow">{T.finalTitle}</p>
             <h2>{finalStatusLabel}</h2>
             <p>{T.finalIntro}</p>
           </div>

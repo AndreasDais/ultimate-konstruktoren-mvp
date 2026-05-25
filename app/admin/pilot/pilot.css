@@ -1,47 +1,38 @@
 .admin-pilot-page {
-  --admin-shadow: 0 20px 70px rgba(0, 0, 0, 0.07);
   min-height: 100vh;
   padding: 40px max(20px, calc((100vw - 1180px) / 2));
-  background: var(--admin-bg, #f6f4ef);
-  color: var(--admin-text, #15130f);
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .admin-pilot-hero,
 .admin-pilot-panel,
 .admin-pilot-warning,
 .admin-pilot-cards article {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  background: var(--admin-surface, rgba(255, 255, 255, 0.82));
-  box-shadow: var(--admin-shadow, 0 20px 70px rgba(0, 0, 0, 0.07));
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-pilot-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 24px;
-  border-radius: 28px;
+  border-radius: var(--r-lg);
   padding: 34px;
   align-items: start;
 }
 
-.admin-pilot-eyebrow {
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  font-weight: 900;
-  color: var(--admin-muted, #766e62);
-}
-
 .admin-pilot-hero h1 {
   margin: 8px 0 10px;
-  font-size: clamp(2.2rem, 5vw, 4.2rem);
-  line-height: 0.95;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.2;
 }
 
 .admin-pilot-hero p,
 .admin-pilot-panel p,
 .admin-pilot-muted {
-  color: var(--admin-muted, #625a50);
+  color: var(--fg-muted);
   line-height: 1.65;
 }
 
@@ -52,22 +43,6 @@
   gap: 10px;
 }
 
-.admin-pilot-actions a,
-.admin-pilot-actions button {
-  min-height: 38px;
-  border-radius: 12px;
-  padding: 0 13px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-weight: 900;
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.14));
-  background: var(--admin-button, #171410);
-  color: var(--admin-button-text, #fffaf0);
-  cursor: pointer;
-}
-
 .admin-pilot-cards {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -76,7 +51,7 @@
 }
 
 .admin-pilot-cards article {
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   padding: 18px;
 }
 
@@ -85,7 +60,7 @@
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
   font-weight: 900;
 }
 
@@ -103,14 +78,15 @@
 
 .admin-pilot-panel,
 .admin-pilot-warning {
-  border-radius: 24px;
+  border-radius: var(--r-lg);
   padding: 24px;
 }
 
 .admin-pilot-warning {
   margin-top: 18px;
-  border-color: rgba(180, 83, 9, 0.35);
-  background: rgba(255, 247, 237, 0.75);
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn);
 }
 
 .admin-pilot-checklist {
@@ -126,8 +102,8 @@
   gap: 10px;
   align-items: flex-start;
   padding: 12px;
-  border-radius: 14px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  border-radius: var(--r-md);
+  background: var(--surface-2);
   font-weight: 750;
 }
 
@@ -138,45 +114,28 @@
 }
 
 .admin-pilot-feedback {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   padding: 14px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  background: var(--surface-2);
 }
 
 .admin-pilot-feedback div {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
 }
 
-.admin-pilot-feedback strong { color: var(--admin-text, #15130f); }
+.admin-pilot-feedback strong { color: var(--fg); }
 .admin-pilot-feedback p { margin: 10px 0; }
-.admin-pilot-feedback small { display: block; color: var(--admin-muted, #766e62); }
+.admin-pilot-feedback small { display: block; color: var(--fg-muted); }
 .admin-pilot-feedback a { display: inline-block; margin-top: 8px; color: inherit; font-weight: 900; }
 
-[data-palette="graphite"] .admin-pilot-page,
-[data-theme="graphite"] .admin-pilot-page {
-  --admin-bg: #101113;
-  --admin-surface: rgba(26, 27, 30, 0.86);
-  --admin-soft: rgba(255, 255, 255, 0.06);
-  --admin-text: #f3f0ea;
-  --admin-muted: #b5aea2;
-  --admin-border: rgba(255, 255, 255, 0.12);
-  --admin-button: #f3f0ea;
-  --admin-button-text: #101113;
-  --admin-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-}
-
-[data-palette="stone"] .admin-pilot-page,
-[data-theme="stone"] .admin-pilot-page {
-  --admin-bg: #f4f1ea;
-  --admin-surface: rgba(255, 252, 246, 0.88);
-  --admin-text: #1c1814;
-  --admin-muted: #70675b;
-  --admin-border: rgba(70, 62, 50, 0.16);
-}
+/* Palett-blokkene er fjerna: admin-pilot-sida arvar slate/stone/
+   graphite sentralt frå tokens.css via var(--bg/--surface/--fg/...).
+   admin-pilot-warning brukar no var(--warn*)-token og fungerer i
+   alle palettar utan eigen graphite-override. */
 
 @media (max-width: 940px) {
   .admin-pilot-hero,
@@ -190,22 +149,8 @@
   .admin-pilot-cards { grid-template-columns: 1fr; }
 }
 
-
-[data-palette="graphite"] .admin-pilot-warning,
-[data-theme="graphite"] .admin-pilot-warning {
-  border-color: rgba(245, 158, 11, 0.32);
-  background: rgba(120, 73, 20, 0.18);
-  color: var(--admin-text, #f3f0ea);
-}
-
-.admin-pilot-actions a,
-.admin-pilot-actions button,
 .admin-pilot-feedback strong {
-  color: var(--admin-button-text, var(--admin-text, #15130f));
-}
-
-.admin-pilot-feedback strong {
-  color: var(--admin-text, #15130f);
+  color: var(--fg);
 }
 
 .admin-pilot-layout-ops {
@@ -228,24 +173,24 @@
   font-weight: 950;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.14));
+  border: 1px solid var(--border);
 }
 
 .admin-pilot-status.ok {
-  color: #14532d;
-  background: rgba(220, 252, 231, 0.9);
-  border-color: rgba(34, 197, 94, 0.3);
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: var(--ok-border);
 }
 
 .admin-pilot-status.bad {
-  color: #7f1d1d;
-  background: rgba(254, 226, 226, 0.9);
-  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--bad);
+  background: var(--bad-bg);
+  border-color: var(--bad-border);
 }
 
 .admin-pilot-status.neutral {
-  color: var(--admin-muted, #766e62);
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  color: var(--fg-muted);
+  background: var(--surface-2);
 }
 
 .admin-pilot-mini-grid {
@@ -256,10 +201,10 @@
 }
 
 .admin-pilot-mini-grid div {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   padding: 13px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  background: var(--surface-2);
 }
 
 .admin-pilot-mini-grid span,
@@ -268,7 +213,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
   font-weight: 900;
 }
 
@@ -279,17 +224,17 @@
 }
 
 .admin-pilot-codeblock {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   padding: 13px;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--surface-2);
   overflow-x: auto;
 }
 
 .admin-pilot-codeblock code {
   display: block;
   margin-top: 7px;
-  color: var(--admin-text, #15130f);
+  color: var(--fg);
   font-size: 0.86rem;
   white-space: nowrap;
 }
@@ -317,23 +262,23 @@
   display: grid;
   gap: 3px;
   padding: 11px 12px;
-  border-radius: 14px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  border-radius: var(--r-md);
+  background: var(--surface-2);
 }
 
 .admin-pilot-compact-list span {
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
   font-size: 0.9rem;
   line-height: 1.45;
 }
 
 .admin-pilot-readiness-note {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   padding: 20px 24px;
   margin: 18px 0;
-  background: var(--admin-surface, rgba(255, 255, 255, 0.82));
-  box-shadow: var(--admin-shadow, 0 20px 70px rgba(0, 0, 0, 0.07));
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-pilot-readiness-note h2 {
@@ -342,34 +287,8 @@
 
 .admin-pilot-readiness-note p {
   margin: 0;
-  color: var(--admin-muted, #625a50);
+  color: var(--fg-muted);
   line-height: 1.6;
-}
-
-[data-palette="graphite"] .admin-pilot-status.ok,
-[data-theme="graphite"] .admin-pilot-status.ok {
-  color: #bbf7d0;
-  background: rgba(20, 83, 45, 0.4);
-  border-color: rgba(34, 197, 94, 0.32);
-}
-
-[data-palette="graphite"] .admin-pilot-status.bad,
-[data-theme="graphite"] .admin-pilot-status.bad {
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.36);
-  border-color: rgba(248, 113, 113, 0.28);
-}
-
-[data-palette="graphite"] .admin-pilot-codeblock,
-[data-theme="graphite"] .admin-pilot-codeblock {
-  background: rgba(0, 0, 0, 0.24);
-}
-
-[data-palette="graphite"] .admin-pilot-readiness-note,
-[data-theme="graphite"] .admin-pilot-readiness-note {
-  border-color: var(--admin-border, rgba(255, 255, 255, 0.12));
-  background: var(--admin-surface, rgba(26, 27, 30, 0.86));
-  color: var(--admin-text, #f3f0ea);
 }
 
 @media (max-width: 720px) {
@@ -383,12 +302,12 @@
 }
 
 .admin-pilot-final-readiness {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   padding: 24px;
   margin: 18px 0;
-  background: var(--admin-surface, rgba(255, 255, 255, 0.82));
-  box-shadow: var(--admin-shadow, 0 20px 70px rgba(0, 0, 0, 0.07));
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-pilot-final-readiness.ready {
@@ -418,15 +337,15 @@
 
 .admin-pilot-final-summary p {
   margin: 0;
-  color: var(--admin-muted, #625a50);
+  color: var(--fg-muted);
   line-height: 1.6;
 }
 
 .admin-pilot-readiness-score {
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   padding: 18px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  background: var(--surface-2);
 }
 
 .admin-pilot-readiness-score strong {
@@ -438,7 +357,7 @@
 .admin-pilot-readiness-score span {
   display: block;
   margin-top: 8px;
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
   font-weight: 850;
   font-size: 0.86rem;
 }
@@ -470,7 +389,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.78rem;
-  color: var(--admin-muted, #766e62);
+  color: var(--fg-muted);
 }
 
 .admin-pilot-final-item {
@@ -478,10 +397,10 @@
   grid-template-columns: 88px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-  border: 1px solid var(--admin-border, rgba(20, 18, 15, 0.12));
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   padding: 13px;
-  background: var(--admin-soft, rgba(20, 18, 15, 0.04));
+  background: var(--surface-2);
 }
 
 .admin-pilot-final-item + .admin-pilot-final-item {
@@ -505,50 +424,25 @@
 
 .admin-pilot-final-item p {
   margin: 5px 0 0;
-  color: var(--admin-muted, #625a50);
+  color: var(--fg-muted);
   line-height: 1.45;
   font-size: 0.92rem;
 }
 
 .admin-pilot-final-item.ok > span {
-  color: #166534;
-  background: rgba(220, 252, 231, 0.92);
+  color: var(--ok);
+  background: var(--ok-bg);
 }
 
 .admin-pilot-final-item.warn > span,
 .admin-pilot-final-item.manual > span {
-  color: #92400e;
-  background: rgba(254, 243, 199, 0.92);
+  color: var(--warn);
+  background: var(--warn-bg);
 }
 
 .admin-pilot-final-item.blocked > span {
-  color: #991b1b;
-  background: rgba(254, 226, 226, 0.92);
-}
-
-[data-palette="graphite"] .admin-pilot-final-readiness,
-[data-theme="graphite"] .admin-pilot-final-readiness {
-  background: var(--admin-surface, rgba(26, 27, 30, 0.86));
-}
-
-[data-palette="graphite"] .admin-pilot-final-item.ok > span,
-[data-theme="graphite"] .admin-pilot-final-item.ok > span {
-  color: #bbf7d0;
-  background: rgba(20, 83, 45, 0.4);
-}
-
-[data-palette="graphite"] .admin-pilot-final-item.warn > span,
-[data-theme="graphite"] .admin-pilot-final-item.warn > span,
-[data-palette="graphite"] .admin-pilot-final-item.manual > span,
-[data-theme="graphite"] .admin-pilot-final-item.manual > span {
-  color: #fde68a;
-  background: rgba(120, 73, 20, 0.32);
-}
-
-[data-palette="graphite"] .admin-pilot-final-item.blocked > span,
-[data-theme="graphite"] .admin-pilot-final-item.blocked > span {
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.36);
+  color: var(--bad);
+  background: var(--bad-bg);
 }
 
 @media (max-width: 860px) {
