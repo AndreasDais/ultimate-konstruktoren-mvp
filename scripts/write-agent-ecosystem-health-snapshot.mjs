@@ -32,6 +32,9 @@ const requiredFiles = [
   "qa/evals/reports/latest-eval-coverage.md",
   "sources/guardrails/guardrail-reason-codes.json",
   "sources/observability/observability-event-taxonomy.json",
+  "sources/report-qa/report-qa-checks.json",
+  "sources/report-qa/REPORT_QA_CHECK_REGISTRY.md",
+  "scripts/validate-report-qa-checks.mjs",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
   "scripts/summarize-eval-coverage.mjs",
@@ -63,7 +66,9 @@ const requiredScripts = [
   "guardrails:codes",
   "guardrails:check",
   "observability:events",
-  "observability:check"
+  "observability:check",
+  "report-qa:checks",
+  "report-qa:check"
 ];
 
 const checks = [
@@ -96,6 +101,11 @@ const checks = [
     id: "observability-events",
     title: "Observability event taxonomy",
     command: ["node", ["scripts/validate-observability-event-taxonomy.mjs"]]
+  },
+  {
+    id: "report-qa-checks",
+    title: "Report QA check registry",
+    command: ["node", ["scripts/validate-report-qa-checks.mjs"]]
   }
 ];
 
@@ -202,6 +212,7 @@ lines.push("- Research Agent: topic registry, topic files, memo files, memo qual
 lines.push("- Eval Agent: eval case validation, readiness runner, coverage summarizer, taxonomy.");
 lines.push("- Guardrails: reason-code registry and validation.");
 lines.push("- Observability: event taxonomy and validation.");
+lines.push("- Report QA: check registry and validation.");
 lines.push("");
 lines.push("## Stop conditions");
 lines.push("");
@@ -214,6 +225,7 @@ lines.push("npm run research:check");
 lines.push("npm run eval:coverage:check");
 lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
+lines.push("npm run report-qa:check");
 lines.push("npm run agent:all");
 lines.push("npm run agent:health");
 lines.push("```");

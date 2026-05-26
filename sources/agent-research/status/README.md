@@ -80,3 +80,27 @@ failed local checks
 ```
 
 Do not ignore a failed health snapshot by updating the markdown manually. Fix the underlying registry, script or artifact first.
+
+## Report QA health coverage
+
+Sprint 40.3 adds Report QA registry status to the health snapshot workflow.
+
+The health script now checks:
+
+- `sources/report-qa/report-qa-checks.json`
+- `sources/report-qa/REPORT_QA_CHECK_REGISTRY.md`
+- `scripts/validate-report-qa-checks.mjs`
+- `report-qa:checks` and `report-qa:check` npm aliases
+- local execution of `scripts/validate-report-qa-checks.mjs` in check mode
+
+Use non-writing mode during ordinary verification:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+```
+
+Use write mode only when intentionally refreshing the committed health artifact:
+
+```bash
+npm run agent:health
+```
