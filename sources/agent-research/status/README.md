@@ -104,3 +104,29 @@ Use write mode only when intentionally refreshing the committed health artifact:
 ```bash
 npm run agent:health
 ```
+
+## Release Manager health coverage
+
+Sprint 41.3 adds Release Manager checks to the health snapshot.
+
+The health command now verifies:
+
+- `sources/release-manager/release-gates.json`
+- `sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md`
+- `scripts/validate-release-gates.mjs`
+- npm aliases `release:gates` and `release:check`
+- local check `node scripts/validate-release-gates.mjs`
+
+Use check mode when validating during a sprint:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run release:check
+npm run agent:all
+```
+
+Use write mode only when intentionally refreshing the generated snapshot artifact:
+
+```bash
+npm run agent:health
+```

@@ -44,7 +44,10 @@ const requiredFiles = [
   "scripts/validate-guardrail-reason-codes.mjs",
   "scripts/validate-observability-event-taxonomy.mjs",
   "scripts/pilar-agent-ecosystem-hub.mjs",
-  "scripts/write-agent-ecosystem-health-snapshot.mjs"
+  "scripts/write-agent-ecosystem-health-snapshot.mjs",
+  "sources/release-manager/release-gates.json",
+  "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
+  "scripts/validate-release-gates.mjs"
 ];
 
 const requiredScripts = [
@@ -68,7 +71,9 @@ const requiredScripts = [
   "observability:events",
   "observability:check",
   "report-qa:checks",
-  "report-qa:check"
+  "report-qa:check",
+  "release:gates",
+  "release:check"
 ];
 
 const checks = [
@@ -106,6 +111,11 @@ const checks = [
     id: "report-qa-checks",
     title: "Report QA check registry",
     command: ["node", ["scripts/validate-report-qa-checks.mjs"]]
+  },
+  {
+    id: "release-gates",
+    title: "Release Manager gate registry",
+    command: ["node", ["scripts/validate-release-gates.mjs"]]
   }
 ];
 
@@ -213,6 +223,7 @@ lines.push("- Eval Agent: eval case validation, readiness runner, coverage summa
 lines.push("- Guardrails: reason-code registry and validation.");
 lines.push("- Observability: event taxonomy and validation.");
 lines.push("- Report QA: check registry and validation.");
+lines.push("- Release Manager: gate registry and validation.");
 lines.push("");
 lines.push("## Stop conditions");
 lines.push("");
@@ -226,6 +237,7 @@ lines.push("npm run eval:coverage:check");
 lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
 lines.push("npm run report-qa:check");
+lines.push("npm run release:check");
 lines.push("npm run agent:all");
 lines.push("npm run agent:health");
 lines.push("```");
