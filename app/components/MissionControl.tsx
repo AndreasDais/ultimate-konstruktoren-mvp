@@ -55,14 +55,14 @@ import { useLocale } from "@/lib/locale-context";
 const MC_LABELS: Record<string, Record<Locale, string>> = {
   // Header
   eyebrow: { nb: "STEG · BEREGNER", nn: "STEG · BEREKNAR" },
-  title: { nb: "To uavhengige engineers beregner samme problem", nn: "To uavhengige engineers reknar same problem" },
-  subtitle: { nb: "Engineer A and Engineer B use ulik metode. Comparatoren bekrefter at de er enige før resultatet presenteres.", nn: "Engineer A and Engineer B use ulik metode. Comparatoren stadfestar at dei er einige før resultatet er presentert." },
+  title: { nb: "To uavhengige konstruktører beregner samme problem", nn: "To uavhengige konstruktørar reknar same problem" },
+  subtitle: { nb: "Konstruktør A og Konstruktør B bruker ulik metode. Sammenligneren bekrefter at de er enige før resultatet presenteres.", nn: "Konstruktør A og Konstruktør B brukar ulik metode. Samanliknaren stadfestar at dei er einige før resultatet er presentert." },
   // Pair-bar (#1) — felles overskrift over A+B som signaliserer arkitekturen
   toLoysningar: { nb: "TO LØSNINGER, ETT SVAR", nn: "TO LØYSINGAR, EITT SVAR" },
   samanliknast: { nb: "samanliknast", nn: "samanliknast" },
   // Engineer tags
-  konstruktorA: { nb: "Engineer", nn: "Engineer" },
-  konstruktorB: { nb: "Engineer", nn: "Engineer" },
+  konstruktorA: { nb: "Konstruktør", nn: "Konstruktør" },
+  konstruktorB: { nb: "Konstruktør", nn: "Konstruktør" },
   tagA: { nb: "LUKKET FORMEL · EUROKODE", nn: "LUKKA FORMEL · EUROKODE" },
   tagB: { nb: "NUMERISK · FRITT LEGEME", nn: "NUMERISK · FRI LEKAM" },
   // Tooltip-tekstar (#7) — forklar metode-tags på hover/long-press
@@ -83,11 +83,11 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   ventarPaPartner: { nb: "Ventar på partner — kan ikkje samanliknast åleine", nn: "Ventar på partner — kan ikkje samanliknast åleine" },
   blokkertARetry: { nb: "BLOKKERT · A TRENG RETRY", nn: "BLOKKERT · A TRENG RETRY" },
   blokkertBRetry: { nb: "BLOKKERT · B TRENG RETRY", nn: "BLOKKERT · B TRENG RETRY" },
-  blokkertForklaring: { nb: "Both engineers må fullføre før samanlikning kan starte.", nn: "Both engineers må fullføre før samanlikning kan starte." },
+  blokkertForklaring: { nb: "Begge konstruktørene må fullføre før samanlikning kan starte.", nn: "Begge konstruktørane må fullføre før samanlikning kan starte." },
   tenkjerDjupt: { nb: "Tenker dypt på problemet", nn: "Tenkjer djupt på problemet" },
   skrivNesteSteg: { nb: "Skriver neste steg", nn: "Skriv neste steg" },
   // ComparatorPanel
-  samanliknar: { nb: "Comparator", nn: "Comparator" },
+  samanliknar: { nb: "Sammenligner", nn: "Samanliknar" },
   ventar: { nb: "VENTER", nn: "VENTAR" },
   reknarAvvik: { nb: "BEREGNER AVVIK", nn: "REKNAR AVVIK" },
   // Placeholder-stripe (#4): synleg while A+B streamar — slank tekst i staden
@@ -108,7 +108,7 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   cellMetode: { nb: "METODE", nn: "METODE" },
   cellKonklusjon: { nb: "KONKLUSJON", nn: "KONKLUSJON" },
   cellAvvikSuffix: { nb: "AVVIK", nn: "AVVIK" },
-  abIdentiske: { nb: "Engineer A and Engineer B identiske", nn: "Engineer A and Engineer B identiske" },
+  abIdentiske: { nb: "Konstruktør A og Konstruktør B identiske", nn: "Konstruktør A og Konstruktør B identiske" },
   beggeKonvergerer: { nb: "Begge konvergerer", nn: "Begge konvergerer" },
   lukkaFormelSame: { nb: "Lukket formel og numerisk gir samme svar", nn: "Lukka formel og numerisk gir same svar" },
   innanforToleranse: { nb: "Innenfor toleranse", nn: "Innanfor toleranse" },
@@ -118,7 +118,7 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   tabellVerdi: { nb: "VERDI", nn: "VERDI" },
   tabellAvvik: { nb: "AVVIK", nn: "AVVIK" },
   toAvToEinige: { nb: "2 av 2 metoder enige", nn: "2 av 2 metodar einige" },
-  doneToComparator: { nb: "{L.doneToComparator[locale]}", nn: "Ferdig — leverer resultat til Comparator" },
+  doneToComparator: { nb: "Ferdig — leverer resultat til Sammenligneren", nn: "Ferdig — leverer resultat til Samanliknaren" },
   avvikAVurdere: { nb: "avvik å vurdere", nn: "avvik å vurdere" },
 };
 
