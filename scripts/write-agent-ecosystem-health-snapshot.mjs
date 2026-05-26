@@ -4,6 +4,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
+const args = new Set(process.argv.slice(2));
+const checkOnly = args.has("--check") || args.has("--dry-run");
 const now = new Date().toISOString();
 const reportPath = path.join(root, "sources", "agent-research", "status", "latest-agent-ecosystem-health.md");
 
@@ -17,6 +19,14 @@ function repoPath(relativePath) {
 
 function fileExists(relativePath) {
   return fs.existsSync(repoPath(relativePath));
+}
+
+function readText(relativePath) {
+  try {
+    return fs.readFileSync(repoPath(relativePath), "utf8");
+  } catch {
+    return "";
+  }
 }
 
 function readJson(relativePath) {
@@ -69,6 +79,26 @@ function countJsonlCases(relativePath) {
   }
 }
 
+function countResearchTopics() {
+  const registry = readJson("sources/agent-research/topics/topic-registry.json");
+  if (Array.isArray(registry)) return registry.length;
+  if (Array.isArray(registry.topics)) return registry.topics.length;
+  return 0;
+}
+
+function countResearchMemos() {
+  const memoDir = repoPath("sources/agent-research/memos");
+  try {
+    return fs
+      .readdirSync(memoDir)
+      .filter((name) => name.endsWith(".md"))
+      .filter((name) => !["README.md", "MEMO_QUALITY_CHECKS.md"].includes(name))
+      .length;
+  } catch {
+    return 0;
+  }
+}
+
 function shortOutput(result, maxLines = 12) {
   const combined = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
   if (!combined) return "(no output)";
@@ -80,7 +110,7 @@ function markdownCode(value) {
 }
 
 function row(status, item, detail) {
-  return `| ${status} | ${item} | ${detail.replace(/\|/g, "\\|")} |`;
+  return `| ${status} | ${item} | ${String(detail).replace(/\|/g, "\\|")} |`;
 }
 
 const expectedFiles = [
@@ -88,21 +118,33 @@ const expectedFiles = [
   "sources/agent-research/AGENT_OPPORTUNITY_MEMO_TEMPLATE.md",
   "sources/agent-research/AGENT_ECOSYSTEM_COMMAND_HUB.md",
   "sources/agent-research/AGENT_ECOSYSTEM_INDEX.md",
+  "sources/agent-research/AGENT_ECOSYSTEM_RELEASE_CHECKLIST.md",
+  "sources/agent-research/AGENT_ECOSYSTEM_HANDOFF.md",
+  "sources/agent-research/AGENT_ECOSYSTEM_FINAL_CHECKPOINT.md",
   "sources/agent-research/topics/README.md",
   "sources/agent-research/topics/ai-agent-testing.md",
+  "sources/agent-research/topics/topic-registry.json",
+  "sources/agent-research/topics/RESEARCH_TOPIC_REGISTRY.md",
   "sources/agent-research/memos/README.md",
+  "sources/agent-research/memos/MEMO_QUALITY_CHECKS.md",
   "sources/agent-research/memos/agent-opportunity-ai-agent-testing.md",
+  "sources/agent-research/status/README.md",
+  "sources/agent-research/status/latest-agent-ecosystem-health.md",
   "sources/database/PILAR_AGENT_OBSERVABILITY_SCHEMA.md",
   "sources/database/PILAR_GUARDRAIL_DECISION_SCHEMA.md",
   "qa/evals/README.md",
   "qa/evals/pilar-core-evals.jsonl",
   "qa/evals/reports/README.md",
+  "qa/evals/reports/latest-eval-readiness.md",
   "qa/e2e/PILAR_SYNTHETIC_USER_CHECKLIST.md",
   "qa/e2e/prompts/english-aisc-simple-beam.txt",
   "qa/e2e/prompts/norwegian-simple-beam.txt",
   "scripts/validate-eval-cases.mjs",
-  "scripts/create-agent-opportunity-memo.mjs",
   "scripts/run-eval-suite.mjs",
+  "scripts/create-agent-opportunity-memo.mjs",
+  "scripts/validate-agent-research-topics.mjs",
+  "scripts/validate-agent-research-memos.mjs",
+  "scripts/write-agent-ecosystem-health-snapshot.mjs",
   "scripts/pilar-agent-ecosystem-hub.mjs",
 ];
 
@@ -114,6 +156,12 @@ const requiredScripts = [
   "agent:readiness",
   "agent:research",
   "agent:all",
+  "agent:health",
+  "research:topics",
+  "research:memo",
+  "research:ai-agent-testing",
+  "research:memos",
+  "research:check",
 ];
 
 const packageJson = readJson("package.json");
@@ -121,8 +169,12 @@ const packageScripts = packageJson.scripts ?? {};
 const gitHead = runCommand("git", ["rev-parse", "--short", "HEAD"]);
 const gitStatus = runCommand("git", ["status", "--short"]);
 const evalCaseCount = countJsonlCases("qa/evals/pilar-core-evals.jsonl");
+const topicCount = countResearchTopics();
+const memoCount = countResearchMemos();
 const validateRun = runNode("scripts/validate-eval-cases.mjs");
 const readinessRun = runNode("scripts/run-eval-suite.mjs");
+const researchTopicsRun = runNode("scripts/validate-agent-research-topics.mjs");
+const researchMemosRun = runNode("scripts/validate-agent-research-memos.mjs");
 
 const fileChecks = expectedFiles.map((file) => ({
   file,
@@ -135,11 +187,16 @@ const scriptChecks = requiredScripts.map((scriptName) => ({
   value: packageScripts[scriptName] ?? "",
 }));
 
+const latestHealthText = readText("sources/agent-research/status/latest-agent-ecosystem-health.md");
+const healthAlreadyMentionsResearch = /Research topic registry|Research memo quality|Research Agent/i.test(latestHealthText);
+
 const criticalFailures = [
   ...fileChecks.filter((check) => !check.ok).map((check) => `Missing file: ${check.file}`),
   ...scriptChecks.filter((check) => !check.ok).map((check) => `Missing npm script: ${check.scriptName}`),
   ...(validateRun.status === 0 ? [] : [`Command failed: ${validateRun.command}`]),
   ...(readinessRun.status === 0 ? [] : [`Command failed: ${readinessRun.command}`]),
+  ...(researchTopicsRun.status === 0 ? [] : [`Command failed: ${researchTopicsRun.command}`]),
+  ...(researchMemosRun.status === 0 ? [] : [`Command failed: ${researchMemosRun.command}`]),
 ];
 
 const readinessReportExists = fileExists("qa/evals/reports/latest-eval-readiness.md");
@@ -155,6 +212,7 @@ lines.push("# PILAR Agent Ecosystem Health Snapshot");
 lines.push("");
 lines.push(`**Generated:** ${now}`);
 lines.push(`**Status:** ${statusText}`);
+lines.push(`**Mode:** ${checkOnly ? "check-only / no repository write" : "write latest snapshot"}`);
 lines.push(`**Git HEAD:** ${(gitHead.stdout.trim() || "unknown")}`);
 lines.push("");
 lines.push("## 1. Summary");
@@ -163,6 +221,11 @@ lines.push(`- Eval cases detected: **${evalCaseCount}**`);
 lines.push(`- Eval validator: **${validateRun.status === 0 ? "PASS" : "FAIL"}**`);
 lines.push(`- Eval readiness runner: **${readinessRun.status === 0 ? "PASS" : "FAIL"}**`);
 lines.push(`- Readiness report artifact: **${readinessReportExists ? "present" : "missing"}**`);
+lines.push(`- Research topics detected: **${topicCount}**`);
+lines.push(`- Research memos detected: **${memoCount}**`);
+lines.push(`- Research topic registry validator: **${researchTopicsRun.status === 0 ? "PASS" : "FAIL"}**`);
+lines.push(`- Research memo quality validator: **${researchMemosRun.status === 0 ? "PASS" : "FAIL"}**`);
+lines.push(`- Previous committed health snapshot mentions research checks: **${healthAlreadyMentionsResearch ? "yes" : "no"}**`);
 lines.push(`- Critical failures: **${criticalFailures.length}**`);
 lines.push("");
 lines.push("## 2. Required file map");
@@ -183,16 +246,13 @@ for (const check of scriptChecks) {
 lines.push("");
 lines.push("## 4. Command results");
 lines.push("");
-lines.push(`### ${validateRun.command}`);
-lines.push("");
-lines.push(`Exit code: ${validateRun.status}`);
-lines.push(markdownCode(shortOutput(validateRun)));
-lines.push("");
-lines.push(`### ${readinessRun.command}`);
-lines.push("");
-lines.push(`Exit code: ${readinessRun.status}`);
-lines.push(markdownCode(shortOutput(readinessRun)));
-lines.push("");
+for (const result of [validateRun, readinessRun, researchTopicsRun, researchMemosRun]) {
+  lines.push(`### ${result.command}`);
+  lines.push("");
+  lines.push(`Exit code: ${result.status}`);
+  lines.push(markdownCode(shortOutput(result)));
+  lines.push("");
+}
 lines.push("## 5. Git status at snapshot start");
 lines.push("");
 lines.push(markdownCode(gitStatusText));
@@ -211,17 +271,24 @@ lines.push("## 7. Next recommended checks");
 lines.push("");
 lines.push("```bash");
 lines.push("npm run agent:all");
+lines.push("npm run research:check");
 lines.push("npm run eval:readiness");
 lines.push("npx tsc --noEmit --pretty false");
 lines.push("```");
 lines.push("");
 
-fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-fs.writeFileSync(reportPath, `${lines.join("\n")}\n`, "utf8");
+if (!checkOnly) {
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, `${lines.join("\n")}\n`, "utf8");
+  console.log(`OK wrote ${rel(reportPath)}`);
+} else {
+  console.log("OK check-only mode: no files written");
+}
 
-console.log(`OK wrote ${rel(reportPath)}`);
 console.log(`Status: ${statusText}`);
 console.log(`Eval cases: ${evalCaseCount}`);
+console.log(`Research topics: ${topicCount}`);
+console.log(`Research memos: ${memoCount}`);
 
 if (criticalFailures.length > 0) {
   for (const failure of criticalFailures) {
