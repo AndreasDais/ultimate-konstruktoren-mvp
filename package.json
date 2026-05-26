@@ -19,7 +19,8 @@
     "agent:validate": "node scripts/pilar-agent-ecosystem-hub.mjs validate",
     "agent:readiness": "node scripts/pilar-agent-ecosystem-hub.mjs eval-readiness",
     "agent:research": "node scripts/pilar-agent-ecosystem-hub.mjs research-memo",
-    "agent:all": "node scripts/pilar-agent-ecosystem-hub.mjs all"
+    "agent:all": "node scripts/pilar-agent-ecosystem-hub.mjs all",
+    "agent:health": "node scripts/write-agent-ecosystem-health-snapshot.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
