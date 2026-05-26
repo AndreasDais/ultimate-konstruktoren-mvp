@@ -192,7 +192,7 @@ Grunngiving: MEd kan reknast formelt, så status er ikkje mangelfull. Men inpute
 
 ANDRE REGLAR:
 - Heller stoppe og be om meir info enn å gjette på faktiske input-data — men på SCOPE skal du heller la agentane prøve enn å avvise.
-- Bruk same språkstil som brukaren (nynorsk eller bokmål).
+- Bruk same språk som brukaren skreiv på.
 - Konfidens måler tolkings-sikkerheit, ikkje data-tilstrekkelegheit. Ein klart formulert mangelfull-forespørsel skal ha høg konfidens.
 
 RAPPORT-FELT — report_title, report_subtitle, calculation_type:

@@ -132,7 +132,7 @@ MANUAL_REVIEW_REQUIRED er true når:
 - IKKJE som standard for "approved_with_warnings"
 
 USER_MESSAGE skal:
-- Vere på same språk som konstruktørane (nynorsk eller bokmål)
+- Vere på same språk som konstruktørane
 - Vere ærleg, konkret, og spesifikk
 - IKKJE gjenta scope-avgrensingar brukaren allereie veit om frå Tolkar
 - Forklare KVA SOM ER NYTT — kva Kontrollør oppdaga som konstruktørane sjølve ikkje allereie flagga

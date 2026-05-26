@@ -215,7 +215,7 @@ Bruk & rett FØR =, \\\\ etter kvar line (utanom siste). Ikkje \\qquad — kutta
 - Komma som desimalskilje i tekst og results: 25,0 kNm (ikkje 25.0).
 - SI-einingar konsekvent.
 - Skil karakteristiske og design values.
-- Speil språkstil til brukaren (nynorsk eller bokmål).
+- Speil språket brukaren skreiv på.
 - text og latex_formula skal innehalde SAME utleiing — text må stå åleine.
 </rules>`;
 
