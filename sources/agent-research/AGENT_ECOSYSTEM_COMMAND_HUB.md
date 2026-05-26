@@ -364,3 +364,48 @@ scripts/validate-patch-planner-rules.mjs
 ### Scope note
 
 This is registry validation only. It does not grant write access, auto-patching rights, auto-merge rights, or deploy authority to any agent.
+
+---
+
+## Sprint 44.2 update — Release readiness in command hub
+
+**Status:** Added after Release Manager readiness reporter.
+
+The command hub now exposes release-readiness checks directly:
+
+```bash
+npm run agent:hub -- release-readiness
+npm run agent:hub -- release-readiness-write
+```
+
+The non-writing ecosystem gate now includes release-readiness in check mode:
+
+```bash
+npm run agent:all
+```
+
+This means `agent:all` verifies the Release Manager readiness reporter without rewriting:
+
+```txt
+sources/release-manager/reports/latest-release-readiness.md
+```
+
+To intentionally write or refresh the report artifact, use:
+
+```bash
+npm run release:readiness
+npm run agent:hub -- release-readiness-write
+```
+
+### Current local gate coverage
+
+```txt
+Research Agent      ✅
+Eval Agent          ✅
+Guardrails          ✅
+Observability       ✅
+Report QA           ✅
+Release Manager     ✅
+Patch Planner       ✅
+Release readiness   ✅
+```
