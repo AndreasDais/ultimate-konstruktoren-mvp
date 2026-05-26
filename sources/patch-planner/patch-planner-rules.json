@@ -1,0 +1,180 @@
+{
+  "version": "0.1.0",
+  "status": "foundation_registry",
+  "owner": "PILAR Patch Planner Agent",
+  "purpose": "Define the minimum planning and safety rules a future Patch Planner Agent must follow before proposing or preparing sprint patches for PILAR.",
+  "non_goals": [
+    "No runtime patching",
+    "No automatic code edits",
+    "No auto-merge",
+    "No deployment automation",
+    "No prompt or i18n source changes in this sprint"
+  ],
+  "rules": [
+    {
+      "id": "sprint-format-required",
+      "title": "Sprint plan must use the PILAR sprint format",
+      "category": "planning",
+      "severity": "block",
+      "requirement": "Every proposed sprint must include Sprint name, goal, scope, files, risk, test and rollback sections before any patch is prepared.",
+      "applies_to": ["docs", "scripts", "app", "lib", "qa", "runtime"],
+      "required_evidence": ["Sprint XX.Y title", "Mål", "Omfang", "Filer", "Risiko", "Test", "Rollback"],
+      "forbidden_patterns": ["patch first, plan later"],
+      "status": "active"
+    },
+    {
+      "id": "one-file-group-per-sprint",
+      "title": "Keep one file group per sprint",
+      "category": "scope",
+      "severity": "block",
+      "requirement": "Do not mix unrelated file groups such as UI, prompts, report rendering, database and QA in the same sprint.",
+      "applies_to": ["app", "lib", "scripts", "qa", "sources", "database"],
+      "required_evidence": ["Explicit included files", "Explicit excluded files"],
+      "forbidden_patterns": ["UI + prompts + PDF + Word + database in one sprint"],
+      "status": "active"
+    },
+    {
+      "id": "no-new-sprint-on-red-gate",
+      "title": "Do not start a new sprint while core gates are red",
+      "category": "release_gate",
+      "severity": "block",
+      "requirement": "If TypeScript, agent:all or relevant validators fail, the Patch Planner must propose a fix, not a new sprint.",
+      "applies_to": ["scripts", "app", "lib", "qa"],
+      "required_evidence": ["Latest failing command", "Failing file or validator", "Fix-first plan"],
+      "forbidden_patterns": ["Start next sprint despite failed tsc", "Start next sprint despite failed agent:all"],
+      "status": "active"
+    },
+    {
+      "id": "audit-before-patch",
+      "title": "Audit the real file state before patching reused files",
+      "category": "evidence",
+      "severity": "block",
+      "requirement": "When a file has been patched recently or a previous patch did not apply, collect grep or sed output before preparing another patch.",
+      "applies_to": ["scripts", "app", "lib", "sources", "qa"],
+      "required_evidence": ["grep output", "sed output", "git diff/status context"],
+      "forbidden_patterns": ["blind patch after failed patch", "guess current file structure"],
+      "status": "active"
+    },
+    {
+      "id": "downloadable-artifact-preferred",
+      "title": "Use downloadable artifacts for Git Bash workflow",
+      "category": "artifact_workflow",
+      "severity": "block",
+      "requirement": "For non-trivial code or docs changes, prepare a downloadable ZIP, patch or Node script instead of long Git Bash heredocs.",
+      "applies_to": ["scripts", "app", "lib", "sources", "qa"],
+      "required_evidence": ["Artifact path", "Apply commands", "Verification commands"],
+      "forbidden_patterns": ["large heredoc", "manual multiline source replacement"],
+      "status": "active"
+    },
+    {
+      "id": "no-broad-tsx-regex",
+      "title": "Never use broad regex replacement over TSX",
+      "category": "patch_safety",
+      "severity": "block",
+      "requirement": "TSX and JSX changes must use exact blocks, structured changes or helper additions. Broad replacements across JSX are forbidden.",
+      "applies_to": ["app", "components", "tsx"],
+      "required_evidence": ["Exact target block or stable ASCII anchor", "Narrow file scope"],
+      "forbidden_patterns": ["source.replaceAll over TSX", "large multi-line TSX regex", "global Norwegian-to-English text replacement"],
+      "status": "active"
+    },
+    {
+      "id": "backup-before-write",
+      "title": "Patch scripts must back up changed files",
+      "category": "rollback",
+      "severity": "block",
+      "requirement": "Any script that writes to existing tracked files must create a backup under .patch-backup/sprint-XX before writing.",
+      "applies_to": ["scripts", "app", "lib", "sources", "qa"],
+      "required_evidence": ["Backup path", "Rollback command"],
+      "forbidden_patterns": ["write without backup", "overwrite before backup"],
+      "status": "active"
+    },
+    {
+      "id": "patch-outcome-reporting",
+      "title": "Patch scripts must report outcomes",
+      "category": "observability",
+      "severity": "warn",
+      "requirement": "Patch scripts must print PATCHED, OK, SKIPPED or FAILED lines so the operator can see exactly what happened.",
+      "applies_to": ["scripts"],
+      "required_evidence": ["PATCHED/OK/SKIPPED/FAILED terminal output"],
+      "forbidden_patterns": ["silent patch script", "ambiguous output"],
+      "status": "active"
+    },
+    {
+      "id": "exact-anchor-or-fail",
+      "title": "Critical patch anchors must fail closed",
+      "category": "patch_safety",
+      "severity": "block",
+      "requirement": "If a critical expected block or anchor is not found, the patch script must exit non-zero and not claim success.",
+      "applies_to": ["scripts", "app", "lib", "qa", "sources"],
+      "required_evidence": ["Missing-anchor failure path", "Non-zero exit on critical mismatch"],
+      "forbidden_patterns": ["continue after critical mismatch", "claim success when no diff occurred"],
+      "status": "active"
+    },
+    {
+      "id": "preserve-norwegian-and-international-modes",
+      "title": "Preserve Norwegian and international language modes",
+      "category": "i18n",
+      "severity": "block",
+      "requirement": "Any i18n-related sprint must explicitly preserve Norwegian mode while using English shell labels for non-Norwegian profiles.",
+      "applies_to": ["app", "lib", "report", "agent_prompts"],
+      "required_evidence": ["Norwegian regression test", "English/international regression test"],
+      "forbidden_patterns": ["global source-language replacement", "locale used as displayLanguage in international context"],
+      "status": "active"
+    },
+    {
+      "id": "no-aisc-table-values-from-memory",
+      "title": "Do not invent AISC or standards table values",
+      "category": "domain_safety",
+      "severity": "block",
+      "requirement": "International/AISC changes must not introduce unverified section properties, code constants or final compliance claims.",
+      "applies_to": ["agent_prompts", "report", "result_view", "evals"],
+      "required_evidence": ["AISC guard checked", "No invented table values"],
+      "forbidden_patterns": ["Zx from memory", "Lp/Lr from memory", "final AISC compliance without verified data"],
+      "status": "active"
+    },
+    {
+      "id": "separate-generated-artifacts",
+      "title": "Separate generated artifacts from source changes",
+      "category": "git_hygiene",
+      "severity": "warn",
+      "requirement": "Generated files such as latest health or coverage reports must only be committed when intentionally refreshed.",
+      "applies_to": ["qa", "sources"],
+      "required_evidence": ["Generated artifact listed as intentional or restored"],
+      "forbidden_patterns": ["accidental latest-health diff", "accidental latest-coverage diff"],
+      "status": "active"
+    },
+    {
+      "id": "stage-only-owned-files",
+      "title": "Stage only files owned by the sprint",
+      "category": "git_hygiene",
+      "severity": "block",
+      "requirement": "When Claude or another process has parallel changes, only stage the exact files belonging to the current sprint.",
+      "applies_to": ["git", "all"],
+      "required_evidence": ["git status --short before commit", "Expected staged file list"],
+      "forbidden_patterns": ["git add .", "commit unrelated app/prompt files"],
+      "status": "active"
+    },
+    {
+      "id": "verify-with-tsc-and-relevant-gates",
+      "title": "Verify with TypeScript and relevant gates",
+      "category": "verification",
+      "severity": "block",
+      "requirement": "Every code/script sprint must run TypeScript and relevant validators before commit. Runtime/UI changes also require build and manual/runtime tests.",
+      "applies_to": ["scripts", "app", "lib", "qa"],
+      "required_evidence": ["npx tsc --noEmit --pretty false", "Relevant npm run gate"],
+      "forbidden_patterns": ["commit without tsc", "use old DB output as proof for prompt changes"],
+      "status": "active"
+    },
+    {
+      "id": "human-review-for-write-power",
+      "title": "Patch Planner remains human-approved",
+      "category": "authority",
+      "severity": "block",
+      "requirement": "Patch Planner may propose plans and artifacts, but must not auto-merge, auto-deploy or edit production prompts without explicit human command and review.",
+      "applies_to": ["agents", "release", "prompts"],
+      "required_evidence": ["Human approval step", "No auto-merge/deploy step"],
+      "forbidden_patterns": ["auto-merge", "auto-deploy", "self-modifying prompt without review"],
+      "status": "active"
+    }
+  ]
+}
