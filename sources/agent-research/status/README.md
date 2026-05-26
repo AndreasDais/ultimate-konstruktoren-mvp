@@ -8,14 +8,21 @@ Sprint 34.13 introduserte:
 node scripts/write-agent-ecosystem-health-snapshot.mjs
 ```
 
-Sprint 35.5 utvidar health-snapshotet slik at det også kontrollerer Research Agent-sporet:
+Sprint 35.5 utvida health-snapshotet slik at det også kontrollerer Research Agent-sporet:
 
 ```bash
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run agent:health
 ```
 
-Scriptet kontrollerer at dei viktigaste agent-økosystemfilene finst, at npm-aliasa er registrerte, at eval-casane validerer, at eval-readiness-runneren kan skrive sin rapport, og at Research Agent topic-/memo-kvalitetssjekkane passerer.
+Sprint 36.3 utvidar health-snapshotet vidare slik at Eval Agent coverage også blir kontrollert:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run eval:coverage:check
+```
+
+Scriptet kontrollerer at dei viktigaste agent-økosystemfilene finst, at npm-aliasa er registrerte, at eval-casane validerer, at eval-readiness-runneren fungerer, at eval coverage-checken fungerer, og at Research Agent topic-/memo-kvalitetssjekkane passerer.
 
 Forventa output:
 
@@ -24,7 +31,8 @@ OK wrote sources/agent-research/status/latest-agent-ecosystem-health.md
 Status: PASS
 Eval cases: 10
 Research topics: 4
-Research memos: 1
+Research memos: 4
+Eval coverage: PASS
 ```
 
 For ein dry-run utan repository-write:
@@ -37,11 +45,13 @@ Den genererte fila `latest-agent-ecosystem-health.md` er eit lokalt snapshot som
 
 ## Bruk
 
+Verifiser utan å skrive snapshot:
+
 ```bash
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 ```
 
-eller faktisk oppdatere snapshotet:
+Oppdater snapshotet:
 
 ```bash
 npm run agent:health
@@ -53,6 +63,18 @@ Etterpå:
 git diff --stat
 git diff -- sources/agent-research/status/latest-agent-ecosystem-health.md
 ```
+
+## Eval coverage
+
+Sprint 36.3 gjer health snapshot coverage-aware. Det betyr at `agent:health` no bør reflektere desse eval-kommandoane:
+
+```bash
+npm run eval:readiness
+npm run eval:coverage:check
+npm run eval:coverage
+```
+
+Bruk `eval:coverage:check` når du berre vil verifisere utan å skrive `qa/evals/reports/latest-eval-coverage.md`.
 
 ## Merk
 
