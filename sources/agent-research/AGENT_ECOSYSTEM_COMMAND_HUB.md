@@ -444,3 +444,30 @@ The reporter should surface:
 
 `agent:all` and health-style verification must use check-mode release readiness. They must not rewrite the release-readiness report artifact unless explicitly requested.
 
+---
+
+## Sprint 48.2 — Report QA dry-run hub integration
+
+Report QA dry-run is now available through the command hub as a read-only/non-runtime check.
+
+### Commands
+
+```bash
+npm run report-qa:dry-run:check
+npm run agent:hub -- report-qa-dry-run-check
+npm run agent:all
+```
+
+### Write mode
+
+Use write mode only when intentionally refreshing a Report QA dry-run report artifact:
+
+```bash
+npm run report-qa:dry-run
+npm run agent:hub -- report-qa-dry-run
+```
+
+### Scope boundary
+
+Sprint 48.2 does not change runtime user output, app routes, agent prompts, Supabase tables, report rendering, PDF, or Word generation. The dry-run remains a local QA/check artifact.
+

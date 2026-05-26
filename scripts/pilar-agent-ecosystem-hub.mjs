@@ -21,6 +21,10 @@ const requiredFiles = [
   "sources/release-manager/release-gates.json",
   "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
   "scripts/validate-release-gates.mjs",
+  "scripts/run-report-qa-dry-run.mjs",
+  "sources/report-qa/REPORT_QA_DRY_RUN.md",
+  "sources/report-qa/dry-run/sample-report.md",
+  "sources/report-qa/reports/README.md",
   "scripts/write-release-readiness-report.mjs",
   "sources/release-manager/RELEASE_READINESS_REPORTER.md",
   "sources/release-manager/reports/README.md",
@@ -112,6 +116,14 @@ const commandGroups = {
     description: "Run Report QA Agent check registry validation.",
     run: () => runNodeScript("scripts/validate-report-qa-checks.mjs")
   },
+  "report-qa-dry-run": {
+    description: "Write the Report QA dry-run report artifact.",
+    run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--write"])
+  },
+  "report-qa-dry-run-check": {
+    description: "Run Report QA dry-run in non-writing check mode.",
+    run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--check"])
+  },
   "release-gates": {
     description: "Validate Release Manager gate registry.",
     run: () => runNodeScript("scripts/validate-release-gates.mjs")
@@ -156,6 +168,7 @@ const commandGroups = {
       ["guardrails-check", []],
       ["observability-check", []],
       ["report-qa-check", []],
+      ["report-qa-dry-run-check", []],
       ["release-check", []],
       ["release-readiness", []],
       ["patch-planner-check", []],
@@ -252,6 +265,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- release-check");
   console.log("  npm run agent:hub -- release-readiness");
   console.log("  npm run agent:hub -- report-qa-check");
+  console.log("  npm run agent:hub -- report-qa-dry-run-check");
   console.log("  npm run agent:hub -- patch-planner-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
