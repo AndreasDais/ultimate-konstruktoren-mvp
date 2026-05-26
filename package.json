@@ -34,7 +34,9 @@
     "observability:events": "node scripts/validate-observability-event-taxonomy.mjs",
     "observability:check": "node scripts/validate-observability-event-taxonomy.mjs",
     "report-qa:checks": "node scripts/validate-report-qa-checks.mjs",
-    "report-qa:check": "node scripts/validate-report-qa-checks.mjs"
+    "report-qa:check": "node scripts/validate-report-qa-checks.mjs",
+    "release:gates": "node scripts/validate-release-gates.mjs",
+    "release:check": "node scripts/validate-release-gates.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
