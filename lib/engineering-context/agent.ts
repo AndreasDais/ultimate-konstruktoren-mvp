@@ -8,15 +8,6 @@ import type { EngineeringContext } from "@/lib/engineering-context";
 
 export type EngineeringContextPayload = EngineeringContext | null | undefined;
 
-const SPRINT338_INTERNATIONAL_LANGUAGE_HARD_STOP = [
-  "SPRINT 33.8 INTERNATIONAL LANGUAGE HARD STOP:",
-  "When engineering context is international, US, AISC, ASCE, ACI, imperial, or the requested language is English, all generated prose must be English.",
-  "Use Engineer A, Engineer B, Comparator and Controller.",
-  "Do not use Engineer, Comparator, Comparator, Controller, assumption, assumption, antaking, antakelse, utrekning, beregning, forskjell, while, only, or Norwegian/Nynorsk explanatory prose.",
-  "Translate any upstream Norwegian/Nynorsk comparator/controller prose to English before emitting user-facing JSON fields.",
-  "For AISC/ASCE support, do not provide numerical typical ranges, approximate thresholds, or Manual-derived values such as Lp, Lr, Cb, Zx, Sx, J, Cw, rts, ho, phi_b*Mn, or phi_v*Vn unless verified by an approved application data source or explicitly supplied by the user.",
-].join("\n");
-
 export function parseEngineeringContextPayload(value: unknown): EngineeringContext | undefined {
   if (!value) return undefined;
 
@@ -45,13 +36,9 @@ export function buildAgentSystemPrompt(
 
   const isEnglishContext = isInternationalEnglishContext(context);
 
-  const roleLanguageBlock = isEnglishContext
+  const notationHintBlock = isEnglishContext
     ? [
-        "INTERNATIONAL UI / ROLE NAMING",
-        "- Use English role names in prose when referring to the pipeline: Interpreter, Engineer A, Engineer B, Comparator, Controller, professional reviewer.",
-        "- Do not use Norwegian labels such as Engineer, Comparator/Comparator, Controller, beregningsnotat, fagperson in English output.",
-        "- This instruction overrides any Norwegian role-name wording in the base prompt or upstream agent output.",
-        "- If upstream text contains Norwegian/Nynorsk comparator prose, translate it to English before emitting user-facing JSON fields.",
+        "INTERNATIONAL NOTATION",
         "- For US customary / AISC-ASCE contexts, use load factor terminology such as 1.2D and 1.6L. Avoid gamma_D/gamma_L labels unless the user explicitly asks for symbolic comparison.",
         "",
       ].join("\n")
@@ -60,8 +47,7 @@ export function buildAgentSystemPrompt(
   return [
     buildEngineeringContextPromptBlock(context),
     SPRINT335_NO_UNVERIFIED_AISC_VALUES_PROMPT,
-    isEnglishContext ? SPRINT338_INTERNATIONAL_LANGUAGE_HARD_STOP : "",
-    roleLanguageBlock,
+    notationHintBlock,
     "PILAR AGENT INSTRUCTIONS",
     basePrompt,
   ].filter(Boolean).join("\n");

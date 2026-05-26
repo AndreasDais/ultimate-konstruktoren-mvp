@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, type Locale } from "@/lib/locale";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
-import { isInternationalEnglishContext } from "@/lib/international/display";
 import {
   compareResults,
   normalizeResultKey,
@@ -11,9 +10,6 @@ import {
 import { normalizeConsistencyIssues } from "@/lib/compare/consistency-issues";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
-
-const SPRINT338_INTERNATIONAL_COMPARATOR_LANGUAGE_RULE = "\n\nSPRINT 33.8 INTERNATIONAL COMPARATOR LANGUAGE RULE:\nIf the engineering context is international, United States, AISC, ASCE, ACI, imperial, or the user asks in English, all Comparator output MUST be English.\nUse only these role names: Engineer A, Engineer B, Comparator, Controller.\nNever write Norwegian or Nynorsk comparator prose such as Engineer, Comparator, Controller, assumption, antaking, utrekning, forskjell, while, only, begge engineers, or norsk/nynorsk sentence structure.\nIf comparing methods, write complete English sentences.\nDo not provide numerical typical AISC Manual ranges such as Lp/Lr/Cb unless values are verified input or retrieved from an approved data source.\n";
-
 
 const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -95,41 +91,12 @@ recommended_status:
 - "uncertain": significant_differences — bør sjåast på, men kanskje OK
 - "rejected_needs_review": critical_disagreement eller alvorlege inkonsistensar
 
-Bruk nynorsk eller bokmål — same språk som Konstruktør A og Konstruktør B brukte.`;
+Bruk same språk som Konstruktør A og Konstruktør B brukte.`;
 
 /**
  * Formaterer den deterministiske jamføringa som ei tekstblokk for prompten.
  * Para nøklar med kode-rekna avvik + listene over upara nøklar.
  */
-function buildEnglishComparisonBlock(cmp: ResultComparison): string {
-  const lines: string[] = [
-    "DETERMINISTIC NUMERICAL COMPARISON (computed in code — authoritative; do not recalculate):",
-  ];
-  if (cmp.paired.length > 0) {
-    lines.push("Paired keys reported by BOTH engineers:");
-    for (const p of cmp.paired) {
-      const pd =
-        p.percentDiff === null
-          ? "non-numeric"
-          : `${(Math.round(p.percentDiff * 10) / 10).toFixed(1)} %`;
-      lines.push(`  ${p.key}: A = ${p.aValue} / B = ${p.bValue} -> ${pd}`);
-    }
-  } else {
-    lines.push("Paired keys: none.");
-  }
-  lines.push(
-    cmp.onlyA.length > 0
-      ? `Keys reported ONLY by Engineer A: ${cmp.onlyA.join(", ")}`
-      : "Keys reported only by Engineer A: none.",
-  );
-  lines.push(
-    cmp.onlyB.length > 0
-      ? `Keys reported ONLY by Engineer B: ${cmp.onlyB.join(", ")}`
-      : "Keys reported only by Engineer B: none.",
-  );
-  return lines.join("\n") + "\n";
-}
-
 function buildComparisonBlock(cmp: ResultComparison): string {
   const lines: string[] = [
     "DETERMINISTISK TALJAMFØRING (rekna i kode — autoritativ, ikkje rekn sjølv):",
@@ -167,7 +134,6 @@ export async function POST(request: Request) {
     const { run_id, agent_a_output, agent_b_output, locale: rawLocale, engineering_context } = await request.json();
     locale = coerceLocale(rawLocale);
     const engineeringContext = parseEngineeringContextPayload(engineering_context);
-    const comparatorEnglishMode = isInternationalEnglishContext(engineeringContext);
 
     if (!run_id || !agent_a_output || !agent_b_output) {
       return Response.json(
@@ -181,19 +147,10 @@ export async function POST(request: Request) {
       (agent_a_output as { results?: Record<string, string> })?.results,
       (agent_b_output as { results?: Record<string, string> })?.results,
     );
-    const comparisonBlock = comparatorEnglishMode ? buildEnglishComparisonBlock(comparison) : buildComparisonBlock(comparison);
+    const comparisonBlock = buildComparisonBlock(comparison);
 
     // === BYGG USER MESSAGE ===
-    const userMessage = comparatorEnglishMode
-      ? `${engineeringContextUserMessageBlock(engineeringContext)}ENGINEER A OUTPUT:
-${JSON.stringify(agent_a_output, null, 2)}
-
-ENGINEER B OUTPUT:
-${JSON.stringify(agent_b_output, null, 2)}
-
-${comparisonBlock}
-Compare these two solutions systematically according to the system instruction. Also check internal consistency in each engineer. In every user-facing prose field (method_differences, assumption_differences, summary, likely_cause), use English only and refer to the two solutions as "Engineer A" and "Engineer B" — never "Engineer", "Comparator", "Comparator", or "Agent A/B".`
-      : `${engineeringContextUserMessageBlock(engineeringContext)}ENGINEER A RESPONSE:
+    const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}ENGINEER A RESPONSE:
 ${JSON.stringify(agent_a_output, null, 2)}
 
 ENGINEER B RESPONSE:
