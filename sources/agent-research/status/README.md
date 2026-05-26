@@ -193,3 +193,24 @@ Do not use write mode during normal health checks:
 ```bash
 npm run report-qa:dry-run
 ```
+
+## Report QA real fixture health coverage
+
+Sprint 49.3 adds the realistic Report QA fixture validator to the health snapshot.
+
+The health command now verifies:
+
+- `scripts/validate-report-qa-real-fixture.mjs`
+- `sources/report-qa/REPORT_QA_REAL_REPORT_FIXTURE.md`
+- `sources/report-qa/dry-run/fixtures/README.md`
+- `sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md`
+- npm aliases `report-qa:fixture` and `report-qa:fixture:check`
+- local check `node scripts/validate-report-qa-real-fixture.mjs`
+
+Use check mode during ordinary verification:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run report-qa:fixture:check
+npm run agent:all
+```

@@ -39,6 +39,10 @@ const requiredFiles = [
   "sources/report-qa/REPORT_QA_DRY_RUN.md",
   "sources/report-qa/dry-run/sample-report.md",
   "sources/report-qa/reports/README.md",
+  "scripts/validate-report-qa-real-fixture.mjs",
+  "sources/report-qa/REPORT_QA_REAL_REPORT_FIXTURE.md",
+  "sources/report-qa/dry-run/fixtures/README.md",
+  "sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
   "scripts/summarize-eval-coverage.mjs",
@@ -85,6 +89,8 @@ const requiredScripts = [
   "report-qa:check",
   "report-qa:dry-run",
   "report-qa:dry-run:check",
+  "report-qa:fixture",
+  "report-qa:fixture:check",
   "release:gates",
   "release:check",
   "release:readiness",
@@ -133,6 +139,11 @@ const checks = [
     id: "report-qa-dry-run",
     title: "Report QA dry-run check",
     command: ["node", ["scripts/run-report-qa-dry-run.mjs", "--check"]]
+  },
+  {
+    id: "report-qa-real-fixture",
+    title: "Report QA real fixture validator",
+    command: ["node", ["scripts/validate-report-qa-real-fixture.mjs"]]
   },
   {
     id: "release-gates",
@@ -266,6 +277,7 @@ lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
 lines.push("npm run report-qa:check");
 lines.push("npm run report-qa:dry-run:check");
+lines.push("npm run report-qa:fixture:check");
 lines.push("npm run release:check");
 lines.push("npm run release:readiness:check");
 lines.push("npm run patch-planner:check");
