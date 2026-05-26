@@ -25,6 +25,9 @@ const requiredFiles = [
   "scripts/validate-agent-research-topics.mjs",
   "scripts/validate-agent-research-memos.mjs",
   "scripts/write-agent-ecosystem-health-snapshot.mjs",
+  "sources/guardrails/guardrail-reason-codes.json",
+  "sources/guardrails/GUARDRAIL_REASON_CODE_REGISTRY.md",
+  "scripts/validate-guardrail-reason-codes.mjs",
   "scripts/pilar-agent-ecosystem-hub.mjs"
 ];
 
@@ -76,6 +79,14 @@ const commandGroups = {
       ["research-memos", []]
     ])
   },
+  "guardrails-codes": {
+    description: "Validate Guardrail Agent reason-code registry.",
+    run: () => runNodeScript("scripts/validate-guardrail-reason-codes.mjs")
+  },
+  "guardrails-check": {
+    description: "Run Guardrail Agent registry checks.",
+    run: () => runNodeScript("scripts/validate-guardrail-reason-codes.mjs")
+  },
   "health": {
     description: "Run health snapshot check mode without rewriting latest-agent-ecosystem-health.md.",
     run: () => runNodeScript("scripts/write-agent-ecosystem-health-snapshot.mjs", ["--check"])
@@ -93,6 +104,7 @@ const commandGroups = {
       ["eval-coverage", []],
       ["research-topics", []],
       ["research-memos", []],
+      ["guardrails-check", []],
       ["health", []]
     ])
   }
@@ -181,6 +193,7 @@ function printHelp() {
   console.log("Examples:");
   console.log("  npm run agent:all");
   console.log("  npm run agent:hub -- eval-coverage");
+  console.log("  npm run agent:hub -- guardrails-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
 
