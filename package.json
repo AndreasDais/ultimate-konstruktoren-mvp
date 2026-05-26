@@ -42,7 +42,9 @@
     "release:readiness": "node scripts/write-release-readiness-report.mjs",
     "release:readiness:check": "node scripts/write-release-readiness-report.mjs --check",
     "report-qa:dry-run": "node scripts/run-report-qa-dry-run.mjs --write",
-    "report-qa:dry-run:check": "node scripts/run-report-qa-dry-run.mjs --check"
+    "report-qa:dry-run:check": "node scripts/run-report-qa-dry-run.mjs --check",
+    "report-qa:fixture": "node scripts/validate-report-qa-real-fixture.mjs",
+    "report-qa:fixture:check": "node scripts/validate-report-qa-real-fixture.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
