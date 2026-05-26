@@ -1,0 +1,373 @@
+{
+  "schema_version": "report_qa_checks_v0.1",
+  "status": "seed",
+  "owner": "PILAR Report QA Agent track",
+  "purpose": "Controlled registry for checks a future Report QA Agent should run against PILAR report artifacts.",
+  "created_in_sprint": "40.0",
+  "checks": [
+    {
+      "id": "answers_user_request",
+      "category": "task_alignment",
+      "severity": "block",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "The report must answer the user's requested engineering task, not a neighbouring or generic problem.",
+      "pass_signals": [
+        "Requested quantities are explicitly addressed",
+        "Main conclusion maps to the prompt"
+      ],
+      "fail_signals": [
+        "Report solves a different structural member",
+        "Requested check is missing"
+      ],
+      "evidence_fields": [
+        "user_prompt",
+        "executive_summary",
+        "calculation_sections",
+        "controller_decision"
+      ]
+    },
+    {
+      "id": "assumptions_explicit",
+      "category": "assumption_traceability",
+      "severity": "warn",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "All important assumptions must be visible to the user, especially support conditions, load model, profile data and standard/profile context.",
+      "pass_signals": [
+        "Assumptions section exists",
+        "Missing inputs are called out"
+      ],
+      "fail_signals": [
+        "Hidden assumptions",
+        "Conclusion depends on an unstated assumption"
+      ],
+      "evidence_fields": [
+        "assumptions",
+        "warnings",
+        "given_data"
+      ]
+    },
+    {
+      "id": "formulas_units_symbols_consistent",
+      "category": "calculation_consistency",
+      "severity": "block",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "Formulas, units and symbols must be internally consistent across the report.",
+      "pass_signals": [
+        "Units match quantities",
+        "Symbols are defined or obvious",
+        "Converted values are coherent"
+      ],
+      "fail_signals": [
+        "kN and kip mixed without conversion",
+        "Moment reported as force",
+        "Symbol changes meaning"
+      ],
+      "evidence_fields": [
+        "calculation_steps",
+        "tables",
+        "result_tiles"
+      ]
+    },
+    {
+      "id": "conclusion_strength_appropriate",
+      "category": "risk_language",
+      "severity": "block",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "The report must not claim final approval or verified code compliance when inputs or checks are incomplete.",
+      "pass_signals": [
+        "Preliminary wording when appropriate",
+        "Human/professional review reminder present"
+      ],
+      "fail_signals": [
+        "Final approval claimed without enough data",
+        "Strong compliance language despite missing checks"
+      ],
+      "evidence_fields": [
+        "controller_decision",
+        "conclusion",
+        "important_note"
+      ]
+    },
+    {
+      "id": "standard_context_consistent",
+      "category": "standard_profile",
+      "severity": "block",
+      "automated_level": "rule",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "The report must not mix Eurocode, AISC/ASCE, Canadian or other standard logic unless explicitly explained as a comparison.",
+      "pass_signals": [
+        "Standard/profile labels are consistent",
+        "Forbidden standard terms are absent"
+      ],
+      "fail_signals": [
+        "AISC terms in Norwegian Eurocode run",
+        "Eurocode partial factors in AISC run"
+      ],
+      "evidence_fields": [
+        "standard_context",
+        "technical_prose",
+        "calculation_steps"
+      ]
+    },
+    {
+      "id": "language_shell_consistent",
+      "category": "i18n",
+      "severity": "warn",
+      "automated_level": "rule",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "Shell labels must follow the selected shell language; technical prose may follow the answer language.",
+      "pass_signals": [
+        "English shell in international mode",
+        "Norwegian shell in Norwegian mode"
+      ],
+      "fail_signals": [
+        "Konstruktør in English shell",
+        "HIGH in Norwegian shell",
+        "FØREBELS in English shell"
+      ],
+      "evidence_fields": [
+        "display_language",
+        "role_labels",
+        "status_labels",
+        "metadata_labels"
+      ]
+    },
+    {
+      "id": "values_traceable",
+      "category": "traceability",
+      "severity": "warn",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "Key values in the conclusion must be traceable to given data, formulas or stated assumptions.",
+      "pass_signals": [
+        "Result values also appear in calculation steps",
+        "Input values are visible"
+      ],
+      "fail_signals": [
+        "Conclusion contains value not found elsewhere",
+        "No path from input to result"
+      ],
+      "evidence_fields": [
+        "given_data",
+        "calculation_steps",
+        "results",
+        "conclusion"
+      ]
+    },
+    {
+      "id": "warnings_visible",
+      "category": "risk_visibility",
+      "severity": "warn",
+      "automated_level": "rule",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "Important warnings must be visible in the report, not hidden only in internal agent output.",
+      "pass_signals": [
+        "Warnings section exists when risks exist",
+        "Warnings are near conclusion"
+      ],
+      "fail_signals": [
+        "Controller warning omitted from final report",
+        "Risk only appears in raw JSON"
+      ],
+      "evidence_fields": [
+        "warnings",
+        "controller_decision",
+        "important_note"
+      ]
+    },
+    {
+      "id": "pdf_word_web_parity",
+      "category": "artifact_parity",
+      "severity": "warn",
+      "automated_level": "manual",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "Web report, PDF and Word output should preserve the same core conclusion, labels, warnings and values.",
+      "pass_signals": [
+        "Same key values across artifacts",
+        "Same status and warnings"
+      ],
+      "fail_signals": [
+        "DOCX missing warning",
+        "PDF uses old language labels",
+        "Values differ across artifacts"
+      ],
+      "evidence_fields": [
+        "web_report_text",
+        "pdf_text",
+        "docx_text"
+      ]
+    },
+    {
+      "id": "disclaimer_present",
+      "category": "safety_disclaimer",
+      "severity": "block",
+      "automated_level": "rule",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "Preliminary engineering output must include a clear disclaimer / professional-review note.",
+      "pass_signals": [
+        "Professional review note present",
+        "Preliminary status visible"
+      ],
+      "fail_signals": [
+        "No disclaimer in report",
+        "Output looks like final certified design"
+      ],
+      "evidence_fields": [
+        "important_note",
+        "footer",
+        "conclusion"
+      ]
+    },
+    {
+      "id": "missing_data_acknowledged",
+      "category": "input_quality",
+      "severity": "block",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "When data is missing, the report must acknowledge it instead of silently inventing values.",
+      "pass_signals": [
+        "Missing data listed",
+        "Preliminary limitation explained"
+      ],
+      "fail_signals": [
+        "Capacity check done without section properties",
+        "Unsupported assumptions treated as facts"
+      ],
+      "evidence_fields": [
+        "input_agent_status",
+        "assumptions",
+        "warnings",
+        "calculation_steps"
+      ]
+    },
+    {
+      "id": "no_hallucinated_standard_values",
+      "category": "standard_safety",
+      "severity": "block",
+      "automated_level": "semi_auto",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf",
+        "calculation_sheet"
+      ],
+      "description": "The report must not invent standard table values, section properties or code-specific capacities from memory.",
+      "pass_signals": [
+        "Values are provided by user or cited as unavailable",
+        "Qualitative warning instead of invented capacity"
+      ],
+      "fail_signals": [
+        "Invented AISC section properties",
+        "Unverified Lp/Lr/Zx/J/Cw/rts values"
+      ],
+      "evidence_fields": [
+        "standard_context",
+        "given_data",
+        "capacity_checks",
+        "warnings"
+      ]
+    },
+    {
+      "id": "controller_decision_visible",
+      "category": "decision_traceability",
+      "severity": "warn",
+      "automated_level": "rule",
+      "applies_to": [
+        "web_report",
+        "docx",
+        "pdf"
+      ],
+      "description": "The controller decision and status should be visible enough for the user to understand trust level and limitations.",
+      "pass_signals": [
+        "Decision status shown",
+        "Reason or warning shown"
+      ],
+      "fail_signals": [
+        "Only raw calculation shown",
+        "Trust status hidden from report"
+      ],
+      "evidence_fields": [
+        "controller_decision",
+        "status_badge",
+        "trust_score"
+      ]
+    },
+    {
+      "id": "calculation_sheet_available_when_expected",
+      "category": "artifact_availability",
+      "severity": "info",
+      "automated_level": "manual",
+      "applies_to": [
+        "calculation_sheet"
+      ],
+      "description": "If the flow advertises calculation-only artifacts, the calculation sheet/PDF/DOCX should exist and open.",
+      "pass_signals": [
+        "Calculation route returns artifact",
+        "Artifact has expected title and values"
+      ],
+      "fail_signals": [
+        "Download button exists but route fails",
+        "Calculation sheet is empty or wrong language"
+      ],
+      "evidence_fields": [
+        "calculation_pdf_status",
+        "calculation_docx_status",
+        "route_status"
+      ]
+    }
+  ]
+}
