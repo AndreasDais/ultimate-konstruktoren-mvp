@@ -1,8 +1,8 @@
 # PILAR Agent Ecosystem Command Hub
 
 **Status:** Local command hub / implementation reference  
-**Sprint:** 37.2  
-**Purpose:** Provide one controlled entry point for local PILAR agent-ecosystem checks across Eval, Research and Guardrails.
+**Sprint:** 38.2  
+**Purpose:** Provide one controlled entry point for local PILAR agent-ecosystem checks across Eval, Research, Guardrails and Observability.
 
 ---
 
@@ -14,7 +14,7 @@ The command hub is:
 scripts/pilar-agent-ecosystem-hub.mjs
 ```
 
-It wraps the local scripts added through Sprint 34–37 into one small command surface.
+It wraps the local scripts added through Sprint 34–38 into one small command surface.
 
 The npm alias is:
 
@@ -31,6 +31,7 @@ npm run agent:readiness
 npm run agent:research -- ai-agent-testing
 npm run agent:health
 npm run guardrails:check
+npm run observability:check
 npm run agent:all
 ```
 
@@ -50,6 +51,8 @@ node scripts/pilar-agent-ecosystem-hub.mjs research-check
 node scripts/pilar-agent-ecosystem-hub.mjs research-memo ai-agent-testing
 node scripts/pilar-agent-ecosystem-hub.mjs guardrails-codes
 node scripts/pilar-agent-ecosystem-hub.mjs guardrails-check
+node scripts/pilar-agent-ecosystem-hub.mjs observability-events
+node scripts/pilar-agent-ecosystem-hub.mjs observability-check
 node scripts/pilar-agent-ecosystem-hub.mjs health
 node scripts/pilar-agent-ecosystem-hub.mjs health-write
 node scripts/pilar-agent-ecosystem-hub.mjs all
@@ -65,7 +68,7 @@ Use this as the normal local gate:
 npm run agent:all
 ```
 
-As of Sprint 37.2 this runs:
+As of Sprint 38.2 this runs:
 
 ```txt
 1. status
@@ -75,10 +78,11 @@ As of Sprint 37.2 this runs:
 5. research-topics
 6. research-memos
 7. guardrails-check     # reason-code registry validation
-8. health               # check mode, does not rewrite latest-agent-ecosystem-health.md
+8. observability-check  # event taxonomy validation
+9. health               # check mode, does not rewrite latest-agent-ecosystem-health.md
 ```
 
-The Sprint 37.2 change is that **guardrail reason-code validation is now part of the agent ecosystem gate**, not just a separate Guardrail command.
+The Sprint 38.2 change is that **observability event taxonomy validation is now part of the agent ecosystem gate**, not just a separate Observability command. Guardrail reason-code validation remains part of the gate from Sprint 37.2.
 
 ---
 
@@ -184,7 +188,29 @@ scripts/validate-guardrail-reason-codes.mjs
 
 ---
 
-## 8. Standard verification after hub changes
+## 8. Observability commands
+
+Observability event taxonomy validation:
+
+```bash
+npm run observability:events
+npm run observability:check
+npm run agent:hub -- observability-check
+```
+
+The Observability track is still taxonomy/schema-first. These commands validate event taxonomy source files only. They do not write runtime traces, mutate Supabase, or change production agent behavior.
+
+Tracked Observability files:
+
+```txt
+sources/observability/observability-event-taxonomy.json
+sources/observability/OBSERVABILITY_EVENT_TAXONOMY.md
+scripts/validate-observability-event-taxonomy.mjs
+```
+
+---
+
+## 9. Standard verification after hub changes
 
 ```bash
 node --check scripts/pilar-agent-ecosystem-hub.mjs
@@ -194,6 +220,7 @@ npm run agent:readiness
 npm run eval:coverage:check
 npm run research:check
 npm run guardrails:check
+npm run observability:check
 npm run agent:all
 npx tsc --noEmit --pretty false
 ```
@@ -208,9 +235,9 @@ cat /tmp/pilar-agent-hub-status.log | clip
 
 ---
 
-## 9. Scope rules
+## 10. Scope rules
 
-The command hub may orchestrate local docs/eval/research/guardrail registry scripts.
+The command hub may orchestrate local docs/eval/research/guardrail/observability registry scripts.
 
 It must not:
 
@@ -227,10 +254,10 @@ It must not:
 
 ---
 
-## 10. Next safe improvements
+## 11. Next safe improvements
 
 ```txt
-37.3 — Health snapshot includes guardrail checks
-37.4 — Guardrail final checkpoint
-38.0 — Report QA registry/checklist track
+38.3 — Health snapshot includes observability checks
+38.4 — Observability final checkpoint
+39.0 — Report QA registry/checklist track
 ```
