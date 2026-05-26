@@ -1,176 +1,174 @@
 # PILAR Agent Ecosystem Command Hub
 
-**Status:** Sprint 34.10 source / local command reference  
-**Owner:** PILAR AI-agent ecosystem track  
-**Scope:** Local helper commands only. No production runtime changes.
+**File:** `sources/agent-research/AGENT_ECOSYSTEM_COMMAND_HUB.md`  
+**Status:** Implementation reference  
+**Sprint:** 35.4  
+**Purpose:** Document the local command hub for the PILAR agent-ecosystem track.
 
-## Purpose
+---
 
-This document describes the local command hub for the PILAR agent-ecosystem foundation.
+## 1. Purpose
 
-The hub gives one entry point for the work introduced in Sprint 34:
+The command hub is a local wrapper around the first PILAR agent-ecosystem workflows.
+
+It is intentionally simple:
 
 ```txt
-Research Agent memo workflow
-Eval case validation
-Eval readiness reporting
-Synthetic-user checklist references
-Observability and guardrail schema references
+read local files
+run local validation scripts
+write deterministic Markdown artifacts
+never call production APIs
+never change app runtime logic
 ```
 
-The hub does not run the production PILAR agent pipeline. It is a local QA and coordination tool.
-
-## Files
+The hub lives here:
 
 ```txt
 scripts/pilar-agent-ecosystem-hub.mjs
-sources/agent-research/AGENT_ECOSYSTEM_COMMAND_HUB.md
 ```
 
-Optional npm alias:
+---
+
+## 2. Commands
+
+### 2.1 Direct Node commands
+
+```bash
+node scripts/pilar-agent-ecosystem-hub.mjs status
+node scripts/pilar-agent-ecosystem-hub.mjs validate
+node scripts/pilar-agent-ecosystem-hub.mjs eval-readiness
+node scripts/pilar-agent-ecosystem-hub.mjs research-topics
+node scripts/pilar-agent-ecosystem-hub.mjs research-memos
+node scripts/pilar-agent-ecosystem-hub.mjs research-check
+node scripts/pilar-agent-ecosystem-hub.mjs research-memo ai-agent-testing
+node scripts/pilar-agent-ecosystem-hub.mjs health
+node scripts/pilar-agent-ecosystem-hub.mjs all
+```
+
+### 2.2 NPM aliases
+
+```bash
+npm run agent:status
+npm run agent:validate
+npm run agent:readiness
+npm run agent:research -- ai-agent-testing
+npm run agent:health
+npm run agent:all
+npm run research:check
+```
+
+---
+
+## 3. Command meanings
+
+| Command | Meaning | Writes artifact? |
+|---|---|---:|
+| `status` | Checks that required agent-ecosystem files exist. | No |
+| `validate` | Validates `qa/evals/pilar-core-evals.jsonl`. | No |
+| `eval-readiness` | Runs readiness scan for the eval suite. | Yes: `qa/evals/reports/latest-eval-readiness.md` |
+| `research-topics` | Validates the research topic registry. | No |
+| `research-memos` | Validates generated Agent Opportunity Memos. | No |
+| `research-check` | Runs topic-registry and memo-quality checks. | No |
+| `research-memo <topic>` | Generates a memo for one topic. | Yes: `sources/agent-research/memos/agent-opportunity-<topic>.md` |
+| `health` | Writes a health snapshot. | Yes: `sources/agent-research/status/latest-agent-ecosystem-health.md` |
+| `all` | Runs status, eval validation, readiness and research checks. | Yes: readiness report |
+
+---
+
+## 4. Sprint 35.4 change
+
+Before Sprint 35.4, `agent:all` covered:
 
 ```txt
-agent:hub = node scripts/pilar-agent-ecosystem-hub.mjs
+status
+validate
+eval-readiness
 ```
 
-## Commands
+After Sprint 35.4, `agent:all` also covers:
 
-### Status
-
-Checks that the Sprint 34 agent-ecosystem foundation files exist.
-
-```bash
-node scripts/pilar-agent-ecosystem-hub.mjs status
+```txt
+research-topics
+research-memos
 ```
 
-With npm alias:
+This means a single command now checks both the eval side and the Research Agent side:
 
 ```bash
-npm run agent:hub -- status
+npm run agent:all
 ```
 
-### Validate eval cases
+---
 
-Runs the deterministic JSONL validation for `qa/evals/pilar-core-evals.jsonl`.
+## 5. Important generated artifacts
 
-```bash
-node scripts/pilar-agent-ecosystem-hub.mjs validate
+These files may change when commands are run:
+
+```txt
+qa/evals/reports/latest-eval-readiness.md
+sources/agent-research/status/latest-agent-ecosystem-health.md
+sources/agent-research/memos/agent-opportunity-*.md
 ```
 
-Equivalent direct command:
+Do not accidentally commit generated artifact changes unless the sprint intentionally refreshes them.
 
-```bash
-node scripts/validate-eval-cases.mjs
+---
+
+## 6. Safety rules
+
+The hub must stay local and low-risk:
+
+```txt
+- no app runtime code changes
+- no Supabase writes
+- no production API calls
+- no auto-merge
+- no auto-deploy
+- no prompt changes unless a sprint explicitly scopes them
 ```
 
-### Eval readiness
+The hub is allowed to:
 
-Runs the eval readiness suite and writes the latest report artifact.
-
-```bash
-node scripts/pilar-agent-ecosystem-hub.mjs eval-readiness
+```txt
+- read local repo files
+- run local validators
+- write local Markdown reports
+- fail fast when required files are missing
 ```
 
-Equivalent direct command:
+---
+
+## 7. Recommended release check
+
+Before moving to a real runtime agent sprint, run:
 
 ```bash
-npm run eval:readiness
-```
-
-### Research memo
-
-Generates an Agent Opportunity Memo from a topic slug.
-
-```bash
-node scripts/pilar-agent-ecosystem-hub.mjs research-memo ai-agent-testing
-```
-
-Equivalent direct command:
-
-```bash
-node scripts/create-agent-opportunity-memo.mjs ai-agent-testing
-```
-
-### All local checks
-
-Runs status, eval validation and eval readiness in sequence.
-
-```bash
-node scripts/pilar-agent-ecosystem-hub.mjs all
-```
-
-With npm alias:
-
-```bash
-npm run agent:hub -- all
-```
-
-## Git Bash workflow
-
-Apply Sprint 34.10 ZIP:
-
-```bash
-cd /c/Users/rayma/Code/ultimate-konstruktoren-mvp
-unzip -o ~/Downloads/PILAR_34.10_agent_ecosystem_command_hub.zip
-```
-
-Configure npm alias:
-
-```bash
-npm pkg set scripts.agent:hub="node scripts/pilar-agent-ecosystem-hub.mjs"
-```
-
-Verify:
-
-```bash
-node --check scripts/pilar-agent-ecosystem-hub.mjs
-node scripts/pilar-agent-ecosystem-hub.mjs status
-node scripts/pilar-agent-ecosystem-hub.mjs all
-npm run agent:hub -- status
+npm run agent:all
+npm run research:check
+npm run agent:status
 npx tsc --noEmit --pretty false
 ```
 
-Copy status:
+Then verify Git status:
 
 ```bash
-git status --short > /tmp/pilar-sprint34-10-status.log
-git diff --stat >> /tmp/pilar-sprint34-10-status.log
-cat /tmp/pilar-sprint34-10-status.log | clip
+git status --short
 ```
 
-## Acceptance criteria
+If generated artifacts changed unintentionally, restore them before commit.
+
+---
+
+## 8. Next possible sprint
+
+Recommended next sprint:
 
 ```txt
-- node --check scripts/pilar-agent-ecosystem-hub.mjs passes
-- status finds all required Sprint 34 foundation files
-- validate passes
-- eval-readiness writes latest eval readiness report
-- npm run agent:hub -- status works after npm pkg set
-- TypeScript passes
-- no app/runtime files are touched
+Sprint 35.5 — Add research checks to health snapshot
 ```
 
-## Non-goals
+Goal:
 
 ```txt
-- no production agent orchestration
-- no database migration
-- no browser automation
-- no app UI changes
-- no prompt changes
-```
-
-## Next possible sprint
-
-```txt
-Sprint 34.11 — Agent ecosystem daily snapshot
-```
-
-That sprint could generate a daily Markdown snapshot from:
-
-```txt
-agent hub status
-eval readiness report
-latest research memo list
-known guardrail/observability schema docs
+Make `npm run agent:health` report topic-registry and memo-quality status explicitly.
 ```
