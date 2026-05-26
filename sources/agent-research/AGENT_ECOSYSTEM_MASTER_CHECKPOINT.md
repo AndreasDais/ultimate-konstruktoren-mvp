@@ -401,3 +401,78 @@ Sprint 44.0 — Agent ecosystem release readiness reporter
 
 This should generate a local Markdown release-readiness report from the existing checks, without changing runtime app behavior.
 
+---
+
+## Sprint 45.0 update — Agent ecosystem final master checkpoint v2
+
+**Status:** Updated after Sprints 44.0–44.4  
+**Purpose:** Close the foundation-level agent ecosystem checkpoint before moving into runtime-agent implementation.
+
+### Foundation tracks now closed
+
+| Track | Status | Primary check |
+|---|---:|---|
+| Research Agent foundation | ✅ Complete | `npm run research:check` |
+| Eval Agent foundation | ✅ Complete | `npm run eval:coverage:check` |
+| Guardrail foundation | ✅ Complete | `npm run guardrails:check` |
+| Observability foundation | ✅ Complete | `npm run observability:check` |
+| Report QA foundation | ✅ Complete | `npm run report-qa:check` |
+| Release Manager foundation | ✅ Complete | `npm run release:check` |
+| Release Readiness Reporter | ✅ Complete | `npm run release:readiness:check` |
+| Patch Planner foundation | ✅ Complete | `npm run patch-planner:check` |
+
+### Current standard local gate
+
+```bash
+npm run research:check
+npm run eval:coverage:check
+npm run guardrails:check
+npm run observability:check
+npm run report-qa:check
+npm run release:check
+npm run release:readiness:check
+npm run patch-planner:check
+npm run agent:all
+npm run agent:health
+```
+
+### Interpretation
+
+PILAR now has a complete foundation-level control layer around the core AI pipeline:
+
+```txt
+Research        -> topic/memo coverage and research quality
+Eval            -> eval readiness and coverage
+Guardrails      -> reason-code registry and validation
+Observability   -> event taxonomy and validation
+Report QA       -> report-quality check registry and validation
+Release Manager -> release-gate registry and validation
+Release Readiness -> report-only readiness status
+Patch Planner   -> safe patch planning rules and validation
+```
+
+These tracks are still deliberately conservative. They provide registries, validators, npm aliases, hub integration, health coverage, readiness reporting and checkpoint documentation. They do not yet provide autonomous runtime agents, auto-merge, auto-deploy, production write permissions, browser automation, database migrations or end-user runtime blocking.
+
+### Closed-foundation rule
+
+Before starting runtime-agent work, run:
+
+```bash
+npm run agent:all
+npm run agent:health
+npm run release:readiness:check
+npx tsc --noEmit --pretty false
+```
+
+If any of these fail, fix the failing foundation gate before opening a new runtime-agent sprint.
+
+### Recommended next implementation step
+
+Recommended next sprint:
+
+```txt
+Sprint 46.0 — Synthetic User Agent checklist foundation
+```
+
+Rationale: Synthetic User Agent was a P0 idea in the agent strategy, and it should start as a deterministic/manual-or-Playwright-ready checklist before any browser automation or computer-use workflow is introduced.
+
