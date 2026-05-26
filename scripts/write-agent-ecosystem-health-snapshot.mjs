@@ -99,6 +99,14 @@ function countResearchMemos() {
   }
 }
 
+function countGuardrailReasonCodes() {
+  const registry = readJson("sources/guardrails/guardrail-reason-codes.json");
+  if (Array.isArray(registry)) return registry.length;
+  if (Array.isArray(registry.reason_codes)) return registry.reason_codes.length;
+  if (Array.isArray(registry.codes)) return registry.codes.length;
+  return 0;
+}
+
 function shortOutput(result, maxLines = 12) {
   const combined = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
   if (!combined) return "(no output)";
@@ -141,6 +149,8 @@ const expectedFiles = [
   "sources/agent-research/status/latest-agent-ecosystem-health.md",
   "sources/database/PILAR_AGENT_OBSERVABILITY_SCHEMA.md",
   "sources/database/PILAR_GUARDRAIL_DECISION_SCHEMA.md",
+  "sources/guardrails/GUARDRAIL_REASON_CODE_REGISTRY.md",
+  "sources/guardrails/guardrail-reason-codes.json",
   "qa/evals/README.md",
   "qa/evals/EVAL_AGENT_EXPANSION.md",
   "qa/evals/pilar-core-evals.jsonl",
@@ -159,6 +169,7 @@ const expectedFiles = [
   "scripts/validate-agent-research-memos.mjs",
   "scripts/write-agent-ecosystem-health-snapshot.mjs",
   "scripts/pilar-agent-ecosystem-hub.mjs",
+  "scripts/validate-guardrail-reason-codes.mjs",
 ];
 
 const requiredScripts = [
@@ -178,6 +189,8 @@ const requiredScripts = [
   "research:memos",
   "research:check",
   "research:coverage",
+  "guardrails:codes",
+  "guardrails:check",
 ];
 
 const packageJson = readJson("package.json");
@@ -187,11 +200,13 @@ const gitStatus = runCommand("git", ["status", "--short"]);
 const evalCaseCount = countJsonlCases("qa/evals/pilar-core-evals.jsonl");
 const topicCount = countResearchTopics();
 const memoCount = countResearchMemos();
+const guardrailReasonCodeCount = countGuardrailReasonCodes();
 const validateRun = runNode("scripts/validate-eval-cases.mjs");
 const readinessRun = runNode("scripts/run-eval-suite.mjs");
 const evalCoverageRun = runNode("scripts/summarize-eval-coverage.mjs", ["--check"]);
 const researchTopicsRun = runNode("scripts/validate-agent-research-topics.mjs");
 const researchMemosRun = runNode("scripts/validate-agent-research-memos.mjs");
+const guardrailCodesRun = runNode("scripts/validate-guardrail-reason-codes.mjs");
 
 const fileChecks = expectedFiles.map((file) => ({
   file,
@@ -207,6 +222,7 @@ const scriptChecks = requiredScripts.map((scriptName) => ({
 const latestHealthText = readText("sources/agent-research/status/latest-agent-ecosystem-health.md");
 const healthAlreadyMentionsResearch = /Research topic registry|Research memo quality|Research Agent/i.test(latestHealthText);
 const healthAlreadyMentionsEvalCoverage = /Eval coverage|latest-eval-coverage|summarize-eval-coverage/i.test(latestHealthText);
+const healthAlreadyMentionsGuardrails = /Guardrail reason-code registry|guardrail-reason-codes|validate-guardrail-reason-codes/i.test(latestHealthText);
 
 const criticalFailures = [
   ...fileChecks.filter((check) => !check.ok).map((check) => `Missing file: ${check.file}`),
@@ -216,6 +232,7 @@ const criticalFailures = [
   ...(evalCoverageRun.status === 0 ? [] : [`Command failed: ${evalCoverageRun.command}`]),
   ...(researchTopicsRun.status === 0 ? [] : [`Command failed: ${researchTopicsRun.command}`]),
   ...(researchMemosRun.status === 0 ? [] : [`Command failed: ${researchMemosRun.command}`]),
+  ...(guardrailCodesRun.status === 0 ? [] : [`Command failed: ${guardrailCodesRun.command}`]),
 ];
 
 const readinessReportExists = fileExists("qa/evals/reports/latest-eval-readiness.md");
@@ -251,8 +268,11 @@ lines.push(`- Research topics detected: **${topicCount}**`);
 lines.push(`- Research memos detected: **${memoCount}**`);
 lines.push(`- Research topic registry validator: **${researchTopicsRun.status === 0 ? "PASS" : "FAIL"}**`);
 lines.push(`- Research memo quality validator: **${researchMemosRun.status === 0 ? "PASS" : "FAIL"}**`);
+lines.push(`- Guardrail reason codes detected: **${guardrailReasonCodeCount}**`);
+lines.push(`- Guardrail reason-code validator: **${guardrailCodesRun.status === 0 ? "PASS" : "FAIL"}**`);
 lines.push(`- Previous committed health snapshot mentions research checks: **${healthAlreadyMentionsResearch ? "yes" : "no"}**`);
 lines.push(`- Previous committed health snapshot mentions eval coverage checks: **${healthAlreadyMentionsEvalCoverage ? "yes" : "no"}**`);
+lines.push(`- Previous committed health snapshot mentions guardrail checks: **${healthAlreadyMentionsGuardrails ? "yes" : "no"}**`);
 lines.push(`- Critical failures: **${criticalFailures.length}**`);
 lines.push("");
 lines.push("## 2. Required file map");
@@ -273,7 +293,7 @@ for (const check of scriptChecks) {
 lines.push("");
 lines.push("## 4. Command results");
 lines.push("");
-for (const result of [validateRun, readinessRun, evalCoverageRun, researchTopicsRun, researchMemosRun]) {
+for (const result of [validateRun, readinessRun, evalCoverageRun, researchTopicsRun, researchMemosRun, guardrailCodesRun]) {
   lines.push(`### ${result.command}`);
   lines.push("");
   lines.push(`Exit code: ${result.status}`);
@@ -300,6 +320,7 @@ lines.push("```bash");
 lines.push("npm run agent:all");
 lines.push("npm run eval:coverage:check");
 lines.push("npm run research:check");
+lines.push("npm run guardrails:check");
 lines.push("npm run eval:readiness");
 lines.push("npx tsc --noEmit --pretty false");
 lines.push("```");
@@ -318,6 +339,8 @@ console.log(`Eval cases: ${evalCaseCount}`);
 console.log(`Research topics: ${topicCount}`);
 console.log(`Research memos: ${memoCount}`);
 console.log(`Eval coverage: ${evalCoverageRun.status === 0 ? "PASS" : "FAIL"}`);
+console.log(`Guardrail reason codes: ${guardrailReasonCodeCount}`);
+console.log(`Guardrail checks: ${guardrailCodesRun.status === 0 ? "PASS" : "FAIL"}`);
 
 if (criticalFailures.length > 0) {
   for (const failure of criticalFailures) {

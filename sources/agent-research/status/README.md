@@ -15,14 +15,21 @@ node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run agent:health
 ```
 
-Sprint 36.3 utvidar health-snapshotet vidare slik at Eval Agent coverage også blir kontrollert:
+Sprint 36.3 utvida health-snapshotet vidare slik at Eval Agent coverage også blir kontrollert:
 
 ```bash
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run eval:coverage:check
 ```
 
-Scriptet kontrollerer at dei viktigaste agent-økosystemfilene finst, at npm-aliasa er registrerte, at eval-casane validerer, at eval-readiness-runneren fungerer, at eval coverage-checken fungerer, og at Research Agent topic-/memo-kvalitetssjekkane passerer.
+Sprint 37.3 utvidar health-snapshotet med Guardrail-sporet:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run guardrails:check
+```
+
+Scriptet kontrollerer at dei viktigaste agent-økosystemfilene finst, at npm-aliasa er registrerte, at eval-casane validerer, at eval-readiness-runneren fungerer, at eval coverage-checken fungerer, at Research Agent topic-/memo-kvalitetssjekkane passerer, og at Guardrail reason-code registry validerer.
 
 Forventa output:
 
@@ -33,6 +40,8 @@ Eval cases: 10
 Research topics: 4
 Research memos: 4
 Eval coverage: PASS
+Guardrail reason codes: 14
+Guardrail checks: PASS
 ```
 
 For ein dry-run utan repository-write:
@@ -75,6 +84,18 @@ npm run eval:coverage
 ```
 
 Bruk `eval:coverage:check` når du berre vil verifisere utan å skrive `qa/evals/reports/latest-eval-coverage.md`.
+
+## Guardrail checks
+
+Sprint 37.3 gjer health snapshot guardrail-aware. Det betyr at `agent:health` no bør reflektere desse guardrail-kommandoane:
+
+```bash
+npm run guardrails:codes
+npm run guardrails:check
+npm run agent:all
+```
+
+Guardrail-delen er framleis registry/validator-only. Den blokkerer ikkje runtime-output og endrar ikkje Supabase eller app-kode.
 
 ## Merk
 
