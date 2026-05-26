@@ -345,3 +345,59 @@ For app/runtime changes, also require:
 Sprint 39.0 is a checkpoint, not a new capability layer.
 
 Its purpose is to reduce handoff risk before moving from foundation work into real agent behavior.
+
+---
+
+## Sprint 43.0 update — Expanded agent ecosystem foundation
+
+**Status:** Updated after Sprints 40–42  
+**Purpose:** Extend the master checkpoint beyond Research/Eval/Guardrails/Observability so it also reflects Report QA, Release Manager and Patch Planner foundations.
+
+### Additional foundations now included
+
+| Track | Status | Primary check |
+|---|---:|---|
+| Report QA Agent foundation | ✅ Complete | `npm run report-qa:check` |
+| Release Manager foundation | ✅ Complete | `npm run release:check` |
+| Patch Planner foundation | ✅ Complete | `npm run patch-planner:check` |
+
+### Current standard local gate
+
+```bash
+npm run research:check
+npm run eval:coverage:check
+npm run guardrails:check
+npm run observability:check
+npm run report-qa:check
+npm run release:check
+npm run patch-planner:check
+npm run agent:all
+npm run agent:health
+```
+
+### Updated interpretation
+
+PILAR now has a broader agent-ecosystem foundation:
+
+```txt
+Research Agent      ✅
+Eval Agent          ✅
+Guardrails          ✅
+Observability       ✅
+Report QA           ✅
+Release Manager     ✅
+Patch Planner       ✅
+```
+
+These tracks are still foundation-level. They provide registries, validators, command aliases, hub integration, health snapshot coverage and final checkpoints. They do not yet provide autonomous runtime agents, auto-merge, auto-deploy, or production write permissions.
+
+### Next safe implementation direction
+
+Recommended next step:
+
+```txt
+Sprint 44.0 — Agent ecosystem release readiness reporter
+```
+
+This should generate a local Markdown release-readiness report from the existing checks, without changing runtime app behavior.
+
