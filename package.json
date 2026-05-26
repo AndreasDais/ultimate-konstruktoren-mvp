@@ -14,7 +14,12 @@
     "qa:golden": "tsx qa/test-agent.ts",
     "qa:smoke": "tsx qa/test-agent.ts --case A1 --runs 1",
     "eval:readiness": "node scripts/run-eval-suite.mjs",
-    "agent:hub": "node scripts/pilar-agent-ecosystem-hub.mjs"
+    "agent:hub": "node scripts/pilar-agent-ecosystem-hub.mjs",
+    "agent:status": "node scripts/pilar-agent-ecosystem-hub.mjs status",
+    "agent:validate": "node scripts/pilar-agent-ecosystem-hub.mjs validate",
+    "agent:readiness": "node scripts/pilar-agent-ecosystem-hub.mjs eval-readiness",
+    "agent:research": "node scripts/pilar-agent-ecosystem-hub.mjs research-memo",
+    "agent:all": "node scripts/pilar-agent-ecosystem-hub.mjs all"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
