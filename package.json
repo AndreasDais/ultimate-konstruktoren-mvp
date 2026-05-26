@@ -23,7 +23,9 @@
     "agent:health": "node scripts/write-agent-ecosystem-health-snapshot.mjs",
     "research:topics": "node scripts/validate-agent-research-topics.mjs",
     "research:memo": "node scripts/create-agent-opportunity-memo.mjs",
-    "research:ai-agent-testing": "node scripts/create-agent-opportunity-memo.mjs ai-agent-testing"
+    "research:ai-agent-testing": "node scripts/create-agent-opportunity-memo.mjs ai-agent-testing",
+    "research:memos": "node scripts/validate-agent-research-memos.mjs",
+    "research:check": "node scripts/validate-agent-research-topics.mjs && node scripts/validate-agent-research-memos.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
