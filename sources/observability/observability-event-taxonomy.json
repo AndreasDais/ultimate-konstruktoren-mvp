@@ -1,0 +1,228 @@
+{
+  "version": "observability_event_taxonomy_v0.1",
+  "status": "proposal",
+  "owner": "PILAR QA / Observability Agent track",
+  "purpose": "Define controlled observability event types for future PILAR agent runs, evals, guardrails, artifacts and release gates.",
+  "categories": [
+    "run",
+    "input",
+    "agent",
+    "comparison",
+    "controller",
+    "report",
+    "artifact",
+    "guardrail",
+    "eval",
+    "research",
+    "release",
+    "health",
+    "feedback",
+    "anomaly"
+  ],
+  "severity_levels": ["debug", "info", "warn", "error", "critical"],
+  "common_required_fields": [
+    "event_type",
+    "event_version",
+    "created_at",
+    "source",
+    "severity"
+  ],
+  "common_optional_fields": [
+    "run_id",
+    "request_id",
+    "agent_name",
+    "agent_version",
+    "prompt_version",
+    "display_language",
+    "standard_context",
+    "domain",
+    "duration_ms",
+    "token_usage",
+    "cost_estimate",
+    "reason_codes",
+    "artifact_path",
+    "metadata"
+  ],
+  "pii_policy": {
+    "default": "metadata_minimized",
+    "rule": "Do not store raw user-uploaded documents, images, credentials, secrets or full personally identifying text inside observability events. Store pointers, hashes, summaries or redacted snippets when needed.",
+    "allowed_in_metadata": [
+      "domain",
+      "standard_context",
+      "display_language",
+      "status",
+      "score",
+      "counts",
+      "reason_codes",
+      "artifact_path",
+      "duration_ms"
+    ],
+    "requires_redaction": [
+      "raw_input_text",
+      "uploaded_file_text",
+      "email",
+      "phone",
+      "address",
+      "credential",
+      "api_key",
+      "student_or_customer_name"
+    ]
+  },
+  "events": [
+    {
+      "event_type": "run.started",
+      "category": "run",
+      "description": "A user-facing PILAR run has been initialized.",
+      "producer": "app/api/init-run or future orchestration layer",
+      "severity": "info",
+      "required_fields": ["run_id", "source"],
+      "optional_fields": ["display_language", "standard_context", "domain", "metadata"],
+      "example_metadata": {"entrypoint": "workbench", "has_upload": false}
+    },
+    {
+      "event_type": "input.classified",
+      "category": "input",
+      "description": "Input Agent classified input quality, domain and missing data before engineering agents run.",
+      "producer": "app/api/input-agent",
+      "severity": "info",
+      "required_fields": ["run_id", "status", "domain"],
+      "optional_fields": ["standard_context", "display_language", "reason_codes", "metadata"],
+      "example_metadata": {"input_quality_status": "klar", "missing_fields": []}
+    },
+    {
+      "event_type": "agent.started",
+      "category": "agent",
+      "description": "One pipeline agent started work on a run.",
+      "producer": "agent route wrapper",
+      "severity": "debug",
+      "required_fields": ["run_id", "agent_name"],
+      "optional_fields": ["agent_version", "prompt_version", "metadata"]
+    },
+    {
+      "event_type": "agent.completed",
+      "category": "agent",
+      "description": "One pipeline agent completed successfully.",
+      "producer": "agent route wrapper",
+      "severity": "info",
+      "required_fields": ["run_id", "agent_name", "duration_ms"],
+      "optional_fields": ["agent_version", "prompt_version", "token_usage", "cost_estimate", "metadata"]
+    },
+    {
+      "event_type": "agent.failed",
+      "category": "agent",
+      "description": "One pipeline agent failed or returned unusable output.",
+      "producer": "agent route wrapper",
+      "severity": "error",
+      "required_fields": ["run_id", "agent_name", "reason_codes"],
+      "optional_fields": ["agent_version", "prompt_version", "duration_ms", "metadata"]
+    },
+    {
+      "event_type": "comparison.completed",
+      "category": "comparison",
+      "description": "Comparator completed A/B comparison and produced agreement or difference assessment.",
+      "producer": "app/api/agent-c",
+      "severity": "info",
+      "required_fields": ["run_id", "status"],
+      "optional_fields": ["reason_codes", "metadata"],
+      "example_metadata": {"agreement_score": 0.92, "difference_count": 0}
+    },
+    {
+      "event_type": "controller.decision",
+      "category": "controller",
+      "description": "Controller produced final preliminary decision for user-facing display.",
+      "producer": "app/api/agent-d",
+      "severity": "info",
+      "required_fields": ["run_id", "status"],
+      "optional_fields": ["reason_codes", "metadata"],
+      "example_metadata": {"decision_status": "preliminarily_approved", "trust_score": 0.83}
+    },
+    {
+      "event_type": "report.generated",
+      "category": "report",
+      "description": "Reporter generated a report model or final report prose for a run.",
+      "producer": "app/api/agent-e or lib/report/build-report-model.ts",
+      "severity": "info",
+      "required_fields": ["run_id", "artifact_path"],
+      "optional_fields": ["display_language", "standard_context", "metadata"]
+    },
+    {
+      "event_type": "artifact.rendered",
+      "category": "artifact",
+      "description": "A user-facing artifact such as DOCX, PDF, calculation sheet or LaTeX output was rendered.",
+      "producer": "report/calculation rendering routes",
+      "severity": "info",
+      "required_fields": ["run_id", "artifact_path", "status"],
+      "optional_fields": ["display_language", "duration_ms", "metadata"],
+      "example_metadata": {"artifact_type": "docx", "renderer": "render-docx"}
+    },
+    {
+      "event_type": "guardrail.evaluated",
+      "category": "guardrail",
+      "description": "Guardrail rules evaluated a run, output or proposed action.",
+      "producer": "future Guardrail Agent",
+      "severity": "warn",
+      "required_fields": ["run_id", "status", "reason_codes"],
+      "optional_fields": ["metadata"],
+      "example_metadata": {"guardrail_status": "warn", "allowed_next_step": "show_preliminary_with_warning"}
+    },
+    {
+      "event_type": "eval.executed",
+      "category": "eval",
+      "description": "Eval Agent executed or summarized an eval suite.",
+      "producer": "scripts/run-eval-suite.mjs or scripts/summarize-eval-coverage.mjs",
+      "severity": "info",
+      "required_fields": ["status", "artifact_path"],
+      "optional_fields": ["metadata"],
+      "example_metadata": {"case_count": 10, "errors": 0, "warnings": 0}
+    },
+    {
+      "event_type": "research.memo.generated",
+      "category": "research",
+      "description": "Research Agent generated or refreshed an Agent Opportunity Memo.",
+      "producer": "scripts/create-agent-opportunity-memo.mjs",
+      "severity": "info",
+      "required_fields": ["artifact_path", "status"],
+      "optional_fields": ["metadata"],
+      "example_metadata": {"topic_id": "ai-agent-testing", "priority": "P0"}
+    },
+    {
+      "event_type": "release.gate.checked",
+      "category": "release",
+      "description": "Agent ecosystem release gate or command hub completed a local check suite.",
+      "producer": "scripts/pilar-agent-ecosystem-hub.mjs",
+      "severity": "info",
+      "required_fields": ["status"],
+      "optional_fields": ["artifact_path", "metadata"],
+      "example_metadata": {"command": "agent:all", "checks_passed": 7}
+    },
+    {
+      "event_type": "health.snapshot.written",
+      "category": "health",
+      "description": "Agent ecosystem health snapshot was generated or checked.",
+      "producer": "scripts/write-agent-ecosystem-health-snapshot.mjs",
+      "severity": "info",
+      "required_fields": ["status", "artifact_path"],
+      "optional_fields": ["metadata"]
+    },
+    {
+      "event_type": "feedback.recorded",
+      "category": "feedback",
+      "description": "User, pilot, reviewer or admin feedback was recorded for later learning.",
+      "producer": "feedback routes or future Human Review Agent",
+      "severity": "info",
+      "required_fields": ["status"],
+      "optional_fields": ["run_id", "reason_codes", "metadata"],
+      "example_metadata": {"review_status": "needs_more_info", "can_be_used_for_training": false}
+    },
+    {
+      "event_type": "anomaly.flagged",
+      "category": "anomaly",
+      "description": "Observability layer flagged unusual behavior, drift, mismatch or repeated failure pattern.",
+      "producer": "future Observability Agent",
+      "severity": "warn",
+      "required_fields": ["reason_codes", "status"],
+      "optional_fields": ["run_id", "metadata"],
+      "example_metadata": {"anomaly_type": "i18n_leak", "sample_count": 3}
+    }
+  ]
+}
