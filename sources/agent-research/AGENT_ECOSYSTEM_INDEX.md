@@ -303,3 +303,41 @@ node scripts/validate-eval-cases.mjs
 ```
 
 Then open this file and continue from the next sprint candidate.
+
+<!-- PILAR:RESEARCH_COVERAGE_START -->
+## Research coverage gate
+
+Research Agent-sporet har no ein eksplisitt coverage-gate frå topic-registry til topic-fil og memo-fil.
+
+Standardkommandoar:
+
+```bash
+npm run research:coverage
+npm run research:topics
+npm run research:memos
+npm run research:check
+npm run agent:all
+```
+
+Coverage-regelen er:
+
+```txt
+For every entry in sources/agent-research/topics/topic-registry.json:
+  1. sources/agent-research/topics/<topic-id>.md must exist
+  2. sources/agent-research/memos/agent-opportunity-<topic-id>.md must exist
+  3. memo quality checks must pass
+```
+
+Viktige filer:
+
+```txt
+scripts/validate-agent-research-topics.mjs
+scripts/validate-agent-research-memos.mjs
+sources/agent-research/topics/topic-registry.json
+sources/agent-research/topics/REGISTRY_TO_MEMO_COVERAGE.md
+sources/agent-research/topics/RESEARCH_TOPIC_IMPLEMENTATION_CHECKLIST.md
+sources/agent-research/memos/MEMO_QUALITY_CHECKS.md
+```
+
+Dette gjer Research Agent-sporet meir operasjonelt: registry → topic file → memo file → coverage check → quality check → agent hub → health snapshot.
+<!-- PILAR:RESEARCH_COVERAGE_END -->

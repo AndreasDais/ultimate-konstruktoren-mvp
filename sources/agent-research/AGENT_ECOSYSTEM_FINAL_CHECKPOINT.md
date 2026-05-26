@@ -271,3 +271,31 @@ handoff to future agents
 ```
 
 The next major milestone should be the first runtime-adjacent but still safe implementation: an eval runner that grades real saved PILAR outputs without modifying production logic.
+
+<!-- PILAR:RESEARCH_COVERAGE_START -->
+## Research coverage checkpoint
+
+Sprint 35.9 og 35.10 gjorde Research Agent-sporet komplett nok til å ha ein eigen coverage-gate.
+
+Godkjend coverage-kommando:
+
+```bash
+npm run research:coverage
+```
+
+Godkjend samla research-gate:
+
+```bash
+npm run research:check
+```
+
+Godkjend samla agent-økosystem-gate:
+
+```bash
+npm run agent:all
+```
+
+Coverage-kravet er at kvar topic i `topic-registry.json` har både topic-fil og memo-fil. Dette skal sjekkast før nye Research Agent-topics blir rekna som klare for vidare sprintplanlegging.
+
+Neste trygge byggesteg etter dette checkpointet er å bruke coverage-gaten til å kvalitetssikre nye topics før vi byggjer meir runtime-logikk.
+<!-- PILAR:RESEARCH_COVERAGE_END -->
