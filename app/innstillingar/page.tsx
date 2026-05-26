@@ -19,7 +19,7 @@ const INNSTILLINGAR_LABELS: Record<string, Record<Locale, string>> = {
   sisteInnlogging: { nb: "Siste innlogging", nn: "Siste innlogging" },
   // Pilot-status
   pilotStatus: { nb: "Pilot-status", nn: "Pilot-status" },
-  pilotP1: { nb: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er use-preferanser (målform, eksport-format, desimaltegn) begrenset — de kommer som v0.2 etter pilot-tilbakemelding.", nn: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er use-preferansar (målform, eksport-format, desimalteikn) avgrensa — dei kjem som v0.2 etter pilot-tilbakemelding." },
+  pilotP1: { nb: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er bruker-preferanser (målform, eksport-format, desimaltegn) begrenset — de kommer som v0.2 etter pilot-tilbakemelding.", nn: "Du er i pilot-fasen av Pilar (versjon 0.1). I denne fasen er brukar-preferansar (målform, eksport-format, desimalteikn) avgrensa — dei kjem som v0.2 etter pilot-tilbakemelding." },
   pilotP2: { nb: "Tilbakemelding er velkommen. Bruk «Send feilrapport» nederst på hver rapport-side, eller send e-post.", nn: "Tilbakemelding er velkomen. Bruk «Send feilrapport» nederst på kvar rapport-side, eller send e-post." },
   // Konto-handlingar
   kontoHandlingar: { nb: "Konto-handlinger", nn: "Konto-handlingar" },
