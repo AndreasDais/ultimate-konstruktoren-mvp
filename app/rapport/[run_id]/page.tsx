@@ -869,27 +869,31 @@ export default function RapportPage() {
   // i § 04.2 dupliserte same prosa ord-for-ord. P3-fiks: bruk ein kort,
   // statusspesifikk "avgjerd"-utsegn i staden, lik ein stempel-tekst.
   // Held forsida som tillit-narrativ, verdict-box som beslutning.
-  const VERDICT_SHORT: Record<string, Record<Locale, string>> = {
+  const VERDICT_SHORT: Record<string, Record<Locale | "en", string>> = {
     approved: {
       nb: "Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.",
       nn: "Berekninga er godkjend for visning. Føreset manuell verifisering av ansvarleg fagperson før bruk i prosjektering.",
+      en: "The calculation is approved for display as a preliminary result. Requires manual verification by a responsible professional before use in design.",
     },
     approved_with_warnings: {
       nb: "Beregningen er foreløpig godkjent med advarsler. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering.",
       nn: "Berekninga er førebels godkjend med åtvaringar. Skal verifiserast av ansvarleg fagperson før bruk i prosjektering.",
+      en: "The calculation is preliminarily approved with warnings. Must be verified by a responsible professional before use in design.",
     },
     uncertain: {
       nb: "Konklusjonen er usikker. Beregningen skal granskes manuelt før den brukes til noe formål.",
       nn: "Konklusjonen er usikker. Berekninga skal granskast manuelt før ho blir brukt til noko formål.",
+      en: "The conclusion is uncertain. The calculation must be reviewed manually before being used for any purpose.",
     },
     rejected: {
       nb: "Beregningen er avvist. Skal ikke brukes uten omfattende manuell verifikasjon.",
       nn: "Berekninga er avvist. Skal ikkje brukast utan omfattande manuell verifisering.",
+      en: "The calculation is rejected. Must not be used without comprehensive manual verification.",
     },
   };
   const verdictShortText =
-    VERDICT_SHORT[data.controllerDecision?.decision_status ?? ""]?.[locale] ??
-    VERDICT_SHORT.approved_with_warnings[locale];
+    VERDICT_SHORT[data.controllerDecision?.decision_status ?? ""]?.[reportDisplayLanguage] ??
+    VERDICT_SHORT.approved_with_warnings[reportDisplayLanguage];
 
   // === Resultat-tabell (Fase 2, § 02.2) ===
   // Splittar results i DIMENSJONERANDE + INPUT OG GEOMETRI via tile-heuristics.

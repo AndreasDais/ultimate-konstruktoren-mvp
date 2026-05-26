@@ -21,27 +21,27 @@ import { useLocale } from "@/lib/locale-context";
  * Print-mode: breakdown alltid utvida (CSS-styrt via @media print).
  */
 
-const TG_LABELS: Record<string, Record<Locale, string>> = {
+const TG_LABELS: Record<string, Record<Locale | "en", string>> = {
   // Idle-state
-  ikkjeRekna: { nb: "Tillit-score ikke beregnet", nn: "Tillit-score ikkje rekna" },
+  ikkjeRekna: { nb: "Tillit-score ikke beregnet", nn: "Tillit-score ikkje rekna", en: "Trust score not calculated" },
   // Aria-label
-  ariaPre: { nb: "Tillit-score ", nn: "Tillit-score " },
-  ariaMid: { nb: " av 100 (", nn: " av 100 (" },
-  ariaPost: { nb: "). Klikk for å se breakdown.", nn: "). Klikk for å sjå breakdown." },
+  ariaPre: { nb: "Tillit-score ", nn: "Tillit-score ", en: "Trust score " },
+  ariaMid: { nb: " av 100 (", nn: " av 100 (", en: " out of 100 (" },
+  ariaPost: { nb: "). Klikk for å se breakdown.", nn: "). Klikk for å sjå breakdown.", en: "). Click to see breakdown." },
   // Komponent-rader
-  konstruktorSemje: { nb: "Konstruktør-enighet", nn: "Konstruktør-semje" },
-  konstruktorSemjeExpl: { nb: "Speiler Sammenligner sin vurdering av om Konstruktør A og Konstruktør B kom frem til samme svar. Full enighet gir høyeste verdi; metodiske eller numeriske avvik trekker ned.", nn: "Speglar Samanliknar si vurdering av om Konstruktør A og Konstruktør B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned." },
-  kontrollorVerdict: { nb: "Kontrollør-verdikt", nn: "Kontrollør-verdikt" },
-  kontrollorVerdictExpl: { nb: "Speiler Kontrollørens endelige avgjørelse. Godkjent gir høyeste verdi; godkjent med advarsler litt lavere; usikker mye lavere; avvist nuller ut.", nn: "Speglar Kontrolløren si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut." },
-  fullstendigheit: { nb: "Fullstendighet", nn: "Fullstendigheit" },
-  fullstendigheitExpl: { nb: "Måler hvor mange av de forespurte størrelsene som faktisk ble beregnet i pipeline. Full pott når alle er dekket.", nn: "Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt." },
-  formulaNote: { nb: "Gauge'en måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2." },
-  storleikarRekna: { nb: "størrelser beregnet", nn: "storleikar rekna" },
-  avInfix: { nb: "av", nn: "av" },
+  konstruktorSemje: { nb: "Konstruktør-enighet", nn: "Konstruktør-semje", en: "Engineer agreement" },
+  konstruktorSemjeExpl: { nb: "Speiler Sammenligner sin vurdering av om Konstruktør A og Konstruktør B kom frem til samme svar. Full enighet gir høyeste verdi; metodiske eller numeriske avvik trekker ned.", nn: "Speglar Samanliknar si vurdering av om Konstruktør A og Konstruktør B kom fram til same svar. Full semje gjev høgaste verdi; metodiske eller numeriske avvik trekker ned.", en: "Reflects the Comparator's assessment of whether Engineer A and Engineer B reached the same answer. Full agreement gives the highest value; methodological or numerical differences reduce it." },
+  kontrollorVerdict: { nb: "Kontrollør-verdikt", nn: "Kontrollør-verdikt", en: "Controller verdict" },
+  kontrollorVerdictExpl: { nb: "Speiler Kontrollørens endelige avgjørelse. Godkjent gir høyeste verdi; godkjent med advarsler litt lavere; usikker mye lavere; avvist nuller ut.", nn: "Speglar Kontrolløren si endelege avgjerd. Godkjent gjev høgaste verdi; godkjent med åtvaringar litt lågare; usikker mykje lågare; avvist nullar ut.", en: "Reflects the Controller's final decision. Approved gives the highest value; approved with warnings slightly lower; uncertain much lower; rejected zeroes it out." },
+  fullstendigheit: { nb: "Fullstendighet", nn: "Fullstendigheit", en: "Completeness" },
+  fullstendigheitExpl: { nb: "Måler hvor mange av de forespurte størrelsene som faktisk ble beregnet i pipeline. Full pott når alle er dekket.", nn: "Måler kor mange av dei førespurde storleikane som faktisk blei rekna i pipeline. Full pott når alle er dekt.", en: "Measures how many of the requested quantities were actually calculated in the pipeline. Full score when all are covered." },
+  formulaNote: { nb: "Gauge'en måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "Gauge'n måler AI-pipeline-tillit. Fagperson-kontroll vises separat i kontrollstatus. Formelen er ein pilot-hypotese og blir kalibrert i v0.2.", en: "The gauge measures AI pipeline trust. Professional review is shown separately in the control status. The formula is a pilot hypothesis and will be calibrated in v0.2." },
+  storleikarRekna: { nb: "størrelser beregnet", nn: "storleikar rekna", en: "quantities calculated" },
+  avInfix: { nb: "av", nn: "av", en: "of" },
 };
 
 // Enum-mapping for prettifyEnum — locale-aware
-const ENUM_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
+const ENUM_LABELS_BY_LOCALE: Record<Locale | "en", Record<string, string>> = {
   nb: {
     match: "Full enighet",
     minor_differences: "Mindre avvik",
@@ -61,6 +61,16 @@ const ENUM_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
     approved_with_warnings: "Godkjent med åtvaringar",
     uncertain: "Usikker",
     rejected: "Avvist",
+  },
+  en: {
+    match: "Full agreement",
+    minor_differences: "Minor differences",
+    significant_differences: "Significant differences",
+    critical_disagreement: "Critical disagreement",
+    approved: "Approved",
+    approved_with_warnings: "Approved with warnings",
+    uncertain: "Uncertain",
+    rejected: "Rejected",
   },
 };
 
@@ -100,13 +110,14 @@ const EN_TILLIT_LABELS: Record<string, string> = {
 
 export function TillitGauge({ score, breakdown, displayLanguage }: TillitGaugeProps) {
   const { locale } = useLocale();
+  const lang: Locale | "en" = displayLanguage ?? locale;
   const [expanded, setExpanded] = useState(false);
 
   if (score === null || score === undefined) {
     return (
       <div className="tillit-gauge tillit-gauge--idle">
         <span className="tillit-gauge__placeholder">
-          {TG_LABELS.ikkjeRekna[locale]}
+          {TG_LABELS.ikkjeRekna[lang]}
         </span>
       </div>
     );
@@ -127,7 +138,7 @@ export function TillitGauge({ score, breakdown, displayLanguage }: TillitGaugePr
         className="tillit-gauge__button"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        aria-label={`${TG_LABELS.ariaPre[locale]}${score}${TG_LABELS.ariaMid[locale]}${label}${TG_LABELS.ariaPost[locale]}`}
+        aria-label={`${TG_LABELS.ariaPre[lang]}${score}${TG_LABELS.ariaMid[lang]}${label}${TG_LABELS.ariaPost[lang]}`}
       >
         <svg
           width={SVG_SIZE}
@@ -175,32 +186,32 @@ export function TillitGauge({ score, breakdown, displayLanguage }: TillitGaugePr
           data-expanded={expanded ? "true" : "false"}
         >
           <ComponentRow
-            label={TG_LABELS.konstruktorSemje[locale]}
+            label={TG_LABELS.konstruktorSemje[lang]}
             value={breakdown.ab_agreement}
             max={35}
-            detail={prettifyEnum(breakdown.components?.comparison_status, locale)}
-            explanation={TG_LABELS.konstruktorSemjeExpl[locale]}
+            detail={prettifyEnum(breakdown.components?.comparison_status, lang)}
+            explanation={TG_LABELS.konstruktorSemjeExpl[lang]}
           />
           <ComponentRow
-            label={TG_LABELS.kontrollorVerdict[locale]}
+            label={TG_LABELS.kontrollorVerdict[lang]}
             value={breakdown.controller_verdict}
             max={35}
-            detail={prettifyEnum(breakdown.components?.controller_verdict_raw, locale)}
-            explanation={TG_LABELS.kontrollorVerdictExpl[locale]}
+            detail={prettifyEnum(breakdown.components?.controller_verdict_raw, lang)}
+            explanation={TG_LABELS.kontrollorVerdictExpl[lang]}
           />
           <ComponentRow
-            label={TG_LABELS.fullstendigheit[locale]}
+            label={TG_LABELS.fullstendigheit[lang]}
             value={breakdown.completeness}
             max={30}
             detail={
               breakdown.components
-                ? `${breakdown.components.rekna_storleikar} ${TG_LABELS.avInfix[locale]} ${breakdown.components.spurde_storleikar} ${TG_LABELS.storleikarRekna[locale]}`
+                ? `${breakdown.components.rekna_storleikar} ${TG_LABELS.avInfix[lang]} ${breakdown.components.spurde_storleikar} ${TG_LABELS.storleikarRekna[lang]}`
                 : undefined
             }
-            explanation={TG_LABELS.fullstendigheitExpl[locale]}
+            explanation={TG_LABELS.fullstendigheitExpl[lang]}
           />
           <p className="tillit-gauge__formula-note">
-            {TG_LABELS.formulaNote[locale]}
+            {TG_LABELS.formulaNote[lang]}
           </p>
         </div>
       )}
@@ -246,8 +257,8 @@ function ComponentRow({ label, value, max, detail, explanation }: ComponentRowPr
  * Mappar snake_case enum-verdiar til lesonly etikettar.
  * Returnerer undefined viss input er undefined/tom.
  */
-function prettifyEnum(raw: string | undefined, locale: Locale): string | undefined {
+function prettifyEnum(raw: string | undefined, lang: Locale | "en"): string | undefined {
   if (!raw) return undefined;
-  const map = ENUM_LABELS_BY_LOCALE[locale];
+  const map = ENUM_LABELS_BY_LOCALE[lang];
   return map[raw] ?? raw;
 }
