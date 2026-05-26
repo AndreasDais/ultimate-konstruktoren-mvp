@@ -261,3 +261,41 @@ It must not:
 38.4 — Observability final checkpoint
 39.0 — Report QA registry/checklist track
 ```
+
+---
+
+## Sprint 40.2 — Report QA in agent hub
+
+Report QA registry validation is now part of the local non-writing agent ecosystem gate.
+
+### Added command
+
+```bash
+npm run agent:hub -- report-qa-check
+```
+
+This command runs:
+
+```bash
+node scripts/validate-report-qa-checks.mjs
+```
+
+### Updated all-gate
+
+`npm run agent:all` now includes:
+
+```txt
+status
+validate
+eval-readiness
+eval-coverage
+research-topics
+research-memos
+guardrails-check
+observability-check
+report-qa-check
+health
+```
+
+The Report QA step validates the check registry only. It does not inspect live reports, read user data, change app code, or block runtime output.
+

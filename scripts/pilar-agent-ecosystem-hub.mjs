@@ -98,6 +98,10 @@ const commandGroups = {
     description: "Run Observability Agent taxonomy checks.",
     run: () => runNodeScript("scripts/validate-observability-event-taxonomy.mjs")
   },
+  "report-qa-check": {
+    description: "Run Report QA Agent check registry validation.",
+    run: () => runNodeScript("scripts/validate-report-qa-checks.mjs")
+  },
   "health": {
     description: "Run health snapshot check mode without rewriting latest-agent-ecosystem-health.md.",
     run: () => runNodeScript("scripts/write-agent-ecosystem-health-snapshot.mjs", ["--check"])
@@ -117,6 +121,7 @@ const commandGroups = {
       ["research-memos", []],
       ["guardrails-check", []],
       ["observability-check", []],
+      ["report-qa-check", []],
       ["health", []]
     ])
   }
@@ -207,6 +212,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- eval-coverage");
   console.log("  npm run agent:hub -- guardrails-check");
   console.log("  npm run agent:hub -- observability-check");
+  console.log("  npm run agent:hub -- report-qa-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
 
