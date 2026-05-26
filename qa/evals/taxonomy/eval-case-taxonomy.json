@@ -1,0 +1,38 @@
+{
+  "version": "eval-taxonomy-v0.1",
+  "status": "seed",
+  "description": "Initial taxonomy for PILAR Eval Agent expansion. This is intentionally lightweight and does not change production agent behavior.",
+  "domains": [
+    "steel",
+    "concrete",
+    "timber",
+    "loads",
+    "input_validation",
+    "report_rendering",
+    "international_i18n",
+    "unknown"
+  ],
+  "display_languages": ["nb", "nn", "en", "de", "fr"],
+  "standard_profiles": [
+    "norway_eurocode",
+    "eurocode_general",
+    "aisc_asce_aci",
+    "canadian_experimental",
+    "unknown"
+  ],
+  "required_eval_dimensions": [
+    "input completeness",
+    "domain detection",
+    "standard/profile separation",
+    "unit consistency",
+    "must-include factual anchors",
+    "must-not-include forbidden leakage",
+    "warning/disclaimer behavior",
+    "report artifact readiness"
+  ],
+  "future_graders": [
+    "rules_only",
+    "rules_plus_llm_review",
+    "human_review_required"
+  ]
+}
