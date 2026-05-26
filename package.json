@@ -28,7 +28,9 @@
     "research:check": "node scripts/validate-agent-research-topics.mjs && node scripts/validate-agent-research-memos.mjs",
     "research:coverage": "node scripts/validate-agent-research-topics.mjs",
     "eval:coverage": "node scripts/summarize-eval-coverage.mjs",
-    "eval:coverage:check": "node scripts/summarize-eval-coverage.mjs --check"
+    "eval:coverage:check": "node scripts/summarize-eval-coverage.mjs --check",
+    "guardrails:codes": "node scripts/validate-guardrail-reason-codes.mjs",
+    "guardrails:check": "node scripts/validate-guardrail-reason-codes.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
