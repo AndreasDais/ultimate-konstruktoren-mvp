@@ -176,7 +176,7 @@
       "example_metadata": {"case_count": 10, "errors": 0, "warnings": 0}
     },
     {
-      "event_type": "research.memo.generated",
+      "event_type": "research.generated",
       "category": "research",
       "description": "Research Agent generated or refreshed an Agent Opportunity Memo.",
       "producer": "scripts/create-agent-opportunity-memo.mjs",
@@ -186,7 +186,7 @@
       "example_metadata": {"topic_id": "ai-agent-testing", "priority": "P0"}
     },
     {
-      "event_type": "release.gate.checked",
+      "event_type": "release.checked",
       "category": "release",
       "description": "Agent ecosystem release gate or command hub completed a local check suite.",
       "producer": "scripts/pilar-agent-ecosystem-hub.mjs",
@@ -196,7 +196,7 @@
       "example_metadata": {"command": "agent:all", "checks_passed": 7}
     },
     {
-      "event_type": "health.snapshot.written",
+      "event_type": "health.written",
       "category": "health",
       "description": "Agent ecosystem health snapshot was generated or checked.",
       "producer": "scripts/write-agent-ecosystem-health-snapshot.mjs",

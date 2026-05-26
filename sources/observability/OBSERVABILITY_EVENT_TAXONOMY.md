@@ -73,8 +73,8 @@ input.classified
 agent.completed
 guardrail.evaluated
 eval.executed
-research.memo.generated
-health.snapshot.written
+research.generated
+health.written
 ```
 
 Avoid vague names:
