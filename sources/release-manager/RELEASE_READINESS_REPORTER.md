@@ -25,6 +25,23 @@ sources/release-manager/reports/latest-release-readiness.md
 
 ## Modes
 
+## Fast check mode
+
+Default check mode is intentionally fast:
+
+```bash
+npm run release:readiness:check
+```
+
+It validates the release registry and local working-tree status, but skips heavy nested gates. Skipped gates make the report `RELEASE_RISKY`, not `RELEASE_READY`, because human/full-gate review is still required before an actual release.
+
+Use full mode only when you intentionally want the reporter to execute nested gates:
+
+```bash
+node scripts/write-release-readiness-report.mjs --check --full
+```
+
+
 ### Check-only mode
 
 Runs the checks and prints the status without writing the report artifact.

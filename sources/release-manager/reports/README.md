@@ -37,3 +37,18 @@ The hardened report should include:
 - recommended action for failed gates
 - recursion guard explanation
 - raw command outputs
+
+
+## Fast check mode
+
+Use the npm alias during active sprint work:
+
+```bash
+npm run release:readiness:check
+```
+
+This mode is intentionally fast and skips heavy nested gates. For a full nested release-readiness pass, run:
+
+```bash
+node scripts/write-release-readiness-report.mjs --check --full
+```

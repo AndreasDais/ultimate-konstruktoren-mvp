@@ -6,6 +6,8 @@ import { spawnSync } from "node:child_process";
 const ROOT = process.cwd();
 const CHECK_ONLY = process.argv.includes("--check");
 const STRICT = process.argv.includes("--strict");
+const FULL = process.argv.includes("--full");
+const FAST_CHECK_MODE = CHECK_ONLY && !FULL;
 const OUT_PATH = join(ROOT, "sources/release-manager/reports/latest-release-readiness.md");
 const isWindows = process.platform === "win32";
 const npmCmd = isWindows ? "npm.cmd" : "npm";
@@ -46,8 +48,8 @@ const steps = [
     command: npmCmd,
     args: ["run", "agent:all"],
     action: "Run npm run agent:all and fix the first failing registry, validator, or health check.",
-    skipWhen: () => RECURSION_GUARD_ACTIVE,
-    skipNote: "Skipped inside agent hub / nested release-readiness run to avoid recursion."
+    skipWhen: () => FAST_CHECK_MODE || RECURSION_GUARD_ACTIVE,
+    skipNote: "Skipped in fast check mode or inside agent hub / nested release-readiness run to avoid recursion."
   },
   {
     id: "health-snapshot-check",
@@ -55,7 +57,9 @@ const steps = [
     severity: "block",
     command: "node",
     args: ["scripts/write-agent-ecosystem-health-snapshot.mjs", "--check"],
-    action: "Run node scripts/write-agent-ecosystem-health-snapshot.mjs --check and fix missing files, npm scripts, or failed checks."
+    action: "Run node scripts/write-agent-ecosystem-health-snapshot.mjs --check and fix missing files, npm scripts, or failed checks.",
+    skipWhen: () => FAST_CHECK_MODE,
+    skipNote: "Skipped in fast check mode. Run node scripts/write-release-readiness-report.mjs --check --full for the full nested gate."
   },
   {
     id: "typescript-gate",
@@ -63,7 +67,9 @@ const steps = [
     severity: "block",
     command: npxCmd,
     args: ["tsc", "--noEmit", "--pretty", "false"],
-    action: "Run npx tsc --noEmit --pretty false and fix TypeScript errors before release."
+    action: "Run npx tsc --noEmit --pretty false and fix TypeScript errors before release.",
+    skipWhen: () => FAST_CHECK_MODE,
+    skipNote: "Skipped in fast check mode. Run npx tsc --noEmit --pretty false or --full mode before release."
   }
 ];
 
@@ -162,14 +168,14 @@ const results = steps.map(runStep);
 const blockers = results.filter((step) => !step.ok && step.severity === "block");
 const warnings = results.filter((step) => !step.ok && step.severity === "warn");
 const skipped = results.filter((step) => step.skipped);
-const releaseStatus = blockers.length > 0 ? "RELEASE_BLOCKED" : warnings.length > 0 ? "RELEASE_RISKY" : "RELEASE_READY";
+const releaseStatus = blockers.length > 0 ? "RELEASE_BLOCKED" : warnings.length > 0 || skipped.length > 0 ? "RELEASE_RISKY" : "RELEASE_READY";
 const now = new Date().toISOString();
 
 const lines = [];
 lines.push("# PILAR Release Readiness Report");
 lines.push("");
 lines.push(`**Generated:** ${now}`);
-lines.push(`**Mode:** ${CHECK_ONLY ? "check-only" : "write"}`);
+lines.push(`**Mode:** ${CHECK_ONLY ? (FULL ? "check-full" : "check-fast") : "write"}`);
 lines.push(`**Status:** ${releaseStatus}`);
 lines.push("");
 lines.push("## Summary");
@@ -208,9 +214,19 @@ for (const result of results) {
   lines.push(`| ${escapeCell(result.title)} | ${result.severity.toUpperCase()} | ${resultLabel(result)} | ${escapeCell(result.commandLine)} | ${escapeCell(firstUsefulLine(result.output || result.error))} | ${escapeCell(actionFor(result))} | ${escapeCell(result.note)} |`);
 }
 lines.push("");
+lines.push("## Fast/full check modes");
+lines.push("");
+lines.push("Default `--check` mode is intentionally fast. It validates the release registry and working tree status, but skips nested expensive gates that are already covered by `agent:all`, `agent:health`, or explicit manual checks.");
+lines.push("");
+lines.push("Use full mode when you intentionally want the release-readiness reporter to execute nested gates:");
+lines.push("");
+lines.push("```bash");
+lines.push("node scripts/write-release-readiness-report.mjs --check --full");
+lines.push("```");
+lines.push("");
 lines.push("## Recursion guard");
 lines.push("");
-lines.push("The reporter may be called directly or from `agent:all`. When it detects that it is already running inside the agent hub or a nested release-readiness run, it skips the internal `agent:all` step to avoid recursive gate execution.");
+lines.push("The reporter may be called directly or from `agent:all`. When it detects fast check mode, the agent hub, or a nested release-readiness run, it skips heavy nested gates to avoid long recursive gate execution.");
 lines.push("");
 lines.push("## Gates intentionally not executed in v0.2");
 lines.push("");
@@ -251,6 +267,7 @@ if (!CHECK_ONLY) {
 }
 
 console.log(`Status: ${releaseStatus}`);
+console.log(`Fast check mode: ${FAST_CHECK_MODE ? "yes" : "no"}`);
 console.log(`Blocking failures: ${blockers.length}`);
 console.log(`Warnings: ${warnings.length}`);
 console.log(`Skipped gates: ${skipped.length}`);
