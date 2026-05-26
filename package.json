@@ -32,7 +32,9 @@
     "guardrails:codes": "node scripts/validate-guardrail-reason-codes.mjs",
     "guardrails:check": "node scripts/validate-guardrail-reason-codes.mjs",
     "observability:events": "node scripts/validate-observability-event-taxonomy.mjs",
-    "observability:check": "node scripts/validate-observability-event-taxonomy.mjs"
+    "observability:check": "node scripts/validate-observability-event-taxonomy.mjs",
+    "report-qa:checks": "node scripts/validate-report-qa-checks.mjs",
+    "report-qa:check": "node scripts/validate-report-qa-checks.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
