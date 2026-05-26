@@ -1,0 +1,106 @@
+{
+  "version": "35.0.0",
+  "updated_at": "2026-05-26",
+  "owner": "PILAR Research & Agent Strategy Agent",
+  "purpose": "Registry of approved research topics that the local Research Agent memo runner may use.",
+  "rules": [
+    "Research topics are read-only inputs for memo generation.",
+    "A topic may propose code, evals, prompts or schema work, but must not apply changes directly.",
+    "Every topic must declare priority, risk, expected memo output and allowed next step.",
+    "Every topic must map back to a measurable PILAR product problem."
+  ],
+  "topics": [
+    {
+      "id": "ai-agent-testing",
+      "title": "AI agents for web and product testing",
+      "status": "active",
+      "priority": "P0",
+      "risk": "low",
+      "topic_file": "sources/agent-research/topics/ai-agent-testing.md",
+      "memo_file": "sources/agent-research/memos/agent-opportunity-ai-agent-testing.md",
+      "problem_mapping": "PILAR needs reliable regression coverage across input, run creation, result page, full report, PDF/Word downloads and known forbidden strings.",
+      "expected_outputs": [
+        "Agent Opportunity Memo",
+        "MVP scope for Synthetic User Agent",
+        "eval criteria",
+        "risk list",
+        "recommended next sprint"
+      ],
+      "allowed_next_step": "Suggest-only memo. No direct app-code changes.",
+      "blocked_actions": [
+        "auto-merge",
+        "auto-deploy",
+        "editing production prompts",
+        "editing app UI code",
+        "database migrations"
+      ]
+    },
+    {
+      "id": "agent-observability",
+      "title": "Agent observability and trace analytics",
+      "status": "proposed",
+      "priority": "P1",
+      "risk": "medium",
+      "topic_file": "sources/agent-research/topics/agent-observability.md",
+      "memo_file": "sources/agent-research/memos/agent-opportunity-agent-observability.md",
+      "problem_mapping": "PILAR needs visibility into run quality, agent disagreement, silent failures, i18n drift and report rendering failures.",
+      "expected_outputs": [
+        "Observability event taxonomy",
+        "trace fields",
+        "dashboard candidates",
+        "storage risks",
+        "recommended logging MVP"
+      ],
+      "allowed_next_step": "Research memo and schema proposal only.",
+      "blocked_actions": [
+        "database migration",
+        "runtime logging changes without review",
+        "production telemetry changes"
+      ]
+    },
+    {
+      "id": "guardrail-runtime-actions",
+      "title": "Runtime guardrails for agent actions and engineering claims",
+      "status": "proposed",
+      "priority": "P1",
+      "risk": "medium",
+      "topic_file": "sources/agent-research/topics/guardrail-runtime-actions.md",
+      "memo_file": "sources/agent-research/memos/agent-opportunity-guardrail-runtime-actions.md",
+      "problem_mapping": "PILAR must prevent unsupported final approval, invented code values, mixed standards and overconfident engineering claims.",
+      "expected_outputs": [
+        "Guardrail reason-code registry",
+        "block/warn/pass policy draft",
+        "human-review triggers",
+        "eval cases for guardrails"
+      ],
+      "allowed_next_step": "Policy and reason-code proposal only.",
+      "blocked_actions": [
+        "blocking live user output without runtime testing",
+        "removing warnings",
+        "weakening disclaimers"
+      ]
+    },
+    {
+      "id": "report-qa-agent",
+      "title": "Report QA Agent for calculation notes and exports",
+      "status": "proposed",
+      "priority": "P1",
+      "risk": "medium",
+      "topic_file": "sources/agent-research/topics/report-qa-agent.md",
+      "memo_file": "sources/agent-research/memos/agent-opportunity-report-qa-agent.md",
+      "problem_mapping": "PILAR reports must be checked for assumptions, units, conclusion strength, language shell consistency and PDF/Word parity.",
+      "expected_outputs": [
+        "Report QA checklist",
+        "LLM+rule grader proposal",
+        "PDF/Word parity checks",
+        "required evidence fields"
+      ],
+      "allowed_next_step": "Memo and checklist proposal only.",
+      "blocked_actions": [
+        "rewriting report renderer",
+        "changing DOCX/PDF output",
+        "changing calculation math"
+      ]
+    }
+  ]
+}
