@@ -38,7 +38,9 @@
     "release:gates": "node scripts/validate-release-gates.mjs",
     "release:check": "node scripts/validate-release-gates.mjs",
     "patch-planner:rules": "node scripts/validate-patch-planner-rules.mjs",
-    "patch-planner:check": "node scripts/validate-patch-planner-rules.mjs"
+    "patch-planner:check": "node scripts/validate-patch-planner-rules.mjs",
+    "release:readiness": "node scripts/write-release-readiness-report.mjs",
+    "release:readiness:check": "node scripts/write-release-readiness-report.mjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",

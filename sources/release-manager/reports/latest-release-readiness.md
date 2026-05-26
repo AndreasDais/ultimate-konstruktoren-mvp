@@ -1,6 +1,6 @@
 # PILAR Release Readiness Report
 
-**Generated:** 2026-05-26T18:11:46.778Z
+**Generated:** 2026-05-26T18:18:03.694Z
 **Mode:** write
 **Status:** RELEASE_BLOCKED
 
@@ -14,7 +14,7 @@
 
 | Gate | Severity | Status | First output line | Note |
 |---|---:|---:|---|---|
-| Working tree clean | WARN | FAIL | ?? scripts/write-release-readiness-report.mjs | Working tree has local changes |
+| Working tree clean | WARN | FAIL | M package.json | Working tree has local changes |
 | Release gate registry | BLOCK | FAIL | spawnSync npm.cmd EINVAL | - |
 | Agent ecosystem gate | BLOCK | FAIL | spawnSync npm.cmd EINVAL | - |
 | Health snapshot check mode | BLOCK | PASS | Status: PASS | - |
@@ -45,9 +45,8 @@ npx tsc --noEmit --pretty false
 ### Working tree clean
 
 ```txt
-?? scripts/write-release-readiness-report.mjs
-?? sources/release-manager/RELEASE_READINESS_REPORTER.md
-?? sources/release-manager/reports/
+M package.json
+ M sources/release-manager/reports/latest-release-readiness.md
 ```
 
 ### Release gate registry
