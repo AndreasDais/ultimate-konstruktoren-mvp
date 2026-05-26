@@ -34,6 +34,9 @@ const requiredFiles = [
   "sources/observability/observability-event-taxonomy.json",
   "sources/observability/OBSERVABILITY_EVENT_TAXONOMY.md",
   "scripts/validate-observability-event-taxonomy.mjs",
+  "sources/patch-planner/patch-planner-rules.json",
+  "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
+  "scripts/validate-patch-planner-rules.mjs",
   "scripts/pilar-agent-ecosystem-hub.mjs"
 ];
 
@@ -113,6 +116,14 @@ const commandGroups = {
     description: "Run Release Manager gate registry checks.",
     run: () => runNodeScript("scripts/validate-release-gates.mjs")
   },
+  "patch-planner-rules": {
+    description: "Validate Patch Planner Agent rule registry.",
+    run: () => runNodeScript("scripts/validate-patch-planner-rules.mjs")
+  },
+  "patch-planner-check": {
+    description: "Run Patch Planner Agent registry checks.",
+    run: () => runNodeScript("scripts/validate-patch-planner-rules.mjs")
+  },
   "health": {
     description: "Run health snapshot check mode without rewriting latest-agent-ecosystem-health.md.",
     run: () => runNodeScript("scripts/write-agent-ecosystem-health-snapshot.mjs", ["--check"])
@@ -134,6 +145,7 @@ const commandGroups = {
       ["observability-check", []],
       ["report-qa-check", []],
       ["release-check", []],
+      ["patch-planner-check", []],
       ["health", []]
     ])
   }
@@ -226,6 +238,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- observability-check");
   console.log("  npm run agent:hub -- release-check");
   console.log("  npm run agent:hub -- report-qa-check");
+  console.log("  npm run agent:hub -- patch-planner-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
 

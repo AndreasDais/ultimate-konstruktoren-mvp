@@ -323,3 +323,44 @@ sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md
 scripts/validate-release-gates.mjs
 ```
 
+## Sprint 42.2 update — Patch Planner checks
+
+Patch Planner Agent registry validation is now part of the local agent ecosystem hub.
+
+### New hub commands
+
+```bash
+npm run agent:hub -- patch-planner-rules
+npm run agent:hub -- patch-planner-check
+```
+
+### Updated all-gate behavior
+
+`npm run agent:all` now includes Patch Planner validation in the non-writing gate:
+
+```txt
+status
+validate
+eval-readiness
+eval-coverage
+research-topics
+research-memos
+guardrails-check
+observability-check
+report-qa-check
+release-check
+patch-planner-check
+health
+```
+
+### Owned files
+
+```txt
+sources/patch-planner/patch-planner-rules.json
+sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md
+scripts/validate-patch-planner-rules.mjs
+```
+
+### Scope note
+
+This is registry validation only. It does not grant write access, auto-patching rights, auto-merge rights, or deploy authority to any agent.
