@@ -212,7 +212,7 @@ function coverStatusSummary(decisionStatus: string | undefined, locale: Locale):
       nn: "Berekninga er førebels godkjend. Resultatet skal kontrollerast av ansvarleg fagperson før bruk.",
     },
     approved_with_warnings: {
-      nb: "The calculation is preliminarily approved with warnings. The reservations must be resolved before use in design work.",
+      nb: "Beregningen er foreløpig godkjent med advarsler. Forbeholdene må avklares før bruk i prosjektering.",
       nn: "Berekninga er førebels godkjend med åtvaringar. Atterhalda må avklarast før prosjekteringsbruk.",
     },
     uncertain: {
@@ -325,9 +325,9 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   coverKeyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
   disclaimerKort: {
     nb: "Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.",
-    nn: "Innhaldet skal only brukast som støtte, læringshjelp eller førebels teknisk vurdering. Ikkje ein erstatning for kontroll av kvalifisert fagperson.",
+    nn: "Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Ikkje ein erstatning for kontroll av kvalifisert fagperson.",
   },
-  disclaimer: { nb: "Dette dokumentet er generert av et AI-basert beregnings- og dokumentasjonsverktøy. Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Dokumentet er ikke en erstatning for kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, assumptioner, standardreferanser, materialdata og konklusjoner må kontrolleres av en kompetent byggingeniør før de blir brukt i reelle prosjekter, byggesøknader, produksjon eller utføring.", nn: "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. Innhaldet skal only brukast som støtte, læringshjelp eller førebels teknisk vurdering. Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, assumptioner, standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring." },
+  disclaimer: { nb: "Dette dokumentet er generert av et AI-basert beregnings- og dokumentasjonsverktøy. Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Dokumentet er ikke en erstatning for kontroll utført av kvalifisert fagperson, ansvarlig prosjekterende eller godkjent foretak. Alle beregninger, forutsetninger, standardreferanser, materialdata og konklusjoner må kontrolleres av en kompetent byggingeniør før de blir brukt i reelle prosjekter, byggesøknader, produksjon eller utføring.", nn: "Dette dokumentet er generert av eit AI-basert bereknings- og dokumentasjonsverktøy. Innhaldet skal berre brukast som støtte, læringshjelp eller førebels teknisk vurdering. Dokumentet er ikkje ein erstatning for kontroll utført av kvalifisert fagperson, ansvarleg prosjekterande eller godkjent føretak. Alle berekningar, føresetnader, standardreferansar, materialdata og konklusjonar må kontrollerast av ein kompetent byggingeniør før dei blir brukte i reelle prosjekt, byggesøknader, produksjon eller utføring." },
   // Samandrag-seksjon
   samandragH2: { nb: "Sammendrag", nn: "Samandrag" },
   forespurnadH3: { nb: "Forespørsel", nn: "Forespurnad" },
@@ -370,7 +370,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   statusInputExplanation: { nb: "Tolkerens vurdering av hvor klar oppgaven var til å beregnes. 'Klar' = all info på plass; andre statuser = Tolkeren gjorde rimelige antakelser eller manglet info.", nn: "Tolkar si vurdering av kor klar oppgåva var til å reknast. 'Klar' = all info på plass; andre statusar = Tolkar gjorde rimelege antakingar eller mangla info." },
   statusKonstruktorA: { nb: "Konstruktør A", nn: "Konstruktør A" },
   statusKonstruktorB: { nb: "Konstruktør B", nn: "Konstruktør B" },
-  statusKonstruktorExplanation: { nb: "Engineerens egenrapporterte sikkerhet på eget svar (high/medium/low). Måler only én agents tillit til seg selv, ikke den samlede rapporten.", nn: "Engineeren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar only éin agent sin tillit til seg sjølv, ikkje den samla rapporten." },
+  statusKonstruktorExplanation: { nb: "Konstruktørens egenrapporterte sikkerhet på eget svar (high/medium/low). Måler kun én agents tillit til seg selv, ikke den samlede rapporten.", nn: "Konstruktøren si eigenrapporterte sikkerheit på eige svar (high/medium/low). Målar berre éin agent sin tillit til seg sjølv, ikkje den samla rapporten." },
   statusSamanlikning: { nb: "Sammenligning", nn: "Samanlikning" },
   statusSamanlikningExplanation: { nb: "Sammenligner-agenten sjekker om Konstruktør A og Konstruktør B kom frem til samme svar. 'Enige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krever nærmere ettersyn.", nn: "Samanliknar-agenten sjekkar om Konstruktør A og Konstruktør B kom fram til same svar. 'Einige' = ingen avvik; 'Stor avvik' eller 'Kritisk' krev nærare ettersyn." },
   statusKontrollor: { nb: "Kontrollør", nn: "Kontrollør" },
@@ -871,11 +871,11 @@ export default function RapportPage() {
   // Held forsida som tillit-narrativ, verdict-box som beslutning.
   const VERDICT_SHORT: Record<string, Record<Locale, string>> = {
     approved: {
-      nb: "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.",
+      nb: "Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.",
       nn: "Berekninga er godkjend for visning. Føreset manuell verifisering av ansvarleg fagperson før bruk i prosjektering.",
     },
     approved_with_warnings: {
-      nb: "The calculation is preliminarily approved with warnings and must be verified by a qualified professional before use in design work.",
+      nb: "Beregningen er foreløpig godkjent med advarsler. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering.",
       nn: "Berekninga er førebels godkjend med åtvaringar. Skal verifiserast av ansvarleg fagperson før bruk i prosjektering.",
     },
     uncertain: {
