@@ -52,228 +52,6 @@ import { StatusStripe } from "@/app/components/StatusStripe";
 import { KontrollorChipPill } from "./KontrollorChipPill";
 import { DimensjonerandeTiles } from "./DimensjonerandeTile";
 
-function sprint339FinalNorwegianResidueText(value: string): string {
-  return String(value ?? "")
-    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
-    .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
-    .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
-    .replace(/ØVRIG/g, "OTHER")
-    .replace(/GOD/g, "GOOD")
-    .replace(/Beregningen er godkjent for visning. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
-    .replace(/De kom frem til samme resultat./g, "They reached the same result.")
-    .replace(/Engineer A and B er fullstendig enige om alle dimensjonerande verdier./g, "Engineer A and Engineer B fully agree on all design values.")
-    .replace(/Engineer A og B har minor differences/g, "Engineer A and Engineer B have minor differences")
-    .replace(/Engineer B reports HIGH confidence på sin uavhengige løsning./g, "Engineer B reports HIGH confidence in its independent solution.")
-    .replace(/HIGH her betyr at B er trygg på egen metode — at A and B er enige er en separat sjekk (se verdikt over)./g, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check (see verdict above).")
-    .replace(/Self-assessment — ikke en uavhengig verifikasjon./g, "Self-assessment — not an independent verification.")
-    .replace(/Engineer A og Engineer B/g, "Engineer A and Engineer B")
-    .replace(/Engineer A og B/g, "Engineer A and Engineer B")
-    .replace(/A og B/g, "Engineer A and Engineer B")
-    .replace(/er fullstendig enige/g, "fully agree")
-    .replace(/dimensjonerande verdier/g, "design values")
-    .replace(/på sin uavhengige løsning/g, "in its independent solution")
-    .replace(/HIGH her betyr/g, "HIGH means")
-    .replace(/egen metode/g, "its own method")
-    .replace(/se verdikt over/g, "see verdict above")
-    .replace(/same grunnleggjande metode/g, "the same basic method")
-    .replace(/brukar/g, "use")
-    .replace(/bruker/g, "use")
-    .replace(/medan/g, "while")
-    .replace(/berre/g, "only")
-    .replace(/hovudformelen/g, "the main formula")
-    .replace(/utrekningsrute/g, "calculation route")
-    .replace(/ein alternativ/g, "an alternative")
-    .replace(/som ein intern kryssjekk/g, "as an internal cross-check")
-    .replace(/Dette er ei forskjell i presentasjonsform, ikkje i metode./g, "This is a presentation difference, not a methodological difference.")
-    .replace(/lastfaktorane/g, "load factors")
-    .replace(/som eigne resultatfelt/g, "as separate result fields")
-    .replace(/tekstbeskrivinga/g, "the text description")
-    .replace(/Innhaldet er likeverdig men strukturen er ulik./g, "The content is equivalent, but the structure differs.")
-    .replace(/Begge konstruktørar/g, "Both engineers")
-    .replace(/Begge konstruktører/g, "Both engineers")
-    .replace(/konstruktørar/g, "engineers")
-    .replace(/konstruktører/g, "engineers")
-    .replace(/Konstruktør A/g, "Engineer A")
-    .replace(/Konstruktør B/g, "Engineer B")
-    .replace(/Konstruktør/g, "Engineer")
-    .replace(/Cb-antaginga/g, "The Cb assumption")
-    .replace(/antaginga/g, "assumption")
-    .replace(/føresetnad/g, "assumption")
-    .replace(/føresetnader/g, "assumptions")
-    .replace(/sjølve/g, "itself")
-    .replace(/Ingen forskjell/g, "No difference")
-    .replace(/ingen forskjell/g, "no difference")
-    .replace(/mellomledd/g, "intermediate value");
-}
-
-
-function sprint338ResultUiText(value: string): string {
-  return String(value ?? "")
-    .replace(/\bSTEG 3 AV 3\s*·\s*RESULTAT\b/g, "STEP 3 OF 3 · RESULT")
-    .replace(/\bCalculation note\b/g, "Calculation note")
-    .replace(/\bBerekningsnotat\b/g, "Calculation note")
-    .replace(/Fortsetter fra tidligere beregning\. Endringer oppretter en ny beregning — originalen forblir uendret\./g, "Continuing from a previous calculation. Changes create a new calculation — the original remains unchanged.")
-    .replace(/Foreløpig resultat med agentkontroll\. Må kontrolleres av fagperson før bruk\./g, "Preliminary result with agent control. Must be checked by a qualified professional before use.")
-    .replace(/Beregningen er godkjent for visning\. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering\./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
-    .replace(/Beregningen er foreløpig godkjent\. Resultatet skal kontrolleres av ansvarlig fagperson før bruk\./g, "The calculation is preliminarily approved. The result must be checked by a qualified professional before use.")
-    .replace(/\bPRELIMINARILY APPROVED\b/g, "PRELIMINARILY APPROVED")
-    .replace(/\bPRELIMINARY\b/g, "PRELIMINARY")
-    .replace(/\bMINOR DIFFERENCES\b/g, "MINOR DIFFERENCES")
-    .replace(/\bGOOD\b/g, "GOOD")
-    .replace(/\bEnige\b/g, "Agreement")
-    .replace(/\bGodkjent\b/g, "Approved")
-    .replace(/\bEngineer A\b/g, "Engineer A")
-    .replace(/\bEngineer B\b/g, "Engineer B")
-    .replace(/\bEngineerar\b/g, "Engineers")
-    .replace(/\bEngineer\b/g, "Engineer")
-    .replace(/\bengineers\b/g, "engineers")
-    .replace(/\bkonstruktør\b/g, "engineer")
-    .replace(/\bComparator\b/g, "Comparator")
-    .replace(/\bComparator\b/g, "Comparator")
-    .replace(/\bFAGLIG MERKNAD\b/g, "ENGINEERING NOTE")
-    .replace(/\bFaglig merknad\b/g, "Engineering note")
-    .replace(/\bANTAKELSER & ADVARSLER\b/g, "ASSUMPTIONS & WARNINGS")
-    .replace(/\bMETODISKE FORSKJELLER\b/g, "METHODOLOGICAL DIFFERENCES")
-    .replace(/\bFORSKJELLER I FORUTSETNINGER\b/g, "ASSUMPTION DIFFERENCES")
-    .replace(/\bSkjul merknader\b/g, "Hide notes")
-    .replace(/\bSkjul vurderingen\b/g, "Hide assessment")
-    .replace(/\bSelvkontroll\b/g, "Self-check")
-    .replace(/\bEgenvurdering\b/g, "Self-assessment")
-    .replace(/\bikke en uavhengig verifikasjon\b/gi, "not an independent verification")
-    .replace(/\bog B\b/g, "and B")
-    .replace(/\bog Engineer B\b/g, "and Engineer B")
-    .replace(/\bEngineer A and Engineer B\b/g, "Engineer A and Engineer B")
-    .replace(/\bhar minor differences\b/g, "have minor differences")
-    .replace(/\bNo critical deviations\b/g, "no critical deviations")
-    .replace(/\brapporterer HIGH-konfidens\b/g, "reports HIGH confidence")
-    .replace(/\brapporterer\b/g, "reports")
-    .replace(/\bkonfidens\b/g, "confidence")
-    .replace(/\bmetoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen\b/g, "the method is established, all required input is available, and the result is consistent throughout the calculation")
-    .replace(/\bløste oppgaven uten å se Engineer A sitt svar\b/g, "solved the task without seeing Engineer A's answer")
-    .replace(/\bløste oppgaven uten å se A sitt svar\b/g, "solved the task without seeing Engineer A's answer")
-    .replace(/\bB løste oppgaven uten å se A sitt svar\./g, "Engineer B solved the task without seeing Engineer A's answer.")
-    .replace(/\bHIGH means at B er trygg på its own method — at Engineer A and Engineer B er enige er en separat sjekk \(see verdict above\)\./g, "HIGH means Engineer B is confident in their own method; agreement between Engineer A and Engineer B is a separate check.")
-    .replace(/\buse the same basic method\b/g, "use the same basic method")
-    .replace(/\bthe same basic method\b/g, "same basic method")
-    .replace(/\bLRFD-kombinasjon\b/g, "LRFD combination")
-    .replace(/\benkelfeltbjelke\b/g, "simply supported beam")
-    .replace(/\bIngen metodisk forskjell er identifisert\b/g, "No methodological difference is identified")
-    .replace(/\bpresenterer an alternative calculation route\b/g, "presents an alternative calculation route")
-    .replace(/\bas an internal cross-check\b/g, "as an internal cross-check")
-    .replace(/\bwhile\b/g, "while")
-    .replace(/\bonly\b/g, "only")
-    .replace(/\bthe main formula\b/g, "main formula")
-    .replace(/\bDette er ei forskjell i presentasjonsform, ikkje i metode\b/g, "This is a difference in presentation, not in method")
-    .replace(/\brapporterer eksplisitt\b/g, "reports explicitly")
-    .replace(/\bload factors\b/g, "load factors")
-    .replace(/\beigne resultatfelt\b/g, "separate result fields")
-    .replace(/\binkluderer desse only som ein del av the text description\b/g, "includes these only as part of the text description")
-    .replace(/\bInnhaldet er likeverdig men strukturen er ulik\b/g, "The content is equivalent, but the structure differs")
-    .replace(/\bsignalisere?r dermed tydeleg at kapasitetskontroll manglar\b/g, "thereby clearly indicating that the capacity check is missing")
-    .replace(/\bomtaler dette only\b/g, "describes this only")
-    .replace(/\bBegge løysingane er i samsvar med AISC data guard-policyen\b/g, "Both solutions comply with the AISC data guard policy")
-    .replace(/\bThe Cb assumption er identisk\b/g, "The Cb assumption is identical")
-    .replace(/\bkonservativt\b/g, "conservative")
-    .replace(/\bsom eit eige results-felt\b/g, "as a separate results field")
-    .replace(/\bbeskriv det i assumptions og calculation_steps\b/g, "describes it in assumptions and calculation_steps")
-    .replace(/\bBoth engineers nemner\b/g, "Both engineers mention")
-    .replace(/\bBegge engineers nemner\b/g, "Both engineers mention")
-    .replace(/\bBegge engineers\b/g, "Both engineers")
-    .replace(/\buniformly loaded simple span\b/g, "uniformly loaded simple span")
-    .replace(/\bassumption\b/g, "assumption")
-    .replace(/\btolkaren sin instruksjon\b/g, "the interpreter's instruction")
-    .replace(/\bNo difference i itself assumption\b/g, "No difference in the assumption itself")
-    .replace(/\bBoth engineers legg til grunn\b/g, "Both engineers assume")
-    .replace(/\bself-weight\b/g, "self-weight")
-    .replace(/\binkludert\b/g, "included")
-    .replace(/\bNo difference\b/g, "No difference")
-    .replace(/\blast er påført i centroid\b/g, "the load is applied at the centroid")
-    .replace(/\bshear center\b/g, "shear center")
-    .replace(/\bflags\b/g, "flags")
-    .replace(/\btopplastscenarioet\b/g, "the top-flange load scenario")
-    .replace(/\bsomewhat more explicitly\b/g, "somewhat more explicitly")
-    .replace(/\bassumptions-lista\b/g, "the assumptions list")
-    .replace(/\bAntakelser\b/g, "Assumptions")
-    .replace(/\bassumption\b/g, "assumption")
-    .replace(/\bantaging\b/g, "assumption")
-    .replace(/\bforskjell\b/g, "difference")
-    .replace(/\bforskjeller\b/g, "differences")
-    .replace(/\butrekning\b/g, "calculation")
-    .replace(/\bprosjektering\b/g, "design work")
-    .replace(/\bfagperson\b/g, "qualified professional");
-}
-
-
-
-function sprint337ResultUiText(value: string): string {
-  return String(value ?? "")
-    .replace(/\bSTEG 3 AV 3\s*·\s*RESULTAT\b/g, "STEP 3 OF 3 · RESULT")
-    .replace(/\bCalculation note\b/g, "Calculation note")
-    .replace(/\bForeløpig resultat med agentkontroll\. Må kontrolleres av fagperson før bruk\./g, "Preliminary result with agent control. Must be checked by a qualified professional before use.")
-    .replace(/\bEngineer A\b/g, "Engineer A")
-    .replace(/\bEngineer B\b/g, "Engineer B")
-    .replace(/\bEngineer\b/g, "Engineer")
-    .replace(/\bComparator\b/g, "Comparator")
-    .replace(/\bComparator\b/g, "Comparator")
-    .replace(/\bPRELIMINARILY APPROVED\b/g, "PRELIMINARILY APPROVED")
-    .replace(/\bGOOD\b/g, "GOOD")
-    .replace(/\bMINOR DIFFERENCES\b/g, "MINOR DIFFERENCES")
-    .replace(/\bFAGLIG MERKNAD\b/g, "ENGINEERING NOTE")
-    .replace(/\bANTAKELSER & ADVARSLER\b/g, "ASSUMPTIONS & WARNINGS")
-    .replace(/\bMETODISKE FORSKJELLER\b/g, "METHODOLOGICAL DIFFERENCES")
-    .replace(/\bFORSKJELLER I FORUTSETNINGER\b/g, "ASSUMPTION DIFFERENCES")
-    .replace(/\bSkjul merknader\b/g, "Hide notes")
-    .replace(/\bSkjul vurderingen\b/g, "Hide assessment")
-    .replace(/\bSelvkontroll\b/g, "Self-check")
-    .replace(/\bEgenvurdering\b/g, "Self-assessment")
-    .replace(/\bIngen kritiske avvik\b/gi, "No critical deviations")
-    .replace(/\bsmå forskjeller\b/gi, "minor differences")
-    .replace(/\bferdig\s*[-–—]\s*leverer resultat til sammenligner\b/gi, "Done — sending result to Comparator");
-}
-
-
-
-function sprint3310aResultViewResidueText(value: string): string {
-  return String(value ?? "")
-    .replace(/Fortsetter fra tidligere beregning\./g, "Continuing from a previous calculation.")
-    .replace(/Endringer oppretter en ny beregning\s*[—–-]\s*originalen forblir uendret\./g, "Changes create a new calculation — the original remains unchanged.")
-    .replace(/\bAPPROVED\s+MED\s+ADVARSLER\b/gi, "APPROVED WITH WARNINGS")
-    .replace(/\bAPPROVED\s+med\s+advarsler\b/gi, "APPROVED WITH WARNINGS")
-    .replace(/\bApproved\s+med\s+advarsler\b/gi, "Approved with warnings")
-    .replace(/\bMED\s+ADVARSLER\b/gi, "WITH WARNINGS")
-    .replace(/\bmed\s+advarsler\b/gi, "with warnings")
-    .replace(/\bMINDRE\s+DIFFERENCES\b/gi, "MINOR DIFFERENCES")
-    .replace(/\bMINOR\s+FORSKJELLER\b/gi, "MINOR DIFFERENCES")
-    .replace(/\bsmå\s+differences\b/gi, "minor differences")
-    .replace(/\bsm├Ñ\s+differences\b/gi, "minor differences")
-    .replace(/\bEngineer\s+Engineer A and B\b/g, "Engineer A and Engineer B")
-    .replace(/\bEngineer\s+Engineer A and Engineer B\b/gi, "Engineer A and Engineer B")
-    .replace(/\bEngineer A and B\b/g, "Engineer A and Engineer B")
-    .replace(/\bEngineer A and Engineer B har minor differences\s*[—–-]\s*ingen kritiske avvik\.?/gi, "Engineer A and Engineer B have minor differences — no critical deviations.")
-    .replace(/\bEngineer A and Engineer B har minor differences\s*[—–-]\s*ingen critical deviations\.?/gi, "Engineer A and Engineer B have minor differences — no critical deviations.")
-    .replace(/\bEngineer A and Engineer B har små differences\s*[—–-]\s*ingen kritiske avvik\.?/gi, "Engineer A and Engineer B have minor differences — no critical deviations.")
-    .replace(/\bEngineer A and Engineer B har sm├Ñ differences\s*[—–-]\s*ingen kritiske avvik\.?/gi, "Engineer A and Engineer B have minor differences — no critical deviations.")
-    .replace(/\bEngineer A and Engineer B har minor differences\b/gi, "Engineer A and Engineer B have minor differences")
-    .replace(/\bEngineer A and Engineer B har små differences\b/gi, "Engineer A and Engineer B have minor differences")
-    .replace(/\bEngineer A and Engineer B har sm├Ñ differences\b/gi, "Engineer A and Engineer B have minor differences")
-    .replace(/\bhar minor differences\b/gi, "have minor differences")
-    .replace(/\bhar små differences\b/gi, "have minor differences")
-    .replace(/\bhar sm├Ñ differences\b/gi, "have minor differences")
-    .replace(/\bingen kritiske avvik\b/gi, "no critical deviations")
-    .replace(/\bingen critical deviations\b/gi, "no critical deviations")
-    .replace(/HIGH means at B er trygg på its own method\s*[—–-]\s*at Engineer A and Engineer B er enige er en separat sjekk \(see verdict above\)\./gi, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check.")
-    .replace(/HIGH means at B er trygg p├Ñ its own method\s*(?:ÔÇö|[—–-])\s*at Engineer A and Engineer B er enige er en separat sjekk \(see verdict above\)\./gi, "HIGH means that Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check.")
-    .replace(/\bHIGH means at B er trygg på its own method\b/gi, "HIGH means that Engineer B is confident in its own method")
-    .replace(/\bHIGH means at B er trygg p├Ñ its own method\b/gi, "HIGH means that Engineer B is confident in its own method")
-    .replace(/\bat Engineer A and Engineer B er enige er en separat sjekk\b/gi, "agreement between Engineer A and Engineer B is a separate check")
-    .replace(/\bEngineer A and Engineer B er enige\b/gi, "Engineer A and Engineer B agree")
-    .replace(/\ber enige\b/gi, "agree")
-    .replace(/\ber trygg\b/gi, "is confident")
-    .replace(/\bseparat sjekk\b/gi, "separate check")
-    .replace(/\bAPPROVED WITH WARNINGS\b/g, "APPROVED WITH WARNINGS")
-    .replace(/\bMINOR DIFFERENCES\b/g, "MINOR DIFFERENCES");
-}
-
 type CalculationResultViewProps = {
   // === Data ===
   calculationA: CalculationResult;
@@ -362,23 +140,10 @@ export function CalculationResultView(props: CalculationResultViewProps) {
   const isEnglishResult = displayLanguage === "en";
   const uiText = (value: string | null | undefined): string =>
     isEnglishResult
-      ? sanitizeAiscGuardedOutputText(sprint3310aResultViewResidueText(sanitizeAiscGuardedOutputText(sprint339FinalNorwegianResidueText(sprint338ResultUiText(String(value ?? ""))))))
+      ? sanitizeAiscGuardedOutputText(String(value ?? ""))
       : polishNorwegianRoleText(String(value ?? ""), displayLanguage);
 
-  const chipUiText = (value: string | null | undefined): string => {
-    const text = uiText(sanitizeAiscGuardedOutputText(String(value ?? "")));
-
-    if (displayLanguage === "en") return text;
-
-    return text
-      .replace(/\bEngineer A\b/g, "Konstruktør A")
-      .replace(/\bEngineer B\b/g, "Konstruktør B")
-      .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
-      .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
-      .replace(/\bMEDIUM\b/g, "MIDDELS")
-      .replace(/\bLOW\b/g, "LAV");
-  };
-
+  const chipUiText = uiText;
 
   // Lokalisert uppercase nivå-etikett (severity / konfidens). Erstattar dei
   // dupliserte inline-ternarane; engelsk shell får LOW/MEDIUM/HIGH/CRITICAL.
@@ -530,7 +295,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                   (a) Status-badge + eyebrow
                   (b) Eitt-linjers verdikt frå comparison.match_status
                   (c) Fag-flagg-chips frå method/assumption_differences + warnings
-                  (d) Lang prosa frå sprint339FinalNorwegianResidueText(controllerDecision.user_message) bak toggle
+                  (d) Lang prosa frå uiText(controllerDecision.user_message) bak toggle
                   Beheld StatusStripe-shell for venstre-border + bakgrunn-tone. */}
               {controllerDecision && (() => {
                 const rawChips = buildKontrollorChips(
@@ -547,7 +312,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 }));
                 const verdikt = comparison
                   ? getVerdiktForMatchStatus(comparison.match_status, displayLanguage)
-                  : getFirstSentence(sprint339FinalNorwegianResidueText(controllerDecision.user_message));
+                  : getFirstSentence(uiText(controllerDecision.user_message));
                 return (
                   <StatusStripe
                     status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
@@ -847,13 +612,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                           }}
                                         />
                                         <span style={{ minWidth: 0 }}>
-                                          {uiText(issue.issue)
-                                            .replace(/\bEngineer A\b/g, "Konstruktør A")
-                                            .replace(/\bEngineer B\b/g, "Konstruktør B")
-                                            .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
-                                            .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
-                                            .replace(/\bMEDIUM\b/g, "MIDDELS")
-                                            .replace(/\bLOW\b/g, "LAV")}{" "}
+                                          {uiText(issue.issue)}{" "}
                                           <Badge status={SEVERITY_TONES[issue.severity]}>
                                             {levelLabel(issue.severity)}
                                           </Badge>
@@ -909,13 +668,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                           }}
                                         />
                                         <span style={{ minWidth: 0 }}>
-                                          {uiText(issue.issue)
-                                            .replace(/\bEngineer A\b/g, "Konstruktør A")
-                                            .replace(/\bEngineer B\b/g, "Konstruktør B")
-                                            .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
-                                            .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
-                                            .replace(/\bMEDIUM\b/g, "MIDDELS")
-                                            .replace(/\bLOW\b/g, "LAV")}{" "}
+                                          {uiText(issue.issue)}{" "}
                                           <Badge status={SEVERITY_TONES[issue.severity]}>
                                             {levelLabel(issue.severity)}
                                           </Badge>
@@ -934,8 +687,8 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                     {/* (e) Les heile vurderinga ▸ — kollapsa lang prosa.
                         Vis only om user_message er meir enn éi setning
                         (elles er verdikt-linja + chips alt use treng). */}
-                    {sprint339FinalNorwegianResidueText(controllerDecision.user_message) &&
-                      sprint339FinalNorwegianResidueText(controllerDecision.user_message).trim() !== verdikt.trim() && (
+                    {uiText(controllerDecision.user_message) &&
+                      uiText(controllerDecision.user_message).trim() !== verdikt.trim() && (
                         <div style={{ marginTop: 12 }}>
                           <button
                             type="button"
@@ -988,13 +741,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                   paragraf-pattern. Engineer-namn vert markert
                                   fed slik at lesaren kan skanne kven som gjorde
                                   kva. Same regex som chip-body i KontrollorChipPill. */}
-                              {uiText(sprint339FinalNorwegianResidueText(controllerDecision.user_message))
-                                .replace(/\bEngineer A\b/g, "Konstruktør A")
-                                .replace(/\bEngineer B\b/g, "Konstruktør B")
-                                .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
-                                .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
-                                .replace(/\bMEDIUM\b/g, "MIDDELS")
-                                .replace(/\bLOW\b/g, "LAV")
+                              {uiText(controllerDecision.user_message)
                                 .split(/(?<=[.!?])\s+(?=[A-ZÆØÅ])/)
                                 .map((s) => s.trim())
                                 .filter(Boolean)
