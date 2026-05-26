@@ -1,102 +1,82 @@
-# PILAR agent ecosystem status snapshots
+# Agent ecosystem health snapshots
 
-Denne mappa er for lokale health-snapshots frå agent-økosystemet.
+**Status:** operational documentation  
+**Owner:** PILAR Agent Ecosystem track  
+**Scope:** local health snapshot files for Research, Eval, Guardrail and Observability foundations.
 
-Sprint 34.13 introduserte:
+This folder contains generated and documented health information for the local agent-ecosystem foundation.
 
-```bash
-node scripts/write-agent-ecosystem-health-snapshot.mjs
-```
-
-Sprint 35.5 utvida health-snapshotet slik at det også kontrollerer Research Agent-sporet:
+## Primary command
 
 ```bash
-node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run agent:health
 ```
 
-Sprint 36.3 utvida health-snapshotet vidare slik at Eval Agent coverage også blir kontrollert:
-
-```bash
-node scripts/write-agent-ecosystem-health-snapshot.mjs --check
-npm run eval:coverage:check
-```
-
-Sprint 37.3 utvidar health-snapshotet med Guardrail-sporet:
-
-```bash
-node scripts/write-agent-ecosystem-health-snapshot.mjs --check
-npm run guardrails:check
-```
-
-Scriptet kontrollerer at dei viktigaste agent-økosystemfilene finst, at npm-aliasa er registrerte, at eval-casane validerer, at eval-readiness-runneren fungerer, at eval coverage-checken fungerer, at Research Agent topic-/memo-kvalitetssjekkane passerer, og at Guardrail reason-code registry validerer.
-
-Forventa output:
+This writes:
 
 ```txt
-OK wrote sources/agent-research/status/latest-agent-ecosystem-health.md
-Status: PASS
-Eval cases: 10
-Research topics: 4
-Research memos: 4
-Eval coverage: PASS
-Guardrail reason codes: 14
-Guardrail checks: PASS
+sources/agent-research/status/latest-agent-ecosystem-health.md
 ```
 
-For ein dry-run utan repository-write:
+## Check-only mode
+
+Use check-only mode when you want to verify the health script without updating the tracked snapshot artifact:
 
 ```bash
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 ```
 
-Den genererte fila `latest-agent-ecosystem-health.md` er eit lokalt snapshot som kan commitast når ein ønskjer eit sporbar checkpoint for agent-økosystemet.
+## What is checked
 
-## Bruk
+The health snapshot checks these tracks:
 
-Verifiser utan å skrive snapshot:
+```txt
+Research Agent:
+- topic registry
+- topic files
+- memo files
+- registry-to-memo coverage
+- memo quality
+
+Eval Agent:
+- eval case validation
+- eval readiness foundation
+- eval coverage check
+- taxonomy files
+
+Guardrails:
+- guardrail reason-code registry
+- guardrail validator
+
+Observability:
+- observability event taxonomy
+- observability validator
+
+Command surface:
+- npm aliases
+- agent ecosystem command hub
+```
+
+## Important rule
+
+`latest-agent-ecosystem-health.md` is a generated artifact. Do not commit it accidentally just because `npm run agent:health` was run during another sprint. Commit it only when the sprint explicitly refreshes the health snapshot.
+
+For ordinary sprint verification, prefer:
 
 ```bash
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
-```
-
-Oppdater snapshotet:
-
-```bash
-npm run agent:health
-```
-
-Etterpå:
-
-```bash
-git diff --stat
-git diff -- sources/agent-research/status/latest-agent-ecosystem-health.md
-```
-
-## Eval coverage
-
-Sprint 36.3 gjer health snapshot coverage-aware. Det betyr at `agent:health` no bør reflektere desse eval-kommandoane:
-
-```bash
-npm run eval:readiness
-npm run eval:coverage:check
-npm run eval:coverage
-```
-
-Bruk `eval:coverage:check` når du berre vil verifisere utan å skrive `qa/evals/reports/latest-eval-coverage.md`.
-
-## Guardrail checks
-
-Sprint 37.3 gjer health snapshot guardrail-aware. Det betyr at `agent:health` no bør reflektere desse guardrail-kommandoane:
-
-```bash
-npm run guardrails:codes
-npm run guardrails:check
 npm run agent:all
 ```
 
-Guardrail-delen er framleis registry/validator-only. Den blokkerer ikkje runtime-output og endrar ikkje Supabase eller app-kode.
+## Stop conditions
 
-## Merk
+Stop before continuing if any health check reports:
 
-Snapshotet skriv dato/tid og Git-status ved start. Det betyr at fila normalt endrar seg kvar gong scriptet blir køyrt. Bruk `--check` når du berre vil verifisere utan å lage diff.
+```txt
+FAIL
+missing files
+missing npm scripts
+failed local checks
+```
+
+Do not ignore a failed health snapshot by updating the markdown manually. Fix the underlying registry, script or artifact first.
