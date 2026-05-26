@@ -130,9 +130,9 @@ const requiredEventTypes = [
   "artifact.rendered",
   "guardrail.evaluated",
   "eval.executed",
-  "research.memo.generated",
-  "release.gate.checked",
-  "health.snapshot.written",
+  "research.generated",
+  "release.checked",
+  "health.written",
   "feedback.recorded",
   "anomaly.flagged"
 ];
