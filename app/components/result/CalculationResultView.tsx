@@ -359,115 +359,47 @@ export function CalculationResultView(props: CalculationResultViewProps) {
     !!controllerDecision?.blocked_outputs?.includes(key);
 
   const displayLanguage = displayLanguageForContext(locale, engineeringContext);
-const isEnglishResult = displayLanguage === "en";
-
-const englishResultShellText = (value: string): string =>
-  String(value ?? "")
-    .replace(/FØREBELS GODKJENT/g, "PRELIMINARILY APPROVED")
-    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
-    .replace(/\bHØG\b/g, "HIGH")
-    .replace(/\bHØY\b/g, "HIGH")
-    .replace(/\bMIDDELS\b/g, "MEDIUM")
-    .replace(/\bLAV\b/g, "LOW")
-    .replace(/\bGOD\b/g, "GOOD")
-    .replace(/\bKonstruktør A\b/g, "Engineer A")
-    .replace(/\bKonstruktør B\b/g, "Engineer B")
-    .replace(/\bBegge konstruktørar\b/g, "Both engineers")
-    .replace(/\bBegge konstruktører\b/g, "Both engineers")
-    .replace(/\bKontrollør\b/g, "Controller")
-    .replace(/\bSamanliknar\b/g, "Comparator")
-    .replace(/\bSammenligner\b/g, "Comparator")
-    .replace(/BOTH ENGINEERS ER EINIGE/g, "BOTH ENGINEERS AGREE")
-    
-    .replace(/BOTH ENGINEERS ER EINIGE/g, "BOTH ENGINEERS AGREE")
-    .replace(/BOTH ENGINEERS ER ENIGE/g, "BOTH ENGINEERS AGREE")
-    .replace(/metoden er etablert, alle naudsynte input er gitt, og resultatet er konsistent gjennom utrekninga/g, "the method is established, all required input is available, and the result is consistent throughout the calculation")
-    .replace(/metoden er etablert, alle nødvendige input er gitt, og resultatet er konsistent gjennom utregningen/g, "the method is established, all required input is available, and the result is consistent throughout the calculation")
-    .replace(/Eigenvurdering\s*[—–-]\s*ikkje ei uavhengig verifisering\.?/g, "Self-assessment — not an independent verification.")
-    .replace(/Egenvurdering\s*[—–-]\s*ikke en uavhengig verifikasjon\.?/g, "Self-assessment — not an independent verification.")
-    .replace(/i si uavhengige løysing/g, "in its independent solution")
-    .replace(/i sin uavhengige løsning/g, "in its independent solution")
-    .replace(/B løyste oppgåva utan å sjå A sitt svar\.?/g, "Engineer B solved the task without seeing Engineer A's answer.")
-    .replace(/B løste oppgaven uten å se A sitt svar\.?/g, "Engineer B solved the task without seeing Engineer A's answer.")
-    .replace(/HIGH betyr at B is confident på eigen metode\s*[—–-]\s*at Engineer A og Engineer B er samde er ein separate check\.?/g, "HIGH means Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check.")
-    .replace(/HIGH betyr at B is confident på egen metode\s*[—–-]\s*at Engineer A og Engineer B er enige er en separate check\.?/g, "HIGH means Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check.")
-    .replace(/på eigen metode/g, "in its own method")
-    .replace(/på egen metode/g, "in its own method")
-    .replace(/Engineer A og Engineer B/g, "Engineer A and Engineer B")
-    .replace(/er samde/g, "agree")
-    .replace(/er enige/g, "agree")
-    .replace(/Engineer A og Engineer B er samde om alle dimensjonerande verdiar\./g, "Engineer A and Engineer B agree on all design values.")
-    .replace(/Engineer A og Engineer B er enige om alle dimensjonerende verdier\./g, "Engineer A and Engineer B agree on all design values.")
-    .replace(/Konstruktør A og Konstruktør B er samde om alle dimensjonerande verdiar\./g, "Engineer A and Engineer B agree on all design values.")
-    .replace(/Konstruktør A og Konstruktør B er enige om alle dimensjonerende verdier\./g, "Engineer A and Engineer B agree on all design values.")
-    .replace(/Berekninga er godkjend for visning\. Føreset manuell verifisering før bruk\./g, "The calculation is approved for display as a preliminary result. Manual verification is required before use.")
-    .replace(/Beregningen er godkjent for visning\. Forutsetter manuell verifisering før bruk\./g, "The calculation is approved for display as a preliminary result. Manual verification is required before use.")
-    .replace(/\bANNA\b/g, "OTHER")
-    .replace(/\bØVRIG\b/g, "OTHER");
-
-  const uiText = (value: string | null | undefined): string => {
-  const text = String(value ?? "");
-
-  if (isEnglishResult) {
-    const cleaned = sanitizeAiscGuardedOutputText(
-      sprint3310aResultViewResidueText(
-        sanitizeAiscGuardedOutputText(
-          sprint339FinalNorwegianResidueText(
-            sprint338ResultUiText(text),
-          ),
-        ),
-      ),
-    );
-
-    return englishResultShellText(cleaned);
-  }
-
-  return polishNorwegianRoleText(text, displayLanguage);
-};
+  const isEnglishResult = displayLanguage === "en";
+  const uiText = (value: string | null | undefined): string =>
+    isEnglishResult
+      ? sanitizeAiscGuardedOutputText(sprint3310aResultViewResidueText(sanitizeAiscGuardedOutputText(sprint339FinalNorwegianResidueText(sprint338ResultUiText(String(value ?? ""))))))
+      : polishNorwegianRoleText(String(value ?? ""), displayLanguage);
 
   const chipUiText = (value: string | null | undefined): string => {
-  const text = uiText(sanitizeAiscGuardedOutputText(String(value ?? "")));
+    const text = uiText(sanitizeAiscGuardedOutputText(String(value ?? "")));
 
-  if (displayLanguage === "en") {
-    return englishResultShellText(text);
-  }
+    if (displayLanguage === "en") return text;
 
-  return text
-    .replace(/\bEngineer A\b/g, "Konstruktør A")
-    .replace(/\bEngineer B\b/g, "Konstruktør B")
-    .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
-    .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
-    .replace(/\bMEDIUM\b/g, "MIDDELS")
-    .replace(/\bLOW\b/g, "LAV");
-};
-
-  const severityText = (severity: "low" | "medium" | "high" | "critical"): string => {
-  if (isEnglishResult) {
-    if (severity === "high") return "HIGH";
-    if (severity === "medium") return "MEDIUM";
-    if (severity === "low") return "LOW";
-    if (severity === "critical") return "CRITICAL";
-  }
-
-  if (severity === "high") return locale === "nn" ? "HØG" : "HØY";
-  if (severity === "medium") return "MIDDELS";
-  if (severity === "low") return "LAV";
-  if (severity === "critical") return "KRITISK";
-
-  return severity;
-};
-
-  const confidenceText = (confidence: "high" | "medium" | "low"): string => {
-    if (isEnglishResult) {
-      return confidence.toUpperCase();
-    }
-
-    if (confidence === "high") return locale === "nn" ? "HØG" : "HØY";
-    if (confidence === "medium") return "MIDDELS";
-    return "LAV";
+    return text
+      .replace(/\bEngineer A\b/g, "Konstruktør A")
+      .replace(/\bEngineer B\b/g, "Konstruktør B")
+      .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
+      .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
+      .replace(/\bMEDIUM\b/g, "MIDDELS")
+      .replace(/\bLOW\b/g, "LAV");
   };
 
 
+  // Lokalisert uppercase nivå-etikett (severity / konfidens). Erstattar dei
+  // dupliserte inline-ternarane; engelsk shell får LOW/MEDIUM/HIGH/CRITICAL.
+  const levelLabel = (level: string): string => {
+    if (displayLanguage === "en") {
+      const en: Record<string, string> = {
+        low: "LOW",
+        medium: "MEDIUM",
+        high: "HIGH",
+        critical: "CRITICAL",
+      };
+      return en[level] ?? level.toUpperCase();
+    }
+    const no: Record<string, string> = {
+      low: "LAV",
+      medium: "MIDDELS",
+      high: displayLanguage === "nn" ? "HØG" : "HØY",
+      critical: "KRITISK",
+    };
+    return no[level] ?? level;
+  };
 
   const WB_LABELS = buildLocalizedLabelProxy(BASE_WB_LABELS, locale, engineeringContext, {
     konstruktorA: "Engineer A",
@@ -606,8 +538,6 @@ const englishResultShellText = (value: string): string =>
                   calculationA,
                   calculationB,
                   controllerDecision,
-                  locale,
-                  60,
                   displayLanguage,
                 );
                 const chips = rawChips.map((chip) => ({
@@ -615,11 +545,9 @@ const englishResultShellText = (value: string): string =>
                   text: chipUiText(chip.text),
                   body: chip.body ? chipUiText(chip.body) : chip.body,
                 }));
-                const verdikt = uiText(
-  comparison
-    ? getVerdiktForMatchStatus(comparison.match_status, locale)
-    : getFirstSentence(sprint339FinalNorwegianResidueText(controllerDecision.user_message)),
-);
+                const verdikt = comparison
+                  ? getVerdiktForMatchStatus(comparison.match_status, displayLanguage)
+                  : getFirstSentence(sprint339FinalNorwegianResidueText(controllerDecision.user_message));
                 return (
                   <StatusStripe
                     status={DECISION_STATUS_TONES[controllerDecision.decision_status]}
@@ -642,7 +570,7 @@ const englishResultShellText = (value: string): string =>
                         <span className="pilar-breathe">
                           <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
                             <span className="pilar-puls-dot" aria-hidden="true" />
-                            {uiText(decisionStatusLabel(controllerDecision.decision_status, locale))}
+                            {uiText(decisionStatusLabel(controllerDecision.decision_status, displayLanguage))}
                           </Badge>
                         </span>
                       </div>
@@ -661,10 +589,10 @@ const englishResultShellText = (value: string): string =>
                     {chips.length > 0 && (() => {
                       // Skil konfidens-chips (dei to første om dei kjem frå
                       // calculationA/B.confidence — sjå buildKontrollorChips)
-                      // frå fag-flagg-chips. Konfidens-chips har tekst i
-                      // form "A · HØG/HØY" / "B · HØG/HØY".
+                      // frå fag-flagg-chips. Klassifisert strukturelt via
+                      // chip.kind === "confidence" (sett av buildKontrollorChips).
                       const isConfidenceChip = (c: KontrollorChip) =>
-                        /^[AB] · (HIGH|MEDIUM|LOW|HØG|HØY|MIDDELS|LAV)$/.test(c.text);
+                        c.kind === "confidence";
                       const konfidensChips = chips.filter(isConfidenceChip);
                       const fagChips = chips.filter((c) => !isConfidenceChip(c));
 
@@ -919,9 +847,15 @@ const englishResultShellText = (value: string): string =>
                                           }}
                                         />
                                         <span style={{ minWidth: 0 }}>
-                                          {chipUiText(issue.issue)}{" "}
+                                          {uiText(issue.issue)
+                                            .replace(/\bEngineer A\b/g, "Konstruktør A")
+                                            .replace(/\bEngineer B\b/g, "Konstruktør B")
+                                            .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
+                                            .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
+                                            .replace(/\bMEDIUM\b/g, "MIDDELS")
+                                            .replace(/\bLOW\b/g, "LAV")}{" "}
                                           <Badge status={SEVERITY_TONES[issue.severity]}>
-                                            {severityText(issue.severity)}
+                                            {levelLabel(issue.severity)}
                                           </Badge>
                                         </span>
                                       </li>
@@ -975,9 +909,15 @@ const englishResultShellText = (value: string): string =>
                                           }}
                                         />
                                         <span style={{ minWidth: 0 }}>
-                                          {chipUiText(issue.issue)}{" "}
+                                          {uiText(issue.issue)
+                                            .replace(/\bEngineer A\b/g, "Konstruktør A")
+                                            .replace(/\bEngineer B\b/g, "Konstruktør B")
+                                            .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
+                                            .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
+                                            .replace(/\bMEDIUM\b/g, "MIDDELS")
+                                            .replace(/\bLOW\b/g, "LAV")}{" "}
                                           <Badge status={SEVERITY_TONES[issue.severity]}>
-                                            {severityText(issue.severity)}
+                                            {levelLabel(issue.severity)}
                                           </Badge>
                                         </span>
                                       </li>
@@ -1048,7 +988,13 @@ const englishResultShellText = (value: string): string =>
                                   paragraf-pattern. Engineer-namn vert markert
                                   fed slik at lesaren kan skanne kven som gjorde
                                   kva. Same regex som chip-body i KontrollorChipPill. */}
-                              {chipUiText(sprint339FinalNorwegianResidueText(controllerDecision.user_message))
+                              {uiText(sprint339FinalNorwegianResidueText(controllerDecision.user_message))
+                                .replace(/\bEngineer A\b/g, "Konstruktør A")
+                                .replace(/\bEngineer B\b/g, "Konstruktør B")
+                                .replace(/\bBoth engineers\b/g, locale === "nn" ? "Begge konstruktørar" : "Begge konstruktører")
+                                .replace(/\bHIGH\b/g, locale === "nn" ? "HØG" : "HØY")
+                                .replace(/\bMEDIUM\b/g, "MIDDELS")
+                                .replace(/\bLOW\b/g, "LAV")
                                 .split(/(?<=[.!?])\s+(?=[A-ZÆØÅ])/)
                                 .map((s) => s.trim())
                                 .filter(Boolean)
@@ -1091,7 +1037,7 @@ const englishResultShellText = (value: string): string =>
                   className="mb-4"
                   header={
                     <div className="uk-eyebrow" style={{ marginBottom: 8 }}>
-                      {uiText(matchStatusLabel(comparison.match_status, locale))}
+                      {uiText(matchStatusLabel(comparison.match_status, displayLanguage))}
                     </div>
                   }
                 >
@@ -1133,7 +1079,7 @@ const englishResultShellText = (value: string): string =>
                       <DimensjonerandeTiles
                         results={calculationA.results}
                         calculationType={result?.berekningstype ?? null}
-                        locale={locale}
+                        displayLanguage={displayLanguage}
                         resultRoles={calculationA.result_roles}
                       />
                     )}
@@ -1714,7 +1660,7 @@ const englishResultShellText = (value: string): string =>
                           <span style={{ fontSize: 12, color: "var(--fg-2)" }}>
                             {WB_LABELS.bKonfidens[locale]}{" "}
                             <span className="uk-mono" style={{ fontWeight: 600 }}>
-                              {confidenceText(calculationB.confidence)}
+                              {levelLabel(calculationB.confidence)}
                             </span>
                           </span>
                         </>
@@ -1828,7 +1774,7 @@ const englishResultShellText = (value: string): string =>
                     <div className="uk-card__hd">
                       <div className="uk-card__title">{WB_LABELS.samanliknarSkilnader[locale]}</div>
                       <Badge status={MATCH_STATUS_TONES[comparison.match_status]}>
-                        {uiText(matchStatusLabel(comparison.match_status, locale))}
+                        {uiText(matchStatusLabel(comparison.match_status, displayLanguage))}
                       </Badge>
                     </div>
                     <div className="uk-card__bd" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1901,8 +1847,8 @@ const englishResultShellText = (value: string): string =>
                                       </td>
                                       <td style={{ padding: "8px 0" }}>
                                         <Badge status={SEVERITY_TONES[diff.severity]}>
-                                            {severityText(diff.severity)}
-                                          </Badge>
+                                          {levelLabel(diff.severity)}
+                                        </Badge>
                                       </td>
                                     </tr>
                                     {isOpen && isClickable && (
@@ -2221,7 +2167,7 @@ const englishResultShellText = (value: string): string =>
                 >
                   {/* Status-badge (decision_status) */}
                   <Badge status={DECISION_STATUS_TONES[controllerDecision.decision_status]}>
-                    {uiText(decisionStatusLabel(controllerDecision.decision_status, locale))}
+                    {uiText(decisionStatusLabel(controllerDecision.decision_status, displayLanguage))}
                   </Badge>
 
                   {/* Styrande dimensjonerande verdi (om tilgjengeleg) */}
@@ -2247,7 +2193,7 @@ const englishResultShellText = (value: string): string =>
                             letterSpacing: "0.06em",
                           }}
                         >
-                          {tileLabel(styrendeKey, locale)}
+                          {tileLabel(styrendeKey, displayLanguage)}
                         </span>
                         <span className="uk-mono" style={{ fontWeight: 600, fontSize: 14 }}>
                           {styrendeValue}

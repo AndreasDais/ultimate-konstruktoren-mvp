@@ -118,4 +118,9 @@ export type KontrollorChip = {
   body?: string;
   tone: "info" | "warn" | "neutral";
   prefix?: string;
+  /**
+   * Strukturell chip-kategori. Lèt render-laget skilje konfidens-chips
+   * frå fag-flagg-chips utan å regex-matche språkavhengig tekst.
+   */
+  kind?: "confidence";
 };

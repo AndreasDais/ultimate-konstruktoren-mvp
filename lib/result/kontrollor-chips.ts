@@ -14,7 +14,6 @@
  * Splitta ut frå app/page.tsx i refaktor-fase 2.
  */
 
-import type { Locale } from "@/lib/locale";
 import type {
   CalculationResult,
   ComparisonResult,
@@ -22,15 +21,33 @@ import type {
   KontrollorChip,
 } from "@/lib/result/types";
 import { WB_LABELS } from "@/lib/result/labels";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
+
+// Engelske verdikt-malar for internasjonal shell (displayLanguage === "en").
+// nb/nn ligg i WB_LABELS.verdikt* (labels.ts).
+const VERDIKT_EN: Record<
+  "match" | "minor_differences" | "significant_differences" | "critical_disagreement",
+  string
+> = {
+  match: "Engineer A and Engineer B agree on all design values.",
+  minor_differences:
+    "Engineer A and Engineer B have minor differences — no critical deviations.",
+  significant_differences:
+    "Engineer A and Engineer B have significant deviations in the design values.",
+  critical_disagreement:
+    "Engineer A and Engineer B do not agree — manual review required.",
+};
 
 export function getVerdiktForMatchStatus(
   matchStatus: "match" | "minor_differences" | "significant_differences" | "critical_disagreement",
-  locale: Locale,
+  displayLanguage: PilarDisplayLanguage,
 ): string {
-  if (matchStatus === "match") return WB_LABELS.verdiktMatch[locale];
-  if (matchStatus === "minor_differences") return WB_LABELS.verdiktMinor[locale];
-  if (matchStatus === "significant_differences") return WB_LABELS.verdiktSignificant[locale];
-  return WB_LABELS.verdiktCritical[locale];
+  if (displayLanguage === "en") return VERDIKT_EN[matchStatus];
+  if (matchStatus === "match") return WB_LABELS.verdiktMatch[displayLanguage];
+  if (matchStatus === "minor_differences") return WB_LABELS.verdiktMinor[displayLanguage];
+  if (matchStatus === "significant_differences")
+    return WB_LABELS.verdiktSignificant[displayLanguage];
+  return WB_LABELS.verdiktCritical[displayLanguage];
 }
 
 // Hentar første setning frå ein prosa-blokk. Splittar på første ., !, ?.
@@ -134,14 +151,39 @@ function isNearDuplicateWarning(candidate: Set<string>, kept: Set<string>): bool
   return jaccardSimilarity(candidate, kept) >= WARNING_NEAR_DUP_THRESHOLD;
 }
 
+// Engelske konfidens-tooltip-tekstar for internasjonal shell (displayLanguage === "en").
+// nb/nn-versjonane ligg i WB_LABELS (labels.ts); dette er den engelske parallellen,
+// slik at confidenceTooltip slepp aa vere avhengig av regex-omsetjing nedstraums.
+type ConfidenceTooltipKey =
+  | "konfidensHighA"
+  | "konfidensMediumA"
+  | "konfidensLowA"
+  | "konfidensHighB"
+  | "konfidensMediumB"
+  | "konfidensLowB";
+
+const CONFIDENCE_TOOLTIPS_EN: Record<ConfidenceTooltipKey, string> = {
+  konfidensHighA:
+    "Engineer A reports HIGH confidence: the method is established, all required inputs are provided, and the result is consistent throughout the calculation. Self-assessment — not an independent verification.",
+  konfidensMediumA:
+    "Engineer A reports MEDIUM confidence: the method is correct, but one or more inputs are assumed or extrapolated. Check the assumptions before relying on the result.",
+  konfidensLowA:
+    "Engineer A reports LOW confidence: significant uncertainty in method or input. The result should not be used without manual verification — consider restarting with more precise input data.",
+  konfidensHighB:
+    "Engineer B reports HIGH confidence in its independent solution. B solved the task without seeing A’s answer. HIGH means B is confident in its own method — whether Engineer A and Engineer B agree is a separate check.",
+  konfidensMediumB:
+    "Engineer B reports MEDIUM confidence: B solved the task, but at least one assumption is uncertain. See the assumptions in the Engineer B block.",
+  konfidensLowB:
+    "Engineer B reports LOW confidence in its own solution. B is uncertain about method or input. Manual professional review is strongly recommended.",
+};
+
 export function buildKontrollorChips(
   comparison: ComparisonResult | null,
   calculationA: CalculationResult | null,
   calculationB: CalculationResult | null,
   decision: ControllerDecision | null,
-  locale: Locale,
+  displayLanguage: PilarDisplayLanguage,
   maxChars: number = 60,
-  displayLanguage: Locale | "en" = locale,
 ): KontrollorChip[] {
   const chips: KontrollorChip[] = [];
 
@@ -150,56 +192,41 @@ export function buildKontrollorChips(
   // Per-nivå tooltip (klikk for å utvide) forklarer kva konfidens-verdien tyder.
   const confidenceTone = (c: "high" | "medium" | "low"): "info" | "warn" | "neutral" => {
     if (c === "high") return "info";
-    return "warn";
+    return "warn"; // medium og low begge warn-tona
   };
-
   const confidenceTooltip = (
     agent: "A" | "B",
     c: "high" | "medium" | "low",
   ): string => {
-    if (displayLanguage === "en") {
-      if (agent === "A") {
-        if (c === "high") {
-          return "Engineer A reports HIGH confidence: the method is established, all required input is available, and the result is consistent throughout the calculation. Self-assessment — not an independent verification.";
-        }
-        if (c === "medium") {
-          return "Engineer A reports MEDIUM confidence: the method is mostly established, but at least one assumption or input should be reviewed.";
-        }
-        return "Engineer A reports LOW confidence: the method or input basis is uncertain and requires review.";
-      }
-
-      if (c === "high") {
-        return "Engineer B reports HIGH confidence in its independent solution. Engineer B solved the task without seeing Engineer A's answer. HIGH means Engineer B is confident in its own method — agreement between Engineer A and Engineer B is a separate check.";
-      }
-      if (c === "medium") {
-        return "Engineer B reports MEDIUM confidence: Engineer B solved the task independently, but at least one assumption is uncertain. Review Engineer B's assumptions.";
-      }
-      return "Engineer B reports LOW confidence: Engineer B's independent solution is uncertain and requires review.";
-    }
-
+    // Engelsk shell hentar tooltip frå CONFIDENCE_TOOLTIPS_EN; nb/nn frå WB_LABELS.
+    const pick = (key: ConfidenceTooltipKey): string =>
+      displayLanguage === "en"
+        ? CONFIDENCE_TOOLTIPS_EN[key]
+        : WB_LABELS[key][displayLanguage];
     if (agent === "A") {
-      if (c === "high") return WB_LABELS.konfidensHighA[locale];
-      if (c === "medium") return WB_LABELS.konfidensMediumA[locale];
-      return WB_LABELS.konfidensLowA[locale];
+      if (c === "high") return pick("konfidensHighA");
+      if (c === "medium") return pick("konfidensMediumA");
+      return pick("konfidensLowA");
     }
-
-    if (c === "high") return WB_LABELS.konfidensHighB[locale];
-    if (c === "medium") return WB_LABELS.konfidensMediumB[locale];
-    return WB_LABELS.konfidensLowB[locale];
+    if (c === "high") return pick("konfidensHighB");
+    if (c === "medium") return pick("konfidensMediumB");
+    return pick("konfidensLowB");
   };
-
   const confidenceLabel = (c: "high" | "medium" | "low"): string => {
-    if (displayLanguage === "en") return c.toUpperCase();
 
-    if (c === "high") return locale === "nn" ? "HØG" : "HØY";
-    if (c === "medium") return "MIDDELS";
-    return "LAV";
+    if (c === "high") return "HIGH";
+
+    if (c === "medium") return "MEDIUM";
+
+    return "LOW";
+
   };
 
 if (calculationA?.confidence) {
     chips.push({
       text: `A · ${confidenceLabel(calculationA.confidence)}`,
       body: confidenceTooltip("A", calculationA.confidence),
+      kind: "confidence",
       tone: confidenceTone(calculationA.confidence),
     });
   }
@@ -207,6 +234,7 @@ if (calculationA?.confidence) {
     chips.push({
       text: `B · ${confidenceLabel(calculationB.confidence)}`,
       body: confidenceTooltip("B", calculationB.confidence),
+      kind: "confidence",
       tone: confidenceTone(calculationB.confidence),
     });
   }
@@ -282,7 +310,10 @@ if (calculationA?.confidence) {
   // 4) Manual review required → neutral-chip
   if (decision?.manual_review_required) {
     chips.push({
-      text: WB_LABELS.krevFagligGjennomgang[locale],
+      text:
+        displayLanguage === "en"
+          ? "Requires professional review"
+          : WB_LABELS.krevFagligGjennomgang[displayLanguage],
       body: decision.controller_notes || undefined,
       tone: "neutral",
     });

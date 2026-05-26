@@ -18,6 +18,7 @@
  */
 
 import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 
 // Per-oppgåvetype regex-patterns. Fleire pattern matchar fleire keys, og
 // resultatet returnerast i den rekkjefølga keys finst i results-objektet
@@ -408,10 +409,131 @@ export function getDimensjonerandeKeys(
 
 // Hentar tile-label for ein key. Bruker KEY_TILE_LABELS-mapping om mogleg,
 // elles UPPERCASE-konvertering med "_" → " · ".
-export function tileLabel(key: string, locale: Locale): string {
-  const mapped = KEY_TILE_LABELS[key]?.[locale];
+// Engelske tile-labels for internasjonal shell. Berre keys der engelsk skil
+// seg frå norsk; MOMENT/RISK og rein-symbol-labels (Mu, phibMn ...) fell
+// tilbake til nb-label, som er språknøytral.
+const KEY_TILE_LABELS_EN: Record<string, string> = {
+  V_Ed: "SHEAR · V_Ed",
+  V_Rd: "SHEAR · V_Rd",
+  N_Ed: "AXIAL · N_Ed",
+  N_Rd: "AXIAL · N_Rd",
+  q_Ed: "DESIGN LOAD · q_Ed",
+  As_req: "REINFORCEMENT · REQUIRED",
+  A_s_req: "REINFORCEMENT · REQUIRED",
+  As_min: "REINFORCEMENT · MIN",
+  A_s_min: "REINFORCEMENT · MIN",
+  As_max: "REINFORCEMENT · MAX",
+  As_valgt: "REINFORCEMENT · SELECTED",
+  As_valt: "REINFORCEMENT · SELECTED",
+  A_s_valgt: "REINFORCEMENT · SELECTED",
+  mu_Ed: "μ · UTILIZATION",
+  mu_lim: "μ · LIMIT",
+  xi_lim: "ξ · LIMIT",
+  zeta_Ed: "ζ · UTILIZATION",
+  Ed_ULS_styrende: "ULS · GOVERNING",
+  Ed_ULS_styrande: "ULS · GOVERNING",
+  ULS_styrende: "ULS · GOVERNING",
+  Ed_ULS_dominerende: "ULS · DOMINANT",
+  Ed_ULS_dominerande: "ULS · DOMINANT",
+  ULS_dominerende: "ULS · DOMINANT",
+  Ed_ULS_kombo: "ULS · COMBINATION",
+  Ed_SLS_karakt: "SLS · CHARACT.",
+  Ed_SLS_karakteristisk: "SLS · CHARACT.",
+  Ed_SLS_hyppig: "SLS · FREQUENT",
+  Ed_SLS_kvasi: "SLS · QUASI-PERM.",
+  Ed_SLS_kvasi_permanent: "SLS · QUASI-PERM.",
+};
+
+// Hentar tile-label. Engelsk shell brukar KEY_TILE_LABELS_EN; fell tilbake
+// til nb-label (symbol-labels er språknøytrale) eller UPPERCASE-key.
+export function tileLabel(key: string, displayLanguage: PilarDisplayLanguage): string {
+  if (displayLanguage === "en") {
+    return (
+      KEY_TILE_LABELS_EN[key] ??
+      KEY_TILE_LABELS[key]?.nb ??
+      key.toUpperCase().replace(/_/g, " · ")
+    );
+  }
+  const mapped = KEY_TILE_LABELS[key]?.[displayLanguage];
   if (mapped) return mapped;
   return key.toUpperCase().replace(/_/g, " · ");
+}
+
+// Engelske tile-beskrivingar for internasjonal shell. nb/nn ligg i
+// KEY_TILE_DESCRIPTIONS; manglar ein key her, fell vi tilbake til nb.
+const KEY_TILE_DESCRIPTIONS_EN: Record<string, string> = {
+  Ed_ULS_styrende:
+    "Design ULS load in the governing combination. ULS (Ultimate Limit State) is the load combination that produces the largest action effect and that the structural system must resist with adequate safety. Calculated per EC0 eq. 6.10 or 6.10a/b.",
+  Ed_ULS_styrande:
+    "Design ULS load in the governing combination. ULS (Ultimate Limit State) is the load combination that produces the largest action effect and that the structural system must resist with adequate safety. Calculated per EC0 eq. 6.10 or 6.10a/b.",
+  Ed_ULS_dominerende:
+    "Design ULS load with the dominant variable action (category-Q with factor 1.5). Other variable actions are reduced by the ψ0 factor. Comparing the different Ed_ULS combinations shows which one governs.",
+  Ed_ULS_dominerande:
+    "Design ULS load with the dominant variable action (category-Q with factor 1.5). Other variable actions are reduced by the ψ0 factor. Comparing the different Ed_ULS combinations shows which one governs.",
+  Ed_ULS_kombo:
+    "Design ULS combination per EC0. Used as a reference for comparison with alternative combinations (6.10a/b).",
+  Ed_ULS_psi0:
+    "ULS combination where the variable action is reduced by the ψ0 factor (combination value for simultaneity). Used when several independent variable actions occur together, but not all at peak at the same time.",
+  Ed_SLS_karakt:
+    "SLS characteristic combination (rare, irreversible effects). Used for deflection limits that must not be exceeded — typically L/250 for total deflection, L/300 for long-term.",
+  Ed_SLS_karakteristisk:
+    "SLS characteristic combination (rare, irreversible effects). Used for deflection limits that must not be exceeded — typically L/250 for total deflection, L/300 for long-term.",
+  Ed_SLS_hyppig:
+    "SLS frequent combination (reversible effects that occur often). Used for deflection assessments in everyday use — comfort and serviceability under typical operating conditions.",
+  Ed_SLS_kvasi:
+    "SLS quasi-permanent combination (long-term effects). Used for creep and long-term deflection in concrete — the load the structure carries for the longest time. Typically ψ2 = 0.3 for office buildings.",
+  Ed_SLS_kvasi_permanent:
+    "SLS quasi-permanent combination (long-term effects). Used for creep and long-term deflection in concrete — the load the structure carries for the longest time. Typically ψ2 = 0.3 for office buildings.",
+  M_Ed:
+    "Design bending moment at the critical section per ULS. To be compared with the capacity M_Rd. For a simply supported beam with uniformly distributed load: M_Ed = q_Ed · L²/8.",
+  V_Ed:
+    "Design shear force, typically at the supports. To be compared with the shear capacity V_Rd. For a simply supported beam: V_Ed = q_Ed · L/2.",
+  N_Ed:
+    "Design axial force (compression or tension). For columns and tension members. To be compared with N_Rd. For compression members this includes buckling effects via the χ factor.",
+  q_Ed:
+    "Design line load per metre after the characteristic loads have been multiplied by the partial factors. Simplified: q_Ed = γ_G · g_k + γ_Q · q_k (1.35·G + 1.5·Q at ULS).",
+  M_Rd:
+    "Bending moment capacity of the cross-section. For steel: M_Rd = W_pl · f_y / γ_M0 (plastic). For concrete: depends on cross-section, material grade and reinforcement amount. Requirement: M_Rd ≥ M_Ed.",
+  V_Rd:
+    "Shear capacity of the cross-section. For steel: V_Rd = A_v · f_y / (γ_M0 · √3). For concrete without shear reinforcement: V_Rd,c per EC2 §6.2.2. Requirement: V_Rd ≥ V_Ed.",
+  N_Rd:
+    "Axial capacity of the cross-section. For concentric compression: N_Rd = χ · A · f_y / γ_M1 (with buckling reduction χ). For tension: N_Rd = A · f_y / γ_M0. Requirement: N_Rd ≥ N_Ed.",
+  As_req:
+    "Required tension reinforcement to resist the design moment. Calculated from moment equilibrium with design material data. Must be ≥ A_s,min and ≤ A_s,max. Select a standard bar arrangement (e.g. 4ø16 = 804 mm²) that covers this.",
+  A_s_req:
+    "Required tension reinforcement to resist the design moment. Calculated from moment equilibrium with design material data. Must be ≥ A_s,min and ≤ A_s,max. Select a standard bar arrangement (e.g. 4ø16 = 804 mm²) that covers this.",
+  As_min:
+    "Minimum reinforcement per EC2 §9.2.1.1: A_s,min = max(0.26 · f_ctm/f_yk · b_t · d, 0.0013 · b_t · d). Ensures ductile behaviour at cracking and prevents brittle failure.",
+  A_s_min:
+    "Minimum reinforcement per EC2 §9.2.1.1: A_s,min = max(0.26 · f_ctm/f_yk · b_t · d, 0.0013 · b_t · d). Ensures ductile behaviour at cracking and prevents brittle failure.",
+  As_max:
+    "Maximum reinforcement per EC2 §9.2.1.1: A_s,max = 0.04 · A_c. Prevents the cross-section from being over-reinforced — above this limit there is a risk of brittle compression failure in the concrete before the steel yields.",
+  As_valgt:
+    "Actual selected reinforcement amount based on a standard bar arrangement. Must be ≥ A_s,req and within [A_s,min, A_s,max]. Choose a whole number of bars with known diameters (ø10, ø12, ø16, ø20, ø25, ø32).",
+  As_valt:
+    "Actual selected reinforcement amount based on a standard bar arrangement. Must be ≥ A_s,req and within [A_s,min, A_s,max]. Choose a whole number of bars with known diameters (ø10, ø12, ø16, ø20, ø25, ø32).",
+  A_s_valgt:
+    "Actual selected reinforcement amount based on a standard bar arrangement. Must be ≥ A_s,req and within [A_s,min, A_s,max]. Choose a whole number of bars with known diameters (ø10, ø12, ø16, ø20, ø25, ø32).",
+  mu_Ed:
+    "Relative moment μ_Ed = M_Ed / (b · d² · f_cd). A dimensionless parameter used in reinforcement design — it determines whether the beam is under-reinforced (μ_Ed < μ_lim) or whether compression reinforcement is needed. Lower is better from a utilization perspective.",
+  mu_lim:
+    "The limit of μ_Ed below which a singly reinforced cross-section (tension reinforcement only) is sufficient. Depends on concrete and steel grade. Above μ_lim you must add compression reinforcement or increase the cross-section dimensions.",
+  xi_lim:
+    "The limit of the relative compression-zone depth ξ = x/d, where x is the depth of the neutral axis. Ensures the ductility requirement per EC2 §5.6.3 (usually ξ_lim ≈ 0.45–0.5). A lower ξ gives more ductile behaviour and warning before failure.",
+  zeta_Ed:
+    "Design utilization ratio — the ratio between the design action effect and the capacity. Values < 1.0 indicate that the cross-section has adequate capacity. Lower is better, but a very low value (< 0.5) may indicate over-design.",
+};
+
+// Hentar tile-beskriving (tooltip). Engelsk shell brukar
+// KEY_TILE_DESCRIPTIONS_EN; fell tilbake til nb om ein key manglar.
+export function tileDescription(
+  key: string,
+  displayLanguage: PilarDisplayLanguage,
+): string | undefined {
+  if (displayLanguage === "en") {
+    return KEY_TILE_DESCRIPTIONS_EN[key] ?? KEY_TILE_DESCRIPTIONS[key]?.nb;
+  }
+  return KEY_TILE_DESCRIPTIONS[key]?.[displayLanguage];
 }
 
 // Splittar verdistreng i tal og eining for tile-typografi. Robust mot

@@ -20,13 +20,13 @@ export type Tone = "ok" | "warn" | "bad" | "info" | "neutral";
 
 const MATCH_STATUS_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
   nb: {
-    match: "Both engineers er enige",
+    match: "Begge konstruktørene er enige",
     minor_differences: "Mindre forskjeller",
     significant_differences: "Betydelige forskjeller",
     critical_disagreement: "Kritisk uenighet",
   },
   nn: {
-    match: "Both engineers er einige",
+    match: "Begge konstruktørane er einige",
     minor_differences: "Mindre forskjellar",
     significant_differences: "Betydelege forskjellar",
     critical_disagreement: "Kritisk uenigheit",
@@ -76,8 +76,18 @@ export const MATCH_STATUS_TONES: Record<string, Tone> = {
 };
 
 // Helper-funksjonar (foretrekkast i ny kode)
-export function matchStatusLabel(key: string, locale: Locale = DEFAULT_LOCALE): string {
-  return localizedLookup(MATCH_STATUS_LABELS_BY_LOCALE, key, locale);
+const MATCH_STATUS_LABELS_EN: Record<string, string> = {
+  match: "Both engineers agree",
+  minor_differences: "Minor differences",
+  significant_differences: "Significant differences",
+  critical_disagreement: "Critical disagreement",
+};
+export function matchStatusLabel(
+  key: string,
+  language: Locale | "en" = DEFAULT_LOCALE,
+): string {
+  if (language === "en") return MATCH_STATUS_LABELS_EN[key] ?? key;
+  return localizedLookup(MATCH_STATUS_LABELS_BY_LOCALE, key, language);
 }
 export function matchStatusShort(key: string, locale: Locale = DEFAULT_LOCALE): string {
   return localizedLookup(MATCH_STATUS_SHORT_BY_LOCALE, key, locale);
@@ -138,8 +148,19 @@ export const DECISION_STATUS_TONES: Record<string, Tone> = {
   needs_more_input: "warn",
 };
 
-export function decisionStatusLabel(key: string, locale: Locale = DEFAULT_LOCALE): string {
-  return localizedLookup(DECISION_STATUS_LABELS_BY_LOCALE, key, locale);
+const DECISION_STATUS_LABELS_EN: Record<string, string> = {
+  approved: "Preliminarily approved",
+  approved_with_warnings: "Approved with warnings",
+  uncertain: "Uncertain",
+  rejected: "Rejected — review required",
+  needs_more_input: "Needs more information",
+};
+export function decisionStatusLabel(
+  key: string,
+  language: Locale | "en" = DEFAULT_LOCALE,
+): string {
+  if (language === "en") return DECISION_STATUS_LABELS_EN[key] ?? key;
+  return localizedLookup(DECISION_STATUS_LABELS_BY_LOCALE, key, language);
 }
 export function decisionStatusShort(key: string, locale: Locale = DEFAULT_LOCALE): string {
   return localizedLookup(DECISION_STATUS_SHORT_BY_LOCALE, key, locale);

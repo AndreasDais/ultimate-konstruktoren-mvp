@@ -16,12 +16,12 @@
  */
 
 import { useState } from "react";
-import type { Locale } from "@/lib/locale";
+import type { PilarDisplayLanguage } from "@/lib/international/display";
 import { renderMathKey } from "@/lib/result/formula-extract";
 import {
-  KEY_TILE_DESCRIPTIONS,
   getDimensjonerandeKeys,
   tileLabel,
+  tileDescription,
   splitNumberUnit,
 } from "@/lib/result/tile-heuristics";
 import { CountUp } from "./CountUp";
@@ -31,17 +31,17 @@ export function DimensjonerandeTile({
   value,
   isStyrande,
   span,
-  locale,
+  displayLanguage,
 }: {
   k: string;
   value: string;
   isStyrande: boolean;
   span: number;
-  locale: Locale;
+  displayLanguage: PilarDisplayLanguage;
 }) {
   const [expanded, setExpanded] = useState(false);
   const { number, unit } = splitNumberUnit(value);
-  const description = KEY_TILE_DESCRIPTIONS[k]?.[locale];
+  const description = tileDescription(k, displayLanguage);
   const isClickable = !!description;
 
   return (
@@ -88,7 +88,7 @@ export function DimensjonerandeTile({
         }}
         title={k}
       >
-        {tileLabel(k, locale)}
+        {tileLabel(k, displayLanguage)}
       </div>
       <div
         style={{
@@ -165,12 +165,12 @@ export function DimensjonerandeTile({
 export function DimensjonerandeTiles({
   results,
   calculationType,
-  locale,
+  displayLanguage,
   resultRoles,
 }: {
   results: Record<string, string>;
   calculationType: string | null;
-  locale: Locale;
+  displayLanguage: PilarDisplayLanguage;
   resultRoles?: Record<string, string> | null;
 }) {
   const keys = getDimensjonerandeKeys(results, calculationType, resultRoles);
@@ -213,7 +213,7 @@ export function DimensjonerandeTiles({
           value={results[k] ?? ""}
           isStyrande={i === 0}
           span={spanForIndex(i, keys.length)}
-          locale={locale}
+          displayLanguage={displayLanguage}
         />
       ))}
     </div>
