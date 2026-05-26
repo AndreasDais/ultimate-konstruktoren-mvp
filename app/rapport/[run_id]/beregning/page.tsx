@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import { type Locale } from "@/lib/locale";
 import type { PilarDisplayLanguage } from "@/lib/international/display";
@@ -92,7 +92,10 @@ function valueWithUnit(value: string, unit: string | null) {
 }
 
 export default function CalculationSheetPage() {
-  const { locale } = useLocale();
+  const { locale: contextLocale } = useLocale();
+  const searchParams = useSearchParams();
+  const localeParam = searchParams?.get("locale");
+  const locale: Locale = localeParam === "nn" || localeParam === "nb" ? localeParam : contextLocale;
   const params = useParams();
   const router = useRouter();
   const runId = params.run_id as string;

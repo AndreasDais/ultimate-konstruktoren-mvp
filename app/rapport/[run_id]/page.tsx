@@ -752,7 +752,7 @@ export default function RapportPage() {
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
-  const calculationSheetUrl = `/rapport/${runId}/beregning`;
+  const calculationSheetUrl = `/rapport/${runId}/beregning?locale=${locale}`;
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
   const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
