@@ -1,6 +1,7 @@
 # PILAR Release Readiness Reporter
 
 **Sprint:** 44.0  
+**Hardened:** 46.0  
 **Status:** local report-only foundation  
 **Owner:** Release Manager track
 
@@ -30,6 +31,7 @@ Runs the checks and prints the status without writing the report artifact.
 
 ```bash
 node scripts/write-release-readiness-report.mjs --check
+npm run release:readiness:check
 ```
 
 ### Write mode
@@ -38,6 +40,7 @@ Runs the checks and writes the Markdown report artifact.
 
 ```bash
 node scripts/write-release-readiness-report.mjs
+npm run release:readiness
 ```
 
 ### Strict mode
@@ -56,15 +59,15 @@ RELEASE_RISKY
 RELEASE_BLOCKED
 ```
 
-`RELEASE_READY` means all local blocking and warning gates in v0.1 passed.
+`RELEASE_READY` means all local blocking and warning gates in the current reporter passed.
 
 `RELEASE_RISKY` means blocking gates passed, but warning gates need human review. The first warning gate is working-tree cleanliness, because a report may be run during an active sprint.
 
 `RELEASE_BLOCKED` means at least one blocking gate failed. Do not merge or deploy.
 
-## v0.1 gates
+## v0.2 checks
 
-The first version checks:
+The hardened version checks:
 
 ```txt
 working-tree-clean        warn
@@ -74,7 +77,24 @@ health-snapshot-check     block
 typescript-gate           block
 ```
 
-## Gates intentionally not executed in v0.1
+## Sprint 46.0 hardening
+
+Sprint 46.0 improves the reporter by adding:
+
+- action-plan text for blocked/risky states
+- recommended action per failed gate
+- command column in the gate table
+- recursion guard for `release-readiness -> agent:all -> release-readiness`
+- Windows command hardening for `npm.cmd` and `npx.cmd` execution
+- skipped-gate reporting when the recursion guard is active
+
+## Recursion guard
+
+The reporter can be called directly or from the agent hub. Since `agent:all` can include release-readiness, the reporter must not blindly call `agent:all` again when it is already running inside the agent hub.
+
+When the guard is active, the internal `agent-ecosystem-gate` step is marked as `SKIP` rather than `FAIL`.
+
+## Gates intentionally not executed in v0.2
 
 These remain human/manual until a later sprint:
 
@@ -89,8 +109,8 @@ PDF/Word parity review
 ## Standard command sequence
 
 ```bash
-node scripts/write-release-readiness-report.mjs --check
-node scripts/write-release-readiness-report.mjs
+npm run release:readiness:check
+npm run release:readiness
 npm run agent:all
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npx tsc --noEmit --pretty false
