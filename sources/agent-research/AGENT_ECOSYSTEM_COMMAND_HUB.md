@@ -471,3 +471,35 @@ npm run agent:hub -- report-qa-dry-run
 
 Sprint 48.2 does not change runtime user output, app routes, agent prompts, Supabase tables, report rendering, PDF, or Word generation. The dry-run remains a local QA/check artifact.
 
+---
+
+## Sprint 49.2 — Report QA real fixture hub commands
+
+Report QA real fixture validation is now available from the agent ecosystem command hub.
+
+### Commands
+
+```bash
+npm run agent:hub -- report-qa-fixture
+npm run agent:hub -- report-qa-fixture-check
+npm run agent:all
+```
+
+### What this checks
+
+`report-qa-fixture-check` runs:
+
+```bash
+node scripts/validate-report-qa-real-fixture.mjs
+```
+
+It validates the realistic static Report QA fixture:
+
+```txt
+sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md
+```
+
+### Non-runtime rule
+
+This is still a read-only fixture validation step. It must not change app runtime behavior, user output, Supabase data, agent prompts, report rendering, PDF generation, or Word generation.
+

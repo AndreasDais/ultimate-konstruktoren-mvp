@@ -22,6 +22,10 @@ const requiredFiles = [
   "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
   "scripts/validate-release-gates.mjs",
   "scripts/run-report-qa-dry-run.mjs",
+  "scripts/validate-report-qa-real-fixture.mjs",
+  "sources/report-qa/REPORT_QA_REAL_REPORT_FIXTURE.md",
+  "sources/report-qa/dry-run/fixtures/README.md",
+  "sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md",
   "sources/report-qa/REPORT_QA_DRY_RUN.md",
   "sources/report-qa/dry-run/sample-report.md",
   "sources/report-qa/reports/README.md",
@@ -116,6 +120,14 @@ const commandGroups = {
     description: "Run Report QA Agent check registry validation.",
     run: () => runNodeScript("scripts/validate-report-qa-checks.mjs")
   },
+  "report-qa-fixture": {
+    description: "Validate Report QA realistic report fixture.",
+    run: () => runNodeScript("scripts/validate-report-qa-real-fixture.mjs")
+  },
+  "report-qa-fixture-check": {
+    description: "Run Report QA realistic fixture checks.",
+    run: () => runNodeScript("scripts/validate-report-qa-real-fixture.mjs")
+  },
   "report-qa-dry-run": {
     description: "Write the Report QA dry-run report artifact.",
     run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--write"])
@@ -169,6 +181,7 @@ const commandGroups = {
       ["observability-check", []],
       ["report-qa-check", []],
       ["report-qa-dry-run-check", []],
+      ["report-qa-fixture-check", []],
       ["release-check", []],
       ["release-readiness", []],
       ["patch-planner-check", []],
@@ -266,6 +279,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- release-readiness");
   console.log("  npm run agent:hub -- report-qa-check");
   console.log("  npm run agent:hub -- report-qa-dry-run-check");
+  console.log("  npm run agent:hub -- report-qa-fixture-check");
   console.log("  npm run agent:hub -- patch-planner-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
