@@ -1,0 +1,11 @@
+Eg har ein fritt opplagd stålbjelke med spennvidde L = 6,0 m og jamt fordelt dimensjonerande last qEd = 12 kN/m.
+
+Rekn ut:
+1. Maksimalt bøyemoment.
+2. Maksimal skjærkraft ved opplag.
+3. Kort forklaring av kvar moment og skjærkraft er størst.
+
+Svar på norsk/nynorsk.
+Bruk kN, m og kNm.
+Ikkje bruk AISC, ASCE, kip, ft eller amerikanske lastkombinasjonar.
+Dette er berre ein enkel statikk-kontroll, ikkje full kapasitetskontroll etter Eurokode.

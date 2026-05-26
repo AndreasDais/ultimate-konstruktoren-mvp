@@ -1,0 +1,81 @@
+# PILAR eval case seed set
+
+**Status:** Seed data / implementation reference  
+**Sprint:** 34.2  
+**Purpose:** Give PILAR a small, explicit eval-set before building the full Eval Agent.
+
+This folder contains rule-readable eval cases for the PILAR core pipeline. The goal is not to replace the existing live QA agent in `qa/`, but to add a lightweight benchmark source that can later feed:
+
+- Eval Agent
+- Synthetic User Agent
+- Guardrail Agent
+- Report QA Agent
+- Release Manager Agent
+
+## Files
+
+```txt
+qa/evals/pilar-core-evals.jsonl
+scripts/validate-eval-cases.mjs
+```
+
+## Run validation
+
+```bash
+node scripts/validate-eval-cases.mjs
+```
+
+The validator only checks schema shape, duplicate IDs and basic consistency. It does not run the PILAR app or call an LLM.
+
+## Case format
+
+Each line in `pilar-core-evals.jsonl` is one JSON object.
+
+Required top-level fields:
+
+```txt
+case_id
+version
+title
+priority
+domain
+standard_context
+display_language
+input_text
+expected
+grader
+manual_review_required
+tags
+```
+
+Expected fields:
+
+```txt
+must_include
+must_not_include
+unit_expectations
+required_warnings_if_missing
+safety_checks
+```
+
+Optional expected fields:
+
+```txt
+numeric_expectations
+notes
+```
+
+## Design principles
+
+1. Start with a tiny benchmark that is easy to inspect.
+2. Keep cases human-readable.
+3. Mark high-risk engineering cases for manual review.
+4. Include both Norwegian/Eurocode and English/AISC regression.
+5. Separate shell-language problems from technical answer-language problems.
+6. Do not encode paid-standard table values unless they are provided as input.
+
+## Relationship to existing QA
+
+The existing `qa/test-agent.ts` flow is a live pipeline/golden-test system. These eval cases are a source dataset that can later be converted into live tests, rule graders or LLM-assisted graders.
+
+Use this seed set to decide what PILAR should measure before building more automation.

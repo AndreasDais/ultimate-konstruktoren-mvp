@@ -1,0 +1,28 @@
+I am testing PILAR with a United States structural engineering context.
+
+Please evaluate a simply supported steel beam using an AISC/ASCE-style workflow, but clearly state if full code verification is not supported yet.
+
+Beam:
+- Span: L = 20 ft
+- Section: W12x26
+- Steel grade: ASTM A992, Fy = 50 ksi
+- Supports: simply supported
+- Lateral bracing: only at the supports, unbraced length Lb = 20 ft
+- Dead load: D = 0.45 kip/ft
+- Live load: L = 0.80 kip/ft
+
+Requested checks:
+1. Determine the LRFD factored uniform load using a typical ASCE 7 gravity load combination.
+2. Calculate the maximum factored bending moment.
+3. Calculate the maximum factored shear.
+4. Determine whether lateral-torsional buckling is likely to be a critical issue.
+5. If AISC section properties or code-specific equations are missing, do not invent them.
+6. Produce a clear calculation note and a calculation-only summary suitable for a student report.
+
+Important requirements:
+- Answer in English.
+- Use US customary units.
+- Do not use Eurocode notation or Eurocode partial factors.
+- Do not use gamma_G, gamma_Q, M_Ed, V_Ed, NS-EN, Eurocode 3, or Norwegian National Annex logic.
+- Do not claim final AISC code compliance unless the required AISC checks and section properties are available.
+- Clearly mark the result as preliminary and requiring verification by a licensed structural engineer.
