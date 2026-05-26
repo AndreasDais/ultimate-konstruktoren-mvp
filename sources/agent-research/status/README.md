@@ -166,3 +166,30 @@ node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run release:readiness:check
 npm run agent:all
 ```
+
+## Report QA dry-run health coverage
+
+Sprint 48.3 adds Report QA dry-run status to the health snapshot.
+
+The health command now verifies:
+
+- `scripts/run-report-qa-dry-run.mjs`
+- `sources/report-qa/REPORT_QA_DRY_RUN.md`
+- `sources/report-qa/dry-run/sample-report.md`
+- `sources/report-qa/reports/README.md`
+- npm aliases `report-qa:dry-run` and `report-qa:dry-run:check`
+- local check `node scripts/run-report-qa-dry-run.mjs --check`
+
+Use check mode during ordinary verification:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run report-qa:dry-run:check
+npm run agent:all
+```
+
+Do not use write mode during normal health checks:
+
+```bash
+npm run report-qa:dry-run
+```

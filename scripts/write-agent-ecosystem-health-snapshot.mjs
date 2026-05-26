@@ -35,6 +35,10 @@ const requiredFiles = [
   "sources/report-qa/report-qa-checks.json",
   "sources/report-qa/REPORT_QA_CHECK_REGISTRY.md",
   "scripts/validate-report-qa-checks.mjs",
+  "scripts/run-report-qa-dry-run.mjs",
+  "sources/report-qa/REPORT_QA_DRY_RUN.md",
+  "sources/report-qa/dry-run/sample-report.md",
+  "sources/report-qa/reports/README.md",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
   "scripts/summarize-eval-coverage.mjs",
@@ -79,6 +83,8 @@ const requiredScripts = [
   "observability:check",
   "report-qa:checks",
   "report-qa:check",
+  "report-qa:dry-run",
+  "report-qa:dry-run:check",
   "release:gates",
   "release:check",
   "release:readiness",
@@ -122,6 +128,11 @@ const checks = [
     id: "report-qa-checks",
     title: "Report QA check registry",
     command: ["node", ["scripts/validate-report-qa-checks.mjs"]]
+  },
+  {
+    id: "report-qa-dry-run",
+    title: "Report QA dry-run check",
+    command: ["node", ["scripts/run-report-qa-dry-run.mjs", "--check"]]
   },
   {
     id: "release-gates",
@@ -254,6 +265,7 @@ lines.push("npm run eval:coverage:check");
 lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
 lines.push("npm run report-qa:check");
+lines.push("npm run report-qa:dry-run:check");
 lines.push("npm run release:check");
 lines.push("npm run release:readiness:check");
 lines.push("npm run patch-planner:check");
