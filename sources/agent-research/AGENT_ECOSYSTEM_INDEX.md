@@ -341,3 +341,42 @@ sources/agent-research/memos/MEMO_QUALITY_CHECKS.md
 
 Dette gjer Research Agent-sporet meir operasjonelt: registry → topic file → memo file → coverage check → quality check → agent hub → health snapshot.
 <!-- PILAR:RESEARCH_COVERAGE_END -->
+
+---
+
+## Sprint 47.1 — Agent ecosystem docs index sync
+
+**Status:** active index entry  
+**Purpose:** Make the fast-gate/performance checkpoint easy to find from the agent ecosystem index.
+
+### New canonical references
+
+| Document | Purpose |
+|---|---|
+| `sources/agent-research/AGENT_ECOSYSTEM_PERFORMANCE_CHECKPOINT.md` | Defines daily fast-gate practice, full release-candidate gates, write-mode discipline and stop rules for long-running tests. |
+| `sources/release-manager/RELEASE_READINESS_FAST_MODE_FINAL_CHECKPOINT.md` | Documents fast release-readiness check mode and explicit `--full` release-candidate mode. |
+
+### Daily sprint gate
+
+Use this gate during ordinary sprint work:
+
+```bash
+npm run release:readiness:check
+npm run agent:hub -- release-readiness
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+### Full release-candidate gate
+
+Use this only when intentionally checking a release candidate:
+
+```bash
+node scripts/write-release-readiness-report.mjs --check --full
+{ rm -rf .next && npm run debug:sweep && npm run build; } 2>&1 | tee last-run.log
+```
+
+### Stop rule
+
+If a normal sprint gate runs for 8–10+ minutes without useful output, stop it, capture the log and debug the slow gate before continuing.

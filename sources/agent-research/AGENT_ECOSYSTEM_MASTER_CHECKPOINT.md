@@ -508,3 +508,41 @@ npm run release:readiness:check
 
 Only write `sources/release-manager/reports/latest-release-readiness.md` when intentionally refreshing the committed release-readiness artifact.
 
+---
+
+## Sprint 47.1 update — Fast-gate documentation indexed
+
+**Status:** documentation sync after Sprint 47.0  
+**Purpose:** Keep the master checkpoint aligned with the new performance checkpoint and fast-gate practice.
+
+### Added to the indexed documentation set
+
+```txt
+sources/agent-research/AGENT_ECOSYSTEM_PERFORMANCE_CHECKPOINT.md
+sources/release-manager/RELEASE_READINESS_FAST_MODE_FINAL_CHECKPOINT.md
+```
+
+### Current interpretation
+
+The agent-ecosystem foundation is still closed, but daily verification should now use the fast gate by default. Full release-candidate checks remain available, but they must be explicit so `agent:all`, `agent:health` and ordinary sprint work do not trigger slow nested release gates.
+
+### Canonical fast gate
+
+```bash
+npm run release:readiness:check
+npm run agent:hub -- release-readiness
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+### Canonical full gate
+
+```bash
+node scripts/write-release-readiness-report.mjs --check --full
+{ rm -rf .next && npm run debug:sweep && npm run build; } 2>&1 | tee last-run.log
+```
+
+### Guardrail for future sprint planning
+
+Patch Planner and Release Manager documentation should treat slow nested gates as a design issue, not as a normal cost of sprint work.
