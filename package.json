@@ -40,7 +40,9 @@
     "patch-planner:rules": "node scripts/validate-patch-planner-rules.mjs",
     "patch-planner:check": "node scripts/validate-patch-planner-rules.mjs",
     "release:readiness": "node scripts/write-release-readiness-report.mjs",
-    "release:readiness:check": "node scripts/write-release-readiness-report.mjs --check"
+    "release:readiness:check": "node scripts/write-release-readiness-report.mjs --check",
+    "report-qa:dry-run": "node scripts/run-report-qa-dry-run.mjs --write",
+    "report-qa:dry-run:check": "node scripts/run-report-qa-dry-run.mjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
