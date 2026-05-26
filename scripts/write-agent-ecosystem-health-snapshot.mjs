@@ -47,7 +47,10 @@ const requiredFiles = [
   "scripts/write-agent-ecosystem-health-snapshot.mjs",
   "sources/release-manager/release-gates.json",
   "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
-  "scripts/validate-release-gates.mjs"
+  "scripts/validate-release-gates.mjs",
+  "sources/patch-planner/patch-planner-rules.json",
+  "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
+  "scripts/validate-patch-planner-rules.mjs"
 ];
 
 const requiredScripts = [
@@ -73,7 +76,9 @@ const requiredScripts = [
   "report-qa:checks",
   "report-qa:check",
   "release:gates",
-  "release:check"
+  "release:check",
+  "patch-planner:rules",
+  "patch-planner:check"
 ];
 
 const checks = [
@@ -222,6 +227,7 @@ lines.push("- Research Agent: topic registry, topic files, memo files, memo qual
 lines.push("- Eval Agent: eval case validation, readiness runner, coverage summarizer, taxonomy.");
 lines.push("- Guardrails: reason-code registry and validation.");
 lines.push("- Observability: event taxonomy and validation.");
+lines.push("- Patch Planner: patch safety rule registry and validation.");
 lines.push("- Report QA: check registry and validation.");
 lines.push("- Release Manager: gate registry and validation.");
 lines.push("");
@@ -238,6 +244,7 @@ lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
 lines.push("npm run report-qa:check");
 lines.push("npm run release:check");
+lines.push("npm run patch-planner:check");
 lines.push("npm run agent:all");
 lines.push("npm run agent:health");
 lines.push("```");

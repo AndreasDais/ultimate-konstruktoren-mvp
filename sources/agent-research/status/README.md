@@ -130,3 +130,18 @@ Use write mode only when intentionally refreshing the generated snapshot artifac
 ```bash
 npm run agent:health
 ```
+
+## Patch Planner checks
+
+Sprint 42.3 adds Patch Planner registry validation to the health snapshot.
+
+The health check should verify:
+
+- `sources/patch-planner/patch-planner-rules.json` exists.
+- `sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md` exists.
+- `scripts/validate-patch-planner-rules.mjs` exists.
+- `npm run patch-planner:check` is available.
+- `scripts/validate-patch-planner-rules.mjs` passes in check mode.
+
+This keeps patch planning inside the same non-writing agent-ecosystem health gate as Research, Eval, Guardrails, Observability, Report QA and Release Manager.
+
