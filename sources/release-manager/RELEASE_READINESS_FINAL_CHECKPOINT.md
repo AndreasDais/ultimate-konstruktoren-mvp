@@ -205,3 +205,44 @@ Release readiness final checkpoint ✅
 ```
 
 This track is complete as a local, report-only foundation.
+
+## Sprint 46.1 update — Hardening and docs sync
+
+Release readiness now documents the hardened Sprint 46.0 behavior consistently across the command hub and master checkpoint.
+
+### Hardened output expectations
+
+The release-readiness report should include:
+
+- overall release status
+- blocking failure count
+- warning failure count
+- gates checked
+- per-gate severity and pass/fail status
+- command/context used for each gate
+- recommended action per failed gate
+- raw command output for debugging
+
+### Safe command policy
+
+Use these during active sprint work:
+
+```bash
+npm run release:readiness:check
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+Use write mode only when intentionally refreshing the report artifact:
+
+```bash
+npm run release:readiness
+```
+
+Use strict mode only when a non-ready state should fail the process:
+
+```bash
+node scripts/write-release-readiness-report.mjs --strict
+```
+

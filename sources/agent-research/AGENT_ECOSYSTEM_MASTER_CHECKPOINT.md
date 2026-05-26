@@ -476,3 +476,35 @@ Sprint 46.0 — Synthetic User Agent checklist foundation
 
 Rationale: Synthetic User Agent was a P0 idea in the agent strategy, and it should start as a deterministic/manual-or-Playwright-ready checklist before any browser automation or computer-use workflow is introduced.
 
+---
+
+## Sprint 46.1 update — Release readiness hardening reflected in master checkpoint
+
+Release Readiness Reporter is no longer only a simple status writer. It now has a hardened report shape intended for practical release triage.
+
+### Current release-readiness commands
+
+```bash
+npm run release:readiness:check
+npm run release:readiness
+npm run agent:hub -- release-readiness
+npm run agent:hub -- release-readiness-write
+node scripts/write-release-readiness-report.mjs --strict
+```
+
+### Interpretation
+
+- `RELEASE_READY`: all local blocking and warning gates passed at report time.
+- `RELEASE_RISKY`: blocking gates passed, but one or more warning gates require human review.
+- `RELEASE_BLOCKED`: one or more blocking gates failed; do not merge or deploy until fixed.
+
+### Important operating rule
+
+During normal sprint verification, use check mode:
+
+```bash
+npm run release:readiness:check
+```
+
+Only write `sources/release-manager/reports/latest-release-readiness.md` when intentionally refreshing the committed release-readiness artifact.
+

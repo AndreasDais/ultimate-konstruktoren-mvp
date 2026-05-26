@@ -409,3 +409,38 @@ Release Manager     ✅
 Patch Planner       ✅
 Release readiness   ✅
 ```
+
+## Sprint 46.1 — Release readiness hardening docs sync
+
+Release readiness commands now document the hardened reporter behavior from Sprint 46.0.
+
+### Commands
+
+```bash
+npm run release:readiness:check
+npm run release:readiness
+npm run agent:hub -- release-readiness
+npm run agent:hub -- release-readiness-write
+```
+
+### Recommended usage
+
+- Use `npm run release:readiness:check` during active sprint work.
+- Use `npm run release:readiness` only when intentionally refreshing `sources/release-manager/reports/latest-release-readiness.md`.
+- Use `node scripts/write-release-readiness-report.mjs --strict` only for explicit fail-fast release checks where `RELEASE_RISKY` and `RELEASE_BLOCKED` should return a non-zero exit code.
+- Do not treat `RELEASE_BLOCKED` as a script failure by itself in check mode; it is a report status that should explain which gates need attention.
+
+### Hardened report behavior
+
+The reporter should surface:
+
+- release status: `RELEASE_READY`, `RELEASE_RISKY`, or `RELEASE_BLOCKED`
+- blocking failures and warning failures
+- gate command, first output line, note and recommended action
+- raw command output for debugging
+- manual gates that are intentionally not executed in v0.1
+
+### Non-writing gate rule
+
+`agent:all` and health-style verification must use check-mode release readiness. They must not rewrite the release-readiness report artifact unless explicitly requested.
+
