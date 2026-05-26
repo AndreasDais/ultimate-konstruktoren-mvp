@@ -30,7 +30,9 @@
     "eval:coverage": "node scripts/summarize-eval-coverage.mjs",
     "eval:coverage:check": "node scripts/summarize-eval-coverage.mjs --check",
     "guardrails:codes": "node scripts/validate-guardrail-reason-codes.mjs",
-    "guardrails:check": "node scripts/validate-guardrail-reason-codes.mjs"
+    "guardrails:check": "node scripts/validate-guardrail-reason-codes.mjs",
+    "observability:events": "node scripts/validate-observability-event-taxonomy.mjs",
+    "observability:check": "node scripts/validate-observability-event-taxonomy.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
