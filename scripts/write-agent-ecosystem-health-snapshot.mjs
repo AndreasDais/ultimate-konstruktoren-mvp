@@ -48,6 +48,10 @@ const requiredFiles = [
   "sources/release-manager/release-gates.json",
   "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
   "scripts/validate-release-gates.mjs",
+  "scripts/write-release-readiness-report.mjs",
+  "sources/release-manager/RELEASE_READINESS_REPORTER.md",
+  "sources/release-manager/reports/README.md",
+  "sources/release-manager/reports/latest-release-readiness.md",
   "sources/patch-planner/patch-planner-rules.json",
   "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
   "scripts/validate-patch-planner-rules.mjs"
@@ -77,6 +81,8 @@ const requiredScripts = [
   "report-qa:check",
   "release:gates",
   "release:check",
+  "release:readiness",
+  "release:readiness:check",
   "patch-planner:rules",
   "patch-planner:check"
 ];
@@ -121,6 +127,11 @@ const checks = [
     id: "release-gates",
     title: "Release Manager gate registry",
     command: ["node", ["scripts/validate-release-gates.mjs"]]
+  },
+  {
+    id: "release-readiness",
+    title: "Release readiness reporter",
+    command: ["node", ["scripts/write-release-readiness-report.mjs", "--check"]]
   }
 ];
 
@@ -244,6 +255,7 @@ lines.push("npm run guardrails:check");
 lines.push("npm run observability:check");
 lines.push("npm run report-qa:check");
 lines.push("npm run release:check");
+lines.push("npm run release:readiness:check");
 lines.push("npm run patch-planner:check");
 lines.push("npm run agent:all");
 lines.push("npm run agent:health");

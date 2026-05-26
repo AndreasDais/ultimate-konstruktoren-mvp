@@ -145,3 +145,24 @@ The health check should verify:
 
 This keeps patch planning inside the same non-writing agent-ecosystem health gate as Research, Eval, Guardrails, Observability, Report QA and Release Manager.
 
+
+## Release readiness health coverage
+
+Sprint 44.3 adds release-readiness reporter status to the health snapshot.
+
+The health command now verifies:
+
+- `scripts/write-release-readiness-report.mjs`
+- `sources/release-manager/RELEASE_READINESS_REPORTER.md`
+- `sources/release-manager/reports/README.md`
+- `sources/release-manager/reports/latest-release-readiness.md`
+- npm aliases `release:readiness` and `release:readiness:check`
+- local check `node scripts/write-release-readiness-report.mjs --check`
+
+Use check mode during ordinary verification:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run release:readiness:check
+npm run agent:all
+```
