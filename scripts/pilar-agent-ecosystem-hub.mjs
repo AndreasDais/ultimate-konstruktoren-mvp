@@ -18,6 +18,9 @@ const requiredFiles = [
   "qa/evals/taxonomy/eval-case-taxonomy.json",
   "qa/evals/reports/latest-eval-readiness.md",
   "qa/evals/reports/latest-eval-coverage.md",
+  "sources/release-manager/release-gates.json",
+  "sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md",
+  "scripts/validate-release-gates.mjs",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
   "scripts/summarize-eval-coverage.mjs",
@@ -102,6 +105,14 @@ const commandGroups = {
     description: "Run Report QA Agent check registry validation.",
     run: () => runNodeScript("scripts/validate-report-qa-checks.mjs")
   },
+  "release-gates": {
+    description: "Validate Release Manager gate registry.",
+    run: () => runNodeScript("scripts/validate-release-gates.mjs")
+  },
+  "release-check": {
+    description: "Run Release Manager gate registry checks.",
+    run: () => runNodeScript("scripts/validate-release-gates.mjs")
+  },
   "health": {
     description: "Run health snapshot check mode without rewriting latest-agent-ecosystem-health.md.",
     run: () => runNodeScript("scripts/write-agent-ecosystem-health-snapshot.mjs", ["--check"])
@@ -122,6 +133,7 @@ const commandGroups = {
       ["guardrails-check", []],
       ["observability-check", []],
       ["report-qa-check", []],
+      ["release-check", []],
       ["health", []]
     ])
   }
@@ -212,6 +224,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- eval-coverage");
   console.log("  npm run agent:hub -- guardrails-check");
   console.log("  npm run agent:hub -- observability-check");
+  console.log("  npm run agent:hub -- release-check");
   console.log("  npm run agent:hub -- report-qa-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }

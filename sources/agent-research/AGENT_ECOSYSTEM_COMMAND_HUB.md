@@ -299,3 +299,27 @@ health
 
 The Report QA step validates the check registry only. It does not inspect live reports, read user data, change app code, or block runtime output.
 
+## Release Manager integration (Sprint 41.2)
+
+Release Manager checks are part of the non-writing local agent ecosystem gate.
+
+### Commands
+
+```bash
+npm run release:check
+npm run agent:hub -- release-check
+npm run agent:all
+```
+
+### Hub behavior
+
+`agent:all` must run Release Manager after Report QA / Observability checks and before health check mode. The Release Manager step validates the release-gate registry only; it does not build, deploy, mutate runtime code, or rewrite artifacts.
+
+### Owned files
+
+```txt
+sources/release-manager/release-gates.json
+sources/release-manager/RELEASE_MANAGER_GATE_REGISTRY.md
+scripts/validate-release-gates.mjs
+```
+
