@@ -150,3 +150,17 @@ Sprint 42.3 — Health snapshot includes Patch Planner checks
 Sprint 42.4 — Patch Planner final checkpoint
 Sprint 42.5 — Patch plan template generator
 ```
+
+## Sprint 57.2 — Sprint patch workflow discipline
+
+Sprint 57.2 connects the accepted sprint patch workflow document to the Patch Planner documentation layer.
+
+The workflow document is tracked at:
+
+```txt
+sources/patch-planner/PILAR_SPRINT_PATCH_WORKFLOW.md
+```
+
+Patch Planner planning should treat this document as the operator workflow baseline for local PILAR sprint patches, especially the status-only clipboard rule, guarded `git apply --check` usage, small ZIP patch preference, commit gates and stop conditions.
+
+This sprint is documentation-only. Health snapshot coverage and machine validation can be handled in a later smaller sprint after the registry documentation link is committed cleanly.
