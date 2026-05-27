@@ -1,6 +1,6 @@
 {
   "schema_version": "report_qa_fixture_registry.v0.1",
-  "updated_by_sprint": "52.0",
+  "updated_by_sprint": "53.0",
   "purpose": "Track Report QA dry-run fixtures, their risk coverage, language/standard context, and whether the fixture file is active or planned.",
   "fixture_status_values": [
     "active",
@@ -113,19 +113,24 @@
     {
       "id": "overconfident-conclusion-report",
       "title": "Overconfident conclusion report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "conclusion_strength",
-      "risk_area": "unsafe certainty",
+      "risk_area": "overconfident approval and unsupported final conclusion",
       "language": "nb",
       "standard_context": "generic",
       "fixture_path": "sources/report-qa/dry-run/fixtures/overconfident-conclusion-report.md",
       "expected_signal": "warn_overconfident_conclusion",
       "checks_targeted": [
         "conclusion_strength_appropriate",
+        "calculation_basis_sufficient",
+        "assumptions_explicit",
         "warnings_visible",
-        "controller_decision_visible"
+        "controller_decision_supported",
+        "overconfident_approval_detected",
+        "needs_manual_review"
       ],
-      "notes": "Should test that QA flags strong approval language when uncertainty remains."
+      "notes": "Active negative fixture from Sprint 53.0. It should verify that Report QA catches reports that approve a design more strongly than the shown calculation basis supports.",
+      "expected_outcome": "fail_or_warn"
     },
     {
       "id": "missing-disclaimer-report",

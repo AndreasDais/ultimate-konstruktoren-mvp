@@ -125,3 +125,28 @@ numeric_scale_sanity
 warnings_visible
 conclusion_strength_appropriate
 ```
+
+## Sprint 53.0 — overconfident conclusion fixture
+
+Sprint 53.0 promotes `overconfident-conclusion-report` from planned to active coverage.
+
+Active file:
+
+```txt
+sources/report-qa/dry-run/fixtures/overconfident-conclusion-report.md
+```
+
+Expected QA outcome: `fail_or_warn`.
+
+This fixture checks whether Report QA catches reports that give final approval, construction-ready wording or "no further review required" conclusions without enough documented calculation basis.
+
+Target signals:
+
+```txt
+conclusion_strength_appropriate
+calculation_basis_sufficient
+warnings_visible
+controller_decision_supported
+overconfident_approval_detected
+needs_manual_review
+```
