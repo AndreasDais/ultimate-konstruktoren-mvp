@@ -88,3 +88,21 @@ numeric_scale_sanity
 warnings_visible
 conclusion_strength_appropriate
 ```
+
+## Sprint 52.5 hotfix - explicit unit-pair mismatch signals
+
+This fixture intentionally contains the exact unit-QA signal strings required by the dedicated validator.
+
+Explicit unit-pair mismatch signals:
+
+- kN/N mismatch: the report mixes force values written in kN with formulas or intermediate values treated as N without a visible conversion step.
+- m/mm mismatch: the report mixes span or deflection values in m and mm without converting before substitution.
+- kNm/Nmm mismatch: the report compares bending moment effects in kNm against resistance values expressed as Nmm without a documented conversion factor.
+- cm4/mm4 mismatch: the report mixes second moment of area values in cm4 and mm4 without converting by the correct power-of-four scale.
+
+Expected Report QA interpretation:
+
+- This is a unit mismatch / unit inconsistency fixture.
+- The conclusion is too strong because the unit basis is not internally consistent.
+- Report QA should return fail_or_warn and request corrected unit handling before accepting the calculation.
+
