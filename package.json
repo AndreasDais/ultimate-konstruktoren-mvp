@@ -54,7 +54,9 @@
     "report-qa:overconfident-conclusion": "node scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
     "report-qa:overconfident-conclusion:check": "node scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
     "report-qa:missing-disclaimer": "node scripts/validate-report-qa-missing-disclaimer-fixture.mjs",
-    "report-qa:missing-disclaimer:check": "node scripts/validate-report-qa-missing-disclaimer-fixture.mjs"
+    "report-qa:missing-disclaimer:check": "node scripts/validate-report-qa-missing-disclaimer-fixture.mjs",
+    "report-qa:nynorsk": "node scripts/validate-report-qa-nynorsk-fixture.mjs",
+    "report-qa:nynorsk:check": "node scripts/validate-report-qa-nynorsk-fixture.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
