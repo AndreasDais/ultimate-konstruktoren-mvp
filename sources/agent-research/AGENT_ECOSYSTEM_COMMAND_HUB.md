@@ -503,3 +503,28 @@ sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md
 
 This is still a read-only fixture validation step. It must not change app runtime behavior, user output, Supabase data, agent prompts, report rendering, PDF generation, or Word generation.
 
+## Sprint 50.3 — Report QA fixture registry hub integration
+
+The command hub now exposes the Report QA fixture-registry validator.
+
+### New hub command
+
+```bash
+npm run agent:hub -- report-qa-fixtures-check
+```
+
+### Standard non-writing gate
+
+```bash
+npm run report-qa:fixtures:check
+npm run agent:hub -- report-qa-fixtures-check
+npm run agent:all
+```
+
+### Scope
+
+This is registry-only validation. It does not run runtime Report QA, mutate report output, write Supabase data, generate PDF/DOCX artifacts, or execute LLM grading.
+
+### Expected behavior
+
+`agent:all` should include the fixture-registry check after the existing Report QA dry-run / real-fixture checks so the standard agent gate verifies both fixture content and fixture coverage metadata.
