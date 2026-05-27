@@ -75,7 +75,7 @@
     {
       "id": "missing-input-report",
       "title": "Missing input report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "missing_input",
       "risk_area": "missing data acknowledgement",
       "language": "nb",
@@ -87,7 +87,8 @@
         "assumptions_explicit",
         "warnings_visible"
       ],
-      "notes": "Should verify that Report QA catches reports that proceed too far with missing inputs."
+      "notes": "Active negative fixture. Should verify that Report QA catches reports that proceed too far with missing or uncertain inputs.",
+      "expected_outcome": "fail_or_warn"
     },
     {
       "id": "unit-inconsistency-report",

@@ -53,3 +53,9 @@ A good fixture should be short enough to review, but realistic enough that it re
 Avoid making every fixture fail everything. Each fixture should be designed to test a small, understandable failure mode.
 
 Do not add LLM-generated grading in the fixture layer yet. Keep validation deterministic until the fixture bank is stable.
+
+## Sprint 51.0 status update
+
+`missing-input-report` is now active.
+
+This fixture checks whether Report QA catches reports that move too far toward approval even though required engineering inputs are missing or uncertain.

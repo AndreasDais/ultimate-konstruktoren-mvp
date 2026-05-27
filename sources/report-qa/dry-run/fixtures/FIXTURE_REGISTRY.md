@@ -93,3 +93,15 @@ It is a planning and validation layer only.
 ```txt
 Sprint 50.2 — Report QA fixture registry npm aliases
 ```
+
+## Sprint 51.0 active fixture
+
+`missing-input-report` has been promoted from planned to active.
+
+The fixture path is:
+
+```txt
+sources/report-qa/dry-run/fixtures/missing-input-report.md
+```
+
+Expected QA outcome: `fail_or_warn`.
