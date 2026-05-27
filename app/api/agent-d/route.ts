@@ -5,11 +5,11 @@ import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngine
 import { formatAnthropicError } from "@/lib/anthropic-errors";
 import { extractMentionedProfiles } from "@/lib/profiles/extract";
 import {
-  buildNaBasisPromptBlock,
   EC2,
   EC3,
   type SteelGrade,
 } from "@/lib/profiles/na-basis";
+import { buildStandardsBasisPromptBlock } from "@/lib/profiles/standards-basis";
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 import { recordShadowCheck } from "@/lib/shadow/shadow-check";
@@ -250,7 +250,7 @@ export async function POST(request: Request) {
     const profileBlob = JSON.stringify(input_review ?? {});
     const mentionedProfiles = extractMentionedProfiles(profileBlob);
     const grade = resolveSteelGrade(input_review);
-    const naBasisBlock = buildNaBasisPromptBlock({
+    const naBasisBlock = buildStandardsBasisPromptBlock(engineeringContext, {
       profiles: mentionedProfiles,
       grade,
     });

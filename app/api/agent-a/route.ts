@@ -6,7 +6,8 @@ import {
   extractMentionedProfiles,
   buildProfileDataPromptBlock,
 } from "@/lib/profiles/extract";
-import { buildNaBasisPromptBlock, type SteelGrade } from "@/lib/profiles/na-basis";
+import { type SteelGrade } from "@/lib/profiles/na-basis";
+import { buildStandardsBasisPromptBlock } from "@/lib/profiles/standards-basis";
 import { coerceLocale, type Locale } from "@/lib/locale";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
@@ -253,7 +254,7 @@ async function callKonstruktorA(args: CoreCallArgs): Promise<CoreCallResult> {
   // knekkekurve-val), bindande for både Konstruktør A og Konstruktør B. Stålkvaliteten
   // trengst for det konkrete knekkekurve-oppslaget.
   const grade = resolveSteelGrade(input_review);
-  const naBasisBlock = buildNaBasisPromptBlock({
+  const naBasisBlock = buildStandardsBasisPromptBlock(engineeringContext, {
     profiles: mentionedProfiles,
     grade,
   });
