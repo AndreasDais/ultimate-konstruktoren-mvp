@@ -50,7 +50,9 @@
     "report-qa:missing-input": "node scripts/validate-report-qa-missing-input-fixture.mjs",
     "report-qa:missing-input:check": "node scripts/validate-report-qa-missing-input-fixture.mjs",
     "report-qa:unit-inconsistency": "node scripts/validate-report-qa-unit-inconsistency-fixture.mjs",
-    "report-qa:unit-inconsistency:check": "node scripts/validate-report-qa-unit-inconsistency-fixture.mjs"
+    "report-qa:unit-inconsistency:check": "node scripts/validate-report-qa-unit-inconsistency-fixture.mjs",
+    "report-qa:overconfident-conclusion": "node scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
+    "report-qa:overconfident-conclusion:check": "node scripts/validate-report-qa-overconfident-conclusion-fixture.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
