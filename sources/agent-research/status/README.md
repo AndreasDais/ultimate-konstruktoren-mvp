@@ -319,3 +319,30 @@ Health snapshot now includes the nynorsk Report QA fixture validator as a requir
 - Required fixture report: `sources/report-qa/dry-run/fixtures/nynorsk-report.md`
 - Required npm script: `report-qa:nynorsk:check`
 - Local check command: `npm run report-qa:nynorsk:check`
+
+## Sprint 56.4 — English/AISC diagnostic validator health coverage
+
+The agent health snapshot now includes the dedicated Report QA English/AISC diagnostic fixture validator.
+
+### Health coverage added
+
+The health gate verifies:
+
+- `scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs`
+- `sources/report-qa/REPORT_QA_ENGLISH_AISC_DIAGNOSTIC_FIXTURE.md`
+- `sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md`
+- npm aliases `report-qa:english-aisc-diagnostic` and `report-qa:english-aisc-diagnostic:check`
+- local check `node scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs`
+
+### Standard verification
+
+```bash
+npm run report-qa:english-aisc-diagnostic:check
+npm run agent:hub -- report-qa-english-aisc-diagnostic-check
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+This keeps the English/AISC diagnostic fixture visible in both the command hub gate and the health snapshot gate.
+

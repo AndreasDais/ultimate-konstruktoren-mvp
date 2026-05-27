@@ -49,6 +49,7 @@ const requiredFiles = [
   "scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
   "scripts/validate-report-qa-missing-disclaimer-fixture.mjs",
   "scripts/validate-report-qa-nynorsk-fixture.mjs",
+  "scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs",
   "sources/report-qa/dry-run/fixtures/fixture-registry.json",
   "sources/report-qa/dry-run/fixtures/FIXTURE_REGISTRY.md",
   "sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md",
@@ -56,10 +57,12 @@ const requiredFiles = [
   "sources/report-qa/REPORT_QA_OVERCONFIDENT_CONCLUSION_FIXTURE.md",
   "sources/report-qa/REPORT_QA_MISSING_DISCLAIMER_FIXTURE.md",
   "sources/report-qa/REPORT_QA_NYNORSK_FIXTURE.md",
+  "sources/report-qa/REPORT_QA_ENGLISH_AISC_DIAGNOSTIC_FIXTURE.md",
   "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
   "sources/report-qa/dry-run/fixtures/overconfident-conclusion-report.md",
   "sources/report-qa/dry-run/fixtures/missing-disclaimer-report.md",
   "sources/report-qa/dry-run/fixtures/nynorsk-report.md",
+  "sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md",
   "sources/report-qa/dry-run/fixtures/missing-input-report.md",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
@@ -118,6 +121,8 @@ const requiredScripts = [
   "report-qa:overconfident-conclusion:check",
   "report-qa:missing-disclaimer:check",
   "report-qa:nynorsk:check",
+  "report-qa:english-aisc-diagnostic",
+  "report-qa:english-aisc-diagnostic:check",
   "release:gates",
   "release:check",
   "release:readiness",
@@ -186,6 +191,11 @@ const checks = [
     id: "report-qa-fixtures",
     title: "Report QA fixture registry",
     command: ["node", ["scripts/validate-report-qa-fixture-registry.mjs"]]
+  },
+  {
+    id: "report-qa-english-aisc-diagnostic",
+    title: "Report QA English/AISC diagnostic fixture validator",
+    command: ["node", ["scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs"]]
   },
   {
     id: "release-gates",
