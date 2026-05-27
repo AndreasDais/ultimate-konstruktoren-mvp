@@ -44,7 +44,9 @@
     "report-qa:dry-run": "node scripts/run-report-qa-dry-run.mjs --write",
     "report-qa:dry-run:check": "node scripts/run-report-qa-dry-run.mjs --check",
     "report-qa:fixture": "node scripts/validate-report-qa-real-fixture.mjs",
-    "report-qa:fixture:check": "node scripts/validate-report-qa-real-fixture.mjs"
+    "report-qa:fixture:check": "node scripts/validate-report-qa-real-fixture.mjs",
+    "report-qa:fixtures": "node scripts/validate-report-qa-fixture-registry.mjs",
+    "report-qa:fixtures:check": "node scripts/validate-report-qa-fixture-registry.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
