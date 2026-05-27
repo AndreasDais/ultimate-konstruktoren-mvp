@@ -581,3 +581,25 @@ This integration is read-only. It validates the active unit-inconsistency fixtur
 
 `agent:all` should include the unit-inconsistency fixture check after the missing-input fixture check, so the standard local agent gate verifies both active negative Report QA fixture families.
 
+## Sprint 53.3 — Overconfident-conclusion validator in hub
+
+The Report QA overconfident-conclusion validator is now available through the Agent Ecosystem Command Hub.
+
+### Command
+
+```bash
+npm run agent:hub -- report-qa-overconfident-conclusion-check
+```
+
+### Included in local gate
+
+`report-qa-overconfident-conclusion-check` is part of the non-writing local agent gate:
+
+```bash
+npm run agent:all
+```
+
+### Purpose
+
+This command validates that the active `overconfident-conclusion-report` fixture continues to represent a risky report that approves or strongly concludes without enough documented calculation basis.
+
