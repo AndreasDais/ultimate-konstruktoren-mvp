@@ -63,3 +63,8 @@ Report QA should return `fail_or_warn` because:
 ## Non-goals
 
 This fixture is not primarily testing arithmetic, unit consistency, missing input, or Eurocode completeness. It isolates the disclaimer and responsibility-boundary failure mode.
+
+
+## Expected QA finding: responsibility / liability limitation
+
+Expected QA outcome: fail_or_warn. This fixture is intentionally missing a clear responsibility / liability limitation in the user-facing report body. The Report QA validator should flag that the preliminary AI-assisted engineering output lacks a visible responsibility / liability limitation and responsible engineer boundary.
