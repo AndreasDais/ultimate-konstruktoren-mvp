@@ -1,6 +1,6 @@
 {
   "schema_version": "report_qa_fixture_registry.v0.1",
-  "updated_by_sprint": "53.0",
+  "updated_by_sprint": "56.0",
   "purpose": "Track Report QA dry-run fixtures, their risk coverage, language/standard context, and whether the fixture file is active or planned.",
   "fixture_status_values": [
     "active",
@@ -171,9 +171,9 @@
     {
       "id": "english-aisc-diagnostic-report",
       "title": "English/AISC diagnostic report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "standard_context",
-      "risk_area": "non-Eurocode standard context",
+      "risk_area": "non-Eurocode standard context and AISC diagnostic guardrails",
       "language": "en",
       "standard_context": "aisc_diagnostic",
       "fixture_path": "sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md",
@@ -181,9 +181,16 @@
       "checks_targeted": [
         "standard_context_consistent",
         "language_shell_consistent",
-        "no_hallucinated_standard_values"
+        "no_hallucinated_standard_values",
+        "unit_consistency",
+        "warnings_visible",
+        "conclusion_strength_appropriate"
       ],
-      "notes": "Should test that standard context is not silently mixed with Eurocode assumptions."
+      "notes": "Activated in Sprint 56.0 as an English/AISC diagnostic Report QA fixture. Expected QA outcome = pass_or_warn. It verifies English shell/language handling, AISC/ASCE diagnostic context and guardrails against invented standard values.",
+      "expected_outcome": "pass_or_warn",
+      "fixture_type": "standard_context_diagnostic",
+      "expected_qa_outcome": "pass_or_warn",
+      "priority": "P1"
     },
     {
       "id": "concrete-example-report",

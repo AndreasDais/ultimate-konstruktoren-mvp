@@ -166,3 +166,11 @@ needs_manual_review
 - Fixture path: `sources/report-qa/dry-run/fixtures/nynorsk-report.md`
 - Expected QA outcome: `pass_or_warn`
 - Purpose: verify nynorsk report language handling, Norwegian engineering terms, and localisation robustness.
+
+## english-aisc-diagnostic-report - active
+
+- Sprint: 56.0
+- Fixture path: `sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md`
+- Expected QA outcome: `pass_or_warn`
+- Purpose: verify English/AISC diagnostic report handling, US customary units, standard-context consistency and guardrails against invented AISC values or final compliance claims.
+- Safety note: this fixture must not be treated as Eurocode/Norwegian output, and it must preserve preliminary-review wording when verified AISC section properties are missing.

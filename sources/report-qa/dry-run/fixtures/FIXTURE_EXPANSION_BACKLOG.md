@@ -16,7 +16,7 @@
 | P0 | overconfident-conclusion-report | overconfident-conclusion-report.md | Catch final-compliance language | fail_or_warn |
 | P0 | missing-disclaimer-report | missing-disclaimer-report.md | Catch report that lacks AI/engineering disclaimer and responsible engineer limitation | fail_or_warn | active |
 | P1 | norwegian-nynorsk-report | norwegian-nynorsk-report.md | Check Norwegian/Nynorsk shell and role labels | mostly_pass_or_warn |
-| P1 | english-aisc-diagnostic-report | english-aisc-diagnostic-report.md | Check international shell and AISC guardrails | mostly_pass_or_warn |
+| P1 | english-aisc-diagnostic-report | english-aisc-diagnostic-report.md | Check international shell and AISC guardrails | mostly_pass_or_warn | active |
 | P2 | concrete-example-report | concrete-example-report.md | Avoid steel-only overfitting | mostly_pass_or_warn |
 | P2 | load-combination-mismatch-report | load-combination-mismatch-report.md | Catch characteristic/design load confusion | fail_or_warn |
 | P3 | pdf-word-parity-placeholder | pdf-word-parity-placeholder.md | Prepare later artifact parity scope | planned_not_active |
@@ -95,3 +95,15 @@ This starts the overconfident-conclusion fixture family. The fixture focuses on 
 - Activated `nynorsk-report` as a language/localisation fixture.
 - Added `sources/report-qa/dry-run/fixtures/nynorsk-report.md`.
 - Expected QA outcome: `pass_or_warn`.
+
+## Sprint 56.0 status - English/AISC diagnostic fixture activated
+
+`english-aisc-diagnostic-report` has been promoted from planned backlog item to active fixture coverage.
+
+Active file:
+
+```txt
+sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md
+```
+
+This starts the standard-context diagnostic fixture family for Report QA. The fixture focuses on English shell/language handling, AISC/ASCE diagnostic context, US customary units and guardrails against invented AISC section properties or final compliance claims.
