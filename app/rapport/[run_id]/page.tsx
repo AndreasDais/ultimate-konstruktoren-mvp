@@ -261,6 +261,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   bandDimensjonerande: { nb: "DIMENSJONERENDE", nn: "DIMENSJONERANDE" },
   bandBruksgrense: { nb: "BRUKSGRENSE", nn: "BRUKSGRENSE" },
   bandInputGeometri: { nb: "INPUT OG GEOMETRI", nn: "INPUT OG GEOMETRI" },
+  bandOther: { nb: "ANNA", nn: "ANNA" },
   sub21Forutsetninger: { nb: "02.1 — FORUTSETNINGER", nn: "02.1 — FØRESETNADER" },
   sub22Resultat: { nb: "02.2 — RESULTAT", nn: "02.2 — RESULTAT" },
   sub23Stegvis: { nb: "02.3 — STEGVIS UTREGNING", nn: "02.3 — STEGVIS UTREKNING" },
@@ -656,6 +657,7 @@ export default function RapportPage() {
     bandDimensjonerande: "DEMAND / DESIGN VALUES",
     bandBruksgrense: "SERVICEABILITY",
     bandInputGeometri: "INPUT AND GEOMETRY",
+    bandOther: "OTHER",
     sub21Forutsetninger: "02.1 — ASSUMPTIONS",
     sub22Resultat: "02.2 — RESULTS",
     sub23Stegvis: "02.3 — STEP-BY-STEP CALCULATION",
@@ -1552,7 +1554,7 @@ export default function RapportPage() {
                           <>
                             <tr className="rapport-results-table__band rapport-results-table__band--input">
                               <td colSpan={2} className="rapport-results-table__band-cell">
-                                {locale === "nn" ? "ANNA" : "OTHER"}
+                                {RP_LABELS.bandOther[locale]}
                               </td>
                             </tr>
                             {reportOtherRows.map((row) => (
