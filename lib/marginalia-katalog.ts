@@ -25,6 +25,8 @@ export type MarginaliaEntry = {
     unit?: string;
     /** Standard-referanse om relevant ("EC1-1-1", "EC2", "EC3"). */
     standard?: string;
+    /** Jurisdiksjons-scope. "norway" = berre relevant for norske koyringar. */
+    scope?: "norway";
   };
   
   export const MARGINALIA_KATALOG: Record<string, MarginaliaEntry> = {
@@ -76,7 +78,7 @@ export type MarginaliaEntry = {
     EQU:               { description: "lasttilstand: likevekt" },
     FAT:               { description: "lasttilstand: utmatting" },
     ACC:               { description: "ulykkes-lasttilstand" },
-    NA:                { description: "nasjonalt tillegg (Norge)" },
+    NA:                { description: "nasjonalt tillegg (Norge)", scope: "norway" },
   
     // === Kapasitetar ===
     M_Rd:              { description: "dimensjonerande momentkapasitet", unit: "kNm" },
@@ -267,3 +269,17 @@ export type MarginaliaEntry = {
     // ein fallback-match via lookupMarginalia).
     return Array.from(candidates).filter((k) => lookupMarginalia(k) !== null);
   }
+
+/**
+ * Kontekst-filter for ordliste-oppslag. Oppslag merkte `scope: "norway"`
+ * (t.d. NA - nasjonalt tillegg) er Norge-spesifikke og skal IKKJE visast i
+ * rapportar med engelsk visningsspraak. Andre oppslag er jurisdiksjons-
+ * noytrale og blir alltid viste.
+ */
+export function isMarginaliaRelevantForLanguage(
+  entry: MarginaliaEntry,
+  displayLanguage: "nb" | "nn" | "en",
+): boolean {
+  if (entry.scope === "norway" && displayLanguage === "en") return false;
+  return true;
+}

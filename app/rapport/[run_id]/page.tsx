@@ -42,6 +42,7 @@ import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polish
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
+  isMarginaliaRelevantForLanguage,
   lookupMarginalia,
   scanTextForCatalogKeys,
   type MarginaliaEntry,
@@ -1026,7 +1027,12 @@ export default function RapportPage() {
     }
   }
 
-  const hasMarginalia = marginaliaEntries.length > 0;
+  // Spor 6: kontekst-filter - Norge-spesifikke oppslag (NA) skal ikkje
+  // visast i rapportar med engelsk visningsspraak.
+  const marginaliaEntriesVisible = marginaliaEntries.filter(({ entry }) =>
+    isMarginaliaRelevantForLanguage(entry, reportDisplayLanguage),
+  );
+  const hasMarginalia = marginaliaEntriesVisible.length > 0;
 
   const marginaliaTitle =
     reportDisplayLanguage === "en" ? "GLOSSARY" : RP_LABELS.marginaliaTitle[locale];
@@ -1057,7 +1063,7 @@ export default function RapportPage() {
     eta_V: { description: "shear utilization ratio" },
   };
 
-  const marginaliaEntriesForDisplay = marginaliaEntries.map(({ key, entry }) => {
+  const marginaliaEntriesForDisplay = marginaliaEntriesVisible.map(({ key, entry }) => {
     if (reportDisplayLanguage !== "en") return { key, entry };
 
     const compactKey = key.replace(/[{}\\]/g, "").replace(/_/g, "");
