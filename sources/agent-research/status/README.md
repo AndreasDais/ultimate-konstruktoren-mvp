@@ -299,3 +299,12 @@ npx tsc --noEmit --pretty false
 ```
 
 This keeps unit-inconsistency fixture quality inside both the command hub gate and the health snapshot gate.
+### Sprint 54.4 — Missing-disclaimer validator in health snapshot
+
+- Required validator file: `scripts/validate-report-qa-missing-disclaimer-fixture.mjs`
+- Required fixture documentation: `sources/report-qa/REPORT_QA_MISSING_DISCLAIMER_FIXTURE.md`
+- Required fixture file: `sources/report-qa/dry-run/fixtures/missing-disclaimer-report.md`
+- Required npm script: `report-qa:missing-disclaimer:check`
+- Required local check id: `report-qa-missing-disclaimer-check`
+
+This keeps the missing-disclaimer negative fixture visible in the non-writing health snapshot after it has been connected to the agent hub.
