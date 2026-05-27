@@ -260,3 +260,29 @@ npx tsc --noEmit --pretty false
 ```
 
 This keeps missing-input fixture quality inside both the command hub gate and the health snapshot gate.
+
+## Sprint 52.4 — unit-inconsistency validator health coverage
+
+The agent health snapshot now includes the dedicated Report QA unit-inconsistency fixture validator.
+
+### Health coverage added
+
+The health gate verifies:
+
+- `scripts/validate-report-qa-unit-inconsistency-fixture.mjs`
+- `sources/report-qa/REPORT_QA_UNIT_INCONSISTENCY_FIXTURE.md`
+- `sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md`
+- npm aliases `report-qa:unit-inconsistency` and `report-qa:unit-inconsistency:check`
+- local check `node scripts/validate-report-qa-unit-inconsistency-fixture.mjs`
+
+### Standard verification
+
+```bash
+npm run report-qa:unit-inconsistency:check
+npm run agent:hub -- report-qa-unit-inconsistency-check
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+This keeps unit-inconsistency fixture quality inside both the command hub gate and the health snapshot gate.

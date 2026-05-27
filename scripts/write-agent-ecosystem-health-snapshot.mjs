@@ -45,9 +45,12 @@ const requiredFiles = [
   "sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md",
   "scripts/validate-report-qa-fixture-registry.mjs",
   "scripts/validate-report-qa-missing-input-fixture.mjs",
+  "scripts/validate-report-qa-unit-inconsistency-fixture.mjs",
   "sources/report-qa/dry-run/fixtures/fixture-registry.json",
   "sources/report-qa/dry-run/fixtures/FIXTURE_REGISTRY.md",
   "sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md",
+  "sources/report-qa/REPORT_QA_UNIT_INCONSISTENCY_FIXTURE.md",
+  "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
   "sources/report-qa/dry-run/fixtures/missing-input-report.md",
   "scripts/validate-eval-cases.mjs",
   "scripts/run-eval-suite.mjs",
@@ -101,6 +104,8 @@ const requiredScripts = [
   "report-qa:fixtures:check",
   "report-qa:missing-input",
   "report-qa:missing-input:check",
+  "report-qa:unit-inconsistency",
+  "report-qa:unit-inconsistency:check",
   "release:gates",
   "release:check",
   "release:readiness",
@@ -114,6 +119,11 @@ const checks = [
     id: "eval-cases",
     title: "Eval case validator",
     command: ["node", ["scripts/validate-eval-cases.mjs"]]
+  },
+  {
+    id: "report-qa-unit-inconsistency",
+    title: "Report QA unit-inconsistency fixture validator",
+    command: ["node", ["scripts/validate-report-qa-unit-inconsistency-fixture.mjs"]]
   },
   {
     id: "report-qa-missing-input",
@@ -300,6 +310,7 @@ lines.push("npm run report-qa:dry-run:check");
 lines.push("npm run report-qa:fixture:check");
 lines.push("npm run report-qa:fixtures:check");
 lines.push("npm run report-qa:missing-input:check");
+lines.push("npm run report-qa:unit-inconsistency:check");
 lines.push("npm run release:check");
 lines.push("npm run release:readiness:check");
 lines.push("npm run patch-planner:check");
