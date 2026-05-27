@@ -1,6 +1,6 @@
 {
   "schema_version": "report_qa_fixture_registry.v0.1",
-  "updated_by_sprint": "50.1",
+  "updated_by_sprint": "52.0",
   "purpose": "Track Report QA dry-run fixtures, their risk coverage, language/standard context, and whether the fixture file is active or planned.",
   "fixture_status_values": [
     "active",
@@ -93,18 +93,22 @@
     {
       "id": "unit-inconsistency-report",
       "title": "Unit inconsistency report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "unit_consistency",
-      "risk_area": "units and symbols",
+      "risk_area": "unit conversion and numeric scale consistency",
       "language": "nb",
       "standard_context": "eurocode_steel",
       "fixture_path": "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
-      "expected_signal": "fail_units",
+      "expected_signal": "warn_or_fail_unit_inconsistency",
       "checks_targeted": [
-        "formulas_units_symbols_consistent",
-        "values_traceable"
+        "unit_consistency",
+        "conversion_traceability",
+        "numeric_scale_sanity",
+        "warnings_visible",
+        "conclusion_strength_appropriate"
       ],
-      "notes": "Should include deliberate kN/N, mm/m or MPa/N/mm² inconsistencies."
+      "notes": "Activated in Sprint 52.0 as a negative Report QA fixture for mixed units, unsafe conversions and over-confident conclusions.",
+      "expected_outcome": "fail_or_warn"
     },
     {
       "id": "overconfident-conclusion-report",

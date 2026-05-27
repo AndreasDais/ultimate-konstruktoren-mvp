@@ -105,3 +105,23 @@ sources/report-qa/dry-run/fixtures/missing-input-report.md
 ```
 
 Expected QA outcome: `fail_or_warn`.
+
+## Sprint 52.0 — unit inconsistency fixture
+
+Sprint 52.0 promotes `unit-inconsistency-report` from planned to active coverage.
+
+The active fixture file is:
+
+```txt
+sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md
+```
+
+The fixture is a negative control for reports that mix `kN/N`, `m/mm`, `kNm/Nmm` and stiffness units while still approving the design. It targets:
+
+```txt
+unit_consistency
+conversion_traceability
+numeric_scale_sanity
+warnings_visible
+conclusion_strength_appropriate
+```

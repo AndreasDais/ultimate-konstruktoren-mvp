@@ -59,3 +59,15 @@ Do not add LLM-generated grading in the fixture layer yet. Keep validation deter
 `missing-input-report` is now active.
 
 This fixture checks whether Report QA catches reports that move too far toward approval even though required engineering inputs are missing or uncertain.
+
+## Sprint 52.0 status — unit inconsistency fixture activated
+
+`unit-inconsistency-report` has been promoted from planned backlog item to active fixture coverage.
+
+Active file:
+
+```txt
+sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md
+```
+
+This establishes the first unit-consistency negative fixture family for Report QA.
