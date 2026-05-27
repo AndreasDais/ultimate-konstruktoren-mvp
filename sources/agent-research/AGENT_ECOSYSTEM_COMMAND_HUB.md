@@ -528,3 +528,30 @@ This is registry-only validation. It does not run runtime Report QA, mutate repo
 ### Expected behavior
 
 `agent:all` should include the fixture-registry check after the existing Report QA dry-run / real-fixture checks so the standard agent gate verifies both fixture content and fixture coverage metadata.
+
+## Sprint 51.3 — Missing-input fixture validator hub integration
+
+The command hub now exposes the dedicated missing-input fixture validator.
+
+### New hub command
+
+```bash
+npm run agent:hub -- report-qa-missing-input-check
+```
+
+### Standard non-writing gate
+
+```bash
+npm run report-qa:missing-input:check
+npm run agent:hub -- report-qa-missing-input-check
+npm run agent:all
+```
+
+### Scope
+
+This integration is read-only. It validates the active missing-input fixture and does not mutate report output, write Supabase data, run LLM grading, or change runtime app behavior.
+
+### Expected behavior
+
+`agent:all` should include the missing-input fixture check after the broader Report QA fixture-registry checks, so the standard local agent gate verifies both fixture coverage metadata and the first active negative fixture.
+

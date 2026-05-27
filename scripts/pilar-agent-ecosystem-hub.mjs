@@ -50,6 +50,9 @@ const requiredFiles = [
   "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
   "scripts/validate-patch-planner-rules.mjs",
   "scripts/validate-report-qa-fixture-registry.mjs",
+  "scripts/validate-report-qa-missing-input-fixture.mjs",
+  "sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md",
+  "sources/report-qa/dry-run/fixtures/missing-input-report.md",
   "sources/report-qa/dry-run/fixtures/fixture-registry.json",
   "sources/report-qa/dry-run/fixtures/FIXTURE_REGISTRY.md",
   "scripts/pilar-agent-ecosystem-hub.mjs"
@@ -135,6 +138,10 @@ const commandGroups = {
     description: "Validate Report QA fixture registry coverage.",
     run: () => runNodeScript("scripts/validate-report-qa-fixture-registry.mjs")
   },
+  "report-qa-missing-input-check": {
+    description: "Validate the active Report QA missing-input fixture.",
+    run: () => runNodeScript("scripts/validate-report-qa-missing-input-fixture.mjs")
+  },
   "report-qa-dry-run": {
     description: "Write the Report QA dry-run report artifact.",
     run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--write"])
@@ -190,6 +197,7 @@ const commandGroups = {
       ["report-qa-dry-run-check", []],
       ["report-qa-fixture-check", []],
       ["report-qa-fixtures-check", []],
+      ["report-qa-missing-input-check", []],
       ["release-check", []],
       ["release-readiness", []],
       ["patch-planner-check", []],
@@ -289,6 +297,7 @@ function printHelp() {
   console.log("  npm run agent:hub -- report-qa-dry-run-check");
   console.log("  npm run agent:hub -- report-qa-fixture-check");
   console.log("  npm run agent:hub -- report-qa-fixtures-check");
+  console.log("  npm run agent:hub -- report-qa-missing-input-check");
   console.log("  npm run agent:hub -- patch-planner-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }
