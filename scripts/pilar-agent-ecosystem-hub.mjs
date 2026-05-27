@@ -76,7 +76,7 @@ const commandGroups = {
   },
   "eval-readiness": {
     description: "Run eval readiness report workflow.",
-    run: () => runNodeScript("scripts/run-eval-suite.mjs")
+    run: (args) => runNodeScript("scripts/run-eval-suite.mjs", args)
   },
   "eval-coverage": {
     description: "Run eval coverage check without rewriting the coverage artifact.",
@@ -214,7 +214,7 @@ const commandGroups = {
     run: () => runSequence([
       ["status", []],
       ["validate", []],
-      ["eval-readiness", []],
+      ["eval-readiness", ["--check"]],
       ["eval-coverage", []],
       ["research-topics", []],
       ["research-memos", []],

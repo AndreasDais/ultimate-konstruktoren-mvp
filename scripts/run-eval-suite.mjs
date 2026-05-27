@@ -9,6 +9,7 @@ function parseArgs(argv) {
     input: DEFAULT_INPUT,
     output: DEFAULT_OUTPUT,
     strict: false,
+    checkOnly: false,
   };
 
   const positional = [];
@@ -18,6 +19,11 @@ function parseArgs(argv) {
 
     if (token === "--strict") {
       args.strict = true;
+      continue;
+    }
+
+    if (token === "--check") {
+      args.checkOnly = true;
       continue;
     }
 
@@ -67,7 +73,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`PILAR eval suite readiness runner\n\nUsage:\n  node scripts/run-eval-suite.mjs\n  node scripts/run-eval-suite.mjs --input qa/evals/pilar-core-evals.jsonl\n  node scripts/run-eval-suite.mjs --output qa/evals/reports/latest-eval-readiness.md\n  node scripts/run-eval-suite.mjs --tmp\n  node scripts/run-eval-suite.mjs --strict\n\nDefault input:\n  ${DEFAULT_INPUT}\n\nDefault output:\n  ${DEFAULT_OUTPUT}`);
+  console.log(`PILAR eval suite readiness runner\n\nUsage:\n  node scripts/run-eval-suite.mjs\n  node scripts/run-eval-suite.mjs --check\n  node scripts/run-eval-suite.mjs --input qa/evals/pilar-core-evals.jsonl\n  node scripts/run-eval-suite.mjs --output qa/evals/reports/latest-eval-readiness.md\n  node scripts/run-eval-suite.mjs --tmp\n  node scripts/run-eval-suite.mjs --strict\n\nDefault input:\n  ${DEFAULT_INPUT}\n\nDefault output:\n  ${DEFAULT_OUTPUT}`);
 }
 
 function readJsonl(filePath) {
@@ -298,14 +304,16 @@ function main() {
   const { errors, warnings } = validateReadiness(cases);
   const report = buildReport({ inputPath, outputPath, cases, summary, errors, warnings, strict: args.strict });
 
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, report, "utf8");
+  if (!args.checkOnly) {
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, report, "utf8");
+  }
 
   const failed = errors.length > 0 || (args.strict && warnings.length > 0);
   const status = failed ? "FAILED" : "OK";
 
   console.log(`${status} eval suite report: ${cases.length} cases, ${errors.length} errors, ${warnings.length} warnings`);
-  console.log(`Wrote ${outputPath}`);
+  console.log(args.checkOnly ? "CHECK mode: no report file written" : `Wrote ${outputPath}`);
 
   if (failed) process.exit(1);
 }
