@@ -214,3 +214,23 @@ node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run report-qa:fixture:check
 npm run agent:all
 ```
+
+## Report QA fixture registry health coverage
+
+Sprint 50.4 adds the Report QA fixture registry validator to the health snapshot.
+
+The health command now verifies:
+
+- `scripts/validate-report-qa-fixture-registry.mjs`
+- `sources/report-qa/dry-run/fixtures/fixture-registry.json`
+- `sources/report-qa/dry-run/fixtures/FIXTURE_REGISTRY.md`
+- npm aliases `report-qa:fixtures` and `report-qa:fixtures:check`
+- local check `node scripts/validate-report-qa-fixture-registry.mjs`
+
+Use check mode during ordinary verification:
+
+```bash
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npm run report-qa:fixtures:check
+npm run agent:all
+```
