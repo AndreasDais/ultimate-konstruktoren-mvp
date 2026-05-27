@@ -624,3 +624,31 @@ npm run agent:hub -- report-qa-missing-disclaimer-check
 ```txt
 OK missing-disclaimer-report: dedicated fixture validator passed
 ```
+
+## Sprint 55.3 — Nynorsk Report QA fixture validator in agent hub
+
+### Command added
+
+```bash
+npm run agent:hub -- report-qa-nynorsk-check
+```
+
+### Purpose
+
+This command connects the active `nynorsk-report` fixture validator to the shared PILAR Agent Ecosystem Hub.
+
+The validator checks that the Nynorsk Report QA fixture remains an active passing language/locale fixture with clear Norwegian engineering terminology, Eurocode-like references, and enough technical report-structure signals.
+
+### Standard gate coverage
+
+`report-qa-nynorsk-check` is now part of the non-writing `agent:all` gate.
+
+That means the standard local agent gate verifies the Nynorsk Report QA fixture together with the other active Report QA fixtures before later sprint work continues.
+
+### Verification commands
+
+```bash
+npm run report-qa:nynorsk:check
+npm run agent:hub -- report-qa-nynorsk-check
+npm run agent:all
+```

@@ -54,6 +54,7 @@ const requiredFiles = [
   "scripts/validate-report-qa-unit-inconsistency-fixture.mjs",
   "scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
   "scripts/validate-report-qa-missing-disclaimer-fixture.mjs",
+  "scripts/validate-report-qa-nynorsk-fixture.mjs",
   "sources/report-qa/REPORT_QA_UNIT_INCONSISTENCY_FIXTURE.md",
   "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
   "sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md",
@@ -159,6 +160,10 @@ const commandGroups = {
     description: "Validate the active Report QA missing-disclaimer fixture.",
     run: () => runNodeScript("scripts/validate-report-qa-missing-disclaimer-fixture.mjs")
   },
+  "report-qa-nynorsk-check": {
+    description: "Validate the active Report QA nynorsk fixture.",
+    run: () => runNodeScript("scripts/validate-report-qa-nynorsk-fixture.mjs")
+  },
   "report-qa-dry-run": {
     description: "Write the Report QA dry-run report artifact.",
     run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--write"])
@@ -218,6 +223,7 @@ const commandGroups = {
       ["report-qa-unit-inconsistency-check", []],
       ["report-qa-overconfident-conclusion-check", []],
       ["report-qa-missing-disclaimer-check", []],
+      ["report-qa-nynorsk-check", []],
       ["release-check", []],
       ["release-readiness", []],
       ["patch-planner-check", []],
