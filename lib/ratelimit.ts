@@ -6,8 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
  * Rate-limit-helper for Pilar pilot.
  *
  * To grenser per IP per sliding window:
- * - Timesgrense: 10 requests / time
- * - Dagleggrense: 50 requests / dag
+ * - Timesgrense: 600 requests / time
+ * - Dagleggrense: 3000 requests / dag
  *
  * Begge må passere for at requesten skal passere. Returnerer NextResponse
  * med status 429 og Retry-After-header viss éin av dei feilar.
@@ -41,8 +41,8 @@ function makeLimiter(
 }
 
 // Module-level singletons — init éin gong per cold start
-const hourlyLimit = makeLimiter(10, "1 h", "pilar:hourly");
-const dailyLimit = makeLimiter(50, "1 d", "pilar:daily");
+const hourlyLimit = makeLimiter(600, "1 h", "pilar:hourly");
+const dailyLimit = makeLimiter(3000, "1 d", "pilar:daily");
 
 /**
  * Hent klient-IP frå request-headers. Vercel set X-Forwarded-For automatisk.
@@ -80,7 +80,7 @@ export async function checkRateLimit(
     return NextResponse.json(
       {
         error: "For mange førespurnader. Vent og prøv igjen.",
-        detail: `Timesgrense overskredet (10/time). Prøv igjen om ${Math.ceil(retryAfterSec / 60)} minutt.`,
+        detail: `Timesgrense overskredet (600/time). Prøv igjen om ${Math.ceil(retryAfterSec / 60)} minutt.`,
         retryAfter: retryAfterSec,
       },
       {
@@ -102,7 +102,7 @@ export async function checkRateLimit(
     return NextResponse.json(
       {
         error: "Dagleg grense nådd.",
-        detail: `Dagleg rate-limit overskredet (50/dag). Prøv igjen i morgon.`,
+        detail: `Dagleg rate-limit overskredet (3000/dag). Prøv igjen i morgon.`,
         retryAfter: retryAfterSec,
       },
       {
