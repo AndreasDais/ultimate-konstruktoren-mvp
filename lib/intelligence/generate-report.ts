@@ -174,7 +174,7 @@ function buildFindingsAndRecommendations(
       recommendation(
         "pipeline",
         "Lag avviksoversikt for A/B",
-        "Samle dei vanlegaste variablane der Engineer Engineer A and Engineer B er usamde. Prioriter variablar som materialfaktorar, lastkombinasjonar, skjærareal og LTB-relaterte antakingar.",
+        "Samle dei vanlegaste variablane der Konstruktør A og Konstruktør B er usamde. Prioriter variablar som materialfaktorar, lastkombinasjonar, skjærareal og LTB-relaterte antakingar.",
         deviationRate > 20 ? "high" : "medium",
         "Gir raskare fagleg debugging og betre prompt-/regelgrunnlag.",
         "medium",

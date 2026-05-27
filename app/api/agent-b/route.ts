@@ -262,7 +262,7 @@ async function callKonstruktorB(args: CoreCallArgs): Promise<CoreCallResult> {
   const profileBlock = buildProfileDataPromptBlock(mentionedProfiles);
 
   // NA-grunnlag — autoritative NDP-verdiar (partialfaktorar, NA-konstantar,
-  // knekkekurve-val), bindande for både Engineer Engineer A and Engineer B. Stålkvaliteten
+  // knekkekurve-val), bindande for både Konstruktør A og Konstruktør B. Stålkvaliteten
   // trengst for det konkrete knekkekurve-oppslaget.
   const grade = resolveSteelGrade(input_review);
   const naBasisBlock = buildNaBasisPromptBlock({

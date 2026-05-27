@@ -10,7 +10,7 @@
 
 // === AGENT-OUTPUT-TYPER ====================================================
 
-/** Output frå Engineer Engineer A and Engineer B */
+/** Output frå Konstruktør A og Konstruktør B */
 export type CalculationStep = {
   title: string;
   text: string;

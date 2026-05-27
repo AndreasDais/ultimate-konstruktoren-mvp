@@ -908,7 +908,7 @@ useEffect(() => {
       const runId: string = initData.run_id;
       setCurrentRunId(runId);
 
-      // === STEG 1: Engineer Engineer A and Engineer B parallelt via SSE-streaming ===
+      // === STEG 1: Konstruktør A og Konstruktør B parallelt via SSE-streaming ===
       // Begge agentar streamar samtidig. onComplete setter calculationA/B
       // i state — useEffect under Promise.all triggar deretter Comparator+
       // Controller-pipeline. Om éin agent feilar, viser MissionControl
