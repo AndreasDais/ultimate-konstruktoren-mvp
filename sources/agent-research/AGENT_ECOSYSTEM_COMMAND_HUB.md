@@ -603,3 +603,24 @@ npm run agent:all
 
 This command validates that the active `overconfident-conclusion-report` fixture continues to represent a risky report that approves or strongly concludes without enough documented calculation basis.
 
+## Sprint 54.3 — Missing-disclaimer validator command
+
+Adds the active Report QA missing-disclaimer fixture validator to the agent ecosystem hub.
+
+### Command
+
+```bash
+npm run agent:hub -- report-qa-missing-disclaimer-check
+```
+
+### Local gate coverage
+
+- Validates `scripts/validate-report-qa-missing-disclaimer-fixture.mjs`.
+- Validates `sources/report-qa/dry-run/fixtures/missing-disclaimer-report.md`.
+- Keeps the missing-disclaimer fixture visible in the standard `agent:all` gate.
+
+### Expected status
+
+```txt
+OK missing-disclaimer-report: dedicated fixture validator passed
+```
