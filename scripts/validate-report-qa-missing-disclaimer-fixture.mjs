@@ -172,8 +172,12 @@ if (fixtureText) {
     /\bansvarsbegrensning\b[\s\S]{0,160}\bansvarlig\s+ingeni[øo]r\b/i,
   ];
 
-  const expectedSectionStart = fixtureText.search(/expected\s+(qa\s+)?findings|forventa\s+(qa\s+)?funn|forventede\s+(qa\s+)?funn|qa\s+expect/i);
-  const reportBody = expectedSectionStart >= 0 ? fixtureText.slice(0, expectedSectionStart) : fixtureText;
+  const reportSectionStart = fixtureText.search(/##\s+Generated report under QA/i);
+  const reportSectionEnd = fixtureText.search(/##\s+Why this should be flagged/i);
+  const reportBody =
+    reportSectionStart >= 0 && reportSectionEnd > reportSectionStart
+      ? fixtureText.slice(reportSectionStart, reportSectionEnd)
+      : fixtureText;
 
   if (hasAny(reportBody, prohibitedStrongDisclaimerPatterns)) {
     warnings.push("Fixture report body appears to contain a strong disclaimer; verify this is still a missing-disclaimer negative fixture.");
@@ -189,4 +193,3 @@ if (errors.length > 0) {
 
 console.log(`OK ${FIXTURE_ID}: dedicated fixture validator passed (${warnings.length} warning(s))`);
 for (const warning of warnings) console.log(`WARN ${warning}`);
-
