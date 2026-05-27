@@ -84,6 +84,7 @@ const requiredFiles = [
   "sources/patch-planner/patch-planner-rules.json",
   "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
   "sources/patch-planner/PILAR_SPRINT_PATCH_WORKFLOW.md",
+  "scripts/write-pilar-context-packet.mjs",
   "scripts/validate-patch-planner-rules.mjs"
 ];
 
@@ -129,7 +130,8 @@ const requiredScripts = [
   "release:readiness",
   "release:readiness:check",
   "patch-planner:rules",
-  "patch-planner:check"
+  "patch-planner:check",
+  "context:packet"
 ];
 
 const checks = [
