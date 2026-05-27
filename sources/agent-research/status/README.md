@@ -234,3 +234,29 @@ node scripts/write-agent-ecosystem-health-snapshot.mjs --check
 npm run report-qa:fixtures:check
 npm run agent:all
 ```
+
+## Sprint 51.4 — missing-input validator health coverage
+
+The agent health snapshot now includes the dedicated Report QA missing-input fixture validator.
+
+### Health coverage added
+
+The health gate verifies:
+
+- `scripts/validate-report-qa-missing-input-fixture.mjs`
+- `sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md`
+- `sources/report-qa/dry-run/fixtures/missing-input-report.md`
+- npm aliases `report-qa:missing-input` and `report-qa:missing-input:check`
+- local check `node scripts/validate-report-qa-missing-input-fixture.mjs`
+
+### Standard verification
+
+```bash
+npm run report-qa:missing-input:check
+npm run agent:hub -- report-qa-missing-input-check
+npm run agent:all
+node scripts/write-agent-ecosystem-health-snapshot.mjs --check
+npx tsc --noEmit --pretty false
+```
+
+This keeps missing-input fixture quality inside both the command hub gate and the health snapshot gate.
