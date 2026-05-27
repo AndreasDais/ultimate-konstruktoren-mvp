@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { buildStandardsBasisPromptBlock } from "./standards-basis";
+import {
+  buildStandardsBasisPromptBlock,
+  resolveFactorSet,
+} from "./standards-basis";
 import type {
   EngineeringContext,
   EngineeringStandardFamily,
@@ -57,5 +60,36 @@ describe("buildStandardsBasisPromptBlock", () => {
     expect(buildStandardsBasisPromptBlock(ctx("canada"))).toBe("");
     expect(buildStandardsBasisPromptBlock(ctx("australia"))).toBe("");
     expect(buildStandardsBasisPromptBlock(ctx("unknown"))).toBe("");
+  });
+});
+
+
+describe("resolveFactorSet", () => {
+  it("gjev norsk faktorsett for eurocode_norway", () => {
+    const fs = resolveFactorSet("eurocode_norway");
+    expect(fs?.family).toBe("eurocode_norway");
+    expect(fs?.gammaG_610b).toBeCloseTo(1.2, 5);
+    expect(fs?.gammaM0).toBeCloseTo(1.05, 5);
+    expect(fs?.alphaCC).toBeCloseTo(0.85, 5);
+  });
+
+  it("gjev norsk faktorsett naar familien manglar (domestic-flyt)", () => {
+    expect(resolveFactorSet(undefined)?.family).toBe("eurocode_norway");
+  });
+
+  it("gjev generelt EN-faktorsett for eurocode_general", () => {
+    const fs = resolveFactorSet("eurocode_general");
+    expect(fs?.family).toBe("eurocode_general");
+    expect(fs?.gammaG_610b).toBeCloseTo(1.1475, 5); // xi 0.85 * gamma_G 1.35
+    expect(fs?.gammaM0).toBeCloseTo(1.0, 5);
+    expect(fs?.alphaCC).toBeCloseTo(1.0, 5);
+  });
+
+  it("gjev null for familiar utan verifisert faktorsett", () => {
+    expect(resolveFactorSet("eurocode_uk_na")).toBeNull();
+    expect(resolveFactorSet("aisc_asce_aci")).toBeNull();
+    expect(resolveFactorSet("canada")).toBeNull();
+    expect(resolveFactorSet("australia")).toBeNull();
+    expect(resolveFactorSet("unknown")).toBeNull();
   });
 });

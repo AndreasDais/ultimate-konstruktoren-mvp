@@ -27,6 +27,7 @@
  */
 
 import { EC0 } from "@/lib/profiles/na-basis";
+import type { StructuralFactorSet } from "@/lib/profiles/standards-basis";
 
 /** Lastkategori — styrer psi0-verdien etter EC0/NA. */
 export type LoadCategory = "imposed_A_D" | "imposed_E" | "snow" | "wind";
@@ -80,16 +81,20 @@ const VALID_CATEGORIES: ReadonlySet<string> = new Set([
 ]);
 
 /** psi0 frå EC0/NA for ein gitt kategori. */
-function psi0For(category: LoadCategory): number {
+function psi0For(
+  category: LoadCategory,
+  factors?: StructuralFactorSet,
+): number {
+  const psi0 = factors?.psi0 ?? EC0.psi0;
   switch (category) {
     case "imposed_A_D":
-      return EC0.psi0.imposed_A_D;
+      return psi0.imposed_A_D;
     case "imposed_E":
-      return EC0.psi0.imposed_E;
+      return psi0.imposed_E;
     case "snow":
-      return EC0.psi0.snow;
+      return psi0.snow;
     case "wind":
-      return EC0.psi0.wind;
+      return psi0.wind;
     default: {
       const exhaustive: never = category;
       throw new Error(`Ukjend lastkategori: ${String(exhaustive)}`);
@@ -119,7 +124,10 @@ function labelFor(load: VariableLoad, index: number): string {
  *
  * Kastar ved ugyldig input — modulen gjettar aldri.
  */
-export function computeStrCombination(input: CombinationInput): CombinationResult {
+export function computeStrCombination(
+  input: CombinationInput,
+  factors?: StructuralFactorSet,
+): CombinationResult {
   if (!input || !Array.isArray(input.permanent) || !Array.isArray(input.variable)) {
     throw new Error(
       "computeStrCombination: input må ha `permanent` og `variable` som array.",
@@ -154,12 +162,14 @@ export function computeStrCombination(input: CombinationInput): CombinationResul
   });
 
   const sumG = permanent.reduce((acc, g) => acc + g.value, 0);
-  const gammaQ = EC0.gammaQ.unfav;
+  const gammaG_610a = factors?.gammaG_610a ?? EC0.gammaG.unfav_610a;
+  const gammaG_610b = factors?.gammaG_610b ?? EC0.gammaG.unfav_610b;
+  const gammaQ = factors?.gammaQ_unfav ?? EC0.gammaQ.unfav;
 
   // ── 6.10a: alle variable laster psi0-reduserte.
   const a610Value =
-    EC0.gammaG.unfav_610a * sumG +
-    variable.reduce((acc, q) => acc + gammaQ * psi0For(q.category) * q.value, 0);
+    gammaG_610a * sumG +
+    variable.reduce((acc, q) => acc + gammaQ * psi0For(q.category, factors) * q.value, 0);
 
   const terms: CombinationTerm[] = [
     { equation: "6.10a", leadingLoad: null, value: a610Value },
@@ -171,15 +181,15 @@ export function computeStrCombination(input: CombinationInput): CombinationResul
     terms.push({
       equation: "6.10b",
       leadingLoad: null,
-      value: EC0.gammaG.unfav_610b * sumG,
+      value: gammaG_610b * sumG,
     });
   } else {
     variable.forEach((leading, leadIdx) => {
       const value =
-        EC0.gammaG.unfav_610b * sumG +
+        gammaG_610b * sumG +
         variable.reduce((acc, q, i) => {
           if (i === leadIdx) return acc + gammaQ * q.value;
-          return acc + gammaQ * psi0For(q.category) * q.value;
+          return acc + gammaQ * psi0For(q.category, factors) * q.value;
         }, 0);
       terms.push({
         equation: "6.10b",

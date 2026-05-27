@@ -25,9 +25,15 @@
  * EN-tekst FØR offentleg launch.
  */
 
-import type { EngineeringContext } from "@/lib/engineering-context/types";
+import type {
+  EngineeringContext,
+  EngineeringStandardFamily,
+} from "@/lib/engineering-context/types";
 import type { SteelProfile } from "./steel-profiles";
 import {
+  EC0,
+  EC2,
+  EC3,
   buildNaBasisPromptBlock,
   selectBucklingCurve,
   type Axis,
@@ -209,6 +215,114 @@ export function buildStandardsBasisPromptBlock(
       const _exhaustive: never = family;
       void _exhaustive;
       return "";
+    }
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────
+//  Faktorsett — normalisert kjelde for dei deterministiske
+//  kontrollane i agent-d (NA-avvik + lastkombinasjon)
+//
+//  EITT opphav: bygd frå na-basis (norsk NA) eller EUROCODE_GENERAL
+//  (EN-anbefalt) — slik at prompt-blokka og kontrollane les same tal
+//  og aldri kan vere usamde.
+// ─────────────────────────────────────────────────────────────
+
+/** Normalisert partialfaktor-sett for deterministisk kontroll. */
+export type StructuralFactorSet = {
+  family: EngineeringStandardFamily;
+  /** Kortlabel for kontroll-meldingar (t.d. "norsk NA"). */
+  standardLabel: string;
+  // EC0 — STR-lastkombinasjon
+  gammaG_610a: number;
+  /** Effektiv gamma_G for 6.10b (norsk NA: 1.20; generell EN: xi * 1.35). */
+  gammaG_610b: number;
+  gammaQ_unfav: number;
+  psi0: {
+    imposed_A_D: number;
+    imposed_E: number;
+    snow: number;
+    wind: number;
+  };
+  // EC3/EC2 — NA-avvik-sjekk
+  gammaM0: number;
+  gammaM1: number;
+  gammaC: number;
+  gammaS: number;
+  alphaCC: number;
+};
+
+const NORWAY_FACTOR_SET: StructuralFactorSet = {
+  family: "eurocode_norway",
+  standardLabel: "norsk NA (NS-EN 1990/1992/1993)",
+  gammaG_610a: EC0.gammaG.unfav_610a,
+  gammaG_610b: EC0.gammaG.unfav_610b,
+  gammaQ_unfav: EC0.gammaQ.unfav,
+  psi0: {
+    imposed_A_D: EC0.psi0.imposed_A_D,
+    imposed_E: EC0.psi0.imposed_E,
+    snow: EC0.psi0.snow,
+    wind: EC0.psi0.wind,
+  },
+  gammaM0: EC3.gammaM0,
+  gammaM1: EC3.gammaM1,
+  gammaC: EC2.gammaC,
+  gammaS: EC2.gammaS,
+  alphaCC: EC2.alphaCC,
+};
+
+const EUROCODE_GENERAL_FACTOR_SET: StructuralFactorSet = {
+  family: "eurocode_general",
+  standardLabel: "EN 1990/1992/1993 (recommended values)",
+  gammaG_610a: EUROCODE_GENERAL.ec0.gammaG_unfav,
+  // 6.10b: EN-anbefalt er xi * gamma_G (ikkje ein direkte faktor som norsk NA).
+  gammaG_610b: EUROCODE_GENERAL.ec0.xi_610b * EUROCODE_GENERAL.ec0.gammaG_unfav,
+  gammaQ_unfav: EUROCODE_GENERAL.ec0.gammaQ_unfav,
+  psi0: {
+    imposed_A_D: EUROCODE_GENERAL.ec0.psi0_imposed_A_D,
+    imposed_E: EUROCODE_GENERAL.ec0.psi0_imposed_E,
+    // EN 1990 Tab. A1.1: snø-psi0 er høgde-avhengig (0.5 <=1000 m / 0.7 >1000 m).
+    // checkLoadCombination hoppar over generell + snølast sidan høgda er ukjend.
+    snow: EUROCODE_GENERAL.ec0.psi0_snow_le1000,
+    wind: EUROCODE_GENERAL.ec0.psi0_wind,
+  },
+  gammaM0: EUROCODE_GENERAL.ec3.gammaM0,
+  gammaM1: EUROCODE_GENERAL.ec3.gammaM1,
+  gammaC: EUROCODE_GENERAL.ec2.gammaC,
+  gammaS: EUROCODE_GENERAL.ec2.gammaS,
+  alphaCC: EUROCODE_GENERAL.ec2.alphaCC,
+};
+
+/**
+ * Vel det autoritative faktorsettet for ei køyring.
+ *
+ * Returnerer null for familiar utan eit verifisert faktorsett (UK NA, AISC,
+ * NBCC, AS) — dei deterministiske kontrollane i agent-d skal då hoppast over,
+ * ikkje gjette. `undefined` familie = norsk domestic-flyt (regresjonsvern).
+ */
+export function resolveFactorSet(
+  family: EngineeringStandardFamily | undefined,
+): StructuralFactorSet | null {
+  switch (family) {
+    case undefined:
+    case "eurocode_norway":
+      return NORWAY_FACTOR_SET;
+
+    case "eurocode_general":
+      return EUROCODE_GENERAL_FACTOR_SET;
+
+    case "eurocode_uk_na":
+    case "aisc_asce_aci":
+    case "canada":
+    case "australia":
+    case "unknown":
+      return null;
+
+    default: {
+      const _exhaustive: never = family;
+      void _exhaustive;
+      return null;
     }
   }
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeStrCombination } from "@/lib/calc/load-combination";
+import { resolveFactorSet } from "@/lib/profiles/standards-basis";
 
 describe("computeStrCombination — STR-lastkombinasjon EC0/NA", () => {
   it("A1: éin permanent + éin variabel last — 6.10b styrer (Rev. C = 9,3)", () => {
@@ -110,5 +111,32 @@ describe("computeStrCombination — STR-lastkombinasjon EC0/NA", () => {
 
   it("kastar når ingen laster er oppgitt", () => {
     expect(() => computeStrCombination({ permanent: [], variable: [] })).toThrow();
+  });
+});
+
+describe("computeStrCombination - generelt EN-faktorsett (eurocode_general)", () => {
+  const general = resolveFactorSet("eurocode_general")!;
+
+  it("6.10b brukar xi*1.35 for permanent last", () => {
+    const r = computeStrCombination(
+      {
+        permanent: [{ name: "G", value: 300 }],
+        variable: [{ name: "Q", value: 200, category: "imposed_A_D" }],
+      },
+      general,
+    );
+    const a = r.terms.find((t) => t.equation === "6.10a")!;
+    const b = r.terms.find((t) => t.equation === "6.10b")!;
+    expect(a.value).toBeCloseTo(615, 3); // 1.35*300 + 1.5*0.7*200
+    expect(b.value).toBeCloseTo(644.25, 3); // 0.85*1.35*300 + 1.5*200
+    expect(r.designValue).toBeCloseTo(644.25, 3);
+  });
+
+  it("skil seg fraa norsk NA for same last (norsk 6.10b = 660)", () => {
+    const norsk = computeStrCombination({
+      permanent: [{ value: 300 }],
+      variable: [{ value: 200, category: "imposed_A_D" }],
+    });
+    expect(norsk.designValue).toBeCloseTo(660, 3); // 1.20*300 + 1.5*200
   });
 });

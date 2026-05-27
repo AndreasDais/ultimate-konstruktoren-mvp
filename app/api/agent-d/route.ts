@@ -4,12 +4,12 @@ import { coerceLocale, type Locale } from "@/lib/locale";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
 import { formatAnthropicError } from "@/lib/anthropic-errors";
 import { extractMentionedProfiles } from "@/lib/profiles/extract";
+import { type SteelGrade } from "@/lib/profiles/na-basis";
 import {
-  EC2,
-  EC3,
-  type SteelGrade,
-} from "@/lib/profiles/na-basis";
-import { buildStandardsBasisPromptBlock } from "@/lib/profiles/standards-basis";
+  buildStandardsBasisPromptBlock,
+  resolveFactorSet,
+  type StructuralFactorSet,
+} from "@/lib/profiles/standards-basis";
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 import { recordShadowCheck } from "@/lib/shadow/shadow-check";
@@ -169,19 +169,6 @@ OUTPUT-FORMAT:
 
 const PROMPT_VERSION = "agent_d_v0.5";
 
-/**
- * Forventa NA-verdiar per kanonisk result-nøkkel. Engineerane emitterer
- * desse nøklane i results (jf. result_key_nokkelar i agent A/B). Verdiane er
- * henta frå na-basis — éin rett verdi per faktor, ingen profil-avhengnad.
- */
-const NA_EXPECTED: Record<string, number> = {
-  gamma_M0: EC3.gammaM0,
-  gamma_M1: EC3.gammaM1,
-  gamma_c: EC2.gammaC,
-  gamma_s: EC2.gammaS,
-  alpha_cc: EC2.alphaCC,
-};
-
 type NaDeviation = { agent: "A" | "B"; key: string; brukt: number; korrekt: number };
 
 /** Parse eit tal frå streng med norsk komma ("1,05") eller punktum ("1.05"). */
@@ -200,11 +187,21 @@ function parseNum(v: unknown): number | null {
 function checkNaDeviations(
   agentOutput: unknown,
   agent: "A" | "B",
+  factorSet: StructuralFactorSet | null,
 ): NaDeviation[] {
   const out: NaDeviation[] = [];
+  // Ingen autoritativt faktorsett (UK NA / AISC / NBCC / AS) -> hopp over.
+  if (!factorSet) return out;
+  const expected: Record<string, number> = {
+    gamma_M0: factorSet.gammaM0,
+    gamma_M1: factorSet.gammaM1,
+    gamma_c: factorSet.gammaC,
+    gamma_s: factorSet.gammaS,
+    alpha_cc: factorSet.alphaCC,
+  };
   const results = (agentOutput as { results?: Record<string, unknown> })?.results;
   if (!results || typeof results !== "object") return out;
-  for (const [key, korrekt] of Object.entries(NA_EXPECTED)) {
+  for (const [key, korrekt] of Object.entries(expected)) {
     if (!(key in results)) continue;
     const brukt = parseNum((results as Record<string, unknown>)[key]);
     if (brukt === null) continue;
@@ -255,10 +252,12 @@ export async function POST(request: Request) {
       grade,
     });
 
+    const factorSet = resolveFactorSet(engineeringContext?.standards?.family);
+
     // ── Deterministisk forhåndskontroll (lag 1). Kode, ikkje LLM.
     const naDeviations = [
-      ...checkNaDeviations(agent_a_output, "A"),
-      ...checkNaDeviations(agent_b_output, "B"),
+      ...checkNaDeviations(agent_a_output, "A", factorSet),
+      ...checkNaDeviations(agent_b_output, "B", factorSet),
     ];
     const motstrid: string[] = Array.isArray(
       (input_review as { motstrid?: unknown })?.motstrid
@@ -268,7 +267,8 @@ export async function POST(request: Request) {
     const loadComboDeviations = checkLoadCombination(
       input_review,
       agent_a_output,
-      agent_b_output
+      agent_b_output,
+      factorSet
     );
 
     let forhandskontroll = "";
@@ -289,7 +289,7 @@ export async function POST(request: Request) {
         for (const d of naDeviations) {
           lines.push(
             `  - Engineer ${d.agent}: ${d.key} = ${d.brukt} ` +
-              `(norsk NA krev ${d.korrekt})`
+              `(${factorSet?.standardLabel ?? "standarden"} krev ${d.korrekt})`
           );
         }
       }

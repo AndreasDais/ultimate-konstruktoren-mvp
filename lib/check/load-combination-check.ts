@@ -16,6 +16,7 @@ import {
     type CombinationInput,
     type LoadCategory,
   } from "@/lib/calc/load-combination";
+import type { StructuralFactorSet } from "@/lib/profiles/standards-basis";
   
   /** Relativ toleranse — rein aritmetikk, same nivå som A0 (±2 %). */
   export const LOAD_COMBO_TOLERANCE = 0.02;
@@ -101,6 +102,7 @@ import {
     input_review: unknown,
     agent_a_output: unknown,
     agent_b_output: unknown,
+    factorSet?: StructuralFactorSet | null,
   ): LoadComboDeviation[] {
     const review = input_review as {
       calculation_type?: unknown;
@@ -108,6 +110,10 @@ import {
     } | null;
   
     if (!review || review.calculation_type !== "lastkombinasjon") return [];
+
+    // Ingen autoritativt faktorsett (UK NA / AISC / NBCC / AS) -> hopp over
+    // strukturkontrollen heller enn aa gjette med feil faktorar.
+    if (factorSet === null) return [];
   
     const raw = review.lastkombinasjon_input;
     if (!raw || typeof raw !== "object") {
@@ -137,7 +143,18 @@ import {
           category: q?.category as LoadCategory,
         })),
       };
-      const result = computeStrCombination(combinationInput);
+      if (
+        factorSet?.family === "eurocode_general" &&
+        combinationInput.variable.some((q) => q.category === "snow")
+      ) {
+        console.warn(
+          "[load-combination-check] eurocode_general + snolast: psi0 er " +
+            "hogde-avhengig (EN 1990 Tab. A1.1) og hogda er ukjend her - " +
+            "strukturkontroll hoppa over.",
+        );
+        return [];
+      }
+      const result = computeStrCombination(combinationInput, factorSet);
       designValue = result.designValue;
       governingEq = result.governing.equation;
       leadingLoad = result.governing.leadingLoad;

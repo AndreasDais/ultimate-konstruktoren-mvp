@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
+import { resolveFactorSet } from "@/lib/profiles/standards-basis";
 
 // Tolkar-utdrag for ei A2-aktig oppgåve: G=6, Q=8 (nyttelast), S=3,5 (snø).
 // Korrekt STR-kombinasjon: 22,875 (6.10b, nyttelast leiande).
@@ -113,5 +114,58 @@ describe("checkLoadCombination", () => {
       result_roles: { F_a: "dimensjonerande", F_b: "dimensjonerande" },
     };
     expect(checkLoadCombination(A2_REVIEW, out, out)).toHaveLength(0);
+  });
+});
+
+describe("checkLoadCombination - internasjonale faktorsett", () => {
+  const GENERAL_REVIEW = {
+    calculation_type: "lastkombinasjon",
+    lastkombinasjon_input: {
+      permanent: [{ name: "G", value: 300, unit: "kN" }],
+      variable: [{ name: "Q", value: 200, unit: "kN", category: "imposed_A_D" }],
+    },
+  };
+  const general = resolveFactorSet("eurocode_general");
+
+  it("eurocode_general: korrekt EN-verdi (644,25) gjev ingen avvik", () => {
+    const dev = checkLoadCombination(
+      GENERAL_REVIEW,
+      outWithEd("644,25 kN"),
+      outWithEd("644,25 kN"),
+      general,
+    );
+    expect(dev).toHaveLength(0);
+  });
+
+  it("eurocode_general: norsk verdi (660) blir flagga som avvik", () => {
+    const dev = checkLoadCombination(
+      GENERAL_REVIEW,
+      outWithEd("660 kN"),
+      outWithEd("644,25 kN"),
+      general,
+    );
+    expect(dev).toHaveLength(1);
+    expect(dev[0].agent).toBe("A");
+    expect(dev[0].correct).toBeCloseTo(644.25, 2);
+  });
+
+  it("eurocode_general + snolast: strukturkontroll hoppa over", () => {
+    const dev = checkLoadCombination(
+      A2_REVIEW,
+      outWithEd("999 kN/m"),
+      outWithEd("999 kN/m"),
+      general,
+    );
+    expect(dev).toHaveLength(0);
+  });
+
+  it("null faktorsett (UK NA / AISC): strukturkontroll hoppa over", () => {
+    const dev = checkLoadCombination(
+      GENERAL_REVIEW,
+      outWithEd("999 kN"),
+      outWithEd("999 kN"),
+      null,
+    );
+    expect(dev).toHaveLength(0);
   });
 });
