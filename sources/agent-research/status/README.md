@@ -279,6 +279,19 @@ The health gate verifies:
 
 ```bash
 npm run report-qa:unit-inconsistency:check
+
+### Report QA overconfident-conclusion validator
+
+Sprint 53.4 adds the active overconfident-conclusion fixture validator to the health snapshot.
+
+Expected checks:
+
+- `npm run report-qa:overconfident-conclusion:check`
+- `npm run agent:hub -- report-qa-overconfident-conclusion-check`
+- `npm run agent:all`
+- `node scripts/write-agent-ecosystem-health-snapshot.mjs --check`
+
+This keeps the overconfident-conclusion fixture in the same local gate family as missing-input and unit-inconsistency.
 npm run agent:hub -- report-qa-unit-inconsistency-check
 npm run agent:all
 node scripts/write-agent-ecosystem-health-snapshot.mjs --check
