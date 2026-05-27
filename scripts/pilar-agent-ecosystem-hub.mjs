@@ -55,6 +55,7 @@ const requiredFiles = [
   "scripts/validate-report-qa-overconfident-conclusion-fixture.mjs",
   "scripts/validate-report-qa-missing-disclaimer-fixture.mjs",
   "scripts/validate-report-qa-nynorsk-fixture.mjs",
+  "scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs",
   "sources/report-qa/REPORT_QA_UNIT_INCONSISTENCY_FIXTURE.md",
   "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
   "sources/report-qa/REPORT_QA_MISSING_INPUT_FIXTURE.md",
@@ -164,6 +165,10 @@ const commandGroups = {
     description: "Validate the active Report QA nynorsk fixture.",
     run: () => runNodeScript("scripts/validate-report-qa-nynorsk-fixture.mjs")
   },
+  "report-qa-english-aisc-diagnostic-check": {
+    description: "Validate the active Report QA English/AISC diagnostic fixture.",
+    run: () => runNodeScript("scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs")
+  },
   "report-qa-dry-run": {
     description: "Write the Report QA dry-run report artifact.",
     run: () => runNodeScript("scripts/run-report-qa-dry-run.mjs", ["--write"])
@@ -224,6 +229,7 @@ const commandGroups = {
       ["report-qa-overconfident-conclusion-check", []],
       ["report-qa-missing-disclaimer-check", []],
       ["report-qa-nynorsk-check", []],
+      ["report-qa-english-aisc-diagnostic-check", []],
       ["release-check", []],
       ["release-readiness", []],
       ["patch-planner-check", []],
@@ -327,6 +333,8 @@ function printHelp() {
   console.log("  npm run agent:hub -- report-qa-unit-inconsistency-check");
   console.log("  npm run agent:hub -- report-qa-overconfident-conclusion-check");
   console.log("  npm run agent:hub -- report-qa-missing-disclaimer-check");
+  console.log("  npm run agent:hub -- report-qa-nynorsk-check");
+  console.log("  npm run agent:hub -- report-qa-english-aisc-diagnostic-check");
   console.log("  npm run agent:hub -- patch-planner-check");
   console.log("  npm run agent:hub -- research-memo ai-agent-testing");
 }

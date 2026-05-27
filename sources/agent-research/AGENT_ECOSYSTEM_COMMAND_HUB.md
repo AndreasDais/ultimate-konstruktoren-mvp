@@ -631,6 +631,34 @@ OK missing-disclaimer-report: dedicated fixture validator passed
 
 ```bash
 npm run agent:hub -- report-qa-nynorsk-check
+
+## Sprint 56.3 — English/AISC diagnostic Report QA fixture validator in agent hub
+
+Adds the active English/AISC diagnostic Report QA fixture validator to the Agent Ecosystem Command Hub.
+
+Manual hub command:
+
+```bash
+npm run agent:hub -- report-qa-english-aisc-diagnostic-check
+```
+
+The hub command validates:
+
+- `scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs`;
+- `sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md`;
+- registry metadata for `english-aisc-diagnostic-report`;
+- English shell/language signals;
+- AISC/ASCE diagnostic context and guardrails against invented AISC table values.
+
+`report-qa-english-aisc-diagnostic-check` is now part of the non-writing `agent:all` gate, after the other active Report QA fixture checks.
+
+That means the standard local agent gate verifies the English/AISC diagnostic fixture together with the Norwegian and negative Report QA fixture families before later sprint work continues.
+
+Recommended direct check:
+
+```bash
+npm run agent:hub -- report-qa-english-aisc-diagnostic-check
+```
 ```
 
 ### Purpose
