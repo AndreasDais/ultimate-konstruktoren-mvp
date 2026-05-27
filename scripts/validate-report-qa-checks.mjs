@@ -22,6 +22,7 @@ const allowedCategories = new Set([
 
 const allowedSeverity = new Set(["info", "warn", "block"]);
 const allowedAutomatedLevel = new Set(["manual", "semi_auto", "rule"]);
+const artifactOnlyChecks = new Set(["calculation_sheet_available_when_expected"]);
 const requiredStringFields = ["id", "category", "severity", "automated_level", "description"];
 const requiredArrayFields = ["applies_to", "pass_signals", "fail_signals", "evidence_fields"];
 
@@ -114,7 +115,7 @@ for (const [index, check] of (registry.checks ?? []).entries()) {
     error(`${filePath}: ${label}.automated_level is not allowed: ${check.automated_level}`);
   }
 
-  if (Array.isArray(check.applies_to) && !check.applies_to.includes("web_report")) {
+  if (Array.isArray(check.applies_to) && !check.applies_to.includes("web_report") && !artifactOnlyChecks.has(check.id)) {
     warn(`${filePath}: ${label}.applies_to does not include web_report`);
   }
 
