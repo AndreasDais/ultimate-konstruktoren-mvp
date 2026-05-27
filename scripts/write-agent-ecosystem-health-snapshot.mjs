@@ -229,12 +229,14 @@ function runCheck(check) {
   });
   const stdout = String(result.stdout || "").trim();
   const stderr = String(result.stderr || "").trim();
+  const error = result.error ? result.error.message : "";
   return {
     ...check,
-    ok: result.status === 0,
+    ok: result.status === 0 && !result.error,
     status: result.status ?? 1,
     stdout,
-    stderr
+    stderr,
+    error
   };
 }
 
@@ -287,7 +289,7 @@ lines.push("");
 lines.push("| Check | Status | First output line |");
 lines.push("|---|---:|---|");
 for (const check of checkResults) {
-  const output = firstLine(check.stdout || check.stderr).replace(/\|/g, "\\|") || "—";
+  const output = firstLine(check.stdout || check.stderr || check.error).replace(/\|/g, "\\|") || "—";
   lines.push(`| ${check.title} | ${resultIcon(check.ok)} | ${output} |`);
 }
 lines.push("");
@@ -362,6 +364,7 @@ if (status !== "PASS") {
   if (missingScripts.length > 0) console.error(`Missing npm scripts: ${missingScripts.join(", ")}`);
   for (const check of failedChecks) {
     console.error(`Failed check: ${check.id}`);
+    if (check.error) console.error(`Process error: ${check.error}`);
     if (check.stderr) console.error(check.stderr);
     if (check.stdout) console.error(check.stdout);
   }
