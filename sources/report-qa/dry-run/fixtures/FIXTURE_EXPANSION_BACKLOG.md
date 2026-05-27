@@ -89,3 +89,9 @@ This starts the overconfident-conclusion fixture family. The fixture focuses on 
 - Activated `missing-disclaimer-report` as the next negative Report QA fixture family.
 - Purpose: verify that Report QA catches reports that present engineering conclusions without clear AI/engineering disclaimer, responsibility limits, or qualified engineer review requirement.
 - Expected QA outcome: `fail_or_warn`.
+
+## Sprint 55.0 fixture activation — nynorsk-report
+
+- Activated `nynorsk-report` as a language/localisation fixture.
+- Added `sources/report-qa/dry-run/fixtures/nynorsk-report.md`.
+- Expected QA outcome: `pass_or_warn`.

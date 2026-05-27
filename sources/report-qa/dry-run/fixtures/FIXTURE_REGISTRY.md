@@ -68,7 +68,7 @@ missing-input-report
 unit-inconsistency-report
 overconfident-conclusion-report
 missing-disclaimer-report
-nynorsk-report
+nynorsk-report — active — `sources/report-qa/dry-run/fixtures/nynorsk-report.md` — expected `pass_or_warn`
 english-aisc-diagnostic-report
 concrete-example-report
 load-combination-mismatch-report
@@ -158,3 +158,11 @@ needs_manual_review
 - Expected QA outcome: `fail_or_warn`
 - Negative fixture family: missing disclaimer / missing responsibility limitation
 - Purpose: catch report output that sounds ready for use but does not clearly state that AI-generated engineering text is not final design, not a substitute for responsible engineer control, and requires qualified review before use.
+
+
+## nynorsk-report — active
+
+- Sprint: 55.0
+- Fixture path: `sources/report-qa/dry-run/fixtures/nynorsk-report.md`
+- Expected QA outcome: `pass_or_warn`
+- Purpose: verify nynorsk report language handling, Norwegian engineering terms, and localisation robustness.

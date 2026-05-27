@@ -152,7 +152,7 @@
     {
       "id": "nynorsk-report",
       "title": "Nynorsk language shell report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "language_shell",
       "risk_area": "language consistency",
       "language": "nn",
@@ -163,7 +163,9 @@
         "language_shell_consistent",
         "standard_context_consistent"
       ],
-      "notes": "Should test whether shell language stays consistent in Nynorsk."
+      "notes": "Nynorsk technical report fixture for Report QA language/localisation handling.",
+      "expected_outcome": "pass_or_warn",
+      "fixture_type": "language_localisation"
     },
     {
       "id": "english-aisc-diagnostic-report",
