@@ -178,6 +178,41 @@ Expected prompt pattern:
 Run this. Then paste only the status copied by the final git status --short command.
 ```
 
+## Context-clip command before patch generation
+
+When the assistant needs file context before preparing a patch, use a separate context artifact instead of manually selecting terminal output.
+
+Context gathering is allowed to use the clipboard only before patch generation. It must not be used as sprint status after apply, test or commit-check runs.
+
+Use this pattern when context is needed:
+
+```bash
+{
+  echo "===== FILE A ====="
+  sed -n '1,220p' path/to/file-a
+
+  echo
+  echo "===== FILE B ====="
+  sed -n '1,160p' path/to/file-b
+} > /tmp/pilar-context.md
+
+clip < /tmp/pilar-context.md
+echo "CONTEXT COPIED TO CLIPBOARD:"
+wc -c /tmp/pilar-context.md
+```
+
+The pasted context packet may contain file excerpts, grep output or command output requested by the assistant.
+
+After any apply, test or commit-check run, return to the status-only command and copy only `git status --short` output.
+
+The assistant should label these two clipboard modes clearly:
+
+```txt
+context-clip = file context before patch generation
+status-clip  = git status --short after apply, test or commit-check
+```
+
+
 ## Sprint 57.1 acceptance
 
 This workflow document is accepted when:
