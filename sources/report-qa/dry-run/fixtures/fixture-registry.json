@@ -135,18 +135,19 @@
     {
       "id": "missing-disclaimer-report",
       "title": "Missing disclaimer report fixture",
-      "status": "planned",
+      "status": "active",
       "family": "disclaimer_presence",
       "risk_area": "legal and usage caveat visibility",
       "language": "nb",
       "standard_context": "generic",
       "fixture_path": "sources/report-qa/dry-run/fixtures/missing-disclaimer-report.md",
-      "expected_signal": "warn_missing_disclaimer",
+      "expected_signal": "fail_or_warn",
       "checks_targeted": [
         "disclaimer_present",
         "warnings_visible"
       ],
-      "notes": "Should verify disclaimers are visible where expected."
+      "notes": "Should verify that Report QA catches reports that omit required AI/engineering disclaimer and responsibility limitations.",
+      "priority": "P0"
     },
     {
       "id": "nynorsk-report",

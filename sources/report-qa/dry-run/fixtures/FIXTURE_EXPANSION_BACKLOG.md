@@ -14,7 +14,7 @@
 | P0 | missing-input-report | missing-input-report.md | Catch confident answer with missing data | fail_or_warn |
 | P0 | unit-inconsistency-report | unit-inconsistency-report.md | Catch mixed units and unclear formulas | fail_or_warn |
 | P0 | overconfident-conclusion-report | overconfident-conclusion-report.md | Catch final-compliance language | fail_or_warn |
-| P1 | missing-disclaimer-report | missing-disclaimer-report.md | Catch missing professional-review language | fail_or_warn |
+| P0 | missing-disclaimer-report | missing-disclaimer-report.md | Catch report that lacks AI/engineering disclaimer and responsible engineer limitation | fail_or_warn | active |
 | P1 | norwegian-nynorsk-report | norwegian-nynorsk-report.md | Check Norwegian/Nynorsk shell and role labels | mostly_pass_or_warn |
 | P1 | english-aisc-diagnostic-report | english-aisc-diagnostic-report.md | Check international shell and AISC guardrails | mostly_pass_or_warn |
 | P2 | concrete-example-report | concrete-example-report.md | Avoid steel-only overfitting | mostly_pass_or_warn |
@@ -83,3 +83,9 @@ sources/report-qa/dry-run/fixtures/overconfident-conclusion-report.md
 ```
 
 This starts the overconfident-conclusion fixture family. The fixture focuses on reports that are polished and partly specified, but still approve the design more strongly than the documented checks support.
+
+## Sprint 54.0 note — missing-disclaimer fixture activated
+
+- Activated `missing-disclaimer-report` as the next negative Report QA fixture family.
+- Purpose: verify that Report QA catches reports that present engineering conclusions without clear AI/engineering disclaimer, responsibility limits, or qualified engineer review requirement.
+- Expected QA outcome: `fail_or_warn`.
