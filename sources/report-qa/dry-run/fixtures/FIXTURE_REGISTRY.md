@@ -1,0 +1,95 @@
+# Report QA Fixture Registry
+
+**Sprint:** 50.1  
+**Status:** registry foundation  
+**Owner:** Report QA track
+
+## Purpose
+
+This registry tracks Report QA dry-run fixtures before they are connected to stronger runtime-adjacent QA workflows.
+
+The registry exists so PILAR can answer:
+
+```txt
+Which Report QA fixtures exist?
+Which are active, planned or deferred?
+Which risk areas do they cover?
+Which language and standard context do they test?
+Which Report QA checks are targeted?
+```
+
+## Files
+
+```txt
+sources/report-qa/dry-run/fixtures/fixture-registry.json
+scripts/validate-report-qa-fixture-registry.mjs
+sources/report-qa/dry-run/fixtures/FIXTURE_REGISTRY.md
+```
+
+## Validation
+
+```bash
+node scripts/validate-report-qa-fixture-registry.mjs
+```
+
+The validator checks:
+
+- JSON parsing.
+- Required fields.
+- Unique kebab-case fixture ids.
+- Valid status values.
+- Known fixture families.
+- Active fixture files exist.
+- Planned/deferred fixture paths stay under `sources/report-qa/`.
+- `checks_targeted` is non-empty.
+
+## Status values
+
+```txt
+active   = fixture file exists and is part of current dry-run coverage
+planned  = fixture family is planned, but file is not required yet
+deferred = valuable later, but intentionally outside current implementation scope
+```
+
+## Current fixture coverage
+
+The first registry includes active coverage for:
+
+```txt
+sample-report
+realistic-steel-beam-report
+```
+
+It also records planned/deferred fixture families from Sprint 50.0:
+
+```txt
+minimal-valid-report
+missing-input-report
+unit-inconsistency-report
+overconfident-conclusion-report
+missing-disclaimer-report
+nynorsk-report
+english-aisc-diagnostic-report
+concrete-example-report
+load-combination-mismatch-report
+pdf-word-parity-placeholder
+```
+
+## Safety constraints
+
+This registry does not:
+
+- call an LLM;
+- modify report output;
+- read Supabase;
+- change app runtime;
+- write generated artifacts;
+- grade real user reports.
+
+It is a planning and validation layer only.
+
+## Next expected sprint
+
+```txt
+Sprint 50.2 — Report QA fixture registry npm aliases
+```

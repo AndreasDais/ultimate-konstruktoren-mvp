@@ -1,0 +1,225 @@
+{
+  "schema_version": "report_qa_fixture_registry.v0.1",
+  "updated_by_sprint": "50.1",
+  "purpose": "Track Report QA dry-run fixtures, their risk coverage, language/standard context, and whether the fixture file is active or planned.",
+  "fixture_status_values": [
+    "active",
+    "planned",
+    "deferred"
+  ],
+  "fixture_families": [
+    "baseline_valid_report",
+    "missing_input",
+    "unit_consistency",
+    "conclusion_strength",
+    "disclaimer_presence",
+    "language_shell",
+    "standard_context",
+    "concrete_design",
+    "load_combination",
+    "artifact_parity"
+  ],
+  "fixtures": [
+    {
+      "id": "sample-report",
+      "title": "Sample Report QA dry-run fixture",
+      "status": "active",
+      "family": "baseline_valid_report",
+      "risk_area": "baseline dry-run parser and check wiring",
+      "language": "mixed",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/sample-report.md",
+      "expected_signal": "pass_or_low_risk",
+      "checks_targeted": [
+        "answers_user_request",
+        "assumptions_explicit",
+        "warnings_visible"
+      ],
+      "notes": "Small static fixture used by the first dry-run foundation."
+    },
+    {
+      "id": "realistic-steel-beam-report",
+      "title": "Realistic steel beam Report QA fixture",
+      "status": "active",
+      "family": "baseline_valid_report",
+      "risk_area": "realistic structural report coverage",
+      "language": "nb",
+      "standard_context": "eurocode_steel",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/realistic-steel-beam-report.md",
+      "expected_signal": "pass_with_traceability_review",
+      "checks_targeted": [
+        "formulas_units_symbols_consistent",
+        "standard_context_consistent",
+        "values_traceable",
+        "conclusion_strength_appropriate"
+      ],
+      "notes": "More realistic steel beam fixture introduced before expanding to negative fixtures."
+    },
+    {
+      "id": "minimal-valid-report",
+      "title": "Minimal valid report fixture",
+      "status": "planned",
+      "family": "baseline_valid_report",
+      "risk_area": "minimum viable acceptable report",
+      "language": "nb",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/minimal-valid-report.md",
+      "expected_signal": "pass",
+      "checks_targeted": [
+        "answers_user_request",
+        "disclaimer_present",
+        "controller_decision_visible"
+      ],
+      "notes": "Planned positive control fixture."
+    },
+    {
+      "id": "missing-input-report",
+      "title": "Missing input report fixture",
+      "status": "planned",
+      "family": "missing_input",
+      "risk_area": "missing data acknowledgement",
+      "language": "nb",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/missing-input-report.md",
+      "expected_signal": "warn_or_fail_missing_data",
+      "checks_targeted": [
+        "missing_data_acknowledged",
+        "assumptions_explicit",
+        "warnings_visible"
+      ],
+      "notes": "Should verify that Report QA catches reports that proceed too far with missing inputs."
+    },
+    {
+      "id": "unit-inconsistency-report",
+      "title": "Unit inconsistency report fixture",
+      "status": "planned",
+      "family": "unit_consistency",
+      "risk_area": "units and symbols",
+      "language": "nb",
+      "standard_context": "eurocode_steel",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/unit-inconsistency-report.md",
+      "expected_signal": "fail_units",
+      "checks_targeted": [
+        "formulas_units_symbols_consistent",
+        "values_traceable"
+      ],
+      "notes": "Should include deliberate kN/N, mm/m or MPa/N/mm² inconsistencies."
+    },
+    {
+      "id": "overconfident-conclusion-report",
+      "title": "Overconfident conclusion report fixture",
+      "status": "planned",
+      "family": "conclusion_strength",
+      "risk_area": "unsafe certainty",
+      "language": "nb",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/overconfident-conclusion-report.md",
+      "expected_signal": "warn_overconfident_conclusion",
+      "checks_targeted": [
+        "conclusion_strength_appropriate",
+        "warnings_visible",
+        "controller_decision_visible"
+      ],
+      "notes": "Should test that QA flags strong approval language when uncertainty remains."
+    },
+    {
+      "id": "missing-disclaimer-report",
+      "title": "Missing disclaimer report fixture",
+      "status": "planned",
+      "family": "disclaimer_presence",
+      "risk_area": "legal and usage caveat visibility",
+      "language": "nb",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/missing-disclaimer-report.md",
+      "expected_signal": "warn_missing_disclaimer",
+      "checks_targeted": [
+        "disclaimer_present",
+        "warnings_visible"
+      ],
+      "notes": "Should verify disclaimers are visible where expected."
+    },
+    {
+      "id": "nynorsk-report",
+      "title": "Nynorsk language shell report fixture",
+      "status": "planned",
+      "family": "language_shell",
+      "risk_area": "language consistency",
+      "language": "nn",
+      "standard_context": "eurocode_steel",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/nynorsk-report.md",
+      "expected_signal": "pass_or_warn_language_shell",
+      "checks_targeted": [
+        "language_shell_consistent",
+        "standard_context_consistent"
+      ],
+      "notes": "Should test whether shell language stays consistent in Nynorsk."
+    },
+    {
+      "id": "english-aisc-diagnostic-report",
+      "title": "English/AISC diagnostic report fixture",
+      "status": "planned",
+      "family": "standard_context",
+      "risk_area": "non-Eurocode standard context",
+      "language": "en",
+      "standard_context": "aisc_diagnostic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/english-aisc-diagnostic-report.md",
+      "expected_signal": "pass_or_warn_standard_context",
+      "checks_targeted": [
+        "standard_context_consistent",
+        "language_shell_consistent",
+        "no_hallucinated_standard_values"
+      ],
+      "notes": "Should test that standard context is not silently mixed with Eurocode assumptions."
+    },
+    {
+      "id": "concrete-example-report",
+      "title": "Concrete design report fixture",
+      "status": "planned",
+      "family": "concrete_design",
+      "risk_area": "Eurocode concrete report quality",
+      "language": "nb",
+      "standard_context": "eurocode_concrete",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/concrete-example-report.md",
+      "expected_signal": "pass_or_warn_concrete_traceability",
+      "checks_targeted": [
+        "formulas_units_symbols_consistent",
+        "standard_context_consistent",
+        "values_traceable"
+      ],
+      "notes": "Planned concrete fixture once dry-run supports broader discipline coverage."
+    },
+    {
+      "id": "load-combination-mismatch-report",
+      "title": "Load combination mismatch report fixture",
+      "status": "planned",
+      "family": "load_combination",
+      "risk_area": "ULS/SLS and combination consistency",
+      "language": "nb",
+      "standard_context": "eurocode_general",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/load-combination-mismatch-report.md",
+      "expected_signal": "fail_or_warn_load_combination",
+      "checks_targeted": [
+        "formulas_units_symbols_consistent",
+        "values_traceable",
+        "standard_context_consistent"
+      ],
+      "notes": "Should include intentional mismatch between stated and used load combinations."
+    },
+    {
+      "id": "pdf-word-parity-placeholder",
+      "title": "PDF/Word parity placeholder fixture",
+      "status": "deferred",
+      "family": "artifact_parity",
+      "risk_area": "rendered artifact parity",
+      "language": "mixed",
+      "standard_context": "generic",
+      "fixture_path": "sources/report-qa/dry-run/fixtures/pdf-word-parity-placeholder.md",
+      "expected_signal": "deferred_until_artifact_reader",
+      "checks_targeted": [
+        "pdf_word_web_parity",
+        "calculation_sheet_available_when_expected"
+      ],
+      "notes": "Deferred until artifact-level checks exist."
+    }
+  ]
+}
