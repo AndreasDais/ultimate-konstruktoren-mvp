@@ -83,6 +83,7 @@ const requiredFiles = [
   "sources/release-manager/reports/latest-release-readiness.md",
   "sources/patch-planner/patch-planner-rules.json",
   "sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md",
+  "sources/patch-planner/PILAR_SPRINT_PATCH_WORKFLOW.md",
   "scripts/validate-patch-planner-rules.mjs"
 ];
 

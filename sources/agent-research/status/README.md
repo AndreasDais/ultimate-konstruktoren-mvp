@@ -139,6 +139,7 @@ The health check should verify:
 
 - `sources/patch-planner/patch-planner-rules.json` exists.
 - `sources/patch-planner/PATCH_PLANNER_RULE_REGISTRY.md` exists.
+- `sources/patch-planner/PILAR_SPRINT_PATCH_WORKFLOW.md` exists.
 - `scripts/validate-patch-planner-rules.mjs` exists.
 - `npm run patch-planner:check` is available.
 - `scripts/validate-patch-planner-rules.mjs` passes in check mode.
