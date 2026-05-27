@@ -77,8 +77,17 @@ function combinedOutput(result) {
   return `${result.stdout || ""}${result.stderr ? `\n${result.stderr}` : ""}`;
 }
 
-function shouldUseShell(command) {
-  return isWindows && /\.cmd$/i.test(String(command));
+function spawnCommand(step) {
+  if (isWindows && /\.cmd$/i.test(String(step.command))) {
+    return {
+      command: process.env.ComSpec || "cmd.exe",
+      args: ["/d", "/s", "/c", step.command, ...(step.args || [])]
+    };
+  }
+  return {
+    command: step.command,
+    args: step.args
+  };
 }
 
 function commandLine(step) {
@@ -100,10 +109,11 @@ function runStep(step) {
     };
   }
 
-  const result = spawnSync(step.command, step.args, {
+  const child = spawnCommand(step);
+  const result = spawnSync(child.command, child.args, {
     cwd: ROOT,
     encoding: "utf8",
-    shell: shouldUseShell(step.command),
+    shell: false,
     env: {
       ...process.env,
       PILAR_RELEASE_READINESS_RUNNING: "1"
