@@ -57,3 +57,29 @@ Fixturen skal ikkje feile berre fordi han brukar nynorske former som `føresetna
 - Must not be treated as irrelevant input
 - Must preserve Norwegian engineering vocabulary
 - Must avoid requiring English or bokmål wording when nynorsk is valid
+
+
+## Expected QA outcome = pass
+
+Expected QA outcome = pass.
+
+Denne fixturen skal passere Report QA. Han er skriven på nynorsk, brukar norske konstruksjonsomgrep og har tydeleg teknisk rapportstruktur.
+
+
+## Rapportstruktur-signal for nynorsk QA
+
+### Grunnlag og føresetnader
+
+Kontrollen byggjer på oppgitt spennvidd, lastgrunnlag, profil, stålkvalitet og Eurokode-referansar.
+
+### Berekningar
+
+Berekningar omfattar dimensjonerande last, moment, skjær, kapasitet og nedbøying.
+
+### Kontroll og vurdering
+
+Kontroll og vurdering skal vise om bjelken har tilstrekkeleg kapasitet i brotgrensetilstand og bruksgrensetilstand.
+
+### Konklusjon
+
+Konklusjon skal vere kort, fagleg og i samsvar med føresetnadene.

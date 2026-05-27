@@ -158,14 +158,15 @@
       "language": "nn",
       "standard_context": "eurocode_steel",
       "fixture_path": "sources/report-qa/dry-run/fixtures/nynorsk-report.md",
-      "expected_signal": "pass_or_warn_language_shell",
+      "expected_signal": "pass",
       "checks_targeted": [
         "language_shell_consistent",
         "standard_context_consistent"
       ],
-      "notes": "Nynorsk technical report fixture for Report QA language/localisation handling.",
-      "expected_outcome": "pass_or_warn",
-      "fixture_type": "language_localisation"
+      "notes": "Nynorsk technical report fixture for Report QA language/localisation handling. Expected QA outcome = pass. Nynorsk language/locale coverage fixture.",
+      "expected_outcome": "pass",
+      "fixture_type": "language_localisation",
+      "expected_qa_outcome": "pass"
     },
     {
       "id": "english-aisc-diagnostic-report",
