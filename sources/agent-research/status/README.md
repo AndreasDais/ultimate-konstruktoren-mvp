@@ -308,3 +308,14 @@ This keeps unit-inconsistency fixture quality inside both the command hub gate a
 - Required local check id: `report-qa-missing-disclaimer-check`
 
 This keeps the missing-disclaimer negative fixture visible in the non-writing health snapshot after it has been connected to the agent hub.
+
+
+### Sprint 55.4 — Nynorsk-report validator in health snapshot
+
+Health snapshot now includes the nynorsk Report QA fixture validator as a required local check.
+
+- Required validator script: `scripts/validate-report-qa-nynorsk-fixture.mjs`
+- Required fixture documentation: `sources/report-qa/REPORT_QA_NYNORSK_FIXTURE.md`
+- Required fixture report: `sources/report-qa/dry-run/fixtures/nynorsk-report.md`
+- Required npm script: `report-qa:nynorsk:check`
+- Local check command: `npm run report-qa:nynorsk:check`
