@@ -555,3 +555,29 @@ This integration is read-only. It validates the active missing-input fixture and
 
 `agent:all` should include the missing-input fixture check after the broader Report QA fixture-registry checks, so the standard local agent gate verifies both fixture coverage metadata and the first active negative fixture.
 
+## Sprint 52.3 - Unit-inconsistency fixture validator hub integration
+
+The command hub now exposes the dedicated unit-inconsistency fixture validator.
+
+### New hub command
+
+```bash
+npm run agent:hub -- report-qa-unit-inconsistency-check
+```
+
+### Standard non-writing gate
+
+```bash
+npm run report-qa:unit-inconsistency:check
+npm run agent:hub -- report-qa-unit-inconsistency-check
+npm run agent:all
+```
+
+### Scope
+
+This integration is read-only. It validates the active unit-inconsistency fixture and does not mutate report output, write Supabase data, run LLM grading, or change runtime app behavior.
+
+### Expected behavior
+
+`agent:all` should include the unit-inconsistency fixture check after the missing-input fixture check, so the standard local agent gate verifies both active negative Report QA fixture families.
+
