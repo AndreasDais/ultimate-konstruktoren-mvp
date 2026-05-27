@@ -210,6 +210,20 @@ scripts/validate-observability-event-taxonomy.mjs
 
 ---
 
+## Context packet helper
+
+Use the context packet helper when preparing context for patch planning:
+
+```bash
+npm run context:packet -- <files...>
+```
+
+This command writes `/tmp/pilar-context.md` and copies the context packet to the clipboard. It is for patch planning only and must not be treated as sprint status.
+
+`context:packet` is not part of `agent:all`, because `agent:all` is a non-writing validation gate and the context packet helper writes an output file.
+
+---
+
 ## 9. Standard verification after hub changes
 
 ```bash
