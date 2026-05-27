@@ -894,6 +894,7 @@ useEffect(() => {
           request_id: requestId,
           calculation_type: result.berekningstype,
           engineering_context: engineeringContext,
+          display_language: displayLanguageForContext(locale, engineeringContext),
         }),
       });
 

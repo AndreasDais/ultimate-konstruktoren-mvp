@@ -41,8 +41,21 @@ async function getCurrentUserId(): Promise<string | null> {
 
 export async function POST(request: Request) {
   try {
-    const { request_id, calculation_type, run_type: rawRunType } =
-      await request.json();
+    const {
+      request_id,
+      calculation_type,
+      run_type: rawRunType,
+      display_language: rawDisplayLanguage,
+    } = await request.json();
+
+    // Visningsspraak: rekna klientside (displayLanguageForContext). Berre
+    // gyldige verdiar blir lagra; alt anna -> null (sniffer-fallback).
+    const display_language =
+      rawDisplayLanguage === "nn" ||
+      rawDisplayLanguage === "nb" ||
+      rawDisplayLanguage === "en"
+        ? rawDisplayLanguage
+        : null;
 
     // run_type lèt test-agenten (steg 4) opprette golden-køyringar.
     // Ukjend / utelaten verdi => "live" (defensivt — same åtferd som før).
@@ -83,6 +96,7 @@ export async function POST(request: Request) {
         calculation_type: calculation_type ?? null,
         run_status: "running",
         run_type,
+        display_language,
         agent_package_version: "agents_v0.2",
         started_at: new Date().toISOString(),
         user_id: userId,

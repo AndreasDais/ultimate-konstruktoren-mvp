@@ -30,7 +30,7 @@ export async function GET(
   // === STEG 1: Hent run ===
   const { data: run, error: runError } = await supabase
     .from("calculation_runs")
-    .select("id, request_id, run_status, calculation_type, started_at, completed_at")
+    .select("id, request_id, run_status, calculation_type, started_at, completed_at, display_language")
     .eq("id", id)
     .maybeSingle();
 

@@ -506,7 +506,11 @@ type Report = {
 type FullReportResponse = {
   report: Report;
   cached: boolean;
-  run: { request_id: string; request: { raw_text: string } };
+  run: {
+    request_id: string;
+    request: { raw_text: string };
+    display_language?: string | null;
+  };
   inputReview: InputReview | null;
   agentA: AgentOutput;
   agentB: AgentOutput;
@@ -619,6 +623,7 @@ export default function RapportPage() {
 
   const reportDisplayLanguage = inferReportDisplayLanguage({
     locale,
+    persisted: data.run.display_language,
     text: [data.run.request.raw_text, data.report.executive_summary, data.report.technical_assessment, data.report.conclusion].join("\n"),
   });
   const reportDate = reportDisplayLanguage === "en"

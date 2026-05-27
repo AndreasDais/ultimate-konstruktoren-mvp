@@ -873,7 +873,16 @@ export function inferReportDisplayLanguage(args: {
   locale: Locale;
   context?: EngineeringContext | null;
   text?: string;
+  /** Persistert run.display_language - autoritativ kjelde, vinn over alt. */
+  persisted?: string | null;
 }): PilarDisplayLanguage {
+  if (
+    args.persisted === "en" ||
+    args.persisted === "nb" ||
+    args.persisted === "nn"
+  ) {
+    return args.persisted;
+  }
   if (isInternationalEnglishContext(args.context)) return "en";
   if (inferEnglishEngineeringText(args.text)) return "en";
   return args.locale;
