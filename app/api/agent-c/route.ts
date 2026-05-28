@@ -171,6 +171,10 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
     const message = await client.messages.create({
       model: PIPELINE_MODEL,
       max_tokens: 8192,
+      // Sprint 65.6 — låg temperature for konsistent klassifisering
+      // (match_status/recommended_status). Samanliknar har ikkje thinking-modus
+      // så vi kan velje fritt; sjå AGENT_ROUTE_AUDIT.md F7.
+      temperature: 0.2,
       system: [
         {
           type: "text",
@@ -198,7 +202,7 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
       stepName: "samanliknar",
       model: PIPELINE_MODEL,
       promptVersion: PROMPT_VERSION,
-      temperature: null,
+      temperature: 0.2,
       maxTokens: 8192,
       rawMessage: message as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
     });

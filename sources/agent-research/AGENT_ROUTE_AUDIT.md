@@ -21,7 +21,7 @@ Verified 2026-05-28 by direct file read. Line numbers are best-effort and shift 
 |---|---|---|---|---|---|---|
 | Model constant | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | **`"claude-sonnet-4-6"` hardkoda** | `PIPELINE_MODEL` |
 | `max_tokens` | 3 072 | 32 768 | 32 768 | 8 192 | 4 096 | 4 000 |
-| `temperature` | 0.1 | (SDK default) | (SDK default) | (SDK default) | 0.3 | (SDK default) |
+| `temperature` | 0.1 | 1 (thinking) | 1 (thinking) | 0.2 (sprint 65.6) | 0.3 | 1 (thinking) |
 | `thinking.budget_tokens` | none | 3 000 | 3 000 | none | none | 2 000 |
 | `maxRetries` (client) | 5 | 5 (fra 64.1c) | 5 (fra 64.1c) | 5 | 5 | **none — SDK default** |
 | Streaming | both (SSE + JSON) | both | both | non-streaming | non-streaming | both |
@@ -84,13 +84,24 @@ Agent-a and agent-b use a two-stage parse: `JSON.parse` first, fall through to `
 
 **Fix scope:** standardize on the two-stage parse for c/d/e (each ~5 lines added), OR remove the fallback from a/b (also ~5 lines each) and rely on the upstream prompt being strict enough. The decision: keep the fallback everywhere — `jsonrepair` is a legitimate defensive layer for LLM-produced JSON.
 
-### F7 — Temperature not set on most agents 🟡
+### F7 — Temperature only partially controllable due to thinking-mode constraint 🟡
 
-Tolkar: 0.1 (intentional determinism for input classification). Kontrollør: 0.3 (mid). All others: unset → SDK default.
+Tolkar: 0.1 (intentional determinism for input classification). Kontrollør: 0.3 (mid). Samanliknar: 0.2 (sprint 65.6). All others: SDK-default and **cannot be lowered**.
 
-**Concrete impact:** higher run-to-run variance for Konstruktør A/B (which is fine, they're meant to be diverse) but also for Samanliknar and Rapportør (where it adds noise that bottoms out the eval signal). The Samanliknar eval case [pilar_eval_samanliknar_load_combo_ambiguity_nn_011](../../qa/evals/pilar-core-evals.jsonl) is sensitive to this: the `match_status` classification is the metric we measure, and unset temperature means two replays may disagree on whether A and B "agree".
+**Important constraint discovered in sprint 65.6:** Anthropic's API requires `temperature = 1` whenever `thinking: { type: "enabled" }` is set. Setting any other value returns a 400. This blocks lower-temperature operation for the three agents that use extended thinking:
 
-**Fix scope:** decide and set explicit temperature per agent. Suggested defaults: Tolkar 0.1 (as-is), Konstruktør A/B 0.7 (some diversity desired between them), Samanliknar 0.2 (consistent classification), Kontrollør 0.3 (as-is), Rapportør 0.5 (prose quality balance). Each is one line per route. Document the choice in [TRACE_SURFACE_AUDIT.md §3 G5](TRACE_SURFACE_AUDIT.md).
+- Konstruktør A — `thinking.budget_tokens: 3000`
+- Konstruktør B — `thinking.budget_tokens: 3000`
+- Rapportør — `thinking.budget_tokens: 2000`
+
+So "set explicit temperature per agent" is achievable for **Tolkar, Samanliknar, Kontrollør**, but for A/B/Rapportør it requires a separate product-level decision: keep thinking and accept temperature=1, or disable thinking to gain temperature control. The two are intertwined.
+
+**Concrete impact:** the Samanliknar eval case [pilar_eval_samanliknar_load_combo_ambiguity_nn_011](../../qa/evals/pilar-core-evals.jsonl) used to suffer high run-to-run variance because `match_status` classification was thermally noisy. Fixed in sprint 65.6 by setting Samanliknar to 0.2. Konstruktør A/B variance is partly *desirable* (diverse independent attempts) so 1.0 may actually be correct for them. Rapportør at 1.0 risks prose drift between runs — observe before deciding.
+
+**Remaining decisions (not blocked by this sprint):**
+
+- Konstruktør A/B: keep thinking + temperature=1? Tentatively yes — diversity is the point.
+- Rapportør: keep thinking + temperature=1, or trade thinking for temperature=0.5? Open. Defer until we observe Rapportør prose-quality variance.
 
 ### F8 — `max_tokens` budget for Rapportør is tight 🟡
 
@@ -113,7 +124,7 @@ Strict-priority order. Each sprint is 1–2 files unless noted.
 | **65.3** | F3 — add `maxRetries: 5` to agent-e | Mirrors 64.1c for the only remaining agent without it. |
 | **65.4 = 64.1b** | F5 — add `recordStepMessage` to Tolkar/A/B/Kontrollør/Rapportør | Closes trace gap G1 across the rest of the pipeline. Larger sprint (5 routes), but the change is identical paste-pattern per file. May split per agent if it gets unwieldy. |
 | **65.5** | F6 — standardize JSON parse fallback (add 2-stage to c/d/e) | Symmetric error handling. Low risk because fallback only fires on broken JSON. |
-| **65.6** | F7 — set explicit temperature per agent | Reduces eval-signal noise. Tiny diff, but should be discussed because temperature choice is product-relevant. |
+| **65.6** | F7 — Samanliknar temperature 0.2; audit amended for thinking-mode constraint | Done. Konstruktør A/B/Rapportør deferred — they use thinking which forces temperature=1. |
 | **65.7** | F8 — raise Rapportør `max_tokens` to 8 000+ | Only if we observe Rapportør truncation in real runs first. Otherwise defer. |
 | **65.8+** | F4 — locale-aware system prompts | Larger multi-sprint effort. Should not be attempted before a separate plan-doc decides whether to do per-locale prompt files, a locale-aware prelude, or a different architecture. |
 
