@@ -4,7 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import "./mission-control.css";
 import { InfoPopover } from "@/app/components/InfoPopover";
 import type { EngineeringContext } from "@/lib/engineering-context";
-import { buildLocalizedLabelProxy, standardShortLabel } from "@/lib/international/display";
+import { buildLocalizedLabelProxy, isInternationalEnglishContext, standardShortLabel } from "@/lib/international/display";
 
 // Greske bokstavar (norsk byggfagleg konvensjon — alpha_cc → α_cc, rho_min → ρ_min)
 const GREEK_MAP: Record<string, string> = {
@@ -230,6 +230,8 @@ export default function MissionControl({
     toAvToEinige: "2 of 2 methods agree",
     avvikAVurdere: "differences to review",
   });
+  // Sammenligner-avatar: S for norsk (Samanliknar), C for engelsk (Comparator).
+  const compareAvatar = isInternationalEnglishContext(engineeringContext) ? "C" : "S";
   const bothComplete = calculationA !== null && calculationB !== null;
   const aErrored = streamingA.phase === "error";
   const bErrored = streamingB.phase === "error";
@@ -399,6 +401,7 @@ export default function MissionControl({
           bErrored={bErrored}
           calculationA={calculationA}
           calculationB={calculationB}
+          compareAvatar={compareAvatar}
           streamingA={streamingA}
           streamingB={streamingB}
         />
@@ -638,6 +641,7 @@ function ComparatorPanel({
   calculationB,
   streamingA,
   streamingB,
+  compareAvatar,
 }: {
   bothComplete: boolean;
   comparison: ComparisonResultMin | null;
@@ -649,6 +653,7 @@ function ComparatorPanel({
   calculationB: CalculationResultMin | null;
   streamingA: AgentStreamingState;
   streamingB: AgentStreamingState;
+  compareAvatar: string;
 }) {
   // BLOKKERT-tilstand (#2): éin agent har feila — Comparator kan ikkje
   // køyre før retry har fullført. Erstattar stille "VENTER" som ville
@@ -656,7 +661,7 @@ function ComparatorPanel({
   if (aErrored || bErrored) {
     return (
       <div className="mc-compare mc-compare--blocked">
-        <div className="mc-compare-avatar">S</div>
+        <div className="mc-compare-avatar">{compareAvatar}</div>
         <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div
           style={{
@@ -729,7 +734,7 @@ function ComparatorPanel({
   if (!comparison) {
     return (
       <div className="mc-compare mc-compare--working mc-compare-slide-in">
-        <div className="mc-compare-avatar">S</div>
+        <div className="mc-compare-avatar">{compareAvatar}</div>
         <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div className="mc-compare-pill mc-compare-pill--active">
           {L.reknarAvvik[locale]}
@@ -804,7 +809,7 @@ function ComparatorPanel({
   return (
     <div className="mc-compare mc-compare--ready mc-compare-slide-in">
       <header className="mc-compare-ready-header">
-        <div className="mc-compare-avatar">S</div>
+        <div className="mc-compare-avatar">{compareAvatar}</div>
         <div className="mc-compare-name">{L.samanliknar[locale]}</div>
         <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
           <div
