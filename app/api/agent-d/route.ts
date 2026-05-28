@@ -13,6 +13,7 @@ import {
 import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 import { recordShadowCheck } from "@/lib/shadow/shadow-check";
+import { recordStepMetric } from "@/lib/step-metrics";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -332,6 +333,7 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
       maxRetries: 5,
     });
 
+    const t0 = Date.now();
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
@@ -344,6 +346,18 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
         },
       ],
       messages: [{ role: "user", content: userMessage }],
+    });
+
+    // Sprint 65.1 — close telemetry blindspot per AGENT_ROUTE_AUDIT.md F1.
+    // Kontrollør is the safety-critical verdict-giver; we need same
+    // latency/token/stop_reason coverage as upstream agents.
+    await recordStepMetric({
+      runId: run_id,
+      stepName: "kontrollor",
+      message,
+      promptVersion: PROMPT_VERSION,
+      latencyMs: Date.now() - t0,
+      ok: message.stop_reason !== "max_tokens",
     });
 
     const responseText = message.content
