@@ -206,6 +206,7 @@ function formatTextPlan(plan) {
     `manifest_case_id: ${plan.manifest_preview.case_id}`,
     `manual_review_required: ${plan.manual_review_required}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
+    `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
     "live_pipeline_execution: false",
     "supabase_reads: false",
     "repo_writes: false",
