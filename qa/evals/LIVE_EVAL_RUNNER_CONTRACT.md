@@ -110,7 +110,9 @@ JSON output should use stable snake_case keys:
 
 ## Artifact bundle
 
-The first comparable bundle should be small:
+The first comparable bundle should follow
+[LIVE_EVAL_ARTIFACT_BUNDLE_CONTRACT.md](LIVE_EVAL_ARTIFACT_BUNDLE_CONTRACT.md).
+It should be small:
 
 ```txt
 runrecord-summary.json
