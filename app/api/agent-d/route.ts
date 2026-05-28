@@ -17,6 +17,7 @@ import { recordShadowCheck } from "@/lib/shadow/shadow-check";
 import { recordStepMetric } from "@/lib/step-metrics";
 import { recordStepMessage } from "@/lib/step-messages/record-message";
 import { PIPELINE_MODEL } from "@/lib/models";
+import { isInternationalEnglishContext } from "@/lib/international/display";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -317,7 +318,42 @@ export async function POST(request: Request) {
       forhandskontroll = lines.join("\n") + "\n\n";
     }
 
-    const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}${naBasisBlock}${forhandskontroll}TOLKAR SI VURDERING:
+    // Sprint 65.11 — overstyr system-prompten sin Norway-only NA-/METODE-
+    // KONTROLL-regel når brukar har valt eit ikkje-norsk standardprofil.
+    // System-prompten hardkodar gamma_M0 = 1.05 etc. som "fasit" og flaggar
+    // alle avvik — det er feil for UK NA / AISC / etc. der naBasisBlock er
+    // tom og ingen autoritativ fasit finst. Brukar (Test 29) såg dette som
+    // falsk "uncertain"-flagg på korrekt UK-berekning.
+    const naContextOverride =
+      isInternationalEnglishContext(engineeringContext) &&
+      !naBasisBlock
+        ? `NA-CONTEXT OVERRIDE (INTERNATIONAL MODE)
+The user selected a non-Norwegian standard profile (${
+            engineeringContext?.standards?.label ?? "unknown"
+          }, region ${
+            engineeringContext?.region?.countryCode ?? "unknown"
+          }). The NA-/METODE-KONTROLL rule in your system prompt assumes the
+NA-GRUNNLAG block carries authoritative Norwegian NA values. That
+assumption does NOT hold for this run.
+
+For this run:
+- No authoritative NA-GRUNNLAG has been supplied. Pilar does not yet
+  maintain validated factor sets outside Norwegian NA.
+- DO NOT flag the absence of NA-GRUNNLAG as a deviation.
+- DO NOT compare engineer-supplied NA values to Norwegian NA defaults
+  (gamma_M0 = 1.05, alpha_cc = 0.85, etc. are NOT the fasit here).
+- DO accept the engineers' NA values as their own engineering judgment
+  within the experimental profile the user selected.
+- Method, unit, and conclusion-safety review still applies.
+
+Acceptable verdict: approved_with_warnings if no other concerns, with a
+warning that NA values were not independently verified by Pilar and that
+the selected profile is experimental.
+
+`
+        : "";
+
+    const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}${naBasisBlock}${naContextOverride}${forhandskontroll}TOLKAR SI VURDERING:
 ${JSON.stringify(input_review ?? {}, null, 2)}
 
 KONSTRUKTØR A SITT SVAR:
