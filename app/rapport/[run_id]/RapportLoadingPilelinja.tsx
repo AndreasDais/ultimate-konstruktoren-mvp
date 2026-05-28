@@ -31,6 +31,9 @@ import type { Locale } from "@/lib/locale";
 import { streamAgent } from "@/lib/stream-agent";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
+import { isInternationalEnglishContext } from "@/lib/international/display";
+
+type LangKey = "nb" | "nn" | "en";
 
 // Forventa text-output frå Rapportør (3 prosa-felt). Brukast for å rekne
 // progresjon-prosent i steg 3. Realistisk: 1500-3000 teikn samanlagt.
@@ -68,14 +71,32 @@ const LABELS = {
     step3: "Skriv rapport-prosa",
     step4: "Lastar inn og formaterer",
   },
+  en: {
+    eyebrow: "PILAR · REPORT PIPELINE",
+    title: "Generating report",
+    stepsLabel: "Step",
+    of: "of",
+    progressLabel: "PROGRESS",
+    firstTimeHint: "Can take 10–30 seconds the first time the report is generated.",
+    cachedHint: "Retrieving report from cache…",
+    almostDone: "Almost done…",
+    step1: "Sending request",
+    step2: "Evaluating controller tone",
+    step3: "Writing report prose",
+    step4: "Loading and formatting",
+  },
 } as const;
 
-// Felt-labels per locale. Brukast i live-preview for å vise kva del av
+// Felt-labels per språk. Brukast i live-preview for å vise kva del av
 // rapporten Claude skriv akkurat no.
-const FIELD_LABELS: Record<string, Record<Locale, string>> = {
-  executive_summary: { nb: "Sammendrag", nn: "Samandrag" },
-  technical_assessment: { nb: "Faglig vurdering", nn: "Fagleg vurdering" },
-  conclusion: { nb: "Konklusjon", nn: "Konklusjon" },
+const FIELD_LABELS: Record<string, Record<LangKey, string>> = {
+  executive_summary: { nb: "Sammendrag", nn: "Samandrag", en: "Summary" },
+  technical_assessment: {
+    nb: "Faglig vurdering",
+    nn: "Fagleg vurdering",
+    en: "Engineering assessment",
+  },
+  conclusion: { nb: "Konklusjon", nn: "Konklusjon", en: "Conclusion" },
 };
 
 type Phase = "sending" | "thinking" | "writing" | "finalizing";
@@ -142,7 +163,13 @@ export function RapportLoadingPilelinja({
   const [isCached, setIsCached] = useState(false);
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
   const [engineeringContextLoaded, setEngineeringContextLoaded] = useState(false);
-  const L = LABELS[locale];
+  // Engineering-context i localStorage avgjer engelsk modus. Pre-mount er
+  // contexten null, så vi viser locale-default (norsk) først — same flicker-
+  // mønster som resten av workbench-laget.
+  const langKey: LangKey = isInternationalEnglishContext(engineeringContext)
+    ? "en"
+    : locale;
+  const L = LABELS[langKey];
 
   // Bruk ref for callbacks slik at streamAgent ikkje må re-startast ved
   // foreldre-re-render. Vi bind nyaste callback inn ved kvar call.
@@ -237,7 +264,7 @@ export function RapportLoadingPilelinja({
       ? "…" + previewValue.slice(-PREVIEW_MAX_CHARS)
       : previewValue;
   const previewFieldLabel = currentPreview
-    ? FIELD_LABELS[currentPreview.field]?.[locale] ?? currentPreview.field
+    ? FIELD_LABELS[currentPreview.field]?.[langKey] ?? currentPreview.field
     : null;
 
   return (
