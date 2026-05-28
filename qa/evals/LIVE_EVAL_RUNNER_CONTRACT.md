@@ -62,7 +62,7 @@ Optional:
 --cases <path>                defaults to qa/evals/pilar-core-evals.jsonl
 --scratch-dir <path>          defaults to /tmp/pilar-live-eval
 --dry-run                     prints planned action only
---require-trace               fails if trace evidence is incomplete
+--require-trace               plans trace evidence as required for future live execution
 --json                        emits machine-readable result
 ```
 
@@ -83,6 +83,7 @@ offline grading commands for the artifact bundle, if planned
 rule checks summary
 trace assertions summary
 manual_review_required
+require_trace
 ```
 
 JSON output should use stable snake_case keys:
@@ -154,6 +155,6 @@ Missing trace data should produce `WARN` or `FAIL`, not a silent pass.
 
 The current implementation starts with `--dry-run` and `--case-id` lookup only.
 It prints the planned runtime action, expected scratch paths, and offline
-grading commands for the planned artifact bundle. Actual pipeline execution
-should wait until Chat B confirms the runtime read path and artifact bundle are
-stable enough.
+grading commands for the planned artifact bundle, including whether trace
+evidence is planned as required. Actual pipeline execution should wait until
+Chat B confirms the runtime read path and artifact bundle are stable enough.
