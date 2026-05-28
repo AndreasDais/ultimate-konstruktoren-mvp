@@ -1,7 +1,7 @@
 # PILAR Agent Route Hardening Audit
 
-**Sprint:** 65.0
-**Status:** Read-only audit; no code changes.
+**Sprint:** 66.0b
+**Status:** Docs-only audit sync; no code changes in this sprint.
 **Scope:** All six PILAR pipeline routes — `input-agent` (Tolkar), `agent-a` (Konstruktør A), `agent-b` (Konstruktør B), `agent-c` (Samanliknar), `agent-d` (Kontrollør), `agent-e` (Rapportør).
 **Purpose:** Map inconsistencies and concrete hardening targets across the route files so subsequent sprints can fix them one-at-a-time without re-doing investigation.
 
@@ -19,70 +19,64 @@ Verified 2026-05-28 by direct file read. Line numbers are best-effort and shift 
 
 | Aspect | Tolkar (input-agent) | Konstr. A (agent-a) | Konstr. B (agent-b) | Samanliknar (agent-c) | Kontrollør (agent-d) | Rapportør (agent-e) |
 |---|---|---|---|---|---|---|
-| Model constant | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | **`"claude-sonnet-4-6"` hardkoda** | `PIPELINE_MODEL` |
+| Model constant | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` | `PIPELINE_MODEL` (65.2) | `PIPELINE_MODEL` |
 | `max_tokens` | 3 072 | 32 768 | 32 768 | 8 192 | 4 096 | 4 000 |
 | `temperature` | 0.1 | 1 (thinking) | 1 (thinking) | 0.2 (sprint 65.6) | 0.3 | 1 (thinking) |
 | `thinking.budget_tokens` | none | 3 000 | 3 000 | none | none | 2 000 |
-| `maxRetries` (client) | 5 | 5 (fra 64.1c) | 5 (fra 64.1c) | 5 | 5 | **none — SDK default** |
+| `maxRetries` (client) | 5 | 5 (fra 64.1c) | 5 (fra 64.1c) | 5 | 5 | 5 (65.3) |
 | Streaming | both (SSE + JSON) | both | both | non-streaming | non-streaming | both |
-| `recordStepMetric` | ✅ | ✅ | ✅ | ✅ | **❌ missing** | ✅ |
-| `recordStepMessage` (64.1) | ❌ | ❌ | ❌ | ✅ (PoC) | ❌ | ❌ |
-| JSON parse fallback | `parseJsonWithFallback` (custom) | `jsonrepair` 2-stage | `jsonrepair` 2-stage | hard parse | hard parse | hard parse |
-| System prompt language | hardkoda norsk | hardkoda norsk | hardkoda norsk | hardkoda norsk | hardkoda norsk | hardkoda norsk |
+| `recordStepMetric` | ✅ | ✅ | ✅ | ✅ | ✅ (65.1) | ✅ |
+| `recordStepMessage` (64.1/65.4) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| JSON parse fallback | `parseJsonWithFallback` (custom) | `jsonrepair` 2-stage | `jsonrepair` 2-stage | `jsonrepair` 2-stage (65.5) | `jsonrepair` 2-stage (65.5) | `jsonrepair` 2-stage (65.5) |
+| System prompt language | Norwegian body + locale/intl preamble | Norwegian body + locale/intl preamble | Norwegian body + locale/intl preamble | Norwegian body + locale/intl preamble + intl tail | Norwegian body + locale/intl preamble | Norwegian body + locale/intl preamble |
 
 ---
 
-## 2. Findings, ranked
+## 2. Findings after sprint 60-65 sync
 
-### F1 — `recordStepMetric` missing in Kontrollør 🔴
+### F1 — `recordStepMetric` missing in Kontrollør ✅ Closed in 65.1
 
-`app/api/agent-d/route.ts` calls `recordShadowCheck` ([line 395](../../app/api/agent-d/route.ts)) but never `recordStepMetric`. Every other agent records step telemetry; Kontrollør is the one final-verdict agent and is also the one we have *least* timing/token data for.
+`app/api/agent-d/route.ts` now imports and calls `recordStepMetric` after the Kontrollør Anthropic call. The telemetry blindspot for the final-verdict agent is closed.
 
-**Concrete impact:** the queries that aggregate tokens-per-run, latency-per-step, or "did this step time out" are blind to Kontrollør. Cost dashboards undercount. Step-metric-based health checks cannot detect Kontrollør outages.
+**Current impact:** token, latency, stop reason, and ok/failure telemetry are now available for `kontrollor` like the other pipeline steps.
 
-**Fix scope:** add `await recordStepMetric({ runId, stepName: "kontrollor", message, promptVersion, latencyMs, ok })` after the existing `client.messages.create`. 1 file, ~8 lines.
+**Remaining watchpoint:** if a future route refactor moves the Kontrollør LLM call, keep `recordStepMetric` adjacent to the SDK response so usage extraction still reflects the actual call.
 
-### F2 — Kontrollør silently uses hardcoded model 🔴
+### F2 — Kontrollør hardcoded model ✅ Closed in 65.2
 
-`app/api/agent-d/route.ts:336` reads `model: "claude-sonnet-4-6"`. Every other route reads `PIPELINE_MODEL` from [lib/models.ts](../../lib/models.ts). The lib/models.ts header literally says: *"Tidlegare låg strengen 'claude-sonnet-4-6' hardkoda i seks route-filer — umogleg å byte trygt"*. Five of six routes got the refactor. **Agent-d was left behind.**
+`app/api/agent-d/route.ts` now uses `PIPELINE_MODEL` from [lib/models.ts](../../lib/models.ts), matching the other five routes.
 
-**Concrete impact:** if `PIPELINE_MODEL` env var is set to override the default (e.g. for a canary test on a newer Sonnet), Kontrollør silently keeps running on the pinned default. The pipeline's "verdict-giver" runs on a different model than the upstream agents that produced the data being judged.
+**Current impact:** model override/canary behavior is consistent across the full pipeline, including the final controller step.
 
-**Fix scope:** change one string literal to `PIPELINE_MODEL`. 1 file, 1 line.
+### F3 — Rapportør missing explicit `maxRetries` ✅ Closed in 65.3
 
-### F3 — Rapportør missing explicit `maxRetries` 🟠
+`app/api/agent-e/route.ts` now constructs the Anthropic client with `maxRetries: 5`, matching the rest of the route set.
 
-`app/api/agent-e/route.ts:131` constructs `new Anthropic({ apiKey: ... })` with no `maxRetries`. Every other agent route specifies `maxRetries: 5`. The SDK default is 2.
+**Current impact:** Rapportør no longer falls back to the lower SDK retry default during transient Anthropic failures.
 
-**Concrete impact:** the same class of "Anthropic svara ikkje i tide" error that hit agent-a/b before sprint 64.1c will eventually hit agent-e. Because agent-e cache-misses already trigger LLM regen, an outage here returns a 500 to the user mid-render.
+### F4 — International role-label leakage 🟡 Mitigated in 65.9/65.10/65.12
 
-**Fix scope:** add `maxRetries: 5` to client constructor. 1 file, 1 line. Same change as 64.1c.
+The long route-local `SYSTEM_PROMPT` bodies still use Norwegian source terminology, but the runtime no longer relies only on the model "doing the right thing" in international mode:
 
-### F4 — System prompts hardcode Norwegian role-labels across all six agents 🟠
+- [lib/engineering-context/agent.ts](../../lib/engineering-context/agent.ts) now prepends `INTERNATIONAL_MODE_ROLE_PREAMBLE` when `isInternationalEnglishContext(context)` is true.
+- [app/api/agent-c/route.ts](../../app/api/agent-c/route.ts) has an international user-message tail that says to use "Engineer A" / "Engineer B", never "Konstruktør A/B".
+- [qa/evals/pilar-core-evals.jsonl](../../qa/evals/pilar-core-evals.jsonl) includes `pilar_eval_prompt_leakage_uk_en_012`, a P0 regression case for Norwegian role-label leakage.
 
-Every system prompt starts with "Du er Tolkar / Konstruktør A / Konstruktør B / Samanliknar / Kontrollør / Rapportør for Pilar..." — full Norwegian, no locale variants.
+**Current impact:** F4 is downgraded from an unmitigated prompt-architecture gap to a regression risk guarded by a centralized preamble and eval coverage.
 
-This is partly mitigated by `buildAgentSystemPrompt(SYSTEM_PROMPT, locale, engineeringContext)` ([lib/engineering-context/agent](../../lib/engineering-context/agent)) which apparently appends locale guidance, but the *role identity* itself is Norwegian. Per the existing eval case [pilar_eval_aisc_simple_beam_en_005](../../qa/evals/pilar-core-evals.jsonl), English-locale runs explicitly assert `must_not_include: ["Konstruktør"]`. If the model echoes the system prompt in its reasoning or output (which Anthropic models occasionally do), that assertion fires.
+**Remaining watchpoint:** do not translate the whole prompt body or introduce per-language prompt files unless measured eval leakage persists despite the preamble. [AGENT_PROMPT_LOCALE_PLAN.md](AGENT_PROMPT_LOCALE_PLAN.md) remains the design record.
 
-**Concrete impact:** language-leakage risk in English/i18n cases. Visible in the eval safety_checks: *"shell labels must be English"*. Currently relies on the model being well-behaved enough not to echo its system prompt.
+### F5 — `recordStepMessage` only in one agent ✅ Closed in 64.1/65.4
 
-**Fix scope:** larger. Either parametrize SYSTEM_PROMPT by locale (per-agent en/nn variants, ~150 lines each), or wrap the role identity in a locale-aware preamble that always speaks the request language. Multi-sprint.
+All six route files now call `recordStepMessage`, not only Samanliknar. Tolkar uses `request_id`; the downstream agents use `run_id`.
 
-### F5 — `recordStepMessage` is in one agent only, breaks symmetry 🟠
+**Current impact:** raw SDK response envelopes and call parameters are now recorded across the pipeline, so [TRACE_SURFACE_AUDIT.md](TRACE_SURFACE_AUDIT.md) G1 is closed for new runs.
 
-Sprint 64.1 wired raw-envelope capture into agent-c as proof-of-concept. The other five agents still skip it. So the only run for which we have raw-envelope replay data is the Samanliknar step.
+### F6 — JSON-parse robustness asymmetric ✅ Closed in 65.5
 
-**Concrete impact:** the trace gap G1 from [TRACE_SURFACE_AUDIT.md §3](TRACE_SURFACE_AUDIT.md) is closed for one-sixth of the pipeline. Replay against a new prompt version on any other agent is still impossible.
+Agent-c, agent-d, and agent-e now import `jsonrepair` and use the same two-stage parse pattern as Konstruktør A/B: `JSON.parse` first, then `jsonrepair()` fallback.
 
-**Fix scope:** 5 small additions (one per remaining agent). Each ~10 lines, identical pattern. Was planned as 64.1b.
-
-### F6 — JSON-parse robustness asymmetric 🟡
-
-Agent-a and agent-b use a two-stage parse: `JSON.parse` first, fall through to `jsonrepair()` on failure. Agent-c, agent-d, agent-e hard-fail.
-
-**Concrete impact:** A truncated or mildly-broken JSON from Samanliknar / Kontrollør / Rapportør takes the whole call down. Same condition in Konstruktør A/B is recovered silently. Inconsistent UX: a user gets "Engineer A: Error" with retry button on one fault class, but "internal server error" on the same fault class one step later.
-
-**Fix scope:** standardize on the two-stage parse for c/d/e (each ~5 lines added), OR remove the fallback from a/b (also ~5 lines each) and rely on the upstream prompt being strict enough. The decision: keep the fallback everywhere — `jsonrepair` is a legitimate defensive layer for LLM-produced JSON.
+**Current impact:** mildly malformed LLM JSON is handled consistently across Samanliknar, Kontrollør, and Rapportør instead of becoming a hard 500 class at later pipeline stages.
 
 ### F7 — Temperature only partially controllable due to thinking-mode constraint 🟡
 
@@ -113,20 +107,23 @@ Rapportør has `max_tokens: 4000` with `thinking.budget_tokens: 2000`. Net usefu
 
 ---
 
-## 3. Recommended sprint sequence
+## 3. Sprint sequence status
 
-Strict-priority order. Each sprint is 1–2 files unless noted.
+Strict-priority order from the original audit, updated after sprint 60-65 work.
 
-| Sprint | What | Why |
-|---|---|---|
-| **65.1** | F1 — add `recordStepMetric` to Kontrollør | Closes telemetry blindspot for the most safety-critical agent. |
-| **65.2** | F2 — replace hardcoded model in agent-d with `PIPELINE_MODEL` | Restores config consistency; fixes a clear historical-debt bug. |
-| **65.3** | F3 — add `maxRetries: 5` to agent-e | Mirrors 64.1c for the only remaining agent without it. |
-| **65.4 = 64.1b** | F5 — add `recordStepMessage` to Tolkar/A/B/Kontrollør/Rapportør | Closes trace gap G1 across the rest of the pipeline. Larger sprint (5 routes), but the change is identical paste-pattern per file. May split per agent if it gets unwieldy. |
-| **65.5** | F6 — standardize JSON parse fallback (add 2-stage to c/d/e) | Symmetric error handling. Low risk because fallback only fires on broken JSON. |
-| **65.6** | F7 — Samanliknar temperature 0.2; audit amended for thinking-mode constraint | Done. Konstruktør A/B/Rapportør deferred — they use thinking which forces temperature=1. |
-| **65.7** | F8 — raise Rapportør `max_tokens` to 8 000+ | Only if we observe Rapportør truncation in real runs first. Otherwise defer. |
-| **65.8+** | F4 — locale-aware system prompts | Larger multi-sprint effort. Should not be attempted before a separate plan-doc decides whether to do per-locale prompt files, a locale-aware prelude, or a different architecture. |
+| Sprint | Status | What | Current note |
+|---|---|---|---|
+| **65.1** | Done | F1 — add `recordStepMetric` to Kontrollør | Telemetry blindspot closed. |
+| **65.2** | Done | F2 — replace hardcoded model in agent-d with `PIPELINE_MODEL` | Config consistency restored. |
+| **65.3** | Done | F3 — add `maxRetries: 5` to agent-e | Rapportør retry policy now matches the other routes. |
+| **64.1 / 65.4** | Done | F5 — add `recordStepMessage` to Tolkar/A/B/Kontrollør/Rapportør | Raw-envelope storage now covers all six agents. |
+| **65.5** | Done | F6 — standardize JSON parse fallback (add 2-stage to c/d/e) | `jsonrepair` fallback now covers c/d/e. |
+| **65.6** | Done | F7 — Samanliknar temperature 0.2; audit amended for thinking-mode constraint | Konstruktør A/B/Rapportør still use thinking, which forces temperature=1. |
+| **65.8** | Done | F4 — choose locale-aware prompt strategy | [AGENT_PROMPT_LOCALE_PLAN.md](AGENT_PROMPT_LOCALE_PLAN.md) selects centralized intl preamble first. |
+| **65.9** | Done | F4 — add international-mode role preamble | Implemented in `buildAgentSystemPrompt`; route call sites unchanged. |
+| **65.10** | Done | F4 — specialize Samanliknar intl tail | Agent-c no longer reinforces Norwegian role labels in international mode. |
+| **65.12** | Done | F4 — prompt-leakage eval case | `pilar_eval_prompt_leakage_uk_en_012` protects the preamble behavior. |
+| **65.7 / later** | Deferred | F8 — raise Rapportør `max_tokens` to 8 000+ | Only if Rapportør truncation is observed in real runs. |
 
 ---
 
@@ -140,8 +137,8 @@ Strict-priority order. Each sprint is 1–2 files unless noted.
 
 ## 5. Keeping this audit honest
 
-- If a sprint lands one of F1–F8, mark it done in §3 in the same sprint, with the commit SHA.
+- If a sprint lands or re-opens one of F1–F8, update §2 and §3 in the same sprint. Add commit SHA when available.
 - If a new agent route is added, extend the matrix in §1.
 - If `PIPELINE_MODEL` is renamed or its purpose changes ([lib/models.ts](../../lib/models.ts)), F2's wording needs an update.
 - If the language-leakage risk in F4 escalates (e.g. a user-reported case where Norwegian role-labels appear in English output), promote F4 to high priority.
-- If the matrix shows an agent regressing on `recordStepMetric` or `maxRetries`, that is a hardening regression and should block the PR.
+- If the matrix shows an agent regressing on `recordStepMetric`, `recordStepMessage`, `maxRetries`, or `PIPELINE_MODEL`, that is a hardening regression and should block the PR.

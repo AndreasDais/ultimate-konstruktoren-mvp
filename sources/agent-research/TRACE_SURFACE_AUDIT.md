@@ -1,7 +1,7 @@
 # PILAR Trace Surface Audit
 
-**Sprint:** 64.0
-**Status:** Read-only audit; no code or schema changes.
+**Sprint:** 66.0b
+**Status:** Docs-only audit sync; no code or schema changes in this sprint.
 **Purpose:** Map what trace data PILAR already captures against the roadmap's Fase 4 "trace event v1" requirements, so future sprints do not build a parallel JSONL trace storage that duplicates what the DB already records.
 
 This audit is the truth-source for one question: **before adding any new trace artifact, what trace data does the runtime already capture?**
@@ -15,7 +15,7 @@ Related audits and policies (do not duplicate):
 
 ## 1. The existing trace surface
 
-PILAR already writes substantial trace data across 11 DB tables. The [runrecord VIEW](../../db/runrecord.sql) joins seven of them by `run_id` to expose one row per pipeline run.
+PILAR already writes substantial trace data across the pipeline DB tables. Since sprint 64.1 it also stores raw SDK message envelopes in `step_messages`, and since sprint 64.3 it exposes a chronological `trace_events` VIEW. The [runrecord VIEW](../../db/runrecord.sql) still joins the core per-run tables by `run_id` to expose one row per pipeline run.
 
 ### 1.1 Per-step telemetry — `step_metrics`
 
@@ -35,7 +35,26 @@ PILAR already writes substantial trace data across 11 DB tables. The [runrecord 
 
 CHECK constraint guarantees correlation: `run_id is not null or request_id is not null`.
 
-### 1.2 Per-agent payloads
+### 1.2 Raw SDK envelopes — `step_messages`
+
+[supabase/migrations/20260528000000_step_messages.sql](../../supabase/migrations/20260528000000_step_messages.sql) adds one raw-envelope row per agent SDK call:
+
+| Field | Captures |
+|---|---|
+| `step_name` | same step identifier shape as `step_metrics` |
+| `model`, `prompt_version`, `temperature`, `max_tokens` | call parameters as sent |
+| `raw_message` | full Anthropic SDK response envelope, stored as jsonb |
+| `run_id` OR `request_id` | same correlation rule as `step_metrics` |
+
+All six routes now call `recordStepMessage`:
+
+- Tolkar uses `request_id` because it runs before `calculation_runs` exists.
+- Konstruktør A/B, Samanliknar, Kontrollør, and Rapportør use `run_id`.
+- Writes soft-fail by design, like `recordStepMetric`; a trace insert failure must not block the user-facing pipeline.
+
+This closes the old G1 raw-envelope gap for new runs.
+
+### 1.3 Per-agent payloads
 
 Each pipeline step writes its full structured output to its own table, all keyed by `run_id`:
 
@@ -49,7 +68,7 @@ Each pipeline step writes its full structured output to its own table, all keyed
 
 Every agent output table carries its own `prompt_version`. The full prompt-version drift map for a single run is queryable directly.
 
-### 1.3 Post-hoc trace surfaces
+### 1.4 Post-hoc trace surfaces
 
 | Table | What it records |
 |---|---|
@@ -59,9 +78,11 @@ Every agent output table carries its own `prompt_version`. The full prompt-versi
 | `agent_learning_feedback` | Feedback on improvement_actions: user_rating, actual_outcome, should_repeat_pattern. |
 | `daily_intelligence_reports`, `improvement_actions`, `daily_metrics_snapshots` | Aggregate intelligence layer. |
 
-### 1.4 The unified read surface — `runrecord` VIEW
+### 1.5 Unified read surfaces — `runrecord` and `trace_events`
 
 [db/runrecord.sql:35-73](../../db/runrecord.sql) joins `calculation_runs + requests + input_reviews + agent_outputs (A and B) + comparisons + controller_decisions + reports + step_metrics`, exposing one row per run with `to_jsonb(t.*)` per table. The grader at [qa/grade.ts](../../qa/grade.ts) is the canonical consumer.
+
+[supabase/migrations/20260528000002_trace_events_view.sql](../../supabase/migrations/20260528000002_trace_events_view.sql) adds a chronological event-stream presentation over the same DB-backed data. It intentionally omits the large `step_messages.raw_message` payload from event rows; consumers can join back to `step_messages` by id when they need the full SDK envelope.
 
 Comment at line 31–34: per-agent jsonb is intentionally untyped because the shape is owned by the respective agent and changes with prompt versions. See [RUNTIME_CONTRACT_AUDIT.md §3](RUNTIME_CONTRACT_AUDIT.md) for why this is load-bearing.
 
@@ -84,54 +105,52 @@ Current coverage:
 | `run_id` | ✅ everywhere | every table has `run_id` (or `request_id` for Tolkar) |
 | `agent_id` | ⚠️ partial | `step_metrics.step_name` and `agent_outputs.agent_name` cover this, but no single enum lifts it to a typed identifier |
 | `prompt_version` | ✅ per agent | every per-agent table carries its own `prompt_version` column; full version-drift map queryable per run |
-| `input_payload` | ✅ partial | `agent_outputs.input_payload` is the only one stored explicitly; Tolkar input is `requests.raw_text`, downstream agents read from prior tables via DB roundtrip — no per-agent input snapshot for B/C/D/E |
+| `input_payload` | ✅ partial | `agent_outputs.input_payload` stores Konstruktør A/B inputs; Tolkar input is `requests.raw_text`; Samanliknar and Kontrollør receive inline client payloads; Rapportør re-queries upstream DB state. There is still no single per-agent input snapshot table for C/D/E. |
 | `tool_calls` | ❌ missing | PILAR has no agent tool-use beyond the LLM call itself (no Anthropic `tools` parameter usage observed in agent routes). When tool use is introduced, no field captures it. |
-| `handoffs` | ⚠️ implicit | Reconstructable from `step_metrics.created_at` ordering by run_id, but never an explicit "agent X handed off to agent Y" event |
+| `handoffs` | ✅ presentation | `trace_events` now exposes chronological pipeline events over existing DB state; there is still no separate write-path handoff table, by design. |
 | `warnings` | ✅ | `agent_outputs.warnings`, `controller_decisions.blocked_outputs`, `comparisons.internal_consistency_issues` |
 | `decision` | ✅ | `controller_decisions.decision_status`, `comparisons.recommended_status`, `input_reviews.input_status` |
 | `output` | ✅ | `output_text` + `structured_output` per agent, prose fields on `reports` |
 
 **Score: 6/9 captured directly, 2/9 partial, 1/9 missing (and the missing one only becomes load-bearing when tool-use is actually introduced).**
 
+Additional replay-only data not listed in the roadmap shape is now captured in `step_messages`: full SDK `raw_message`, `model`, `prompt_version`, `temperature`, and `max_tokens`.
+
 The trace surface is already rich. It is not chronological-event-stream-shaped — it is normalized-per-agent-shaped. That is a presentation difference, not a data gap.
 
 ---
 
-## 3. What is genuinely missing for replay
+## 3. Replay gaps after sprint 60-65 sync
 
-Replay (the roadmap's Fase 4.3) asks: *given an old input, can we re-run the pipeline against a new prompt and diff?* That requires preserving enough of the original to reconstruct the inputs to each agent.
+Replay (the roadmap's Fase 4.3) asks: *given an old input, can we re-run the pipeline against a new prompt and diff?* Sprint 64.x closed several of the original gaps; the remaining issues are narrower.
 
-Real gaps for replay, in priority order:
+### Closed — G1 raw LLM message envelope
 
-### G1 — Raw LLM message envelope not preserved
+Closed by `step_messages` plus `recordStepMessage` calls in all six agent routes. New runs preserve the full SDK response envelope and call parameters (`model`, `prompt_version`, `temperature`, `max_tokens`).
 
-`agent_outputs` stores `output_text` (raw) and `structured_output` (parsed). It does NOT store:
-- The full SDK `message` object (incl. `id`, `stop_sequence`, `usage`, content blocks with `thinking`/`text` distinctions, citations)
-- The exact system prompt content as sent (only `prompt_version` is a pointer)
-- The exact `temperature`, `max_tokens`, `top_p`, `tool_choice` parameters used at call time
-- The model's exact identifier as returned by the API (we record `model` in step_metrics but not the response-side echo)
-
-Replay against a different prompt version is possible because we have the input. Replay against the *same* prompt for determinism testing is harder because we don't have the call parameters.
-
-### G2 — Downstream input payloads not snapshotted
+### Remaining — G2 downstream input payload ambiguity
 
 **Note:** the original description below was partially wrong. See [G2_DOWNSTREAM_INPUT_AUDIT.md](G2_DOWNSTREAM_INPUT_AUDIT.md) for the verified version. In short: Samanliknar and Kontrollør receive their input inline from the client (not re-queried). Only Rapportør re-queries. The real gap is the absence of UNIQUE constraints on `agent_outputs`/`comparisons`/`controller_decisions`, which makes replay ambiguous if a duplicate row ever appears in those tables.
 
 Original (uncorrected) description: `agent_outputs.input_payload` only covers Konstruktør A/B. The downstream agents (Samanliknar, Kontrollør, Rapportør) read their input from prior DB tables on each call. If those tables drift between original-run and replay (e.g. agent_outputs row gets updated by an old code path), replay reads different input than the original.
 
-### G3 — No event-stream presentation of run history
+### Closed — G3 event-stream presentation
 
-The data is split across seven tables. A `trace_event` view that emits one row per state-change event (input received, Tolkar started, Tolkar completed with status X, A started, …) would make traces human-readable and tool-readable without joining seven tables by hand.
+Closed by `trace_events` VIEW. The trace surface is still DB-backed; there is no parallel JSONL writer.
 
-This is presentation, not data. The data is already there.
+### Closed — G4 eval cases linked to runs
 
-### G4 — Eval cases not linked to trace runs
+Closed by `calculation_runs.eval_case_id` plus `init-run` support for non-live/eval runs. This allows queries like "show me all runs of case_id X across prompt versions" without external bookkeeping.
 
-[qa/evals/pilar-core-evals.jsonl](../../qa/evals/pilar-core-evals.jsonl) has 11 eval cases. A run that was triggered by an eval case has `run_type = 'golden'` or `'discovery'` ([db/runrecord.sql:17–27](../../db/runrecord.sql)), but the case_id is not stored on the run. So "show me all runs of case_id X across prompt versions" requires external bookkeeping.
+### Remaining — G5 no deterministic seed / no byte-identical replay
 
-### G5 — No deterministic seed/temperature record per call
+`step_messages.temperature` now records the temperature that was sent. The remaining determinism gap is not observability; it is platform/product reality:
 
-If `temperature > 0` (which is the default for most LLM calls), replay can never be byte-identical even with identical inputs. To distinguish "prompt change caused this" from "LLM nondeterminism caused this," need either temperature=0 for replay runs OR multiple-run aggregation. Neither is enforced today.
+- Anthropic does not expose a seed parameter.
+- Konstruktør A/B and Rapportør use extended thinking, which forces `temperature = 1`.
+- Replay must compare structured fields and eval aggregates, not byte-identical text.
+
+See [REPLAY_DETERMINISM_POLICY.md](../codebase/REPLAY_DETERMINISM_POLICY.md) for the pinned rule.
 
 ---
 
@@ -142,49 +161,32 @@ The natural-sounding fix is: *"Add `lib/trace/trace-writer.ts` that writes JSONL
 **Do not do this without addressing the data gaps above first.** Concretely:
 
 - It creates a parallel storage where the DB is already the source-of-truth.
-- It does not solve G1 (raw envelope) — would just record the same partial data in a new format.
-- It does not solve G2 (downstream input snapshot) — local writer cannot retroactively snapshot what downstream agents read.
+- It does not improve G1 anymore — raw envelopes already live in `step_messages`.
+- It does not solve the remaining G2 ambiguity — local writer cannot retroactively fix duplicate upstream rows or define canonical per-agent input snapshots.
 - It introduces two-truth risk: trace JSONL says X, DB says Y, neither is wrong but both must be kept in sync.
 
 If JSONL trace export is genuinely useful (e.g. for offline analysis or OpenAI-SDK-style trace viewers), it should be a **read-only export from the DB**, not a parallel write path. Same principle as [REPORT_VERSION_POLICY §4](../codebase/REPORT_VERSION_POLICY.md).
 
 ---
 
-## 5. Recommended sprint path for trace/replay (revised from roadmap Fase 4)
+## 5. Trace/replay sprint path status
 
-The roadmap's eight 62.x sprints are sound in intent but mis-scoped given how much already exists. A truer path:
+The roadmap's original 62.x trace work was revised here because much of the useful trace surface already existed in normalized DB tables. Current status:
 
-### 64.1 — Add raw LLM envelope storage (closes G1)
-
-Smallest schema change that unblocks deterministic replay. Add a `step_messages` table (or a `raw_message jsonb` column on `step_metrics`) storing the full SDK response object. Migration in `supabase/migrations/`. App-side change is a single line per agent route.
-
-**Risk:** disk growth. Mitigation: retention policy or sample-only on `run_type = 'golden'`/`'discovery'`.
-
-### 64.2 — Link eval cases to runs (closes G4)
-
-Add `eval_case_id text null` to `calculation_runs`. Filter populated only for non-live runs. One field, one validation update.
-
-### 64.3 — Trace event VIEW (closes G3)
-
-Pure read layer. A SQL VIEW that UNION ALLs typed events from the existing tables ordered by timestamp, with an `event_type` discriminator and a uniform payload jsonb. No app changes.
-
-### 64.4 — Replay harness, only after G1+G4 land
-
-Script that takes an eval_case_id + a target prompt_version, fetches the original input from request/input_review, re-invokes agents with the new prompt, diffs structured_output. Single script under `scripts/`.
-
-### 64.5 — Document determinism policy
-
-When can we expect byte-identical replay (temperature=0, same model, same prompt)? When can we expect only approximate replay? A policy doc like [REPORT_VERSION_POLICY.md](../codebase/REPORT_VERSION_POLICY.md) — addresses G5 without adding code.
-
-### Deferred — JSONL trace writer
-
-Only build this if a concrete consumer requires it (e.g. integrating with an external trace viewer). Otherwise the DB-backed surface plus the VIEW from 64.3 covers all internal needs.
+| Sprint | Status | What | Current note |
+|---|---|---|---|
+| **64.1** | Done | Add raw LLM envelope storage | `step_messages` exists and all six agents call `recordStepMessage`. |
+| **64.2** | Done | Link eval cases to runs | `calculation_runs.eval_case_id` exists and `init-run` can populate it for eval/non-live runs. |
+| **64.3** | Done | Add trace event VIEW | `trace_events` presents chronological events without a parallel writer. |
+| **64.4** | Still future | Replay harness | Now unblocked by G1/G4, but should follow [REPLAY_DETERMINISM_POLICY.md](../codebase/REPLAY_DETERMINISM_POLICY.md). |
+| **64.5** | Done | Document determinism policy | Policy pins structured-output stability, not byte-identical replay. |
+| **Deferred** | Deferred | JSONL trace writer/export | Only build as read-only export from DB if a concrete consumer appears. |
 
 ---
 
 ## 6. Keeping this audit honest
 
-- If a `qa/traces/` directory appears or a `lib/trace/` writer module ships without first addressing G1–G4, this audit has been bypassed — re-evaluate §4.
-- If a new pipeline table is added with `prompt_version` and per-agent jsonb output, update §1.2 in the same sprint.
+- If a `qa/traces/` directory appears or a `lib/trace/` writer module ships as a parallel write path, this audit has been bypassed — re-evaluate §4.
+- If a new pipeline table is added with `prompt_version` and per-agent jsonb output, update §1.3 in the same sprint.
 - If tool-use (`tools` parameter to Anthropic SDK) is introduced anywhere in `app/api/agent-*/route.ts`, the `tool_calls` row in §2 becomes a real gap — open a sprint to address it.
-- If `temperature` settings change for any agent, update §3 G5 — determinism guarantees shift with it.
+- If `temperature` settings change for any agent, update §3 G5 and [REPLAY_DETERMINISM_POLICY.md](../codebase/REPLAY_DETERMINISM_POLICY.md) — determinism guarantees shift with it.
