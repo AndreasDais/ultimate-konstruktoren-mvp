@@ -12,6 +12,7 @@ function parseArgs(argv) {
     json: false,
     listCases: false,
     count: false,
+    idsOnly: false,
     priority: "",
     domain: "",
     standardContext: "",
@@ -41,6 +42,11 @@ function parseArgs(argv) {
 
     if (token === "--count") {
       args.count = true;
+      continue;
+    }
+
+    if (token === "--ids-only") {
+      args.idsOnly = true;
       continue;
     }
 
@@ -181,6 +187,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --list-cases --display-language en
   node scripts/grade-eval-artifact.mjs --list-cases --tag guardrail
   node scripts/grade-eval-artifact.mjs --list-cases --count --tag i18n
+  node scripts/grade-eval-artifact.mjs --list-cases --ids-only --display-language en
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -329,6 +336,10 @@ function summarizeCases(cases) {
   }));
 }
 
+function formatCaseIds(cases) {
+  return cases.map((evalCase) => evalCase.case_id).join("\n");
+}
+
 function formatTextResult(result) {
   const lines = [
     `${result.status} ${result.case_id}: ${result.checked - result.failed}/${result.checked} deterministic text checks passed`,
@@ -371,6 +382,10 @@ function main() {
     const listedCases = filterCases(cases, args);
     if (args.count) {
       console.log(args.json ? JSON.stringify({ count: listedCases.length }, null, 2) : String(listedCases.length));
+      return;
+    }
+    if (args.idsOnly) {
+      console.log(args.json ? JSON.stringify(listedCases.map((evalCase) => evalCase.case_id), null, 2) : formatCaseIds(listedCases));
       return;
     }
     console.log(args.json ? JSON.stringify(summarizeCases(listedCases), null, 2) : formatCaseList(listedCases));
