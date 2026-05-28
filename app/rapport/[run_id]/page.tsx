@@ -44,6 +44,7 @@ import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/nor
 import {
   isMarginaliaRelevantForLanguage,
   lookupMarginalia,
+  pickMarginaliaDescription,
   scanTextForCatalogKeys,
   type MarginaliaEntry,
 } from "@/lib/marginalia-katalog";
@@ -1079,12 +1080,9 @@ export default function RapportPage() {
       key,
       entry: {
         ...entry,
-        description: entry.description
-          .replace(/spennvidde/gi, "span length")
-          .replace(/nedbøying|nedb├©ying/gi, "deflection")
-          .replace(/bøyemoment|b├©yemoment/gi, "bending moment")
-          .replace(/skjærkraft|skj├ªrkraft/gi, "shear force")
-          .replace(/fordelt last/gi, "distributed load"),
+        // descriptionEn er forfatta i katalogen for alle EC- og AISC-entries.
+        // Fallback til norsk om manglar (skal ikkje skje i praksis).
+        description: pickMarginaliaDescription(entry, "en"),
         unit:
           entry.unit === "m" ? "ft" :
           entry.unit === "mm" ? "in" :
