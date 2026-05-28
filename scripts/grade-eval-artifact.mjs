@@ -11,6 +11,9 @@ function parseArgs(argv) {
     text: "",
     json: false,
     listCases: false,
+    priority: "",
+    domain: "",
+    targetAgent: "",
     help: false,
   };
 
@@ -29,6 +32,39 @@ function parseArgs(argv) {
 
     if (token === "--list-cases") {
       args.listCases = true;
+      continue;
+    }
+
+    if (token === "--priority") {
+      args.priority = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--priority=")) {
+      args.priority = token.slice("--priority=".length);
+      continue;
+    }
+
+    if (token === "--domain") {
+      args.domain = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--domain=")) {
+      args.domain = token.slice("--domain=".length);
+      continue;
+    }
+
+    if (token === "--target-agent") {
+      args.targetAgent = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--target-agent=")) {
+      args.targetAgent = token.slice("--target-agent=".length);
       continue;
     }
 
@@ -98,6 +134,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file> --json
   node scripts/grade-eval-artifact.mjs --list-cases
   node scripts/grade-eval-artifact.mjs --list-cases --json
+  node scripts/grade-eval-artifact.mjs --list-cases --priority P0 --target-agent pipeline
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -214,6 +251,21 @@ function formatCaseList(cases) {
   }).join("\n");
 }
 
+function matchesFilter(actual, expected) {
+  return !expected || normalize(actual) === normalize(expected);
+}
+
+function filterCases(cases, args) {
+  return cases.filter((evalCase) => {
+    const targetAgents = Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [];
+    return (
+      matchesFilter(evalCase.priority ?? "unknown", args.priority) &&
+      matchesFilter(evalCase.domain ?? "unknown", args.domain) &&
+      (!args.targetAgent || targetAgents.some((agent) => matchesFilter(agent, args.targetAgent)))
+    );
+  });
+}
+
 function summarizeCases(cases) {
   return cases.map((evalCase) => ({
     case_id: evalCase.case_id,
@@ -266,7 +318,8 @@ function main() {
   const cases = readJsonl(args.casesPath);
 
   if (args.listCases) {
-    console.log(args.json ? JSON.stringify(summarizeCases(cases), null, 2) : formatCaseList(cases));
+    const listedCases = filterCases(cases, args);
+    console.log(args.json ? JSON.stringify(summarizeCases(listedCases), null, 2) : formatCaseList(listedCases));
     return;
   }
 
