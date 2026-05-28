@@ -103,7 +103,8 @@ Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --json
 
 Scope:
-  Dry-run only. No LLM calls, no Supabase reads, no pipeline execution, no writes.
+  Dry-run only. Prints planned /tmp bundle paths and offline grading commands.
+  No LLM calls, no Supabase reads, no pipeline execution, no writes.
 `);
 }
 
