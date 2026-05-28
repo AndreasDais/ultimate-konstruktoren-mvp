@@ -102,6 +102,12 @@ Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --scratch-dir /tmp/pilar-live-eval
   node scripts/run-eval-case-live.mjs --case-id <id> --json
 
+Options:
+  --cases <path>        Eval case JSONL path. Defaults to qa/evals/pilar-core-evals.jsonl.
+  --scratch-dir <path>  Planned artifact bundle root. Defaults to /tmp/pilar-live-eval.
+  --require-trace       Plan trace evidence as required for future live execution.
+  --json                Emit the dry-run plan as stable JSON.
+
 Scope:
   Dry-run only. Prints planned /tmp bundle paths and offline grading commands.
   No LLM calls, no Supabase reads, no pipeline execution, no writes.
