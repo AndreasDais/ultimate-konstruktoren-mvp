@@ -13,6 +13,7 @@ function parseArgs(argv) {
     listCases: false,
     count: false,
     idsOnly: false,
+    requireMatch: false,
     priority: "",
     domain: "",
     standardContext: "",
@@ -47,6 +48,11 @@ function parseArgs(argv) {
 
     if (token === "--ids-only") {
       args.idsOnly = true;
+      continue;
+    }
+
+    if (token === "--require-match") {
+      args.requireMatch = true;
       continue;
     }
 
@@ -188,6 +194,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --list-cases --tag guardrail
   node scripts/grade-eval-artifact.mjs --list-cases --count --tag i18n
   node scripts/grade-eval-artifact.mjs --list-cases --ids-only --display-language en
+  node scripts/grade-eval-artifact.mjs --list-cases --require-match --tag guardrail
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -380,6 +387,10 @@ function main() {
 
   if (args.listCases) {
     const listedCases = filterCases(cases, args);
+    if (args.requireMatch && listedCases.length === 0) {
+      console.error("FAILED eval artifact grader: no eval cases matched the requested filters");
+      process.exit(1);
+    }
     if (args.count) {
       console.log(args.json ? JSON.stringify({ count: listedCases.length }, null, 2) : String(listedCases.length));
       return;
