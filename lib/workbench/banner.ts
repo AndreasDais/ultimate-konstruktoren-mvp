@@ -16,17 +16,48 @@ import { WB_LABELS as BASE_WB_LABELS } from "@/lib/result/labels";
  * (typisk proxied WB_LABELS frå page.tsx) for å støtte intl-engelsk via
  * buildLocalizedLabelProxy. Default er BASE_WB_LABELS (norsk).
  */
+// Tolkar emiterar fagområde-namnet på norsk uansett pipeline-språk
+// (det er ein controlled vocabulary internt). Vi translate til engelsk
+// i intl-modus for banner-visning.
+const FAGOMRAADE_EN: Record<string, string> = {
+  stål: "Steel",
+  stal: "Steel",
+  betong: "Concrete",
+  tre: "Timber",
+  mur: "Masonry",
+  laster: "Loads",
+  last: "Loads",
+  lastkombinasjon: "Load combination",
+  geoteknikk: "Geotechnical",
+  fundament: "Foundation",
+  forbinding: "Connection",
+  knekking: "Buckling",
+};
+
+function translateFagomraade(
+  raw: string,
+  displayLanguage?: "nb" | "nn" | "en",
+): string {
+  if (displayLanguage !== "en") {
+    // Norsk default — capitaliser første bokstav slik som før
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+  const en = FAGOMRAADE_EN[raw.toLowerCase()];
+  if (en) return en;
+  // Ukjent fagområde — capitaliser råverdien som fallback
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 export function getBannerDetail(
   result: AgentResult,
   locale: Locale,
   labels: typeof BASE_WB_LABELS = BASE_WB_LABELS,
+  displayLanguage?: "nb" | "nn" | "en",
 ): string {
   const nMangler = result.manglande_verdiar?.length ?? 0;
   const nKanReknast = result.kan_reknast_no?.length ?? 0;
-  // Capitaliser fagområde-første-bokstav slik at "stål" → "Stål" i banner.
-  // Tolkar emittar lowercase, men i UI vil vi ha proper case.
   const fag = result.fagomraade
-    ? result.fagomraade.charAt(0).toUpperCase() + result.fagomraade.slice(1)
+    ? translateFagomraade(result.fagomraade, displayLanguage)
     : undefined;
   const parts: string[] = [];
   if (fag) parts.push(fag);

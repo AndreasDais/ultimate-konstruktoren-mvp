@@ -1887,7 +1887,7 @@ useEffect(() => {
                             </div>
                           }
                         >
-                          {getBannerDetail(result, locale, WB_LABELS)}
+                          {getBannerDetail(result, locale, WB_LABELS, pageDisplayLanguage)}
                         </StatusStripe>
                         {typeof result.konfidens === "number" && result.konfidens < 0.7 && (
                           <p
