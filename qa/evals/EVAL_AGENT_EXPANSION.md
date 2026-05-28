@@ -47,11 +47,17 @@ qa/evals/reports/latest-eval-coverage.md
 
 Use `--check` when you want to verify without writing a generated artifact.
 
+Use `--strict` only when intentionally testing whether coverage warnings should
+fail the command. The standard local gate should keep using non-writing check
+mode without `--strict`, so future metadata warnings can be reviewed before
+they become release-blocking.
+
 ## Commands
 
 ```bash
 node --check scripts/summarize-eval-coverage.mjs
 node scripts/summarize-eval-coverage.mjs --check
+node scripts/summarize-eval-coverage.mjs --check --strict
 node scripts/summarize-eval-coverage.mjs
 node scripts/validate-eval-cases.mjs
 npm run agent:all
@@ -69,7 +75,10 @@ npx tsc --noEmit --pretty false
 - no app code is changed
 ```
 
-Warnings are allowed in v0.1 if they describe missing metadata or future coverage gaps. Errors are not allowed.
+Warnings are allowed in the standard gate if they describe missing metadata or
+future coverage gaps. Errors are not allowed. Strict mode is available for
+explicit fail-fast audits once the eval taxonomy and corpus are expected to be
+warning-free.
 
 ## Design rule
 
