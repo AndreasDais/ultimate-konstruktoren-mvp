@@ -17,16 +17,40 @@
  */
 
 /**
- * Normaliser ein result-nøkkel for paring: små bokstavar, og fjern
- * mellomrom, komma, punktum, underscore og bindestrek. Slik blir
- * "F_Ed,6.10a", "F_Ed_6_10a" og "FEd6.10a" same nøkkel.
+ * Greek-symbol → ASCII-namn, så «γ_M0» og «gamma_M0» normaliserer likt.
+ * Dekker små greske bokstavar (U+03B1–U+03C9 inkl. final sigma ς),
+ * mikroteiknet µ (U+00B5) og phi-symbolet ϕ (U+03D5). Berre SYMBOL → namn
+ * (ikkje omvendt), så ASCII-namn som alt finst i nøkkelen står uendra.
+ */
+const GREEK_TO_ASCII: Record<string, string> = {
+  "α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon",
+  "ζ": "zeta", "η": "eta", "θ": "theta", "ι": "iota", "κ": "kappa",
+  "λ": "lambda", "μ": "mu", "µ": "mu", "ν": "nu", "ξ": "xi",
+  "ο": "omicron", "π": "pi", "ρ": "rho", "ς": "sigma", "σ": "sigma",
+  "τ": "tau", "υ": "upsilon", "φ": "phi", "ϕ": "phi", "χ": "chi",
+  "ψ": "psi", "ω": "omega",
+};
+
+/**
+ * Normaliser ein result-nøkkel for paring: små bokstavar, mapp greek-symbol
+ * til ASCII-namn (γ → gamma), og fjern skiljeteikn + grupperingsteikn
+ * (mellomrom, komma, punktum, understrek, bindestrek, parentesar). Slik blir
+ * "F_Ed,6.10a", "F_Ed_6_10a", "M_{Ed}" og "γ_M0"/"gamma_M0" same nøkkel.
  *
- * Konservativ med vilje — fjernar only skiljeteikn, ikkje bokstavar/tal —
- * så distinkte nøklar (M_Ed vs M_Rd, gamma_G vs gamma_Q) held seg distinkte.
+ * Konservativ med vilje — fjernar berre skiljeteikn/grupperingsteikn og
+ * mappar symbol→namn, ikkje bokstavar/tal — så distinkte nøklar (M_Ed vs
+ * M_Rd, gamma_G vs gamma_Q) held seg distinkte.
  */
 export function normalizeResultKey(key: string): string {
-    return key.toLowerCase().replace(/[\s,._-]/g, "");
-  }
+  return key
+    .toLowerCase()
+    // Greek-symbol → ASCII-namn (γ → gamma) FØR skiljeteikn blir fjerna,
+    // så symbol-form og namn-form kolliderer.
+    .replace(/[µα-ωϕ]/g, (ch) => GREEK_TO_ASCII[ch] ?? ch)
+    // Fjern skiljeteikn + grupperingsteikn: mellomrom, komma, punktum,
+    // understrek, bindestrek, runde/krøll/hakeparentesar.
+    .replace(/[\s,._(){}\[\]-]/g, "");
+}
 
   /** Parse tal frå streng med norsk komma ("22,9"), eining-suffiks, eller eit tal. */
   export function parseNumeric(v: unknown): number | null {

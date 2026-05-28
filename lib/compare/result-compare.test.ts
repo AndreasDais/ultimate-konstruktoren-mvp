@@ -17,6 +17,24 @@ describe("normalizeResultKey", () => {
     expect(normalizeResultKey("M_Ed")).not.toBe(normalizeResultKey("M_Rd"));
     expect(normalizeResultKey("gamma_G")).not.toBe(normalizeResultKey("gamma_Q"));
   });
+
+  it("parar greek-symbol mot ASCII-namn (γ_M0 vs gamma_M0)", () => {
+    expect(normalizeResultKey("γ_M0")).toBe(normalizeResultKey("gamma_M0"));
+    expect(normalizeResultKey("σ_Rd")).toBe(normalizeResultKey("sigma_Rd"));
+  });
+
+  it("parar phi-symbol mot ASCII (φM_n vs phi_M_n) — AISC kapasitetsfaktor", () => {
+    expect(normalizeResultKey("φM_n")).toBe(normalizeResultKey("phi_M_n"));
+  });
+
+  it("parar krøllparentes-subscript (M_{Ed} vs M_Ed)", () => {
+    expect(normalizeResultKey("M_{Ed}")).toBe(normalizeResultKey("M_Ed"));
+  });
+
+  it("held greek-distinkte nøklar distinkte (γ_G vs γ_Q), men parar symbol mot namn", () => {
+    expect(normalizeResultKey("γ_G")).not.toBe(normalizeResultKey("γ_Q"));
+    expect(normalizeResultKey("γ_G")).toBe(normalizeResultKey("gamma_G"));
+  });
 });
 
 describe("parseNumeric", () => {
@@ -74,6 +92,13 @@ describe("compareResults", () => {
       { F_Ed_6_10a: "20,18 kN/m" },
       { "F_Ed,6.10a": "20,18 kN/m" },
     );
+    expect(cmp.paired).toHaveLength(1);
+    expect(cmp.onlyA).toHaveLength(0);
+    expect(cmp.onlyB).toHaveLength(0);
+  });
+
+  it("parar på tvers av greek-skrivemåte (σ_Rd vs sigma_Rd)", () => {
+    const cmp = compareResults({ "σ_Rd": "355 MPa" }, { sigma_Rd: "355 N/mm²" });
     expect(cmp.paired).toHaveLength(1);
     expect(cmp.onlyA).toHaveLength(0);
     expect(cmp.onlyB).toHaveLength(0);
