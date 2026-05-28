@@ -11,6 +11,7 @@ function parseArgs(argv) {
     text: "",
     json: false,
     listCases: false,
+    count: false,
     priority: "",
     domain: "",
     targetAgent: "",
@@ -33,6 +34,11 @@ function parseArgs(argv) {
 
     if (token === "--list-cases") {
       args.listCases = true;
+      continue;
+    }
+
+    if (token === "--count") {
+      args.count = true;
       continue;
     }
 
@@ -148,6 +154,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --list-cases --json
   node scripts/grade-eval-artifact.mjs --list-cases --priority P0 --target-agent pipeline
   node scripts/grade-eval-artifact.mjs --list-cases --tag guardrail
+  node scripts/grade-eval-artifact.mjs --list-cases --count --tag i18n
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -334,6 +341,10 @@ function main() {
 
   if (args.listCases) {
     const listedCases = filterCases(cases, args);
+    if (args.count) {
+      console.log(args.json ? JSON.stringify({ count: listedCases.length }, null, 2) : String(listedCases.length));
+      return;
+    }
     console.log(args.json ? JSON.stringify(summarizeCases(listedCases), null, 2) : formatCaseList(listedCases));
     return;
   }
