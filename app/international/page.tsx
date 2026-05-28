@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import "./international.css";
 import {
@@ -83,6 +84,16 @@ function setUiModeCookie(mode: "no" | "intl") {
   document.cookie = `${UI_MODE_COOKIE}=${mode}; path=/; max-age=31536000; samesite=lax`;
 }
 
+function getUiModeCookie(): "no" | "intl" | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${UI_MODE_COOKIE}=`));
+  if (!match) return null;
+  const value = match.split("=")[1];
+  return value === "intl" ? "intl" : value === "no" ? "no" : null;
+}
+
 function uiModeForRegion(region: EngineeringRegionCode): "no" | "intl" {
   return region === "NO" ? "no" : "intl";
 }
@@ -95,9 +106,19 @@ function supportTone(level: string) {
 }
 
 export default function InternationalPilotPage() {
+  const router = useRouter();
   const [region, setRegion] = useState<EngineeringRegionCode>("OTHER");
   const [standard, setStandard] = useState<EngineeringStandardFamily>("unknown");
   const [saved, setSaved] = useState(false);
+
+  // Skriv ui-mode cookie + trigg server-rerender av layout (Header) berre
+  // når verdien faktisk endrar seg. router.refresh() er ein no-op ved
+  // uendra cookie, men vi vil unngå unødvendig roundtrip.
+  const applyUiMode = (mode: "no" | "intl") => {
+    if (getUiModeCookie() === mode) return;
+    setUiModeCookie(mode);
+    router.refresh();
+  };
 
   const standardOption = getStandardOption(standard);
   const context = useMemo(
@@ -127,7 +148,7 @@ export default function InternationalPilotPage() {
   useEffect(() => {
     // Å besøke /international aktiverer intl-modus. Lagra region kan
     // overstyre i neste steg under (om brukar har valt NO før).
-    setUiModeCookie("intl");
+    applyUiMode("intl");
 
     try {
       const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
@@ -137,7 +158,7 @@ export default function InternationalPilotPage() {
       const countryCode = parsed.region?.countryCode;
       if (countryCode && countryCode in REGION_LABELS) {
         setRegion(countryCode as EngineeringRegionCode);
-        setUiModeCookie(uiModeForRegion(countryCode as EngineeringRegionCode));
+        applyUiMode(uiModeForRegion(countryCode as EngineeringRegionCode));
       }
 
       const family = parsed.standards?.family;
@@ -147,13 +168,14 @@ export default function InternationalPilotPage() {
     } catch {
       // Ignore corrupt localStorage and keep safe international defaults.
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleRegionChange(nextRegion: EngineeringRegionCode) {
     setRegion(nextRegion);
     setStandard(getRecommendedStandardForRegion(nextRegion));
     setSaved(false);
-    setUiModeCookie(uiModeForRegion(nextRegion));
+    applyUiMode(uiModeForRegion(nextRegion));
   }
 
   async function saveContext() {
