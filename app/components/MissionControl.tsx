@@ -721,7 +721,7 @@ function ComparatorPanel({
             flexShrink: 0,
           }}
         >
-          S
+          {compareAvatar}
         </span>
         <span>{L.samanliknar[locale]}</span>
         <span style={{ marginLeft: "auto", fontStyle: "italic" }}>
