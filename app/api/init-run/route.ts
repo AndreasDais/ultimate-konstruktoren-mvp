@@ -47,6 +47,7 @@ export async function POST(request: Request) {
       calculation_type,
       run_type: rawRunType,
       display_language: rawDisplayLanguage,
+      eval_case_id: rawEvalCaseId,
     } = await request.json();
 
     // Visningsspraak: rekna klientside (displayLanguageForContext). Berre
@@ -64,6 +65,18 @@ export async function POST(request: Request) {
       rawRunType === "golden" || rawRunType === "discovery"
         ? rawRunType
         : "live";
+
+    // Sprint 64.2 — eval_case_id lukker gap G4 frå TRACE_SURFACE_AUDIT.md.
+    // Kun set når kallaren (eval-runner) eksplisitt sender eit gyldig
+    // case_id. Live-trafikk passar undefined => feltet hamnar ikkje i
+    // insert-payloaden i det heile, og fungerer dermed sjølv om DB-kolonnen
+    // ikkje er køyrd ut enno (PostgREST PGRST204 unngått for produksjon).
+    const eval_case_id =
+      typeof rawEvalCaseId === "string" &&
+      rawEvalCaseId.trim().length > 0 &&
+      rawEvalCaseId.length <= 200
+        ? rawEvalCaseId.trim()
+        : null;
 
     if (!request_id) {
       return Response.json(
@@ -99,18 +112,26 @@ export async function POST(request: Request) {
       }
     }
 
+    // Bygg insert-payload conditionally: eval_case_id-feltet blir berre
+    // inkludert om kallaren faktisk sendte ein verdi. Slik unngår
+    // produksjon PGRST204 viss migrationen ikkje er køyrd enno.
+    const insertPayload: Record<string, unknown> = {
+      request_id,
+      calculation_type: calculation_type ?? null,
+      run_status: "running",
+      run_type,
+      display_language,
+      agent_package_version: "agents_v0.2",
+      started_at: new Date().toISOString(),
+      user_id: userId,
+    };
+    if (eval_case_id !== null) {
+      insertPayload.eval_case_id = eval_case_id;
+    }
+
     const { data, error } = await supabase
       .from("calculation_runs")
-      .insert({
-        request_id,
-        calculation_type: calculation_type ?? null,
-        run_status: "running",
-        run_type,
-        display_language,
-        agent_package_version: "agents_v0.2",
-        started_at: new Date().toISOString(),
-        user_id: userId,
-      })
+      .insert(insertPayload)
       .select("id")
       .single();
 
