@@ -8,14 +8,14 @@ export const metadata: Metadata = {
   description: "AI-basert konstruksjonsassistent. Skriv eit konstruksjonsproblem, faa ein kontrollert berekning.",
 };
 
-type Lang = "nb" | "nn" | "en";
+type Lang = "nn" | "en";
 
 export default async function HeimPage() {
   const c = await cookies();
   const uiMode = c.get("pilar-ui-mode")?.value;
-  const locale = c.get("pilar-locale")?.value;
 
-  const lang: Lang = uiMode === "intl" ? "en" : locale === "nn" ? "nn" : "nb";
+  // To variantar: nynorsk (norsk-default) eller engelsk (intl).
+  const lang: Lang = uiMode === "intl" ? "en" : "nn";
   // Modal viser berre naar brukaren ikkje har valt region enno.
   const hasRegionChoice = uiMode === "intl" || uiMode === "no";
 

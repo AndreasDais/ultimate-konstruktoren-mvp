@@ -1,91 +1,172 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import MarketingHeader from "@/app/components/MarketingHeader";
 import { RegionModal } from "./RegionModal";
 
-type Lang = "nb" | "nn" | "en";
+type Lang = "nn" | "en";
+
+/* Små matte-hjelparar (språknøytrale symbol) ------------------ */
+function MathSym({ v, sub }: { v: string; sub?: string }) {
+  return (
+    <span className="m">
+      <span className="m-v">{v}</span>
+      {sub ? <span className="m-sub is-up">{sub}</span> : null}
+    </span>
+  );
+}
 
 const COPY: Record<Lang, {
   eyebrow: string;
-  title: string;
-  lead: string;
-  start: string;
-  demo: string;
+  h1: string;
+  leadPre: string;
+  leadEm: string;
+  startCta: string;
+  demoCta: string;
   fineprint: string;
-  demoYou: string;
+  demoBar: string;
+  you: string;
   demoInput: string;
-  agree: string;
-  howTitle: string;
-  steps: { title: string; body: string }[];
-  disclaimer: string;
-  termsLabel: string;
+  result: string; // tal med rett desimalteikn
+  verdict: string;
+  pipeEyebrow: string;
+  pipeH2: string;
+  pipeIntro: string;
+  s1Title: string;
+  s1Desc: string;
+  s1Tags: [string, string, string];
+  laneChip: string;
+  engAName: string;
+  engBName: string;
+  methodA: [string, string];
+  methodB: [string, string];
+  engAStep1: string;
+  engAStep2: string;
+  engAStep3: string;
+  engBSteps: [string, string, string];
+  s3Title: string;
+  s3Desc: string;
+  cmpA: string; // "25.0 = 25.0"
+  cmpB: string; // "20.0 = 20.0"
+  match: string;
+  s4Title: string;
+  s4Desc: string;
+  s4Tags: [string, string, string];
+  s5Title: string;
+  s5Desc: string;
+  reportStrong: string;
+  reportRest: string;
+  footerNote: string;
+  terms: string;
   termsHref: string;
 }> = {
-  nb: {
-    eyebrow: "AI-KONSTRUKSJONSASSISTENT",
-    title: "Skriv et konstruksjonsproblem. Få en kontrollert beregning.",
-    lead: "To uavhengige AI-konstruktører regner samme problem med ulik metode. En tredje agent bekrefter at de er enige før resultatet presenteres. Du får et notat klart for faglig kontroll — ikke en svart boks.",
-    start: "Start en beregning →",
-    demo: "Se demo",
-    fineprint: "Gratis for studenter · ingen kortinformasjon",
-    demoYou: "DU",
-    demoInput: "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
-    agree: "KONSTRUKTØR A OG B ENIGE",
-    howTitle: "Korleis det fungerer",
-    steps: [
-      { title: "Tolkeren leser oppgaven", body: "Forstår input, identifiserer fagområde og hvilke verdier som mangler." },
-      { title: "Konstruktør A + B regner uavhengig", body: "To agenter løser samme problem med ulik metode, uten å se hverandres svar." },
-      { title: "Sammenligneren bekrefter enighet", body: "Kontrollerer at de to svarene stemmer overens før noe vises." },
-      { title: "Kontrolløren vurderer", body: "Avgjør om resultatet er trygt nok å presentere, og flagger forbehold." },
-      { title: "Rapport klar for kontroll", body: "Et beregningsnotat du kan eksportere og få faglig kontrollert." },
-    ],
-    disclaimer: "AI-generert · eksperimentell · krever faglig kontroll",
-    termsLabel: "Vilkår",
-    termsHref: "/vilkar",
-  },
   nn: {
-    eyebrow: "AI-KONSTRUKSJONSASSISTENT",
-    title: "Skriv eit konstruksjonsproblem. Få ein kontrollert berekning.",
-    lead: "To uavhengige AI-konstruktørar reknar same problem med ulik metode. Ein tredje agent stadfestar at dei er einige før resultatet er presentert. Du får eit notat klart for fagleg kontroll — ikkje ei svart boks.",
-    start: "Start ein berekning →",
-    demo: "Sjå demo",
+    eyebrow: "AI-konstruksjonsassistent",
+    h1: "Skriv eit konstruksjonsproblem. Få ein kontrollert berekning.",
+    leadPre:
+      "To uavhengige AI-konstruktørar reknar same problem med ulik metode. Ein tredje agent stadfestar at dei er einige før resultatet er presentert. Du får eit notat klart for fagleg kontroll — ",
+    leadEm: "ikkje ei svart boks.",
+    startCta: "Start ein berekning →",
+    demoCta: "Sjå demo",
     fineprint: "Gratis for studentar · ingen kortinformasjon",
-    demoYou: "DU",
+    demoBar: "Berekning · direkte",
+    you: "Du",
     demoInput: "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
-    agree: "KONSTRUKTØR A OG B EINIGE",
-    howTitle: "Korleis det fungerer",
-    steps: [
-      { title: "Tolkar les oppgåva", body: "Forstår input, identifiserer fagområde og kva verdiar som manglar." },
-      { title: "Konstruktør A + B reknar uavhengig", body: "To agentar løyser same problem med ulik metode, utan å sjå kvarandre sine svar." },
-      { title: "Samanliknar stadfestar semje", body: "Kontrollerer at dei to svara stemmer overeins før noko visast." },
-      { title: "Kontrollør vurderer", body: "Avgjer om resultatet er trygt nok å vise, og flaggar forbehald." },
-      { title: "Rapport klar for kontroll", body: "Eit berekningsnotat du kan eksportere og få fagleg kontrollert." },
+    result: "25,0",
+    verdict: "Konstruktør A og B einige",
+    pipeEyebrow: "Prosessen",
+    pipeH2: "Eitt problem inn. To løysingar, samanlikna, før du ser noko.",
+    pipeIntro:
+      "Kvar berekning går gjennom fem agentar. Arbeidet deler seg i to slik at svaret blir kontrollert mot seg sjølv — så avgjer ein kontrollør om det er trygt å vise.",
+    s1Title: "Tolkar les oppgåva",
+    s1Desc:
+      "Forstår input, identifiserer fagområde og kva verdiar som manglar før eitt einaste tal blir rekna.",
+    s1Tags: ["Les input", "Identifiserer fagområde", "Flaggar manglar"],
+    laneChip: "Ser ikkje kvarandre",
+    engAName: "Konstruktør A",
+    engBName: "Konstruktør B",
+    methodA: ["Lukka form ·", "førsteprinsipp"],
+    methodB: ["Numerisk ·", "uavhengig metode"],
+    engAStep1: "Faktorert lastverdi",
+    engAStep2: "Nødvendig moment",
+    engAStep3: "Nødvendig skjer",
+    engBSteps: [
+      "Faktorert last via lastkombinasjonssett",
+      "Likevektskontroll for moment",
+      "Diskretisert skjer og nedbøying",
     ],
-    disclaimer: "AI-generert · eksperimentell · krev fagleg kontroll",
-    termsLabel: "Vilkår",
+    s3Title: "Samanliknaren stadfestar semje",
+    s3Desc:
+      "Kontrollerer at dei to svara stemmer overeins — storleik for storleik — før noko visast. Eit avvik stoppar køyringa.",
+    cmpA: "25,0 = 25,0",
+    cmpB: "20,0 = 20,0",
+    match: "✓ samsvar",
+    s4Title: "Kontrolløren vurderer",
+    s4Desc:
+      "Avgjer om det er trygt å vise resultatet, og flaggar forbehald ein kontrollerande ingeniør bør kjenne til.",
+    s4Tags: ["Trygt å vise?", "Flaggar forbehald", "Set konfidens"],
+    s5Title: "Eit notat, klart for kontroll",
+    s5Desc:
+      "Eit berekningsnotat du kan eksportere — kvar steg, føresetnad og forbehald lagt fram for fagleg kontroll og signatur.",
+    reportStrong: "Berekningsnotat",
+    reportRest: " · PDF · Word · LaTeX — klart for fagleg kontroll",
+    footerNote: "AI-generert · eksperimentell · krev fagleg kontroll",
+    terms: "Vilkår",
     termsHref: "/vilkar",
   },
   en: {
-    eyebrow: "AI STRUCTURAL ASSISTANT",
-    title: "Describe a structural problem. Get a checked calculation.",
-    lead: "Two independent AI engineers solve the same problem with different methods. A third agent confirms they agree before the result is shown. You get a note ready for professional review — not a black box.",
-    start: "Start a calculation →",
-    demo: "See demo",
+    eyebrow: "AI Structural Assistant",
+    h1: "Describe a structural problem. Get a checked calculation.",
+    leadPre:
+      "Two independent AI engineers solve the same problem with different methods. A third agent confirms they agree before the result is shown. You get a note ready for professional review — ",
+    leadEm: "not a black box.",
+    startCta: "Start a calculation →",
+    demoCta: "See demo",
     fineprint: "Free for students · no card required",
-    demoYou: "YOU",
+    demoBar: "Calculation · live",
+    you: "You",
     demoInput: "Simply-supported steel beam, L = 5.0 m, q = 8.0 kN/m",
-    agree: "ENGINEER A AND B AGREE",
-    howTitle: "How it works",
-    steps: [
-      { title: "The interpreter reads the task", body: "Understands the input, identifies the discipline and which values are missing." },
-      { title: "Engineer A + B compute independently", body: "Two agents solve the same problem with different methods, without seeing each other's answers." },
-      { title: "The comparator confirms agreement", body: "Checks that the two answers match before anything is shown." },
-      { title: "The controller assesses", body: "Decides whether the result is safe enough to present, and flags caveats." },
-      { title: "Report ready for review", body: "A calculation note you can export and have professionally checked." },
+    result: "25.0",
+    verdict: "Engineer A and B agree",
+    pipeEyebrow: "The pipeline",
+    pipeH2: "One problem in. Two solutions, reconciled, before you see anything.",
+    pipeIntro:
+      "Every calculation runs through five agents. The work splits in two so the answer is checked against itself — then a controller decides if it is safe to present.",
+    s1Title: "The interpreter reads the task",
+    s1Desc:
+      "Understands the input, identifies the discipline, and flags any values that are missing before a single number is computed.",
+    s1Tags: ["Parses input", "Identifies discipline", "Flags missing values"],
+    laneChip: "Neither sees the other",
+    engAName: "Engineer A",
+    engBName: "Engineer B",
+    methodA: ["Closed form ·", "first principles"],
+    methodB: ["Numerical ·", "independent method"],
+    engAStep1: "Factored design load",
+    engAStep2: "Required moment",
+    engAStep3: "Required shear",
+    engBSteps: [
+      "Factored load via load-combination set",
+      "Equilibrium cross-check for moment",
+      "Discretised shear & deflection",
     ],
-    disclaimer: "AI-generated · experimental · requires professional review",
-    termsLabel: "Terms",
+    s3Title: "The comparator confirms agreement",
+    s3Desc:
+      "Checks that the two answers match — quantity by quantity — before anything is shown. A disagreement halts the run.",
+    cmpA: "25.0 = 25.0",
+    cmpB: "20.0 = 20.0",
+    match: "✓ match",
+    s4Title: "The controller assesses",
+    s4Desc:
+      "Decides whether it is safe to present the result, and flags any caveats a reviewing engineer should know about.",
+    s4Tags: ["Safe to present?", "Flags caveats", "Sets confidence"],
+    s5Title: "A report, ready for review",
+    s5Desc:
+      "An exportable calculation note — every step, assumption and caveat laid out for a professional to check and sign.",
+    reportStrong: "Calculation note",
+    reportRest: " · PDF · Word · LaTeX — ready for professional review",
+    footerNote: "AI-generated · experimental · requires professional review",
+    terms: "Terms",
     termsHref: "/terms",
   },
 };
@@ -99,65 +180,291 @@ export default function HeimClient({
 }) {
   const t = COPY[lang];
 
+  // Scroll-reveal med mild stagger (frå Claude Design-mockupen).
+  // CSS handterer reduced-motion (gjer .reveal synleg utan transition).
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".lp .reveal"));
+    if (els.length === 0) return;
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((e) => e.classList.add("in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" },
+    );
+    els.forEach((el, i) => {
+      el.style.transitionDelay = `${Math.min(i % 4, 3) * 60}ms`;
+      io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div className="heim-page">
+    <div className="lp">
       <MarketingHeader lang={lang} />
 
-      <section className="heim-hero">
-        <div>
-          <p className="heim-eyebrow">{t.eyebrow}</p>
-          <h1>{t.title}</h1>
-          <p className="heim-lead">{t.lead}</p>
-          <div className="heim-cta-row">
-            <Link href="/international" className="uk-btn uk-btn--primary">
-              {t.start}
-            </Link>
-            <a href="#korleis" className="uk-btn">
-              {t.demo}
-            </a>
+      <main>
+        {/* ===================== HERO ===================== */}
+        <section className="hero">
+          <div className="hero__copy">
+            <span className="eyebrow hero__eyebrow">{t.eyebrow}</span>
+            <h1>{t.h1}</h1>
+            <p className="hero__lead">
+              {t.leadPre}
+              <em>{t.leadEm}</em>
+            </p>
+            <div className="hero__cta">
+              <Link className="btn btn--primary" href="/international">
+                {t.startCta}
+              </Link>
+              <a className="btn btn--secondary" href="#how">
+                {t.demoCta}
+              </a>
+            </div>
+            <p className="hero__fineprint">{t.fineprint}</p>
           </div>
-          <p className="heim-fineprint">{t.fineprint}</p>
-        </div>
 
-        <div className="heim-demo-card" aria-hidden="true">
-          <div className="heim-demo-row">
-            <span className="heim-demo-label">{t.demoYou}</span>
-            <span className="heim-demo-input">{t.demoInput}</span>
-          </div>
-          <div className="heim-demo-row">
-            <span className="heim-demo-label">PILAR</span>
-            <span className="heim-demo-formula">
-              M<sub>Ed</sub> =
-              <span className="heim-frac">
-                <span className="heim-frac__num">q<sub>Ed</sub>·L²</span>
-                <span className="heim-frac__den">8</span>
+          {/* Signatur-demokort */}
+          <div className="demo" aria-label="Pilar">
+            <div className="demo__bar">
+              <span className="demo__bar-label">{t.demoBar}</span>
+              <span className="demo__bar-dots" aria-hidden="true">
+                <i />
+                <i />
+                <i />
               </span>
-              = 25,0 kNm
-            </span>
+            </div>
+            <div className="demo__body">
+              <div className="demo__row">
+                <span className="demo__who">{t.you}</span>
+                <span className="demo__msg">{t.demoInput}</span>
+              </div>
+              <div className="demo__row">
+                <span className="demo__who">Pilar</span>
+                <span className="demo__msg m">
+                  <span className="m-v">M</span>
+                  <span className="m-sub is-up">Ed</span>
+                  <span className="m-op">=</span>
+                  <span className="m-frac">
+                    <span className="m-frac-n">
+                      <span className="m-v">q</span>
+                      <span className="m-sub is-up">Ed</span>
+                      <span className="m-op" style={{ padding: "0 .18em" }}>·</span>
+                      <span className="m-v">L</span>
+                      <span className="m-sup">2</span>
+                    </span>
+                    <span className="m-frac-d">8</span>
+                  </span>
+                  <span className="m-op">=</span>
+                  {t.result}
+                  <span className="m-unit">kNm</span>
+                </span>
+              </div>
+              <hr className="demo__hr" />
+              <span className="demo__verdict">
+                <span className="demo__verdict-dot" aria-hidden="true" />
+                {t.verdict}
+              </span>
+            </div>
           </div>
-          <div className="heim-demo-badge-row">
-            <span className="uk-badge uk-badge--ok">{t.agree}</span>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="heim-how" id="korleis">
-        <h2>{t.howTitle}</h2>
-        <div className="heim-steps">
-          {t.steps.map((s, i) => (
-            <div className="heim-step" key={i}>
-              <span className="heim-step__num">{String(i + 1).padStart(2, "0")}</span>
-              <div>
-                <p className="heim-step__title">{s.title}</p>
-                <p className="heim-step__body">{s.body}</p>
+        {/* ===================== HOW IT WORKS ===================== */}
+        <section className="pipeline" id="how">
+          <div className="pipeline__inner">
+            <div className="pipeline__head reveal">
+              <span className="eyebrow">{t.pipeEyebrow}</span>
+              <h2>{t.pipeH2}</h2>
+              <p>{t.pipeIntro}</p>
+            </div>
+
+            <div className="flow">
+              {/* 01 Tolkar */}
+              <div className="stage reveal">
+                <span className="node">01</span>
+                <div className="stage__main">
+                  <h3 className="stage__title">{t.s1Title}</h3>
+                  <p className="stage__desc">{t.s1Desc}</p>
+                  <div className="stage__meta">
+                    {t.s1Tags.map((tag) => (
+                      <span className="tag" key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* split */}
+              <div className="branch reveal" aria-hidden="true">
+                <span className="branch__stem" />
+                <span className="branch__bar" />
+                <span className="branch__drop is-l" />
+                <span className="branch__drop is-r" />
+              </div>
+
+              {/* 02 To konstruktørar i parallell */}
+              <div className="lanes reveal">
+                <span className="lanes__divider" aria-hidden="true" />
+                <span className="lanes__chip" aria-hidden="true">
+                  <span className="lanes__chip-glyph">‖</span>
+                  <span className="lanes__chip-label">{t.laneChip}</span>
+                </span>
+
+                <div className="engineer">
+                  <div className="engineer__head">
+                    <span className="engineer__id">
+                      <span className="engineer__avatar">A</span>
+                      <span className="engineer__name">{t.engAName}</span>
+                    </span>
+                    <span className="engineer__method">
+                      {t.methodA[0]}
+                      <br />
+                      {t.methodA[1]}
+                    </span>
+                  </div>
+                  <div className="engineer__body">
+                    <div className="engineer__step">
+                      <span className="engineer__tick">✓</span>
+                      <span>
+                        {t.engAStep1}{" "}
+                        <MathSym v="q" sub="Ed" />
+                      </span>
+                    </div>
+                    <div className="engineer__step">
+                      <span className="engineer__tick">✓</span>
+                      <span>
+                        {t.engAStep2}{" "}
+                        <span className="m">
+                          <span className="m-v">M</span>
+                          <span className="m-sub is-up">Ed</span>
+                          <span className="m-op">=</span>
+                          <span className="m-v">q</span>
+                          <span className="m-sub is-up">Ed</span>
+                          <span className="m-v">L</span>
+                          <span className="m-sup">2</span>/8
+                        </span>
+                      </span>
+                    </div>
+                    <div className="engineer__step">
+                      <span className="engineer__tick">✓</span>
+                      <span>
+                        {t.engAStep3}{" "}
+                        <MathSym v="V" sub="Ed" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="engineer">
+                  <div className="engineer__head">
+                    <span className="engineer__id">
+                      <span className="engineer__avatar">B</span>
+                      <span className="engineer__name">{t.engBName}</span>
+                    </span>
+                    <span className="engineer__method">
+                      {t.methodB[0]}
+                      <br />
+                      {t.methodB[1]}
+                    </span>
+                  </div>
+                  <div className="engineer__body">
+                    {t.engBSteps.map((step) => (
+                      <div className="engineer__step" key={step}>
+                        <span className="engineer__tick">✓</span>
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* merge */}
+              <div className="branch is-merge reveal" aria-hidden="true">
+                <span className="branch__bar" />
+                <span className="branch__drop is-l" />
+                <span className="branch__drop is-r" />
+                <span className="branch__stem" />
+              </div>
+
+              {/* 03 Samanliknar */}
+              <div className="stage reveal">
+                <span className="node">03</span>
+                <div className="stage__main">
+                  <h3 className="stage__title">{t.s3Title}</h3>
+                  <p className="stage__desc">{t.s3Desc}</p>
+                  <div className="compare-strip">
+                    <span className="compare-row">
+                      <MathSym v="M" sub="Ed" /> {t.cmpA}{" "}
+                      <span className="compare-match">{t.match}</span>
+                    </span>
+                    <span className="compare-row">
+                      <MathSym v="V" sub="Ed" /> {t.cmpB}{" "}
+                      <span className="compare-match">{t.match}</span>
+                    </span>
+                    <span className="demo__verdict">
+                      <span className="demo__verdict-dot" aria-hidden="true" />
+                      {t.verdict}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="connector reveal" aria-hidden="true" />
+
+              {/* 04 Kontrollør */}
+              <div className="stage reveal">
+                <span className="node">04</span>
+                <div className="stage__main">
+                  <h3 className="stage__title">{t.s4Title}</h3>
+                  <p className="stage__desc">{t.s4Desc}</p>
+                  <div className="stage__meta">
+                    {t.s4Tags.map((tag) => (
+                      <span className="tag" key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="connector reveal" aria-hidden="true" />
+
+              {/* 05 Rapport */}
+              <div className="stage stage--report reveal">
+                <span className="node">05</span>
+                <div className="stage__main">
+                  <h3 className="stage__title">{t.s5Title}</h3>
+                  <p className="stage__desc">{t.s5Desc}</p>
+                  <div className="report-doc">
+                    <span className="report-doc__icon" aria-hidden="true" />
+                    <span className="report-doc__txt">
+                      <strong>{t.reportStrong}</strong>
+                      {t.reportRest}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      </main>
 
-      <footer className="heim-footer">
-        {t.disclaimer} · <Link href={t.termsHref}>{t.termsLabel}</Link>
+      {/* ===================== FOOTER ===================== */}
+      <footer className="footer">
+        <div className="footer__inner">
+          <span className="footer__note">
+            <span className="dot" aria-hidden="true" />
+            {t.footerNote}
+          </span>
+          <Link className="footer__link" href={t.termsHref}>
+            {t.terms}
+          </Link>
+        </div>
       </footer>
 
       {showRegionModal && <RegionModal lang={lang} />}
