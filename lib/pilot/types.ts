@@ -1,6 +1,6 @@
 import type { EngineeringStandardFamily } from "@/lib/engineering-context";
 
-export type PilotLocale = "nb" | "nn";
+export type PilotLocale = "nb" | "nn" | "en";
 
 export type PilotExampleCategory =
   | "beam"
@@ -21,9 +21,14 @@ export type PilotExample = {
    * (frå /international + engineering-context i localStorage).
    */
   profiles: EngineeringStandardFamily[];
-  title: Record<PilotLocale, string>;
-  description: Record<PilotLocale, string>;
-  prompt: Record<PilotLocale, string>;
+  /**
+   * Partial fordi eit eksempel kan vere språkspesifikt: norske
+   * EC+NA-eksempel har berre nb/nn, internasjonale profilar har berre en.
+   * PilotClient gjer fallback ved rendering om aktivt språk manglar.
+   */
+  title: Partial<Record<PilotLocale, string>>;
+  description: Partial<Record<PilotLocale, string>>;
+  prompt: Partial<Record<PilotLocale, string>>;
   tags: string[];
 };
 

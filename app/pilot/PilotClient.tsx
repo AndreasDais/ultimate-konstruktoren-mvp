@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { PILOT_EXAMPLES } from "@/lib/pilot/examples";
+import type { PilotLocale } from "@/lib/pilot/types";
 import {
   ENGINEERING_CONTEXT_STORAGE_KEY,
   type EngineeringStandardFamily,
@@ -120,6 +121,11 @@ export default function PilotClient({ uiMode }: Props) {
   const showEmptyState =
     filteredExamples.length === 0 && (uiMode === "no" || mounted);
 
+  // Eksempel-tekstar er Partial: norske EC+NA-eksempel har berre nb/nn,
+  // internasjonale har berre en. Fallback: gjeldande språk → en → nb → nn → "".
+  const pickText = (field: Partial<Record<PilotLocale, string>>) =>
+    field[langKey] ?? field.en ?? field.nb ?? field.nn ?? "";
+
   return (
     <main className="pilot-page">
       <section className="pilot-hero">
@@ -144,11 +150,11 @@ export default function PilotClient({ uiMode }: Props) {
                 <span>{example.difficulty}</span>
                 <span>{example.tags.slice(0, 2).join(" · ")}</span>
               </div>
-              <h2>{example.title[locale]}</h2>
-              <p>{example.description[locale]}</p>
+              <h2>{pickText(example.title)}</h2>
+              <p>{pickText(example.description)}</p>
               <details>
                 <summary>{T.showInput}</summary>
-                <pre>{example.prompt[locale]}</pre>
+                <pre>{pickText(example.prompt)}</pre>
               </details>
             </article>
           ))}
