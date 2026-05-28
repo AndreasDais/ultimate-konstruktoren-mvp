@@ -1,5 +1,11 @@
 # PILAR agent/coding rules
 
+## Lane ownership (read first if parallel agents are active)
+
+Multiple agents (Codex + Claude) work PILAR in parallel. Before editing, check
+**`LANES.md`** for which paths your lane owns. Do not edit files outside your
+lane; open a handoff note instead. Charter: `sources/agent-research/THREE_CHAT_PARALLEL_WORKFLOW.md`.
+
 ## Product context
 
 PILAR is a Norwegian AI-assisted structural calculation platform.
