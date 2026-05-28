@@ -117,16 +117,38 @@ function normalize(value) {
   return String(value ?? "").toLocaleLowerCase("nb-NO");
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isAsciiToken(value) {
+  return /^[A-Za-z0-9_]+$/.test(value);
+}
+
+function hasMixedCase(value) {
+  return /[A-Z]/.test(value) && /[a-z]/.test(value);
+}
+
+function textContainsTerm(artifact, term) {
+  if (isAsciiToken(term)) {
+    const flags = hasMixedCase(term) ? "" : "i";
+    const pattern = new RegExp(`(^|[^A-Za-z0-9_])${escapeRegExp(term)}($|[^A-Za-z0-9_])`, flags);
+    return pattern.test(artifact);
+  }
+
+  return normalize(artifact).includes(normalize(term));
+}
+
 function checkRequired(label, terms, artifact) {
   return terms.map((term) => {
-    const passed = normalize(artifact).includes(normalize(term));
+    const passed = textContainsTerm(artifact, term);
     return { label, term, passed };
   });
 }
 
 function checkForbidden(terms, artifact) {
   return terms.map((term) => {
-    const passed = !normalize(artifact).includes(normalize(term));
+    const passed = !textContainsTerm(artifact, term);
     return { label: "must_not_include", term, passed };
   });
 }
