@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
 
 const DEFAULT_CASES = "qa/evals/pilar-core-evals.jsonl";
 
@@ -8,6 +9,7 @@ function parseArgs(argv) {
     casesPath: DEFAULT_CASES,
     caseId: "",
     artifactPath: "",
+    bundlePath: "",
     text: "",
     json: false,
     listCases: false,
@@ -155,6 +157,17 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (token === "--bundle") {
+      args.bundlePath = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--bundle=")) {
+      args.bundlePath = token.slice("--bundle=".length);
+      continue;
+    }
+
     if (token === "--text") {
       args.text = requireValue(argv, index, token);
       index += 1;
@@ -186,6 +199,7 @@ Usage:
   cat artifact.txt | node scripts/grade-eval-artifact.mjs --case-id <id> --artifact -
   node scripts/grade-eval-artifact.mjs --case-id <id> --text "<artifact text>"
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file> --json
+  node scripts/grade-eval-artifact.mjs --bundle <live-eval-bundle-dir>
   node scripts/grade-eval-artifact.mjs --list-cases
   node scripts/grade-eval-artifact.mjs --list-cases --json
   node scripts/grade-eval-artifact.mjs --list-cases --priority P0 --target-agent pipeline
@@ -202,7 +216,7 @@ Scope:
 }
 
 function readJsonl(filePath) {
-  return fs.readFileSync(filePath, "utf8")
+  return stripBom(fs.readFileSync(filePath, "utf8"))
     .split(/\r?\n/)
     .map((line, index) => ({ line: line.trim(), lineNumber: index + 1 }))
     .filter((entry) => entry.line.length > 0)
@@ -213,6 +227,10 @@ function readJsonl(filePath) {
         throw new Error(`${filePath}:${entry.lineNumber}: invalid JSON (${error.message})`);
       }
     });
+}
+
+function stripBom(value) {
+  return String(value).replace(/^\uFEFF/, "");
 }
 
 function asArray(value) {
@@ -366,7 +384,28 @@ function formatTextResult(result) {
 function readArtifactText(args) {
   if (args.text) return args.text;
   if (args.artifactPath === "-") return fs.readFileSync(0, "utf8");
+  if (args.bundlePath) return fs.readFileSync(path.join(args.bundlePath, "report-text.txt"), "utf8");
   return fs.readFileSync(args.artifactPath, "utf8");
+}
+
+function readBundleManifest(bundlePath) {
+  const manifestPath = path.join(bundlePath, "manifest.json");
+  try {
+    return JSON.parse(stripBom(fs.readFileSync(manifestPath, "utf8")));
+  } catch (error) {
+    throw new Error(`${manifestPath}: unable to read live eval bundle manifest (${error.message})`);
+  }
+}
+
+function resolveCaseId(args) {
+  if (args.caseId) return args.caseId;
+  if (!args.bundlePath) return "";
+
+  const manifest = readBundleManifest(args.bundlePath);
+  if (typeof manifest.case_id !== "string" || manifest.case_id.length === 0) {
+    throw new Error(`${path.join(args.bundlePath, "manifest.json")}: missing case_id`);
+  }
+  return manifest.case_id;
 }
 
 function main() {
@@ -403,19 +442,27 @@ function main() {
     return;
   }
 
-  if (!args.caseId) {
-    console.error("FAILED eval artifact grader: --case-id is required");
+  let caseId;
+  try {
+    caseId = resolveCaseId(args);
+  } catch (error) {
+    console.error(`FAILED eval artifact grader: ${error.message}`);
     process.exit(1);
   }
 
-  if (!args.text && !args.artifactPath) {
-    console.error("FAILED eval artifact grader: provide --artifact or --text");
+  if (!caseId) {
+    console.error("FAILED eval artifact grader: --case-id is required unless --bundle provides manifest.json case_id");
     process.exit(1);
   }
 
-  const evalCase = cases.find((candidate) => candidate.case_id === args.caseId);
+  if (!args.text && !args.artifactPath && !args.bundlePath) {
+    console.error("FAILED eval artifact grader: provide --artifact, --text, or --bundle");
+    process.exit(1);
+  }
+
+  const evalCase = cases.find((candidate) => candidate.case_id === caseId);
   if (!evalCase) {
-    console.error(`FAILED eval artifact grader: unknown case_id '${args.caseId}'`);
+    console.error(`FAILED eval artifact grader: unknown case_id '${caseId}'`);
     process.exit(1);
   }
 
