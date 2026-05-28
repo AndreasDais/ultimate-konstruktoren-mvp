@@ -230,7 +230,7 @@ export const SEVERITY_LABELS = SEVERITY_LABELS_BY_LOCALE[DEFAULT_LOCALE];
 
 // ═══ INPUT-TOLKAR-STATUS ═══════════════════════════════════
 
-const INPUT_STATUS_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
+const INPUT_STATUS_LABELS_BY_LOCALE: Record<"nb" | "nn" | "en", Record<string, string>> = {
   nb: {
     klar: "Klar",
     delvis_klar: "Delvis klar",
@@ -249,6 +249,15 @@ const INPUT_STATUS_LABELS_BY_LOCALE: Record<Locale, Record<string, string>> = {
     uklar: "Uklar",
     uklart: "Uklar",
   },
+  en: {
+    klar: "Ready",
+    delvis_klar: "Partly ready",
+    mangelfull: "Incomplete",
+    avvist: "Rejected",
+    relevant_ikkje_stotta: "Not supported",
+    uklar: "Unclear",
+    uklart: "Unclear",
+  },
 };
 
 export const INPUT_STATUS_TONES: Record<string, Tone> = {
@@ -261,8 +270,17 @@ export const INPUT_STATUS_TONES: Record<string, Tone> = {
   uklart: "warn",
 };
 
-export function inputStatusLabel(key: string, locale: Locale = DEFAULT_LOCALE): string {
-  return localizedLookup(INPUT_STATUS_LABELS_BY_LOCALE, key, locale);
+export function inputStatusLabel(
+  key: string,
+  locale: Locale = DEFAULT_LOCALE,
+  language?: "nb" | "nn" | "en",
+): string {
+  const langKey = language ?? locale;
+  return (
+    INPUT_STATUS_LABELS_BY_LOCALE[langKey]?.[key] ??
+    INPUT_STATUS_LABELS_BY_LOCALE[locale]?.[key] ??
+    key
+  );
 }
 
 export const INPUT_STATUS_LABELS = INPUT_STATUS_LABELS_BY_LOCALE[DEFAULT_LOCALE];

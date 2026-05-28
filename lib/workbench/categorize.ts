@@ -7,6 +7,10 @@
 import type { Locale } from "@/lib/locale";
 import type { ValueCategory } from "./types";
 
+// Inkluderer "en" slik at TolkteVerdiarGrid kan vise engelske kategori-
+// etikettar når engineering-context indikerer internasjonal modus.
+type CategoryLangKey = Locale | "en";
+
 export const CATEGORY_ORDER: ValueCategory[] = [
   "profile_material",
   "geometry",
@@ -19,16 +23,16 @@ export const CATEGORY_ORDER: ValueCategory[] = [
   "other",
 ];
 
-export const CATEGORY_LABELS: Record<ValueCategory, Record<Locale, string>> = {
-  profile_material: { nb: "Profil & material", nn: "Profil & material" },
-  geometry: { nb: "Geometri & opplegg", nn: "Geometri & opplegg" },
-  loads: { nb: "Laster", nn: "Laster" },
-  load_combinations: { nb: "Lastkombinasjoner", nn: "Lastkombinasjonar" },
-  material_props: { nb: "Materialkonstanter", nn: "Materialkonstantar" },
-  section_props: { nb: "Tverrsnittsdata", nn: "Tverrsnittsdata" },
-  stability: { nb: "Knekk-parametre", nn: "Knekk-parametrar" },
-  serviceability: { nb: "Bruksgrense (SLS)", nn: "Bruksgrense (SLS)" },
-  other: { nb: "Andre", nn: "Andre" },
+export const CATEGORY_LABELS: Record<ValueCategory, Record<CategoryLangKey, string>> = {
+  profile_material: { nb: "Profil & material", nn: "Profil & material", en: "Profile & material" },
+  geometry: { nb: "Geometri & opplegg", nn: "Geometri & opplegg", en: "Geometry & supports" },
+  loads: { nb: "Laster", nn: "Laster", en: "Loads" },
+  load_combinations: { nb: "Lastkombinasjoner", nn: "Lastkombinasjonar", en: "Load combinations" },
+  material_props: { nb: "Materialkonstanter", nn: "Materialkonstantar", en: "Material constants" },
+  section_props: { nb: "Tverrsnittsdata", nn: "Tverrsnittsdata", en: "Section properties" },
+  stability: { nb: "Knekk-parametre", nn: "Knekk-parametrar", en: "Buckling parameters" },
+  serviceability: { nb: "Bruksgrense (SLS)", nn: "Bruksgrense (SLS)", en: "Serviceability (SLS)" },
+  other: { nb: "Andre", nn: "Andre", en: "Other" },
 };
 
 // Plasserer ein tolka verdi i ein kategori basert på nøkkel-mønster.

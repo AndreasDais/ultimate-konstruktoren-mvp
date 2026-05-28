@@ -155,6 +155,9 @@ export default function Home() {
     resultatetForebels: "The result is preliminary and must be checked by a qualified professional.",
     tilbake: "← Back",
     generRapport: "Generate report →",
+    stromer: "● STREAMING",
+    inputstatusExplanation:
+      "PILAR's assessment of how ready the task is to be calculated. 'Ready' = all info in place. 'Partly ready' = PILAR has made reasonable assumptions (shown above) which you can adjust before starting. Other statuses need more input or fall outside the pilot version.",
   });
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
@@ -1762,7 +1765,7 @@ useEffect(() => {
                       const nKanIkkje = result.kan_ikkje_reknast?.length ?? 0;
                       const nResultat = nKanReknast + nKanIkkje;
                       const nTolkte = Object.keys(result.tolkte_verdiar || {}).length;
-                      const statusBadge = inputStatusLabel(result.status, locale);
+                      const statusBadge = inputStatusLabel(result.status, locale, pageDisplayLanguage);
                       const statusTone = INPUT_STATUS_TONES[result.status] ?? "warn";
 
                       const tabs: Array<{
@@ -1876,7 +1879,7 @@ useEffect(() => {
                                 </InfoPopover>
                               </span>
                               <Badge status={INPUT_STATUS_TONES[result.status] ?? "warn"}>
-                                {inputStatusLabel(result.status, locale)}
+                                {inputStatusLabel(result.status, locale, pageDisplayLanguage)}
                               </Badge>
                             </div>
                           }
@@ -2029,6 +2032,7 @@ useEffect(() => {
                                     <TolkteVerdiarGrid
                                       values={tolkingView.tolkte_verdiar}
                                       locale={locale}
+                                      displayLanguage={pageDisplayLanguage}
                                     />
                                   </div>
                                 )}

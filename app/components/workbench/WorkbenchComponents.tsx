@@ -77,10 +77,18 @@ export function ListSection({
 export function TolkteVerdiarGrid({
   values,
   locale,
+  displayLanguage,
 }: {
   values: Record<string, string>;
   locale: Locale;
+  /**
+   * Når sett til "en" viser kategori-etikettar engelsk. Default følger locale.
+   * Drevet av engineering-context, ikkje ui-mode cookie — same som resten
+   * av workbench-laget.
+   */
+  displayLanguage?: "nb" | "nn" | "en";
 }) {
+  const langKey = displayLanguage ?? locale;
   if (!values || Object.keys(values).length === 0) return null;
 
   // Gruppér etter kategori, behaldande original innsetjings-rekkjefølge per gruppe
@@ -103,7 +111,7 @@ export function TolkteVerdiarGrid({
               className="uk-eyebrow"
               style={{ marginBottom: 6, fontSize: 10, opacity: 0.75 }}
             >
-              {CATEGORY_LABELS[cat][locale]}
+              {CATEGORY_LABELS[cat][langKey]}
             </div>
             <div
               style={{
