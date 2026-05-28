@@ -93,6 +93,7 @@ function printHelp() {
 
 Usage:
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file>
+  cat artifact.txt | node scripts/grade-eval-artifact.mjs --case-id <id> --artifact -
   node scripts/grade-eval-artifact.mjs --case-id <id> --text "<artifact text>"
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file> --json
   node scripts/grade-eval-artifact.mjs --list-cases
@@ -228,6 +229,12 @@ function formatTextResult(result) {
   return lines.join("\n");
 }
 
+function readArtifactText(args) {
+  if (args.text) return args.text;
+  if (args.artifactPath === "-") return fs.readFileSync(0, "utf8");
+  return fs.readFileSync(args.artifactPath, "utf8");
+}
+
 function main() {
   let args;
   try {
@@ -265,7 +272,7 @@ function main() {
     process.exit(1);
   }
 
-  const artifactText = args.text || fs.readFileSync(args.artifactPath, "utf8");
+  const artifactText = readArtifactText(args);
   const result = gradeArtifact(evalCase, artifactText);
 
   console.log(args.json ? JSON.stringify(result, null, 2) : formatTextResult(result));
