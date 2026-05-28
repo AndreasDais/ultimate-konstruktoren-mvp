@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import {
   calculateTillitScore,
   FORMULA_VERSION,
@@ -439,10 +440,23 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
 
   try {
     return JSON.parse(cleaned);
-  } catch {
-    console.error("Failed to parse Rapportør response. Raw text was:");
-    console.error(fullText);
-    throw new Error("Rapportør returned invalid JSON");
+  } catch (initialErr) {
+    // Sprint 65.5 — symmetrisk fallback per AGENT_ROUTE_AUDIT.md F6.
+    try {
+      const repaired = jsonrepair(cleaned);
+      const parsed = JSON.parse(repaired);
+      console.warn("[agent-e] JSON reparert via jsonrepair fallback", {
+        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+      });
+      return parsed;
+    } catch (parseErr) {
+      console.error("[agent-e] JSON.parse feila (også etter jsonrepair):", {
+        raw_length: fullText.length,
+        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+        parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
+      });
+      throw new Error("Rapportør returned invalid JSON");
+    }
   }
 }
 

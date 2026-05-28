@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, type Locale } from "@/lib/locale";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
@@ -212,18 +213,35 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
-    } catch {
-      const wasTruncated = message.stop_reason === "max_tokens";
-      return Response.json(
-        {
-          error: wasTruncated
-            ? "Comparator nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
-            : "Klarte ikkje parse Comparator sitt svar som JSON",
-          raw: responseText,
+    } catch (initialErr) {
+      // Sprint 65.5 — symmetrisk fallback per AGENT_ROUTE_AUDIT.md F6.
+      // Vanleg LLM-feil: LaTeX-backslash ikkje korrekt dobbel-escapa.
+      try {
+        const repaired = jsonrepair(cleaned);
+        parsed = JSON.parse(repaired);
+        console.warn("[agent-c] JSON reparert via jsonrepair fallback", {
           stop_reason: message.stop_reason,
-        },
-        { status: 500 }
-      );
+          initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+        });
+      } catch (parseErr) {
+        console.error("[agent-c] JSON.parse feila (også etter jsonrepair):", {
+          stop_reason: message.stop_reason,
+          raw_length: responseText.length,
+          initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
+          parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
+        });
+        const wasTruncated = message.stop_reason === "max_tokens";
+        return Response.json(
+          {
+            error: wasTruncated
+              ? "Comparator nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
+              : "Klarte ikkje parse Comparator sitt svar som JSON",
+            raw: responseText,
+            stop_reason: message.stop_reason,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     // === DETERMINISTISK OVERSTYRING (kode er fasit for tala) ===
