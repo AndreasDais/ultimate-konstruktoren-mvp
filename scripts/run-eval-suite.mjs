@@ -241,6 +241,20 @@ function buildCaseTable(cases) {
   ].join("\n");
 }
 
+function buildRuleInventoryTable(cases) {
+  const rows = cases.map((item) => {
+    const c = item.value;
+    const checks = countExpected(c.expected ?? {});
+    return `| ${tableEscape(c.case_id ?? `(line ${item.lineNumber})`)} | ${checks.mustInclude} | ${checks.mustNotInclude} | ${checks.unitExpectations} | ${checks.warningsIfMissing} | ${checks.numericExpectations} | ${checks.safetyChecks} |`;
+  });
+
+  return [
+    "| Case | must_include | must_not_include | unit_expectations | required_warnings_if_missing | numeric_expectations | safety_checks |",
+    "|---|---:|---:|---:|---:|---:|---:|",
+    ...rows,
+  ].join("\n");
+}
+
 function buildReport({ inputPath, outputPath, cases, summary, errors, warnings, strict }) {
   const status = errors.length === 0 && (!strict || warnings.length === 0) ? "READY" : "ACTION NEEDED";
 
@@ -267,6 +281,9 @@ function buildReport({ inputPath, outputPath, cases, summary, errors, warnings, 
     `- numeric_expectations entries: ${summary.deterministic.numericExpectations}\n` +
     `- safety_checks entries: ${summary.deterministic.safetyChecks}\n` +
     `- manual review required: ${summary.manualReviewRequired}\n\n` +
+    `## Rules-only check inventory\n\n` +
+    `This table shows deterministic check coverage per case. It is not a live pipeline grade and does not call an LLM.\n\n` +
+    `${buildRuleInventoryTable(cases)}\n\n` +
     `## Cases\n\n${buildCaseTable(cases)}\n\n` +
     `## Tags\n\n${mapToMarkdown(summary.tags)}\n\n` +
     `## Errors\n\n${errors.length ? errors.map((e) => `- ${e}`).join("\n") : "- none"}\n\n` +
