@@ -17,6 +17,7 @@ This folder contains rule-readable eval cases for the PILAR core pipeline. The g
 ```txt
 qa/evals/pilar-core-evals.jsonl
 scripts/validate-eval-cases.mjs
+scripts/grade-eval-artifact.mjs
 ```
 
 ## Run validation
@@ -26,6 +27,31 @@ node scripts/validate-eval-cases.mjs
 ```
 
 The validator only checks schema shape, duplicate IDs and basic consistency. It does not run the PILAR app or call an LLM.
+
+## Grade one saved text artifact
+
+Use the offline artifact grader when you have a saved text artifact and want to
+apply one eval case's deterministic text rules:
+
+```bash
+node scripts/grade-eval-artifact.mjs --case-id pilar_eval_irrelevant_input_football_004 --artifact /tmp/pilar-artifact.txt
+node scripts/grade-eval-artifact.mjs --case-id pilar_eval_irrelevant_input_football_004 --text "..."
+node scripts/grade-eval-artifact.mjs --case-id pilar_eval_irrelevant_input_football_004 --artifact /tmp/pilar-artifact.txt --json
+```
+
+The grader checks:
+
+```txt
+must_include
+must_not_include
+unit_expectations
+required_warnings_if_missing
+```
+
+It intentionally skips `numeric_expectations` and `safety_checks` until those
+have case-specific deterministic graders. It does not call LLMs, read Supabase,
+create runs, refresh report artifacts, or prove that the live PILAR pipeline
+passes the eval case.
 
 ## Case format
 
