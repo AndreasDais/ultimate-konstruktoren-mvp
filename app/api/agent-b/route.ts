@@ -290,6 +290,7 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
 
   const client = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
+    maxRetries: 5,
   });
 
   const t0 = Date.now();

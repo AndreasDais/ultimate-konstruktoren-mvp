@@ -278,6 +278,7 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
 
   const client = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
+    maxRetries: 5,
   });
 
   // Streaming for å unngå 10-min SDK-timeout med max_tokens=32768.
