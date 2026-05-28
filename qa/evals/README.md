@@ -91,8 +91,8 @@ node scripts/run-eval-case-live.mjs --case-id pilar_eval_prompt_leakage_uk_en_01
 ```
 
 The runner currently performs case lookup and prints the planned `/tmp`
-artifact-bundle path only. It does not call LLMs, read Supabase, execute the
-pipeline, or write files.
+artifact-bundle path plus the offline grading commands for that bundle. It does
+not call LLMs, read Supabase, execute the pipeline, or write files.
 
 ## Case format
 
