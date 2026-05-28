@@ -256,6 +256,30 @@ async function handleCache(
 ) {
   if (!existing) return null;
 
+  // Sprint 61.0a — detect-only: cache key ignorerer prompt_version
+  // (P1 dokumentert i sources/codebase/PILAR_PIPELINE_DATAFLOW.md). Logg
+  // når gammal prosa blir servert, men ikkje endre åtferd: full fiks
+  // krev DB-constraint-verifikasjon (61.0b).
+  const existingPromptVersion =
+    typeof existing.prompt_version === "string" ? existing.prompt_version : null;
+  if (existingPromptVersion !== null && existingPromptVersion !== PROMPT_VERSION) {
+    const existingRunId =
+      typeof existing.run_id === "string" ? existing.run_id : null;
+    console.warn(
+      `[agent-e] cache: stale prompt_version "${existingPromptVersion}" ` +
+        `servert for run ${existingRunId ?? "(ukjent)"} ` +
+        `(gjeldande ${PROMPT_VERSION}).`,
+    );
+    void recordStepMetric({
+      runId: existingRunId,
+      stepName: "rapportor_cache_stale",
+      message: null,
+      promptVersion: PROMPT_VERSION,
+      latencyMs: 0,
+      ok: false,
+    });
+  }
+
   const supabase = getSupabase();
 
   let enrichedReport = existing as { id: string; tillit_score: number | null; tillit_breakdown: unknown };
