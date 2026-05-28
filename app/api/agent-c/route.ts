@@ -10,6 +10,7 @@ import {
 import { normalizeConsistencyIssues } from "@/lib/compare/consistency-issues";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
+import { recordStepMessage } from "@/lib/step-messages/record-message";
 
 const SYSTEM_PROMPT = `Du er Samanliknar for Pilar, eit AI-basert verktøy for norsk byggfagleg praksis.
 
@@ -186,6 +187,19 @@ Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjek
       promptVersion: PROMPT_VERSION,
       latencyMs: Date.now() - t0,
       ok: message.stop_reason !== "max_tokens",
+    });
+
+    // Sprint 64.1 — proof-of-concept raw envelope storage. Soft-fail:
+    // missing step_messages table or insert error never blocks the run.
+    // Other agent routes will adopt the same pattern in follow-up sprints.
+    void recordStepMessage({
+      runId: run_id,
+      stepName: "samanliknar",
+      model: PIPELINE_MODEL,
+      promptVersion: PROMPT_VERSION,
+      temperature: null,
+      maxTokens: 8192,
+      rawMessage: message as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
     });
 
     const responseText = message.content
