@@ -1,13 +1,17 @@
 {
-  "version": "eval-taxonomy-v0.2",
+  "version": "eval-taxonomy-v0.3",
   "status": "seed",
-  "description": "Taxonomy for PILAR Eval Agent expansion. Lightweight, does not change production agent behavior. v0.2 adds target_agents — see RUNTIME_CONTRACT_AUDIT.md for the canonical six runtime agents plus the pipeline/process meta-categories.",
+  "description": "Taxonomy for PILAR Eval Agent expansion. Lightweight, does not change production agent behavior. v0.3 keeps active eval metadata in sync with the corpus and validates standard_context values.",
   "domains": [
     "steel",
     "concrete",
     "timber",
     "loads",
+    "input-agent",
     "input_validation",
+    "i18n",
+    "process",
+    "report",
     "report_rendering",
     "international_i18n",
     "unknown"
@@ -24,9 +28,11 @@
   ],
   "display_languages": ["nb", "nn", "en", "de", "fr"],
   "standard_profiles": [
+    "any",
     "norway_eurocode",
     "eurocode_general",
     "aisc_asce_aci",
+    "aisc_asce_aci_experimental",
     "canadian_experimental",
     "unknown"
   ],

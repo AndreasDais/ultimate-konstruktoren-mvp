@@ -86,6 +86,7 @@ function validateCases(cases, taxonomy) {
   const errors = [];
   const seen = new Set();
   const domainSet = new Set(taxonomy.domains || []);
+  const standardSet = new Set(taxonomy.standard_profiles || taxonomy.standard_contexts || taxonomy.standards || []);
   const languageSet = new Set(taxonomy.display_languages || taxonomy.languages || []);
   const targetAgentSet = new Set(taxonomy.target_agents || []);
 
@@ -112,6 +113,10 @@ function validateCases(cases, taxonomy) {
 
     if (domain !== "missing" && domainSet.size > 0 && !domainSet.has(domain)) {
       warnings.push(`${prefix}: domain '${domain}' is not listed in taxonomy`);
+    }
+
+    if (standard !== "missing" && standardSet.size > 0 && !standardSet.has(standard)) {
+      warnings.push(`${prefix}: standard_context '${standard}' is not listed in taxonomy`);
     }
 
     if (language !== "missing" && languageSet.size > 0 && !languageSet.has(language)) {
