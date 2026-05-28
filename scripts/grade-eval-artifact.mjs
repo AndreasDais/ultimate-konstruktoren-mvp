@@ -97,6 +97,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --case-id <id> --text "<artifact text>"
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file> --json
   node scripts/grade-eval-artifact.mjs --list-cases
+  node scripts/grade-eval-artifact.mjs --list-cases --json
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -213,6 +214,19 @@ function formatCaseList(cases) {
   }).join("\n");
 }
 
+function summarizeCases(cases) {
+  return cases.map((evalCase) => ({
+    case_id: evalCase.case_id,
+    title: evalCase.title ?? "",
+    priority: evalCase.priority ?? "unknown",
+    domain: evalCase.domain ?? "unknown",
+    standard_context: evalCase.standard_context ?? "unknown",
+    display_language: evalCase.display_language ?? "unknown",
+    target_agents: Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [],
+    tags: Array.isArray(evalCase.tags) ? evalCase.tags : [],
+  }));
+}
+
 function formatTextResult(result) {
   const lines = [
     `${result.status} ${result.case_id}: ${result.checked - result.failed}/${result.checked} deterministic text checks passed`,
@@ -252,7 +266,7 @@ function main() {
   const cases = readJsonl(args.casesPath);
 
   if (args.listCases) {
-    console.log(formatCaseList(cases));
+    console.log(args.json ? JSON.stringify(summarizeCases(cases), null, 2) : formatCaseList(cases));
     return;
   }
 
