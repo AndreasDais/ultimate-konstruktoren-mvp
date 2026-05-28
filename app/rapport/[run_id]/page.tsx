@@ -2083,6 +2083,7 @@ export default function RapportPage() {
   reportId={data.report.id}
   documentId={data.report.document_id}
   runId={runId}
+  displayLanguage={reportDisplayLanguage}
 />
 </div>
 );

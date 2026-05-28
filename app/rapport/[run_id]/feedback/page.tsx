@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
-import type { Locale } from "@/lib/locale";
 import type { PilotFeedbackPayload, PilotFeedbackRating, PilotTrustLevel, PilotUseCase } from "@/lib/pilot/types";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
+import { isInternationalEnglishContext } from "@/lib/international/display";
 import "./feedback.css";
 
+type LangKey = "nb" | "nn" | "en";
 type Option<T extends string> = { value: T; label: string };
 
-const COPY: Record<Locale, {
+const COPY: Record<LangKey, {
   eyebrow: string;
   title: string;
   intro: string;
@@ -103,11 +106,53 @@ const COPY: Record<Locale, {
       { value: "other", label: "Anna" },
     ],
   },
+  en: {
+    eyebrow: "PILAR · Pilot feedback",
+    title: "Was the report useful?",
+    intro:
+      "Your feedback helps us improve PILAR, identify weak task types and prioritise the right work before the pilot.",
+    ratingLegend: "Usefulness",
+    trustLegend: "Trust",
+    useCaseLabel: "What did you use the report for?",
+    commentLabel: "Comment",
+    commentPlaceholder: "What was useful, wrong or confusing?",
+    followup: "This should be followed up manually",
+    saving: "Saving...",
+    submit: "Send feedback",
+    back: "Back to report",
+    success: "Thank you! The feedback has been saved.",
+    error: "Could not save feedback.",
+    ratings: [
+      { value: "useful", label: "Useful" },
+      { value: "partly", label: "Partly useful" },
+      { value: "not_useful", label: "Not useful" },
+    ],
+    trusts: [
+      { value: "trusted", label: "Trusted the result" },
+      { value: "partly_trusted", label: "Partly trusted" },
+      { value: "not_trusted", label: "Did not trust" },
+      { value: "not_sure", label: "Unsure" },
+    ],
+    useCases: [
+      { value: "understand_task", label: "Understand the task" },
+      { value: "check_answer", label: "Check the answer" },
+      { value: "report_writing", label: "Write report" },
+      { value: "calculation_sheet", label: "Use calculation sheet" },
+      { value: "latex_overleaf", label: "LaTeX / Overleaf" },
+      { value: "word_report", label: "Word report" },
+      { value: "other", label: "Other" },
+    ],
+  },
 };
 
 export default function ReportFeedbackPage() {
   const { locale } = useLocale();
-  const T = COPY[locale];
+  const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  useEffect(() => {
+    setEngineeringContext(loadEngineeringContextFromStorage());
+  }, []);
+  const langKey: LangKey = isInternationalEnglishContext(engineeringContext) ? "en" : locale;
+  const T = COPY[langKey];
   const params = useParams<{ run_id: string }>();
   const runId = params?.run_id ?? null;
   const [rating, setRating] = useState<PilotFeedbackRating>("useful");

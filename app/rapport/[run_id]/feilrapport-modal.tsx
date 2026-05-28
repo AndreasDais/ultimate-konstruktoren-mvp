@@ -12,17 +12,43 @@ import { useEffect, useRef, useState } from "react";
  * - Alvorlegheits-radio (held for dag 6 sin Slack-webhook-trigger)
  * - Auto-vedlegg-blokk med Rapport-ID + Run-ID (transparens)
  * - Focus-trap, Escape-to-close, click-outside-to-close, body-scroll-lock
+ * - i18n: tek displayLanguage-prop ("nb" | "nn" | "en") frå parent
  */
 
-const ERROR_TYPES = [
-  { value: "feil_talverdi", label: "Feil tal" },
-  { value: "feil_tolking", label: "Feil tolking" },
-  { value: "feil_standardreferanse", label: "Manglar standardreferanse" },
-  { value: "uklart_sprak", label: "Uklart språk" },
-  { value: "manglande_kontroll", label: "Manglande kontroll" },
-] as const;
+type LangKey = "nb" | "nn" | "en";
 
-const SECTIONS = [
+const ERROR_TYPES: { value: string; labels: Record<LangKey, string> }[] = [
+  {
+    value: "feil_talverdi",
+    labels: { nb: "Feil tall", nn: "Feil tal", en: "Wrong number" },
+  },
+  {
+    value: "feil_tolking",
+    labels: { nb: "Feil tolkning", nn: "Feil tolking", en: "Wrong interpretation" },
+  },
+  {
+    value: "feil_standardreferanse",
+    labels: {
+      nb: "Mangler standardreferanse",
+      nn: "Manglar standardreferanse",
+      en: "Missing standard reference",
+    },
+  },
+  {
+    value: "uklart_sprak",
+    labels: { nb: "Uklart språk", nn: "Uklart språk", en: "Unclear language" },
+  },
+  {
+    value: "manglande_kontroll",
+    labels: {
+      nb: "Manglende kontroll",
+      nn: "Manglande kontroll",
+      en: "Missing check",
+    },
+  },
+];
+
+const SECTION_VALUES = [
   "Heile rapporten",
   "Samandrag",
   "Berekning",
@@ -31,11 +57,125 @@ const SECTIONS = [
   "Stegvis utrekning",
 ] as const;
 
-const SEVERITIES = [
-  { value: "low", label: "Låg" },
-  { value: "medium", label: "Middels" },
-  { value: "high", label: "Høg" },
-] as const;
+const SECTION_LABELS: Record<(typeof SECTION_VALUES)[number], Record<LangKey, string>> = {
+  "Heile rapporten": { nb: "Hele rapporten", nn: "Heile rapporten", en: "Entire report" },
+  Samandrag: { nb: "Sammendrag", nn: "Samandrag", en: "Summary" },
+  Berekning: { nb: "Beregning", nn: "Berekning", en: "Calculation" },
+  Vurdering: { nb: "Vurdering", nn: "Vurdering", en: "Assessment" },
+  Kontroll: { nb: "Kontroll", nn: "Kontroll", en: "Review" },
+  "Stegvis utrekning": {
+    nb: "Stegvis utregning",
+    nn: "Stegvis utrekning",
+    en: "Step-by-step calculation",
+  },
+};
+
+const SEVERITIES: { value: "low" | "medium" | "high"; labels: Record<LangKey, string> }[] = [
+  { value: "low", labels: { nb: "Lav", nn: "Låg", en: "Low" } },
+  { value: "medium", labels: { nb: "Middels", nn: "Middels", en: "Medium" } },
+  { value: "high", labels: { nb: "Høy", nn: "Høg", en: "High" } },
+];
+
+const COPY: Record<LangKey, {
+  title: string;
+  subtitle: string;
+  typeLabel: string;
+  typeHint: string;
+  sectionLabel: string;
+  severityLabel: string;
+  commentLabel: string;
+  commentPlaceholder: string;
+  attachmentLabel: string;
+  reportIdLabel: string;
+  runIdLabel: string;
+  cancel: string;
+  submit: string;
+  submitting: string;
+  closeAria: string;
+  successTitle: string;
+  successBody: string;
+  successClose: string;
+  errorPickType: string;
+  errorCommentShort: string;
+  errorGeneric: string;
+  errorUnknown: string;
+}> = {
+  nb: {
+    title: "Send tilbakemelding",
+    subtitle: "Hjelp oss å forbedre Pilar. Alle innsendinger blir gjennomgått manuelt.",
+    typeLabel: "Type feil",
+    typeHint: "(velg en eller flere)",
+    sectionLabel: "Hvilken del av rapporten gjelder det?",
+    severityLabel: "Alvorlighet",
+    commentLabel: "Kommentar",
+    commentPlaceholder: "Forklar hva som er feil og hva du forventet...",
+    attachmentLabel: "Følger med innsendingen",
+    reportIdLabel: "Rapport-ID:",
+    runIdLabel: "Run-ID:",
+    cancel: "Avbryt",
+    submit: "Send tilbakemelding →",
+    submitting: "Sender...",
+    closeAria: "Lukk modal",
+    successTitle: "Takk for tilbakemeldingen",
+    successBody:
+      "Innsendingen er lagret og blir gjennomgått manuelt. Bruker-tilbakemeldinger hjelper oss å fange feil som agentkontrollen ikke oppdaget, og å gjøre systemet bedre.",
+    successClose: "Lukk",
+    errorPickType: "Velg minst én feiltype.",
+    errorCommentShort: "Kommentaren må være minst 5 tegn.",
+    errorGeneric: "Kunne ikke sende tilbakemelding",
+    errorUnknown: "Ukjent feil",
+  },
+  nn: {
+    title: "Send tilbakemelding",
+    subtitle: "Hjelp oss å forbetre Pilar. Alle innsendingar blir gjennomgått manuelt.",
+    typeLabel: "Type feil",
+    typeHint: "(vel ein eller fleire)",
+    sectionLabel: "Kva del av rapporten gjeld det?",
+    severityLabel: "Alvorlegheit",
+    commentLabel: "Kommentar",
+    commentPlaceholder: "Forklar kva som er feil og kva du forventa...",
+    attachmentLabel: "Følgjer med innsendinga",
+    reportIdLabel: "Rapport-ID:",
+    runIdLabel: "Run-ID:",
+    cancel: "Avbryt",
+    submit: "Send tilbakemelding →",
+    submitting: "Sender...",
+    closeAria: "Lukk modal",
+    successTitle: "Takk for tilbakemeldinga",
+    successBody:
+      "Innsendinga er lagra og blir gjennomgått manuelt. Brukar-tilbakemeldingar hjelper oss å fange feil som agentkontrollen ikkje oppdaga, og å gjere systemet betre.",
+    successClose: "Lukk",
+    errorPickType: "Vel minst éin feiltype.",
+    errorCommentShort: "Kommentaren må vere minst 5 teikn.",
+    errorGeneric: "Kunne ikkje sende tilbakemelding",
+    errorUnknown: "Ukjend feil",
+  },
+  en: {
+    title: "Send feedback",
+    subtitle: "Help us improve PILAR. All submissions are reviewed manually.",
+    typeLabel: "Type of issue",
+    typeHint: "(select one or more)",
+    sectionLabel: "Which part of the report does it concern?",
+    severityLabel: "Severity",
+    commentLabel: "Comment",
+    commentPlaceholder: "Explain what is wrong and what you expected...",
+    attachmentLabel: "Attached to the submission",
+    reportIdLabel: "Report ID:",
+    runIdLabel: "Run ID:",
+    cancel: "Cancel",
+    submit: "Send feedback →",
+    submitting: "Sending...",
+    closeAria: "Close modal",
+    successTitle: "Thank you for the feedback",
+    successBody:
+      "Your submission has been saved and will be reviewed manually. User feedback helps us catch errors the agent review missed and improve the system.",
+    successClose: "Close",
+    errorPickType: "Select at least one issue type.",
+    errorCommentShort: "The comment must be at least 5 characters.",
+    errorGeneric: "Could not send feedback",
+    errorUnknown: "Unknown error",
+  },
+};
 
 type Severity = "low" | "medium" | "high";
 type SubmitState = "idle" | "submitting" | "submitted" | "error";
@@ -46,6 +186,8 @@ type Props = {
   reportId: string;
   documentId: string;
   runId: string;
+  /** "nb" | "nn" | "en" — frå parent (typisk reportDisplayLanguage). Default "nb". */
+  displayLanguage?: LangKey;
 };
 
 export default function FeilrapportModal({
@@ -54,7 +196,9 @@ export default function FeilrapportModal({
   reportId,
   documentId,
   runId,
+  displayLanguage = "nb",
 }: Props) {
+  const T = COPY[displayLanguage];
   const [errorTypes, setErrorTypes] = useState<string[]>([]);
   const [section, setSection] = useState<string>("Heile rapporten");
   const [severity, setSeverity] = useState<Severity>("medium");
@@ -136,11 +280,11 @@ export default function FeilrapportModal({
     setErrorMessage("");
 
     if (errorTypes.length === 0) {
-      setErrorMessage("Vel minst éin feiltype.");
+      setErrorMessage(T.errorPickType);
       return;
     }
     if (comment.trim().length < 5) {
-      setErrorMessage("Kommentaren må vere minst 5 teikn.");
+      setErrorMessage(T.errorCommentShort);
       return;
     }
 
@@ -161,12 +305,12 @@ export default function FeilrapportModal({
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Kunne ikkje sende tilbakemelding");
+        throw new Error(err.error || T.errorGeneric);
       }
 
       setSubmitState("submitted");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Ukjend feil";
+      const msg = e instanceof Error ? e.message : T.errorUnknown;
       setErrorMessage(msg);
       setSubmitState("error");
     }
@@ -190,15 +334,11 @@ export default function FeilrapportModal({
       >
         {submitState === "submitted" ? (
           <div className="feilrapport-modal__success">
-            <h2 id="feilrapport-modal-title">Takk for tilbakemeldinga</h2>
-            <p>
-              Innsendinga er lagra og blir gjennomgått manuelt. Brukar-tilbakemeldingar
-              hjelper oss å fange feil som agentkontrollen ikkje oppdaga, og å gjere
-              systemet betre.
-            </p>
+            <h2 id="feilrapport-modal-title">{T.successTitle}</h2>
+            <p>{T.successBody}</p>
             <div className="feilrapport-modal__actions">
               <button onClick={handleClose} className="uk-btn uk-btn--primary">
-                Lukk
+                {T.successClose}
               </button>
             </div>
           </div>
@@ -208,23 +348,21 @@ export default function FeilrapportModal({
               type="button"
               className="feilrapport-modal__close"
               onClick={handleClose}
-              aria-label="Lukk modal"
+              aria-label={T.closeAria}
               tabIndex={-1}
             >
               ×
             </button>
 
             <h2 id="feilrapport-modal-title" className="feilrapport-modal__title">
-              Send tilbakemelding
+              {T.title}
             </h2>
-            <p className="feilrapport-modal__subtitle">
-              Hjelp oss å forbetre Pilar. Alle innsendingar blir gjennomgått manuelt.
-            </p>
+            <p className="feilrapport-modal__subtitle">{T.subtitle}</p>
 
             {/* TYPE-CHIPS (multi-select) */}
             <div className="feilrapport-modal__field">
               <span className="feilrapport-modal__label">
-                Type feil <span className="feilrapport-modal__label-hint">(vel ein eller fleire)</span>
+                {T.typeLabel} <span className="feilrapport-modal__label-hint">{T.typeHint}</span>
               </span>
               <div className="feilrapport-modal__chips" role="group">
                 {ERROR_TYPES.map((t, i) => {
@@ -240,7 +378,7 @@ export default function FeilrapportModal({
                       onClick={() => toggleType(t.value)}
                       aria-pressed={active}
                     >
-                      {t.label}
+                      {t.labels[displayLanguage]}
                     </button>
                   );
                 })}
@@ -250,7 +388,7 @@ export default function FeilrapportModal({
             {/* SEKSJON-DROPDOWN */}
             <div className="feilrapport-modal__field">
               <label htmlFor="fr-section" className="feilrapport-modal__label">
-                Kva del av rapporten gjeld det?
+                {T.sectionLabel}
               </label>
               <select
                 id="fr-section"
@@ -258,15 +396,15 @@ export default function FeilrapportModal({
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
               >
-                {SECTIONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                {SECTION_VALUES.map((s) => (
+                  <option key={s} value={s}>{SECTION_LABELS[s][displayLanguage]}</option>
                 ))}
               </select>
             </div>
 
             {/* ALVORLEGHEIT */}
             <div className="feilrapport-modal__field">
-              <span className="feilrapport-modal__label">Alvorlegheit</span>
+              <span className="feilrapport-modal__label">{T.severityLabel}</span>
               <div className="feilrapport-modal__severity" role="radiogroup">
                 {SEVERITIES.map((s) => (
                   <label key={s.value} className="feilrapport-modal__severity-option">
@@ -277,7 +415,7 @@ export default function FeilrapportModal({
                       checked={severity === s.value}
                       onChange={() => setSeverity(s.value as Severity)}
                     />
-                    <span>{s.label}</span>
+                    <span>{s.labels[displayLanguage]}</span>
                   </label>
                 ))}
               </div>
@@ -286,14 +424,14 @@ export default function FeilrapportModal({
             {/* KOMMENTAR */}
             <div className="feilrapport-modal__field">
               <label htmlFor="fr-comment" className="feilrapport-modal__label">
-                Kommentar
+                {T.commentLabel}
               </label>
               <textarea
                 id="fr-comment"
                 className="feilrapport-modal__textarea"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Forklar kva som er feil og kva du forventa..."
+                placeholder={T.commentPlaceholder}
                 rows={5}
               />
             </div>
@@ -301,11 +439,11 @@ export default function FeilrapportModal({
             {/* AUTO-VEDLEGG */}
             <div className="feilrapport-modal__attachment">
               <div className="feilrapport-modal__attachment-label">
-                Følgjer med innsendinga
+                {T.attachmentLabel}
               </div>
               <pre className="feilrapport-modal__attachment-data">
-{`Rapport-ID:  ${documentId}
-Run-ID:      ${runId.slice(0, 8)}…`}
+{`${T.reportIdLabel}  ${documentId}
+${T.runIdLabel}      ${runId.slice(0, 8)}…`}
               </pre>
             </div>
 
@@ -322,14 +460,14 @@ Run-ID:      ${runId.slice(0, 8)}…`}
                 className="uk-btn"
                 disabled={submitState === "submitting"}
               >
-                Avbryt
+                {T.cancel}
               </button>
               <button
                 onClick={handleSubmit}
                 className="uk-btn uk-btn--primary"
                 disabled={submitState === "submitting"}
               >
-                {submitState === "submitting" ? "Sender..." : "Send tilbakemelding →"}
+                {submitState === "submitting" ? T.submitting : T.submit}
               </button>
             </div>
           </>
