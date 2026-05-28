@@ -4,6 +4,8 @@ import fs from "node:fs";
 const DEFAULT_CASES = "qa/evals/pilar-core-evals.jsonl";
 const DEFAULT_SCRATCH_DIR = "/tmp/pilar-live-eval";
 const DRY_RUN_ID = "dry-run";
+const BUNDLE_SCHEMA_VERSION = "live-eval-artifact-bundle.v0";
+const RUNNER_PATH = "scripts/run-eval-case-live.mjs";
 const BUNDLE_FILES = [
   "manifest.json",
   "runrecord-summary.json",
@@ -129,6 +131,7 @@ function joinBundlePath(scratchDir, caseId, runId) {
 
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
+  const manualReviewRequired = Boolean(evalCase.manual_review_required);
 
   return {
     case_id: evalCase.case_id,
@@ -142,10 +145,21 @@ function buildDryRunPlan(evalCase, args) {
     run_status: "SKIP",
     eval_status: "SKIP",
     dry_run: true,
-    manual_review_required: Boolean(evalCase.manual_review_required),
+    manual_review_required: manualReviewRequired,
     artifact_bundle: {
       path: bundlePath,
       files: BUNDLE_FILES,
+    },
+    manifest_preview: {
+      schema_version: BUNDLE_SCHEMA_VERSION,
+      case_id: evalCase.case_id,
+      run_id: null,
+      created_at: null,
+      manual_review_required: manualReviewRequired,
+      source: {
+        cases_path: args.casesPath,
+        runner: RUNNER_PATH,
+      },
     },
     rule_summary: {
       checked: 0,
@@ -175,6 +189,8 @@ function formatTextPlan(plan) {
     `eval_status: ${plan.eval_status}`,
     `artifact_bundle: ${plan.artifact_bundle.path}`,
     `artifact_files: ${plan.artifact_bundle.files.join(", ")}`,
+    `manifest_schema: ${plan.manifest_preview.schema_version}`,
+    `manifest_case_id: ${plan.manifest_preview.case_id}`,
     `manual_review_required: ${plan.manual_review_required}`,
     "live_pipeline_execution: false",
     "supabase_reads: false",
