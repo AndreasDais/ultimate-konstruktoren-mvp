@@ -78,6 +78,7 @@ case_id
 run_id, if a run was created or inspected
 run_status
 eval_status: PASS | FAIL | WARN | SKIP
+bundle_status: PASS | FAIL | WARN | SKIP
 artifact bundle path, if written outside the repo
 offline grading commands for the artifact bundle, if planned
 rule checks summary
@@ -94,6 +95,7 @@ JSON output should use stable snake_case keys:
   "run_id": "uuid-or-null",
   "run_status": "completed",
   "eval_status": "WARN",
+  "bundle_status": "WARN",
   "manual_review_required": true,
   "artifact_bundle": {
     "path": "/tmp/pilar-live-eval/pilar_eval_example_001",
