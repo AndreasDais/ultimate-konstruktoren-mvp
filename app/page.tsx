@@ -1409,18 +1409,28 @@ useEffect(() => {
         }
 
         /* Hover på chips — only når stagger er ferdig (--visible aktivert).
-           Litt scale + lyft for å vise at pille-formen er klikkbar.
-           Transition på --visible-klassen sikrar at hover-endringen får
-           smooth easing utan å konflikte med stagger-animasjonen (animation
-           er ferdig før hover skjer). */
+           POST-REDESIGN: tidlegare translateY(-2px) + scale(1.06) gjorde
+           kontrollør-kortet til ein hoppande pile-rad. Erstatta med subtil
+           bakgrunns-tint + box-shadow utan layout-skift, slik at fokus held
+           seg på innhaldet og chevron-rotasjonen er den primære affordancen. */
         .pilar-chip-stagger.pilar-chip-stagger--visible {
           transition:
-            transform 0.18s cubic-bezier(0.2, 0.9, 0.25, 1),
+            background-color 0.18s ease,
+            border-color 0.18s ease,
             box-shadow 0.18s ease,
-            border-radius 0.15s ease,
-            padding 0.15s ease;
+            padding 0.18s cubic-bezier(0.2, 0.9, 0.25, 1);
         }
-        .pilar-chip-stagger.pilar-chip-stagger--visible:hover:not(:disabled) {
+        .pilar-kontrollor-row.pilar-chip-stagger--visible:hover:not(:disabled) {
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+          filter: brightness(0.985);
+        }
+        .pilar-kontrollor-row.pilar-chip-stagger--visible:focus-visible {
+          outline: 2px solid var(--fg);
+          outline-offset: 2px;
+        }
+        /* Bevar gamal hover for chips utanfor kontrollør-kortet (om dei
+           framleis finst etter refaktor). Fjern når alle har migrert. */
+        .pilar-chip-stagger.pilar-chip-stagger--visible:not(.pilar-kontrollor-row):hover:not(:disabled) {
           transform: translateY(-2px) scale(1.06);
           box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
         }

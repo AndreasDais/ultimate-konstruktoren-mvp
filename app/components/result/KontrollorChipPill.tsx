@@ -1,43 +1,66 @@
 "use client";
 
 /**
- * KontrollorChipPill (#02) — kompakt chip for fag-flagg i Controller-kortet.
+ * KontrollorChipPill — card-row for fag-flagg i Controller-kortet.
  *
- * Klikk på chip utvidar han inline til å vise full tekst (multi-linje,
- * wrappa). Klikk igjen kollapsar tilbake til truncert form. Multiple
- * chips kan vere utvida samtidig — kvar chip styrer sin eigen state.
+ * REDESIGN (post-launch polish):
+ * - Pille-form bytta til konsistent card-row med colored left border.
+ *   Tone er no kommunisert via 3px farga border-left (info=grøn,
+ *   warn=raud-orange, neutral=grå), ikkje via full bakgrunns-tint.
+ * - Eksplisitt chevron til høgre signaliserer expand/collapse.
+ * - Aura-pulsen (CSS-keyframe pilar-chip-aura-kf) er fjerna — han
+ *   var den primære kjelda til "buggy"-kjensla.
+ * - Stagger-entrance behaldt, men raskare (40ms × index, max 320ms).
+ * - Hover er subtil border-color shift i staden for translateY/scale,
+ *   slik at layout er stabilt under interaksjon.
  *
- * Designval: Inline-utviding i staden for popover gjer at studenten kan
- * samanlikne fleire faglege merknader side om side utan å miste kontekst.
- * Pille-radius vert redusert til 8px ved utviding for å handtere multi-
- * linje pent (full pill-radius ser rart ut når innhaldet wrappar).
- *
- * Splitta ut frå app/page.tsx i refaktor-fase 3.
+ * Innhald-API uendra: chip.text / chip.body / chip.prefix / chip.tone.
  */
 
 import { useEffect, useRef, useState } from "react";
 import type { KontrollorChip } from "@/lib/result/types";
 
-// Pille-radius vert redusert til 8px ved utviding for å handtere multi-
-// linje pent (full pill-radius ser rart ut når innhaldet wrappar).
+type ToneStyle = {
+  borderLeft: string;
+  bg: string;
+  border: string;
+  prefixColor: string;
+};
+
+const TONE_STYLES: Record<"info" | "warn" | "neutral", ToneStyle> = {
+  info: {
+    borderLeft: "rgba(79, 139, 110, 0.85)", // grøn — same familie som ok-badge
+    bg: "rgba(79, 139, 110, 0.04)",
+    border: "rgba(79, 139, 110, 0.18)",
+    prefixColor: "rgb(79, 139, 110)",
+  },
+  warn: {
+    borderLeft: "rgba(184, 138, 60, 0.85)", // amber — varsel
+    bg: "rgba(184, 138, 60, 0.05)",
+    border: "rgba(184, 138, 60, 0.22)",
+    prefixColor: "rgb(184, 138, 60)",
+  },
+  neutral: {
+    borderLeft: "var(--border-strong, rgba(0,0,0,0.25))",
+    bg: "var(--surface, transparent)",
+    border: "var(--border, rgba(0,0,0,0.12))",
+    prefixColor: "var(--fg-muted)",
+  },
+};
+
 export function KontrollorChipPill({
   chip,
   index = 0,
-  enableAura = false,
+  enableAura: _enableAura = false, // deprecated — held for backward-compat
   fullWidth = false,
 }: {
   chip: KontrollorChip;
   index?: number;
+  /** @deprecated aura-pulsen er fjerna i redesign. Param held for API-stabilitet. */
   enableAura?: boolean;
-  /** True når chipen er del av ein vertikal liste — strekker til full bredde.
-   *  False (default) gir pille-form som passer innhaldet (brukt for korte
-   *  konfidens-chips i wrap-rad). */
   fullWidth?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  // hasAppeared (#anim-02): triggrar stagger-animasjonen først når chipen
-  // er minst 10% synleg i viewporten. Brukar sin auga er på Controller-
-  // kortet øvst først, så animasjonen må vente til dei faktisk ser raden.
   const [hasAppeared, setHasAppeared] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -65,28 +88,13 @@ export function KontrollorChipPill({
     return () => obs.disconnect();
   }, [hasAppeared]);
 
-  const toneStyles: Record<"info" | "warn" | "neutral", { bg: string; border: string; color: string }> = {
-    info: {
-      bg: "rgba(79, 139, 110, 0.06)", // grøn-tona som matchar uk-badge--ok
-      border: "rgba(79, 139, 110, 0.4)",
-      color: "var(--fg)",
-    },
-    warn: {
-      bg: "var(--surface-2)",
-      border: "var(--border)",
-      color: "var(--fg-2)",
-    },
-    neutral: {
-      bg: "var(--surface)",
-      border: "var(--border)",
-      color: "var(--fg-2)",
-    },
-  };
-  const s = toneStyles[chip.tone];
-  // Chip er klikkbar only om det finst meir tekst å vise — dvs. body
-  // eksisterer og er forskjellig frå den synlege chip-teksten.
+  const s = TONE_STYLES[chip.tone];
   const isExpandable =
     !!chip.body && chip.body.trim() !== chip.text.trim();
+
+  // Stagger-delay raskare enn før (var 80ms × max 800ms — for langsamt).
+  // No 40ms × index, klampes til 320ms (8 chips).
+  const staggerDelayMs = Math.min(index * 40, 320);
 
   return (
     <button
@@ -97,86 +105,91 @@ export function KontrollorChipPill({
       disabled={!isExpandable}
       className={[
         "pilar-chip-stagger",
+        "pilar-kontrollor-row",
         hasAppeared ? "pilar-chip-stagger--visible" : "",
-        enableAura && isExpandable && !expanded && hasAppeared ? "pilar-chip-aura" : "",
+        expanded ? "pilar-kontrollor-row--expanded" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       style={{
-        display: fullWidth ? "flex" : "inline-flex",
-        alignItems: "flex-start", // top-align for multi-linje
-        gap: 5,
-        // Padding: kompakt for pille (konfidens), litt meir for full-bredde
-        // fag-chips (gir luft når dei står som vertikal liste).
-        padding: expanded
-          ? "10px 14px 12px"
-          : fullWidth
-            ? "6px 12px"
-            : "4px 10px",
+        // Layout: full bredde card-row med chevron til høgre.
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        width: fullWidth ? "100%" : "auto",
+        // Padding skalerer mildt med expand — meir luft når body vist.
+        padding: expanded ? "10px 12px 12px" : "8px 12px",
+        // Visuell ramme: tynn rundt + 3px farga venstre.
         background: s.bg,
         border: `1px solid ${s.border}`,
-        // borderRadius: pille (999) for kompakte konfidens-chips, rounded-
-        // rect (8) for full-bredde fag-chips og for alle utvida chips.
-        borderRadius: expanded || fullWidth ? 8 : 999,
-        fontSize: expanded ? 13 : fullWidth ? 12.5 : 12,
-        color: s.color,
+        borderLeft: `3px solid ${s.borderLeft}`,
+        borderRadius: 6,
+        // Typografi
+        fontSize: expanded ? 13 : fullWidth ? 13 : 12,
+        color: "var(--fg)",
         lineHeight: expanded ? 1.6 : 1.5,
-        whiteSpace: expanded ? "normal" : "nowrap",
-        overflow: expanded ? "visible" : "hidden",
-        textOverflow: expanded ? "clip" : "ellipsis",
-        cursor: isExpandable ? "pointer" : "default",
-        fontFamily: "inherit",
         textAlign: "left",
-        // Full bredde only når fullWidth-prop er sett (vertikal liste).
-        // maxWidth begrenser utvida prosa-blokk til ~720px for lesbarheit.
-        width: fullWidth ? "100%" : undefined,
-        maxWidth: expanded
-          ? "min(100%, 720px)"
-          : fullWidth
-            ? "100%"
-            : undefined,
-        // transition: flytta til CSS (.pilar-chip-stagger--visible) slik at
-        // hover sin transform/box-shadow får same smooth easing utan å bli
-        // overskriven av inline-style.
-        // Stagger-forsinking: 80ms per chip-index. Klampes til 800ms max
-        // for store chip-lister. Køyrer only når --visible-klassen er sett.
-        animationDelay: `${Math.min(index * 80, 800)}ms`,
-        // Aura-bølge nedover: kvar chip startar sin aura-puls litt etter
-        // forrige, slik at pulsen renner frå topp til bunn av lista.
-        // 250ms per chip-posisjon, klampes til 4s max. Pilar-aura sin
-        // animation-delay les denne custom property'n.
-        ["--aura-delay" as string]: `${1.5 + Math.min(index * 0.25, 4)}s`,
+        fontFamily: "inherit",
+        cursor: isExpandable ? "pointer" : "default",
+        // maxWidth: lesbarheits-grense for prosa når utvida.
+        maxWidth: expanded ? "min(100%, 720px)" : "100%",
+        // Stagger-animasjon (definert i app/page.tsx inline CSS):
+        // .pilar-chip-stagger er usynleg som default, .--visible spelar
+        // av pilar-stagger-in keyframe. Vi controllar berre delay her.
+        animationDelay: `${staggerDelayMs}ms`,
       }}
     >
-      {chip.prefix && (
+      {/* Innhalds-kolonne — tek alt tilgjengeleg plass. */}
+      <span
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: expanded ? 8 : 0,
+        }}
+      >
+        {/* Tittel-rad med valfri prefix-tag (t.d. "+" eller "⚠"). */}
         <span
           style={{
-            fontWeight: 600,
-            opacity: 0.85,
-            flexShrink: 0,
-            lineHeight: 1.5,
-            // Når utvida, hold prefix-en oppe på linje med overskrifta
-            marginTop: expanded ? 1 : 0,
+            display: "flex",
+            alignItems: "baseline",
+            gap: 8,
+            minWidth: 0,
           }}
         >
-          {chip.prefix}
+          {chip.prefix && (
+            <span
+              style={{
+                fontWeight: 600,
+                color: s.prefixColor,
+                flexShrink: 0,
+                fontSize: 11,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                opacity: 0.95,
+              }}
+            >
+              {chip.prefix}
+            </span>
+          )}
+          <span
+            style={{
+              fontWeight: expanded ? 600 : 500,
+              color: expanded ? "var(--fg)" : "var(--fg)",
+              whiteSpace: expanded ? "normal" : "nowrap",
+              overflow: expanded ? "visible" : "hidden",
+              textOverflow: expanded ? "clip" : "ellipsis",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {chip.text}
+          </span>
         </span>
-      )}
-      <span style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: expanded ? 8 : 0 }}>
-        {/* Overskrift — alltid synleg. Når utvida, fed for å vise det er ein
-            tittel; når kollapsa, normal vekt. */}
-        <span
-          style={{
-            fontWeight: expanded ? 600 : 400,
-            color: expanded ? "var(--fg)" : s.color,
-          }}
-        >
-          {chip.text}
-        </span>
-        {/* Body — only når utvida. Prosa-tekst splitta i avsnitt på
-            setningsgrenser (punktum + space + stor bokstav) for å gjere
-            lange forklaringar lettare å skanne. Engineer-namn vert markert
-            fed slik at lesaren raskt kan sjå kva som gjeld kva agent. */}
+
+        {/* Body — vist berre når utvida. Setningsbasert avsnitt-splitting
+            for skanning, Engineer-namn fed for kjapp visuell parsing. */}
         {expanded && chip.body && (
           <span
             style={{
@@ -187,18 +200,17 @@ export function KontrollorChipPill({
               display: "flex",
               flexDirection: "column",
               gap: 10,
+              // Tynn separator over body for visuell hierarki.
+              paddingTop: 10,
+              borderTop: `1px solid ${s.border}`,
             }}
           >
             {chip.body
-              // Splitt på setningsgrenser: punktum/utropsteikn/spørsmålsteikn
-              // etterfølgt av whitespace + stor bokstav. Lookbehind/lookahead
-              // sikrar at vi ikkje splittar inne i forkortingar eller tal.
               .split(/(?<=[.!?])\s+(?=[A-ZÆØÅ])/)
               .map((sentence) => sentence.trim())
               .filter(Boolean)
               .map((sentence, i) => (
                 <span key={i}>
-                  {/* Detekter konstruktør-prefix og marker fed for skanning */}
                   {(() => {
                     const m = sentence.match(/^(Engineer [AB]s?|Both engineers?|Begge tilnærminger?)/);
                     if (!m) return sentence;
@@ -216,6 +228,24 @@ export function KontrollorChipPill({
           </span>
         )}
       </span>
+
+      {/* Chevron — vist berre om chipen er expandable. Roterer 90° når
+          opna (animasjon styrt av .pilar-chevron i global CSS). */}
+      {isExpandable && (
+        <span
+          aria-hidden="true"
+          className={`pilar-chevron${expanded ? " pilar-chevron--open" : ""}`}
+          style={{
+            color: "var(--fg-muted)",
+            fontSize: 11,
+            lineHeight: 1.5,
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          ▸
+        </span>
+      )}
     </button>
   );
 }
