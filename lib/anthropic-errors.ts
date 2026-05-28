@@ -75,6 +75,18 @@ export function formatAnthropicError(
 ): { message: string; status: number } {
   const lang: Locale = locale ?? "nb";
 
+  // === 0. Tilkoplings-feil. SDK kastar APIConnectionError når connect/nett
+  // feilar (t.d. api.anthropic.com via Cloudflare nede). Dei arvar APIError
+  // men har status=undefined, så alle status-sjekkane under bommar og dei
+  // ville falle til generisk 500. Sjekk dei eksplisitt FØRST. Timeout er ein
+  // subklasse av connection, så han må testast før den meir generelle. ===
+  if (err instanceof Anthropic.APIConnectionTimeoutError) {
+    return { message: ERROR_MESSAGES.timeout[lang], status: 504 };
+  }
+  if (err instanceof Anthropic.APIConnectionError) {
+    return { message: ERROR_MESSAGES.network[lang], status: 503 };
+  }
+
   // === 1. Anthropic SDK APIError-instansar (vanlegaste tilfelle) ===
   if (err instanceof Anthropic.APIError) {
     // 529 Overloaded — Anthropic-side metning, transient
