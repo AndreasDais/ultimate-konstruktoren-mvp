@@ -47,6 +47,7 @@ const requiredExpected = [
 
 const priorities = new Set(["P0", "P1", "P2"]);
 const displayLanguages = new Set(["nb", "nn", "en", "fr", "de"]);
+const tagPattern = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/;
 let parsedCount = 0;
 
 for (const [index, line] of lines.entries()) {
@@ -92,8 +93,30 @@ for (const [index, line] of lines.entries()) {
     fail(`line ${lineNumber}: manual_review_required must be boolean`);
   }
 
-  if (!asArray(item.tags)) {
+  const tags = asArray(item.tags);
+  if (!tags) {
     fail(`line ${lineNumber}: tags must be an array`);
+  } else {
+    const seenTags = new Set();
+    for (const tag of tags) {
+      if (typeof tag !== "string" || tag.trim() === "") {
+        fail(`line ${lineNumber}: tags entries must be non-empty strings`);
+        break;
+      }
+
+      if (!tagPattern.test(tag)) {
+        fail(`line ${lineNumber}: tag '${tag}' must be lowercase kebab/dotted format`);
+      }
+
+      if (/^p[0-2]$/.test(tag)) {
+        fail(`line ${lineNumber}: tag '${tag}' duplicates the top-level priority field`);
+      }
+
+      if (seenTags.has(tag)) {
+        fail(`line ${lineNumber}: duplicate tag '${tag}'`);
+      }
+      seenTags.add(tag);
+    }
   }
 
   const targetAgents = asArray(item.target_agents);
