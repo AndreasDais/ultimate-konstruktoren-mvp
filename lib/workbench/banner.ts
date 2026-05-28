@@ -9,9 +9,18 @@
 
 import type { Locale } from "@/lib/locale";
 import type { AgentResult } from "./types";
-import { WB_LABELS } from "@/lib/result/labels";
+import { WB_LABELS as BASE_WB_LABELS } from "@/lib/result/labels";
 
-export function getBannerDetail(result: AgentResult, locale: Locale): string {
+/**
+ * Bygg detail-tekst til status-banneret. Tek valfritt eit `labels`-objekt
+ * (typisk proxied WB_LABELS frå page.tsx) for å støtte intl-engelsk via
+ * buildLocalizedLabelProxy. Default er BASE_WB_LABELS (norsk).
+ */
+export function getBannerDetail(
+  result: AgentResult,
+  locale: Locale,
+  labels: typeof BASE_WB_LABELS = BASE_WB_LABELS,
+): string {
   const nMangler = result.manglande_verdiar?.length ?? 0;
   const nKanReknast = result.kan_reknast_no?.length ?? 0;
   // Capitaliser fagområde-første-bokstav slik at "stål" → "Stål" i banner.
@@ -25,27 +34,27 @@ export function getBannerDetail(result: AgentResult, locale: Locale): string {
   switch (result.status) {
     case "klar":
       parts.push(
-        WB_LABELS.bannerKlarDetail[locale].replace("{n}", String(nKanReknast)),
+        labels.bannerKlarDetail[locale].replace("{n}", String(nKanReknast)),
       );
       break;
     case "delvis_klar":
       parts.push(
-        WB_LABELS.bannerDelvisDetail[locale].replace("{n}", String(nMangler)),
+        labels.bannerDelvisDetail[locale].replace("{n}", String(nMangler)),
       );
       break;
     case "mangelfull":
-      return WB_LABELS.bannerMangelfullDetail[locale].replace(
+      return labels.bannerMangelfullDetail[locale].replace(
         "{n}",
         String(nMangler),
       );
     case "relevant_ikkje_stotta":
-      parts.push(WB_LABELS.bannerIkkjeStottaDetail[locale]);
+      parts.push(labels.bannerIkkjeStottaDetail[locale]);
       break;
     case "avvist":
-      return WB_LABELS.bannerAvvistDetail[locale];
+      return labels.bannerAvvistDetail[locale];
     case "uklart":
     case "uklar":
-      return WB_LABELS.bannerUklartDetail[locale];
+      return labels.bannerUklartDetail[locale];
   }
 
   return parts.join(" · ");

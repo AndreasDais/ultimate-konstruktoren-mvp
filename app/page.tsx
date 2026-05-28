@@ -64,7 +64,7 @@ import type { AgentResult, Phase, ValueCategory } from "@/lib/workbench/types";
 import {
   MAX_FILE_SIZE,
   ACCEPTED_FILE_TYPES,
-  EXAMPLE_PROMPTS,
+  getExamplePrompts,
   PHASE_HEADERS,
 } from "@/lib/workbench/constants";
 import { getBlockedReason } from "@/lib/workbench/blocked-reason";
@@ -158,6 +158,8 @@ export default function Home() {
     stromer: "● STREAMING",
     inputstatusExplanation:
       "PILAR's assessment of how ready the task is to be calculated. 'Ready' = all info in place. 'Partly ready' = PILAR has made reasonable assumptions (shown above) which you can adjust before starting. Other statuses need more input or fall outside the pilot version.",
+    lastOppStottefil: "+ Upload support file",
+    filFormatHint: "PDF, PNG, DOCX — PILAR reads the task and attachment together.",
   });
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
@@ -1713,7 +1715,7 @@ useEffect(() => {
                 <div style={{ marginTop: 20 }}>
                   <div className="uk-eyebrow" style={{ marginBottom: 10 }}>{WB_LABELS.eksempel[locale]}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
-                    {EXAMPLE_PROMPTS.map((example, i) => (
+                    {getExamplePrompts(pageDisplayLanguage, engineeringContext?.standards?.family).map((example, i) => (
                       <button
                         key={i}
                         type="button"
@@ -1884,7 +1886,7 @@ useEffect(() => {
                             </div>
                           }
                         >
-                          {getBannerDetail(result, locale)}
+                          {getBannerDetail(result, locale, WB_LABELS)}
                         </StatusStripe>
                         {typeof result.konfidens === "number" && result.konfidens < 0.7 && (
                           <p
