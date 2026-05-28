@@ -1,12 +1,13 @@
 # PILAR Live Eval Runner Contract
 
-**Status:** Draft contract  
+**Status:** Draft contract with dry-run implementation  
 **Lane:** Chat A / Live Eval Bridge  
 **Runtime impact:** None  
 
-This contract defines the smallest safe boundary for a future single-case live
-eval runner. It does not implement the runner. The goal is to make the first
-implementation boring, auditable, and hard to confuse with offline readiness.
+This contract defines the smallest safe boundary for a single-case live eval
+runner. The first implementation is a dry-run planner only. The goal is to make
+future live execution boring, auditable, and hard to confuse with offline
+readiness.
 
 ## Purpose
 
@@ -45,6 +46,7 @@ node scripts/run-eval-case-live.mjs --case-id <case_id> --scratch-dir /tmp/pilar
 ```
 
 Default mode should be dry-run until the implementation has explicit safeguards.
+The current implementation always behaves as a dry-run planner.
 
 ## Inputs
 
@@ -149,7 +151,7 @@ Missing trace data should produce `WARN` or `FAIL`, not a silent pass.
 
 ## First implementation boundary
 
-The first implementation should start with `--dry-run` and `--case-id` lookup
-only. It can print the planned runtime action and the expected scratch paths.
-Actual pipeline execution should wait until Chat B confirms the runtime read
-path and artifact bundle are stable enough.
+The current implementation starts with `--dry-run` and `--case-id` lookup only.
+It prints the planned runtime action and expected scratch paths. Actual pipeline
+execution should wait until Chat B confirms the runtime read path and artifact
+bundle are stable enough.

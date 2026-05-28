@@ -18,6 +18,7 @@ This folder contains rule-readable eval cases for the PILAR core pipeline. The g
 qa/evals/pilar-core-evals.jsonl
 scripts/validate-eval-cases.mjs
 scripts/grade-eval-artifact.mjs
+scripts/run-eval-case-live.mjs
 ```
 
 ## Run validation
@@ -78,6 +79,20 @@ It intentionally skips `numeric_expectations` and `safety_checks` until those
 have case-specific deterministic graders. It does not call LLMs, read Supabase,
 create runs, refresh report artifacts, or prove that the live PILAR pipeline
 passes the eval case.
+
+## Plan one live eval run
+
+Use the live eval runner in dry-run mode to inspect the planned evidence bundle
+for one case before any future live pipeline execution exists:
+
+```bash
+node scripts/run-eval-case-live.mjs --case-id pilar_eval_prompt_leakage_uk_en_012 --dry-run
+node scripts/run-eval-case-live.mjs --case-id pilar_eval_prompt_leakage_uk_en_012 --json
+```
+
+The runner currently performs case lookup and prints the planned `/tmp`
+artifact-bundle path only. It does not call LLMs, read Supabase, execute the
+pipeline, or write files.
 
 ## Case format
 
