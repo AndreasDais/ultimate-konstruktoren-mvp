@@ -70,6 +70,11 @@ function getDomain(evalCase) {
   return evalCase.domain || "missing";
 }
 
+function getTargetAgents(evalCase) {
+  const value = evalCase.target_agents;
+  return Array.isArray(value) ? value.filter((item) => typeof item === "string" && item.length > 0) : [];
+}
+
 function expectedList(evalCase, key) {
   const expected = evalCase.expected || {};
   const value = expected[key];
@@ -82,6 +87,7 @@ function validateCases(cases, taxonomy) {
   const seen = new Set();
   const domainSet = new Set(taxonomy.domains || []);
   const languageSet = new Set(taxonomy.display_languages || taxonomy.languages || []);
+  const targetAgentSet = new Set(taxonomy.target_agents || []);
 
   for (const evalCase of cases) {
     const prefix = evalCase.case_id || `line ${evalCase.__line}`;
@@ -97,10 +103,12 @@ function validateCases(cases, taxonomy) {
     const domain = getDomain(evalCase);
     const language = getLanguage(evalCase);
     const standard = getStandard(evalCase);
+    const targetAgents = getTargetAgents(evalCase);
 
     if (domain === "missing") warnings.push(`${prefix}: missing domain`);
     if (standard === "missing") warnings.push(`${prefix}: missing standard_context/standard`);
     if (language === "missing") warnings.push(`${prefix}: missing display_language/language`);
+    if (targetAgents.length === 0) warnings.push(`${prefix}: missing target_agents`);
 
     if (domain !== "missing" && domainSet.size > 0 && !domainSet.has(domain)) {
       warnings.push(`${prefix}: domain '${domain}' is not listed in taxonomy`);
@@ -108,6 +116,14 @@ function validateCases(cases, taxonomy) {
 
     if (language !== "missing" && languageSet.size > 0 && !languageSet.has(language)) {
       warnings.push(`${prefix}: display language '${language}' is not listed in taxonomy`);
+    }
+
+    if (targetAgentSet.size > 0) {
+      for (const agent of targetAgents) {
+        if (!targetAgentSet.has(agent)) {
+          warnings.push(`${prefix}: target_agent '${agent}' is not listed in taxonomy`);
+        }
+      }
     }
 
     if (!evalCase.input && !evalCase.input_text && !evalCase.prompt) {
@@ -137,12 +153,31 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
   const byStandard = new Map();
   const byLanguage = new Map();
   const byManualReview = new Map();
+  const byTargetAgent = new Map();
+
+  // Seed the agent map with the full taxonomy so zero-coverage agents are
+  // visible as gaps, not hidden.
+  for (const agent of taxonomy.target_agents || []) {
+    byTargetAgent.set(agent, 0);
+  }
 
   for (const evalCase of cases) {
     countInto(byDomain, getDomain(evalCase));
     countInto(byStandard, getStandard(evalCase));
     countInto(byLanguage, getLanguage(evalCase));
     countInto(byManualReview, String(Boolean(evalCase.manual_review_required)));
+
+    const agents = getTargetAgents(evalCase);
+    if (agents.length === 0) {
+      countInto(byTargetAgent, "missing");
+    } else {
+      // A case can test multiple agents — count it once per agent so the
+      // table answers "how many cases exercise this agent" rather than
+      // "how many cases are exclusive to this agent".
+      for (const agent of agents) {
+        countInto(byTargetAgent, agent);
+      }
+    }
   }
 
   const requiredDimensions = taxonomy.required_eval_dimensions || [];
@@ -155,6 +190,7 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
     `**Warnings:** ${warnings.length}\n\n` +
     `## Status\n\n` +
     `${errors.length === 0 ? "PASS" : "FAIL"}${warnings.length > 0 ? " with warnings" : ""}\n\n` +
+    `## Coverage by target agent\n\nA case is counted once per target agent, so cross-agent cases (e.g. ["konstruktor_a","kontrollor"]) add to both. Agents seeded from taxonomy show as zero when no case targets them — that is a real coverage gap, not a missing field.\n\n${markdownTable(byTargetAgent, "Target agent")}\n` +
     `## Coverage by domain\n\n${markdownTable(byDomain, "Domain")}\n` +
     `## Coverage by standard context\n\n${markdownTable(byStandard, "Standard context")}\n` +
     `## Coverage by display language\n\n${markdownTable(byLanguage, "Display language")}\n` +
