@@ -36,7 +36,6 @@ type Copy = {
   save: string;
   saved: string;
   start: string;
-  back: string;
   whatThisDoes: string;
   bullets: string[];
   termsLink: string;
@@ -65,7 +64,6 @@ const COPY: Copy = {
   save: "Save context",
   saved: "Context saved",
   start: "Go to pilot",
-  back: "Back to admin",
   whatThisDoes: "This will later be used to",
   bullets: [
     "tell the agents which engineering standard/profile the user selected",
@@ -165,9 +163,6 @@ export default function InternationalPilotPage() {
           <p className="international-lead">{COPY.lead}</p>
         </div>
         <div className="international-actions">
-          <Link href="/admin" className="international-button subtle">
-            {COPY.back}
-          </Link>
           <Link href="/pilot" className="international-button primary">
             {COPY.start}
           </Link>
