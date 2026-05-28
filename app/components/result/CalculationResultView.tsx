@@ -138,12 +138,49 @@ export function CalculationResultView(props: CalculationResultViewProps) {
 
   const displayLanguage = displayLanguageForContext(locale, engineeringContext);
   const isEnglishResult = displayLanguage === "en";
+
+  // Norsk kontrollert vokabular som agentane emiterar i value-feltet uansett
+  // pipeline-språk (same mønster som fagomraade i banner). Oversetjast til
+  // engelsk i intl-modus berre.
+  const polishControlledVocab = (s: string): string =>
+    s
+      .replace(/\bKlasse (\d)\b/g, "Class $1")
+      .replace(/\bKlasse (I|II|III|IV)\b/g, "Class $1")
+      .replace(/\btverrsnittsklass(e)?\b/gi, "section class")
+      .replace(/\bbruksgrense\b/gi, "serviceability limit")
+      .replace(/\bbruddgrense\b/gi, "ultimate limit")
+      .replace(/\beigenvekt\b/gi, "self-weight")
+      .replace(/\begenvekt\b/gi, "self-weight");
+
   const uiText = (value: string | null | undefined): string =>
     isEnglishResult
-      ? sanitizeAiscGuardedOutputText(String(value ?? ""))
+      ? polishControlledVocab(sanitizeAiscGuardedOutputText(String(value ?? "")))
       : polishNorwegianRoleText(String(value ?? ""), displayLanguage);
 
   const chipUiText = uiText;
+
+  // Nokre result-keys er heile norske ord (ikkje matematiske symbol) som
+  // renderMathKey rendrar literally. I intl-modus byter vi dei til engelske
+  // motsvar. Same mønster som ordliste-katalogen.
+  const NORWEGIAN_KEY_EN: Record<string, string> = {
+    tverrsnittsklass: "section class",
+    tverrsnittklass: "section class",
+    bruksgrense: "serviceability",
+    bruddgrense: "ultimate limit",
+    eigenvekt: "self-weight",
+    egenvekt: "self-weight",
+    lastfaktor: "load factor",
+    sikkerheitsfaktor: "safety factor",
+    nedboying: "deflection",
+    nedboyning: "deflection",
+  };
+  const renderResultKey = (key: string): React.ReactNode => {
+    if (isEnglishResult) {
+      const translated = NORWEGIAN_KEY_EN[key.toLowerCase()];
+      if (translated) return translated;
+    }
+    return renderMathKey(key);
+  };
 
   // Lokalisert uppercase nivå-etikett (severity / konfidens). Erstattar dei
   // dupliserte inline-ternarane; engelsk shell får LOW/MEDIUM/HIGH/CRITICAL.
@@ -970,7 +1007,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                   className="uk-kv"
                                   style={{ borderTop: i === 0 ? "none" : undefined }}
                                 >
-                                  <span className="uk-kv__k uk-mono">{renderMathKey(k)}</span>
+                                  <span className="uk-kv__k uk-mono">{renderResultKey(k)}</span>
                                   <span className="uk-kv__v uk-mono" style={{ fontWeight: 600 }}>
                                     {uiText(String(v))}
                                   </span>
