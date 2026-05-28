@@ -151,21 +151,9 @@ Use this as the normal local gate:
 npm run agent:all
 ```
 
-As of Sprint 38.2 this runs:
+For the **current** step list and write semantics, see [Section 0](#0-current-non-writing-gate-sprint-591-truthful-snapshot). The gate has grown well past the Sprint 38.2 shape and the per-sprint sections below this point describe individual additions, not the final sequence.
 
-```txt
-1. status
-2. validate
-3. eval-readiness
-4. eval-coverage        # check mode, does not rewrite latest-eval-coverage.md
-5. research-topics
-6. research-memos
-7. guardrails-check     # reason-code registry validation
-8. observability-check  # event taxonomy validation
-9. health               # check mode, does not rewrite latest-agent-ecosystem-health.md
-```
-
-The Sprint 38.2 change is that **observability event taxonomy validation is now part of the agent ecosystem gate**, not just a separate Observability command. Guardrail reason-code validation remains part of the gate from Sprint 37.2.
+Historical note: Sprint 37.2 added guardrail reason-code validation to the gate; Sprint 38.2 added observability event taxonomy validation. Both remain in the live sequence.
 
 ---
 
