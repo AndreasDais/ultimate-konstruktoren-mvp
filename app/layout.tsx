@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Header, { type HeaderUiMode } from "./components/Header";
+import { type HeaderUiMode } from "./components/Header";
+import ConditionalAppHeader from "./components/ConditionalAppHeader";
 import { LocaleProvider } from "@/lib/locale-context";
 import "./globals.css";
 import "./tokens.css";
@@ -75,7 +76,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <LocaleProvider>
-          <Header uiMode={uiMode} />
+          <ConditionalAppHeader uiMode={uiMode} />
           {children}
         </LocaleProvider>
       </body>
