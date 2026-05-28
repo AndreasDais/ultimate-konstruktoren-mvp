@@ -19,7 +19,7 @@ export type MineRow = {
 
 // === FASE-MAPPING ===
 // PHASE_COLORS er språknøytrale token-baserte stilar.
-// PHASE_LABELS_BY_LOCALE held label + forklaring per fase per språk.
+// PHASE_LABELS_BY_LANG held label + forklaring per fase per språk.
 const PHASE_COLORS: Record<MineRow["phase"], CSSProperties> = {
   workbench: { background: "var(--warn-bg)", color: "var(--warn)", borderColor: "var(--warn-border)" },
   mission_control: { background: "var(--info-bg)", color: "var(--info)", borderColor: "var(--info-border)" },
@@ -28,8 +28,9 @@ const PHASE_COLORS: Record<MineRow["phase"], CSSProperties> = {
 };
 
 type PhaseLabelInfo = { label: string; explanation: string };
+type LangKey = "nb" | "nn" | "en";
 
-const PHASE_LABELS_BY_LOCALE: Record<Locale, Record<MineRow["phase"], PhaseLabelInfo>> = {
+const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelInfo>> = {
   nb: {
     workbench: {
       label: "Workbench",
@@ -74,20 +75,58 @@ const PHASE_LABELS_BY_LOCALE: Record<Locale, Record<MineRow["phase"], PhaseLabel
         "Berekninga vart avbroten eller feila. Du kan starte på nytt frå same input ved å klikke på rada.",
     },
   },
+  en: {
+    workbench: {
+      label: "Workbench",
+      explanation:
+        "The interpreter has read the request, but the calculation has not started yet. Click the row to continue from there.",
+    },
+    mission_control: {
+      label: "Mission Control",
+      explanation:
+        "Engineer A and Engineer B have finished their calculations. Click to view the comparison, controller assessment and generate the report.",
+    },
+    rapport: {
+      label: "Report",
+      explanation:
+        "Completed calculation note. Click to read, export to Word or share via QR code.",
+    },
+    krasja: {
+      label: "Crashed",
+      explanation:
+        "The calculation was aborted or failed. Click the row to start over from the same input.",
+    },
+  },
 };
 
 // === ANDRE UI-STRENGER ===
-const ML_LABELS: Record<string, Record<Locale, string>> = {
-  sokPlaceholder: { nb: "Søk i beregninger...", nn: "Søk i berekningar..." },
-  sokAriaLabel: { nb: "Søk i beregninger", nn: "Søk i berekningar" },
-  ingenTreffPre: { nb: 'Ingen treff for "', nn: 'Ingen treff for "' },
-  ingenTreffPost: { nb: '".', nn: '".' },
-  tillit: { nb: "Tillit", nn: "Tillit" },
-  tillitSkarLabel: { nb: "Tillit-skår", nn: "Tillit-skår" },
-  tillitPopover1: { nb: "AI-pipelinens interne enighet (0–100). Måler hvor godt konstruktørene og kontrolløren er enige om resultatet.", nn: "AI-pipeline si interne semje (0–100). Måler kor godt konstruktørane og kontrolløren er einige om resultatet." },
-  tillitPopover2Pre: { nb: "Erstatter", nn: "Erstattar" },
-  tillitPopover2Mid: { nb: "ikke", nn: "ikkje" },
-  tillitPopover2Post: { nb: "fagperson-kontroll. Formelen er en pilot-hypotese og blir kalibrert i v0.2.", nn: "fagperson-kontroll. Formelen er ein pilot-hypotese og blir kalibrert i v0.2." },
+const ML_LABELS: Record<string, Record<LangKey, string>> = {
+  sokPlaceholder: {
+    nb: "Søk i beregninger...",
+    nn: "Søk i berekningar...",
+    en: "Search calculations...",
+  },
+  sokAriaLabel: {
+    nb: "Søk i beregninger",
+    nn: "Søk i berekningar",
+    en: "Search calculations",
+  },
+  ingenTreffPre: { nb: 'Ingen treff for "', nn: 'Ingen treff for "', en: 'No results for "' },
+  ingenTreffPost: { nb: '".', nn: '".', en: '".' },
+  tillit: { nb: "Tillit", nn: "Tillit", en: "Trust" },
+  tillitSkarLabel: { nb: "Tillit-skår", nn: "Tillit-skår", en: "Trust score" },
+  tillitPopover1: {
+    nb: "AI-pipelinens interne enighet (0–100). Måler hvor godt konstruktørene og kontrolløren er enige om resultatet.",
+    nn: "AI-pipeline si interne semje (0–100). Måler kor godt konstruktørane og kontrolløren er einige om resultatet.",
+    en: "Internal agreement across the AI pipeline (0–100). Measures how well the engineers and the controller agree on the result.",
+  },
+  tillitPopover2Pre: { nb: "Erstatter", nn: "Erstattar", en: "Does" },
+  tillitPopover2Mid: { nb: "ikke", nn: "ikkje", en: "not" },
+  tillitPopover2Post: {
+    nb: "fagperson-kontroll. Formelen er en pilot-hypotese og blir kalibrert i v0.2.",
+    nn: "fagperson-kontroll. Formelen er ein pilot-hypotese og blir kalibrert i v0.2.",
+    en: "replace professional review. The formula is a pilot hypothesis and will be recalibrated in v0.2.",
+  },
 };
 
 // Vis-rekkjefølge — pipeline-orden + Krasja sist.
@@ -98,10 +137,10 @@ const PHASE_ORDER: MineRow["phase"][] = [
   "krasja",
 ];
 
-function formatDate(iso: string | null, locale: Locale): string {
+function formatDate(iso: string | null, langKey: LangKey): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  const tag = locale === "nb" ? "nb-NO" : "nn-NO";
+  const tag = langKey === "en" ? "en-US" : langKey === "nb" ? "nb-NO" : "nn-NO";
   return new Intl.DateTimeFormat(tag, {
     day: "numeric",
     month: "long",
@@ -117,8 +156,16 @@ function getTillitColor(score: number): string {
   return "var(--bad)";
 }
 
-export function MineList({ rows }: { rows: MineRow[] }) {
+export function MineList({
+  rows,
+  displayLanguage,
+}: {
+  rows: MineRow[];
+  /** Frå server (mine/page.tsx) basert på pilar-ui-mode cookie. */
+  displayLanguage?: LangKey;
+}) {
   const { locale } = useLocale();
+  const langKey: LangKey = displayLanguage ?? locale;
   const [search, setSearch] = useState("");
   // Folde-state per fase. Default: alle opne.
   const [collapsed, setCollapsed] = useState<Record<MineRow["phase"], boolean>>(
@@ -165,12 +212,12 @@ export function MineList({ rows }: { rows: MineRow[] }) {
       <div className="mb-6">
         <input
           type="search"
-          placeholder={ML_LABELS.sokPlaceholder[locale]}
+          placeholder={ML_LABELS.sokPlaceholder[langKey]}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-500"
           style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--fg)" }}
-          aria-label={ML_LABELS.sokAriaLabel[locale]}
+          aria-label={ML_LABELS.sokAriaLabel[langKey]}
         />
       </div>
 
@@ -179,7 +226,7 @@ export function MineList({ rows }: { rows: MineRow[] }) {
           className="rounded-lg border border-dashed p-6 text-center text-sm"
           style={{ borderColor: "var(--border-2)", background: "var(--surface-2)", color: "var(--fg-muted)" }}
         >
-          {ML_LABELS.ingenTreffPre[locale]}{search}{ML_LABELS.ingenTreffPost[locale]}
+          {ML_LABELS.ingenTreffPre[langKey]}{search}{ML_LABELS.ingenTreffPost[langKey]}
         </p>
       ) : (
         <div className="space-y-6">
@@ -187,7 +234,7 @@ export function MineList({ rows }: { rows: MineRow[] }) {
             const phaseRows = grouped[phase];
             if (phaseRows.length === 0) return null;
 
-            const info = PHASE_LABELS_BY_LOCALE[locale][phase];
+            const info = PHASE_LABELS_BY_LANG[langKey][phase];
             const color = PHASE_COLORS[phase];
             const isCollapsed = collapsed[phase];
             const sectionId = `mine-section-${phase}`;
@@ -230,7 +277,7 @@ export function MineList({ rows }: { rows: MineRow[] }) {
                   <ul id={sectionId} className="mt-2 space-y-3">
                     {phaseRows.map((row) => (
                       <li key={row.key}>
-                        <CalculationCard row={row} locale={locale} />
+                        <CalculationCard row={row} langKey={langKey} />
                       </li>
                     ))}
                   </ul>
@@ -244,10 +291,10 @@ export function MineList({ rows }: { rows: MineRow[] }) {
   );
 }
 
-function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
-  const phaseLabel = PHASE_LABELS_BY_LOCALE[locale][row.phase];
+function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
+  const phaseLabel = PHASE_LABELS_BY_LANG[langKey][row.phase];
   const phaseColor = PHASE_COLORS[row.phase];
-  const date = formatDate(row.date, locale);
+  const date = formatDate(row.date, langKey);
 
   return (
     <Link
@@ -281,11 +328,11 @@ function CalculationCard({ row, locale }: { row: MineRow; locale: Locale }) {
                   {row.tillit}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider mt-1 inline-flex items-center" style={{ color: "var(--fg-muted)" }}>
-                  <span>{ML_LABELS.tillit[locale]}</span>
-                  <InfoPopover label={ML_LABELS.tillitSkarLabel[locale]}>
-                    <p>{ML_LABELS.tillitPopover1[locale]}</p>
+                  <span>{ML_LABELS.tillit[langKey]}</span>
+                  <InfoPopover label={ML_LABELS.tillitSkarLabel[langKey]}>
+                    <p>{ML_LABELS.tillitPopover1[langKey]}</p>
                     <p>
-                      {ML_LABELS.tillitPopover2Pre[locale]} <strong>{ML_LABELS.tillitPopover2Mid[locale]}</strong> {ML_LABELS.tillitPopover2Post[locale]}
+                      {ML_LABELS.tillitPopover2Pre[langKey]} <strong>{ML_LABELS.tillitPopover2Mid[langKey]}</strong> {ML_LABELS.tillitPopover2Post[langKey]}
                     </p>
                   </InfoPopover>
                 </div>

@@ -10,32 +10,70 @@ import { MineList, type MineRow } from "./MineList";
 // Tving server-rendring per request — sessions må sjekkast på hver hit.
 export const dynamic = "force-dynamic";
 
-const MINE_LABELS: Record<string, Record<Locale, string>> = {
+type LangKey = "nb" | "nn" | "en";
+
+const MINE_LABELS: Record<string, Record<LangKey, string>> = {
   // Default fallback for prettyCalculationType
-  defaultBerekning: { nb: "Beregning", nn: "Berekning" },
+  defaultBerekning: { nb: "Beregning", nn: "Berekning", en: "Calculation" },
   // Auth-gate
-  maVereInnlogga: { nb: "Du må være innlogget for å se denne siden.", nn: "Du må vere innlogga for å sjå denne sida." },
+  maVereInnlogga: {
+    nb: "Du må være innlogget for å se denne siden.",
+    nn: "Du må vere innlogga for å sjå denne sida.",
+    en: "You must be signed in to see this page.",
+  },
   // Header
-  mineEyebrow: { nb: "Mine", nn: "Mine" },
-  berekningarH1: { nb: "Beregninger", nn: "Berekningar" },
-  oversiktDescription: { nb: "Oversikt over beregninger du har startet, nyeste først.", nn: "Oversikt over berekningar du har starta, nyaste først." },
+  mineEyebrow: { nb: "Mine", nn: "Mine", en: "Runs" },
+  berekningarH1: { nb: "Beregninger", nn: "Berekningar", en: "Calculations" },
+  oversiktDescription: {
+    nb: "Oversikt over beregninger du har startet, nyeste først.",
+    nn: "Oversikt over berekningar du har starta, nyaste først.",
+    en: "Overview of calculations you have started, newest first.",
+  },
   // EmptyState
-  ingenBerekningar: { nb: "Ingen beregninger ennå", nn: "Ingen berekningar enno" },
-  narDuStartar: { nb: "Når du starter din første beregning, dukker den opp her.", nn: "Når du startar di første berekning, dukkar ho opp her." },
-  startEiBerekning: { nb: "Start en beregning →", nn: "Start ei berekning →" },
+  ingenBerekningar: {
+    nb: "Ingen beregninger ennå",
+    nn: "Ingen berekningar enno",
+    en: "No calculations yet",
+  },
+  narDuStartar: {
+    nb: "Når du starter din første beregning, dukker den opp her.",
+    nn: "Når du startar di første berekning, dukkar ho opp her.",
+    en: "When you start your first calculation, it will appear here.",
+  },
+  startEiBerekning: {
+    nb: "Start en beregning →",
+    nn: "Start ei berekning →",
+    en: "Start a calculation →",
+  },
 };
 
 
 // === FORMATERING (server-only — brukt for å bygge MineRow.title) ===
-function prettyCalculationType(type: string | null | undefined, locale: Locale): string {
-  if (!type) return MINE_LABELS.defaultBerekning[locale];
-  const known: Record<string, Record<Locale, string>> = {
-    lastkombinasjon: { nb: "Lastkombinasjon i bruddgrense", nn: "Lastkombinasjon i brotgrense" },
-    bjelke_lastverknad: { nb: "Bjelke — moment og skjær", nn: "Bjelke — moment og skjerkraft" },
-    armering_betongbjelke: { nb: "Armeringsberegning av betongbjelke", nn: "Armeringsberekning av betongbjelke" },
-    stalkapasitet: { nb: "Kapasitetskontroll av stålbjelke", nn: "Kapasitetskontroll av stålbjelke" },
+function prettyCalculationType(type: string | null | undefined, langKey: LangKey): string {
+  if (!type) return MINE_LABELS.defaultBerekning[langKey];
+  const known: Record<string, Record<LangKey, string>> = {
+    lastkombinasjon: {
+      nb: "Lastkombinasjon i bruddgrense",
+      nn: "Lastkombinasjon i brotgrense",
+      en: "Load combination (ULS)",
+    },
+    bjelke_lastverknad: {
+      nb: "Bjelke — moment og skjær",
+      nn: "Bjelke — moment og skjerkraft",
+      en: "Beam — moment and shear",
+    },
+    armering_betongbjelke: {
+      nb: "Armeringsberegning av betongbjelke",
+      nn: "Armeringsberekning av betongbjelke",
+      en: "Reinforcement calculation for concrete beam",
+    },
+    stalkapasitet: {
+      nb: "Kapasitetskontroll av stålbjelke",
+      nn: "Kapasitetskontroll av stålbjelke",
+      en: "Steel beam capacity check",
+    },
   };
-  if (known[type]) return known[type][locale];
+  if (known[type]) return known[type][langKey];
   // snake_case → "Bjelke lastverknad" (første ord stor bokstav)
   const words = type.split("_");
   return words
@@ -45,7 +83,7 @@ function prettyCalculationType(type: string | null | undefined, locale: Locale):
 
 function titleFromInputReview(
   review: { calculation_type: string | null; parsed_data?: unknown } | null,
-  locale: Locale,
+  langKey: LangKey,
 ): string {
   const parsed =
     review?.parsed_data && typeof review.parsed_data === "object" && !Array.isArray(review.parsed_data)
@@ -55,7 +93,7 @@ function titleFromInputReview(
   if (typeof reportTitle === "string" && reportTitle.trim()) {
     return reportTitle.trim();
   }
-  return prettyCalculationType(review?.calculation_type, locale);
+  return prettyCalculationType(review?.calculation_type, langKey);
 }
 
 // === DATA ===
@@ -119,7 +157,7 @@ function firstOrNull<T>(x: T | T[] | null | undefined): T | null {
   return x;
 }
 
-async function getUserCalculations(userId: string, locale: Locale): Promise<MineRow[]> {
+async function getUserCalculations(userId: string, langKey: LangKey): Promise<MineRow[]> {
   const supabase = getSupabase();
 
   // === LAZY CLEANUP ===
@@ -200,7 +238,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
 
     return {
       key: `run-${run.id}`,
-      title: prettyCalculationType(run.calculation_type, locale),
+      title: prettyCalculationType(run.calculation_type, langKey),
       date: run.started_at,
       phase,
       href,
@@ -220,7 +258,7 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
       const review = firstOrNull(r.input_reviews);
       return {
         key: `req-${r.id}`,
-        title: titleFromInputReview(review, locale),
+        title: titleFromInputReview(review, langKey),
         date: r.created_at,
         phase: "workbench" as const,
         href: `/?from_request=${r.id}`,
@@ -237,53 +275,61 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
 
 // === SIDE ===
 export default async function MinePage() {
-  const locale = getLocaleFromCookies(await cookies());
+  const cookieStore = await cookies();
+  const locale: Locale = getLocaleFromCookies(cookieStore);
+  const isIntl = cookieStore.get("pilar-ui-mode")?.value === "intl";
+  const langKey: LangKey = isIntl ? "en" : locale;
+
   const userId = await getCurrentUserId();
 
   if (!userId) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <p style={{ color: "var(--fg-muted)" }}>
-          {MINE_LABELS.maVereInnlogga[locale]}
+          {MINE_LABELS.maVereInnlogga[langKey]}
         </p>
       </main>
     );
   }
 
-  const rows = await getUserCalculations(userId, locale);
+  const rows = await getUserCalculations(userId, langKey);
 
   return (
     <main className="flex-1 px-4 py-8 md:py-12">
       <div className="mx-auto max-w-3xl">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--fg-muted)" }}>
-            {MINE_LABELS.mineEyebrow[locale]}
+            {MINE_LABELS.mineEyebrow[langKey]}
           </p>
           <h1 className="text-3xl font-semibold" style={{ color: "var(--fg)" }}>
-            {MINE_LABELS.berekningarH1[locale]}
+            {MINE_LABELS.berekningarH1[langKey]}
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>
-            {MINE_LABELS.oversiktDescription[locale]}
+            {MINE_LABELS.oversiktDescription[langKey]}
           </p>
         </div>
 
-        {rows.length === 0 ? <EmptyState locale={locale} /> : <MineList rows={rows} />}
+        {rows.length === 0 ? (
+          <EmptyState langKey={langKey} />
+        ) : (
+          <MineList rows={rows} displayLanguage={langKey} />
+        )}
       </div>
     </main>
   );
 }
 
-function EmptyState({ locale }: { locale: Locale }) {
+function EmptyState({ langKey }: { langKey: LangKey }) {
   return (
     <div className="rounded-lg border border-dashed p-10 text-center" style={{ borderColor: "var(--border-2)", background: "var(--surface-2)" }}>
       <p className="font-medium mb-1" style={{ color: "var(--fg-2)" }}>
-        {MINE_LABELS.ingenBerekningar[locale]}
+        {MINE_LABELS.ingenBerekningar[langKey]}
       </p>
       <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
-        {MINE_LABELS.narDuStartar[locale]}
+        {MINE_LABELS.narDuStartar[langKey]}
       </p>
       <Link href="/" className="uk-btn uk-btn--primary">
-        {MINE_LABELS.startEiBerekning[locale]}
+        {MINE_LABELS.startEiBerekning[langKey]}
       </Link>
     </div>
   );
