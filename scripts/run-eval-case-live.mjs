@@ -163,6 +163,7 @@ function buildDryRunPlan(evalCase, args) {
     run_id: null,
     run_status: "SKIP",
     eval_status: "SKIP",
+    bundle_status: "SKIP",
     dry_run: true,
     manual_review_required: manualReviewRequired,
     artifact_bundle: {
@@ -207,6 +208,7 @@ function formatTextPlan(plan) {
     `run_id: ${plan.run_id}`,
     `run_status: ${plan.run_status}`,
     `eval_status: ${plan.eval_status}`,
+    `bundle_status: ${plan.bundle_status}`,
     `artifact_bundle: ${plan.artifact_bundle.path}`,
     `artifact_files: ${plan.artifact_bundle.files.join(", ")}`,
     `manifest_schema: ${plan.manifest_preview.schema_version}`,
