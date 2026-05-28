@@ -13,6 +13,7 @@ export const PILOT_EXAMPLES: PilotExample[] = [
       nb: "Tester grunnflyten: tolk input, beregn snittkrefter, lag rapport og beregningsark.",
       nn: "Testar grunnflyten: tolk input, rekn snittkrefter, lag rapport og berekningsark.",
     },
+    profiles: ["eurocode_norway"],
     tags: ["bjelke", "moment", "skjær", "baseline"],
     prompt: {
       nb: `Fritt opplagd stålbjelke med spennvidde L = 5,0 m.
@@ -49,6 +50,7 @@ Rekn ut:
       nb: "Tester symboler, kombinasjonsfaktorer, tabeller og flere beregningsalternativer.",
       nn: "Testar symbol, kombinasjonsfaktorar, tabellar og fleire berekningsalternativ.",
     },
+    profiles: ["eurocode_norway"],
     tags: ["EC0", "lastkombinasjon", "gamma", "psi"],
     prompt: {
       nb: `En bjelke bærer følgende karakteristiske laster:
@@ -117,6 +119,7 @@ Kontroller:
       nb: "Tester EC3-kapasitet, utnyttelsesgrad, faglige forbehold og usikker kontrollstatus.",
       nn: "Testar EC3-kapasitet, utnyttingsgrad, faglege atterhald og usikker kontrollstatus.",
     },
+    profiles: ["eurocode_norway"],
     tags: ["EC3", "IPE", "kapasitet", "utnytting"],
     prompt: {
       nb: `Jeg har en fritt opplagd stålbjelke i et kontorbygg.
@@ -181,6 +184,7 @@ Bruk Eurokode 3-prinsipp.`,
       nb: "Tester slankhet, knekkingskurver, symbolikk og beregningsark til Overleaf.",
       nn: "Testar slankheit, knekkekurver, symbolikk og berekningsark til Overleaf.",
     },
+    profiles: ["eurocode_norway"],
     tags: ["EC3", "knekking", "HEB", "søyle"],
     prompt: {
       nb: `Kontroller knekkingskapasitet for en HEB 200-søyle i S355 om svak akse.

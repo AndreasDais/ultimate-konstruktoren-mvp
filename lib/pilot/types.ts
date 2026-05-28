@@ -1,3 +1,5 @@
+import type { EngineeringStandardFamily } from "@/lib/engineering-context";
+
 export type PilotLocale = "nb" | "nn";
 
 export type PilotExampleCategory =
@@ -13,6 +15,12 @@ export type PilotExample = {
   id: string;
   category: PilotExampleCategory;
   difficulty: PilotDifficulty;
+  /**
+   * Kva standard-profil(ar) dette eksempelet høyrer til. Brukt for å
+   * filtrere kva som visast på /pilot basert på brukar sin valde profil
+   * (frå /international + engineering-context i localStorage).
+   */
+  profiles: EngineeringStandardFamily[];
   title: Record<PilotLocale, string>;
   description: Record<PilotLocale, string>;
   prompt: Record<PilotLocale, string>;
