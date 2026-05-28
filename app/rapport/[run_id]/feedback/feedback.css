@@ -1,38 +1,55 @@
+/* =========================================================
+   Pilot-feedback-side — Pilar-native styling.
+
+   REDESIGN: sida hadde eige token-fallback-system + Vercel-
+   landing-estetikk (28px-kort, gigant-heading line-height 1,
+   900-vekt overalt, pille-aktige inputs, hardkoda success/
+   error-fargar). Skrive om til å arve Pilar sine sentrale
+   tokens (tokens.css) og matche international.css / pilot.css.
+   Slate/stone/graphite følgjer no automatisk — dupliserte
+   palett-blokker fjerna.
+
+   Klassenamna er uendra slik at feedback/page.tsx ikkje treng
+   endring.
+   ========================================================= */
+
 .pilot-feedback-page {
-  --pilot-feedback-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
   min-height: 100vh;
   padding: 56px 20px;
   display: grid;
   place-items: start center;
-  background: var(--page-bg, #f6f4ef);
-  color: var(--text-strong, #14120f);
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .pilot-feedback-card {
   width: min(820px, 100%);
-  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
-  border-radius: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   padding: 36px;
-  background: var(--surface, rgba(255, 255, 255, 0.84));
-  box-shadow: var(--pilot-feedback-shadow, 0 24px 80px rgba(0, 0, 0, 0.08));
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .pilot-feedback-eyebrow {
-  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 0.74rem;
-  font-weight: 900;
-  color: var(--text-muted, #766e62);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-muted);
 }
 
 .pilot-feedback-card h1 {
-  margin: 8px 0 12px;
-  font-size: clamp(2rem, 5vw, 3.4rem);
-  line-height: 1;
+  margin: 12px 0 12px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--fg);
 }
 
 .pilot-feedback-card p {
-  color: var(--text-muted, #5d564c);
+  color: var(--fg-muted);
   line-height: 1.6;
 }
 
@@ -44,15 +61,16 @@
 
 .pilot-feedback-form fieldset {
   margin: 0;
-  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
-  border-radius: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   padding: 16px;
 }
 
 .pilot-feedback-form legend,
 .pilot-field span {
-  font-weight: 900;
-  color: var(--text-strong, #14120f);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .pilot-radio-grid {
@@ -67,11 +85,21 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.12));
-  border-radius: 14px;
-  padding: 12px;
-  background: var(--soft-surface, rgba(20, 18, 15, 0.035));
-  font-weight: 700;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  background: var(--surface-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+
+.pilot-radio-grid label:hover,
+.pilot-check:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
 }
 
 .pilot-field {
@@ -82,12 +110,27 @@
 .pilot-field select,
 .pilot-field textarea {
   width: 100%;
-  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.16));
-  border-radius: 14px;
-  padding: 12px;
-  background: var(--input-bg, #fff);
-  color: var(--input-text, inherit);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--fg);
   font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+
+.pilot-field textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.pilot-field select:focus,
+.pilot-field textarea:focus {
+  border-color: var(--fg-2);
+  box-shadow: 0 0 0 3px var(--surface-3);
 }
 
 .pilot-feedback-actions {
@@ -97,77 +140,65 @@
   align-items: center;
 }
 
+/* Knappar — matchar .uk-btn / .uk-btn--primary */
 .pilot-feedback-actions button,
 .pilot-feedback-actions a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  border-radius: 12px;
-  padding: 0 16px;
-  font-weight: 900;
+  gap: 8px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
   text-decoration: none;
+  transition: background 120ms, border-color 120ms;
 }
 
 .pilot-feedback-actions button {
-  border: 0;
-  background: var(--button-bg, #171410);
-  color: var(--button-fg, #fffaf0);
+  border: 1px solid var(--fg);
+  background: var(--fg);
+  color: var(--surface);
   cursor: pointer;
 }
 
+.pilot-feedback-actions button:hover {
+  background: var(--fg-2);
+  border-color: var(--fg-2);
+}
+
+.pilot-feedback-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .pilot-feedback-actions a {
-  border: 1px solid var(--border-subtle, rgba(20, 18, 15, 0.16));
-  color: inherit;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--fg);
 }
 
-.pilot-success { color: #166534 !important; font-weight: 900; }
-.pilot-error { color: #991b1b !important; font-weight: 900; }
-
-[data-palette="graphite"] .pilot-feedback-page,
-[data-theme="graphite"] .pilot-feedback-page {
-  --page-bg: #101113;
-  --surface: rgba(26, 27, 30, 0.88);
-  --soft-surface: rgba(255, 255, 255, 0.06);
-  --text-strong: #f3f0ea;
-  --text-muted: #b5aea2;
-  --border-subtle: rgba(255, 255, 255, 0.12);
-  --button-bg: #f3f0ea;
-  --button-fg: #101113;
-  --input-bg: rgba(255, 255, 255, 0.08);
-  --input-text: #f3f0ea;
-  --pilot-feedback-shadow: 0 26px 90px rgba(0, 0, 0, 0.36);
+.pilot-feedback-actions a:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
-[data-palette="stone"] .pilot-feedback-page,
-[data-theme="stone"] .pilot-feedback-page {
-  --page-bg: #f4f1ea;
-  --surface: rgba(255, 252, 246, 0.88);
-  --text-strong: #1c1814;
-  --text-muted: #70675b;
-  --border-subtle: rgba(70, 62, 50, 0.16);
-}
+.pilot-success { color: var(--ok) !important; font-weight: 600; }
+.pilot-error   { color: var(--bad) !important; font-weight: 600; }
 
 @media (max-width: 720px) {
   .pilot-feedback-card { padding: 24px; }
   .pilot-radio-grid { grid-template-columns: 1fr; }
 }
 
-
 .pilot-feedback-form label,
 .pilot-feedback-form input,
 .pilot-feedback-form select,
 .pilot-feedback-form textarea {
-  color: var(--text-strong, #14120f);
+  color: var(--fg);
 }
 
-.pilot-feedback-form select option {
-  color: #14120f;
-  background: #ffffff;
-}
-
-[data-palette="graphite"] .pilot-feedback-form select option,
-[data-theme="graphite"] .pilot-feedback-form select option {
-  color: #f3f0ea;
-  background: #1a1b1e;
-}
+/* Select-option fargar styrast av nettlesaren; token-fargane
+   gjeld <select> sjølv. option-overstyring er ikkje naudsynt
+   når vi arvar palette-tokens — fjerna for å unngå hardkoda hex. */
