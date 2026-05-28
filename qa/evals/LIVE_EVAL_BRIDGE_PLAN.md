@@ -124,7 +124,6 @@ evidence files or command output that C can later reference from release gates.
 
 ## First useful sprint after this plan
 
-Create a minimal `LIVE_EVAL_RUNNER_CONTRACT.md` or equivalent section that
-defines the single-case runner contract in enough detail to implement safely.
-Keep it docs-only unless the repo is clean and the exact script boundary is
-obvious.
+Create [LIVE_EVAL_RUNNER_CONTRACT.md](LIVE_EVAL_RUNNER_CONTRACT.md) to define
+the single-case runner contract in enough detail to implement safely. Keep it
+docs-only unless the repo is clean and the exact script boundary is obvious.
