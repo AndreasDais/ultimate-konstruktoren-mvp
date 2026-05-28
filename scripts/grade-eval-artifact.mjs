@@ -10,6 +10,7 @@ function parseArgs(argv) {
     artifactPath: "",
     text: "",
     json: false,
+    listCases: false,
     help: false,
   };
 
@@ -23,6 +24,11 @@ function parseArgs(argv) {
 
     if (token === "--json") {
       args.json = true;
+      continue;
+    }
+
+    if (token === "--list-cases") {
+      args.listCases = true;
       continue;
     }
 
@@ -89,6 +95,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file>
   node scripts/grade-eval-artifact.mjs --case-id <id> --text "<artifact text>"
   node scripts/grade-eval-artifact.mjs --case-id <id> --artifact <file> --json
+  node scripts/grade-eval-artifact.mjs --list-cases
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -196,6 +203,15 @@ function gradeArtifact(evalCase, artifactText) {
   };
 }
 
+function formatCaseList(cases) {
+  return cases.map((evalCase) => {
+    const title = String(evalCase.title ?? "").replace(/\s+/g, " ").trim();
+    const priority = evalCase.priority ?? "unknown";
+    const domain = evalCase.domain ?? "unknown";
+    return `${evalCase.case_id}\t${priority}\t${domain}\t${title}`;
+  }).join("\n");
+}
+
 function formatTextResult(result) {
   const lines = [
     `${result.status} ${result.case_id}: ${result.checked - result.failed}/${result.checked} deterministic text checks passed`,
@@ -226,6 +242,13 @@ function main() {
     return;
   }
 
+  const cases = readJsonl(args.casesPath);
+
+  if (args.listCases) {
+    console.log(formatCaseList(cases));
+    return;
+  }
+
   if (!args.caseId) {
     console.error("FAILED eval artifact grader: --case-id is required");
     process.exit(1);
@@ -236,7 +259,6 @@ function main() {
     process.exit(1);
   }
 
-  const cases = readJsonl(args.casesPath);
   const evalCase = cases.find((candidate) => candidate.case_id === args.caseId);
   if (!evalCase) {
     console.error(`FAILED eval artifact grader: unknown case_id '${args.caseId}'`);
