@@ -150,13 +150,16 @@ order by step_name, n desc;
 
 
 -- =============================================================================
--- B6 — Recent non-Norwegian runs (region != NO or display_language = en)
+-- B6 — Recent international runs (display_language = 'en')
 -- =============================================================================
--- The British / international cohort. Use this to scope all other queries
--- "for international runs only".
+-- The British / international cohort. Note: engineering_context (region,
+-- standards profile) is sent inline to agent routes at request time and is
+-- NOT persisted on requests or calculation_runs. The only reliable DB proxy
+-- for "international mode" is calculation_runs.display_language = 'en'.
 --
--- Note: requests.engineering_context is jsonb. We probe both region.countryCode
--- and standards.family to catch any non-Norwegian profile.
+-- engineering_context_events table (20260524 migration) logs UI selections
+-- but has no run_id/request_id linkage, so it cannot be joined per run.
+-- That gap is documented; for now display_language is the cohort scope.
 
 select
   cr.id as run_id,
@@ -164,17 +167,11 @@ select
   cr.run_status,
   cr.display_language,
   cr.eval_case_id,
-  req.engineering_context->'region'->>'countryCode' as country_code,
-  req.engineering_context->'standards'->>'family' as standards_family,
-  req.engineering_context->'standards'->>'label' as standards_label
+  cr.calculation_type,
+  cr.run_type
 from calculation_runs cr
-join requests req on req.id = cr.request_id
 where cr.started_at > now() - interval '7 days'
-  and (
-    req.engineering_context->'region'->>'countryCode' is distinct from 'NO'
-    or req.engineering_context->'standards'->>'family' <> 'eurocode_norway'
-    or cr.display_language = 'en'
-  )
+  and cr.display_language = 'en'
 order by cr.started_at desc
 limit 50;
 
@@ -184,17 +181,16 @@ limit 50;
 -- =============================================================================
 -- Combine B2 + B6: of international runs only, where are they failing?
 -- This is the headline number for "is the British test broken right now".
+--
+-- samanliknar_success_pct_of_b is the key metric: of runs that reached B,
+-- how many got a Samanliknar event? Sub-100 = drop-out at Samanliknar
+-- (likely Anthropic API quota when failure clusters in time).
 
 with intl_runs as (
   select cr.id, cr.started_at
   from calculation_runs cr
-  join requests req on req.id = cr.request_id
   where cr.started_at > now() - interval '7 days'
-    and (
-      req.engineering_context->'region'->>'countryCode' is distinct from 'NO'
-      or req.engineering_context->'standards'->>'family' <> 'eurocode_norway'
-      or cr.display_language = 'en'
-    )
+    and cr.display_language = 'en'
 ),
 stages as (
   select
