@@ -115,9 +115,9 @@ Replay against a different prompt version is possible because we have the input.
 
 ### G2 — Downstream input payloads not snapshotted
 
-`agent_outputs.input_payload` only covers Konstruktør A/B. The downstream agents (Samanliknar, Kontrollør, Rapportør) read their input from prior DB tables on each call. If those tables drift between original-run and replay (e.g. agent_outputs row gets updated by an old code path), replay reads different input than the original.
+**Note:** the original description below was partially wrong. See [G2_DOWNSTREAM_INPUT_AUDIT.md](G2_DOWNSTREAM_INPUT_AUDIT.md) for the verified version. In short: Samanliknar and Kontrollør receive their input inline from the client (not re-queried). Only Rapportør re-queries. The real gap is the absence of UNIQUE constraints on `agent_outputs`/`comparisons`/`controller_decisions`, which makes replay ambiguous if a duplicate row ever appears in those tables.
 
-This is a low-probability bug today (we have UNIQUE on `reports.run_id` and INSERT-only patterns elsewhere) but it is a real reproducibility gap.
+Original (uncorrected) description: `agent_outputs.input_payload` only covers Konstruktør A/B. The downstream agents (Samanliknar, Kontrollør, Rapportør) read their input from prior DB tables on each call. If those tables drift between original-run and replay (e.g. agent_outputs row gets updated by an old code path), replay reads different input than the original.
 
 ### G3 — No event-stream presentation of run history
 
