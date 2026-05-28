@@ -8,11 +8,18 @@ import { InfoPopover } from "./InfoPopover";
 import ThemeToggle from "./ThemeToggle";
 import { useLocale } from "@/lib/locale-context";
 
+export type HeaderUiMode = "no" | "intl";
+
 type Props = {
   /** Vis AI-disclaimer-chipen. Standard: true. Set false på admin-sider. */
   showAIChip?: boolean;
-  /** Vis nn|nb-toggle. Standard: true. */
+  /** Vis nn|nb-toggle. Standard: true. Gøymast automatisk i intl-modus. */
   showLocaleToggle?: boolean;
+  /**
+   * UI-modus: "no" (nb/nn) eller "intl" (engelsk chrome). Server-passa via
+   * layout.tsx basert på pilar-ui-mode cookie. Default "no".
+   */
+  uiMode?: HeaderUiMode;
 };
 
 const AI_DISCLAIMER_TEXTS = {
@@ -22,63 +29,86 @@ const AI_DISCLAIMER_TEXTS = {
   nn:
     "Dette er ein tidleg testversjon. Innhaldet er AI-generert og må " +
     "kontrollerast av kvalifisert fagperson før bruk i reelle prosjekt.",
+  en:
+    "This is an early test version. Content is AI-generated and must be " +
+    "reviewed by a qualified engineer before use in real projects.",
 };
 
 const AI_CHIP_LABELS = {
   nb: "AI-generert · krever faglig kontroll",
   nn: "AI-generert · krev fagleg kontroll",
+  en: "AI-generated · requires professional review",
 };
 
 const AI_CHIP_POPOVER_LABELS = {
   nb: "AI-generert innhold",
   nn: "AI-generert innhald",
+  en: "AI-generated content",
 };
 
 const LOCALE_TOGGLE_LABEL = {
   nb: "Målform",
   nn: "Målform",
+  en: "Language",
 };
 
 const NB_TOOLTIPS = {
   nb: "Bokmål",
   nn: "Bokmål",
+  en: "Bokmål",
 };
 
 const NN_TOOLTIPS = {
   nb: "Nynorsk",
   nn: "Nynorsk",
+  en: "Nynorsk",
 };
 
 const SETTINGS_TOOLTIPS = {
   nb: " — åpne innstillinger",
   nn: " — opne innstillingar",
+  en: " — open settings",
 };
 
 const MINE_LABELS = {
   nb: "Mine",
   nn: "Mine",
+  en: "Runs",
 };
 
 const LOGOUT_LABELS = {
   nb: "Logg ut",
   nn: "Logg ut",
+  en: "Sign out",
 };
 
 const LOGIN_LABELS = {
   nb: "Logg inn",
   nn: "Logg inn",
+  en: "Sign in",
 };
 
 const BRAND_ARIA = {
   nb: "Pilar — til forsiden",
   nn: "Pilar — til framsida",
+  en: "Pilar — to homepage",
+};
+
+const BRAND_TAGLINE = {
+  nb: "AI-KONSTRUKSJONSASSISTENT",
+  nn: "AI-KONSTRUKSJONSASSISTENT",
+  en: "AI STRUCTURAL ASSISTANT",
 };
 
 export default function Header({
   showAIChip = true,
   showLocaleToggle = true,
+  uiMode = "no",
 }: Props) {
   const { locale, setLocale } = useLocale();
+
+  const pick = <T,>(map: { nb: T; nn: T; en: T }): T =>
+    uiMode === "intl" ? map.en : map[locale];
 
   const [user, setUser] = useState<User | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
@@ -113,12 +143,14 @@ export default function Header({
     window.location.href = "/";
   }
 
+  const localeToggleVisible = showLocaleToggle && uiMode === "no";
+
   return (
     <header className="uk-header">
       <Link
         href="/"
         className="uk-header__brand"
-        aria-label={BRAND_ARIA[locale]}
+        aria-label={pick(BRAND_ARIA)}
       >
         <span className="uk-header__logo" aria-hidden="true">
           <span className="uk-header__logo-bar" />
@@ -126,7 +158,7 @@ export default function Header({
         </span>
         <span className="uk-header__brand-text">
           <span className="uk-header__wordmark">Pilar</span>
-          <span className="uk-header__tagline">AI-KONSTRUKSJONSASSISTENT</span>
+          <span className="uk-header__tagline">{pick(BRAND_TAGLINE)}</span>
         </span>
       </Link>
 
@@ -135,20 +167,20 @@ export default function Header({
       {showAIChip && (
         <div className="uk-header__ai-chip">
           <span className="uk-header__ai-chip-dot" aria-hidden="true" />
-          <span>{AI_CHIP_LABELS[locale]}</span>
-          <InfoPopover label={AI_CHIP_POPOVER_LABELS[locale]}>
-            <p>{AI_DISCLAIMER_TEXTS[locale]}</p>
+          <span>{pick(AI_CHIP_LABELS)}</span>
+          <InfoPopover label={pick(AI_CHIP_POPOVER_LABELS)}>
+            <p>{pick(AI_DISCLAIMER_TEXTS)}</p>
           </InfoPopover>
         </div>
       )}
 
       <ThemeToggle />
 
-      {showLocaleToggle && (
+      {localeToggleVisible && (
         <div
           className="uk-header__locale"
           role="group"
-          aria-label={LOCALE_TOGGLE_LABEL[locale]}
+          aria-label={pick(LOCALE_TOGGLE_LABEL)}
         >
           <button
             type="button"
@@ -157,7 +189,7 @@ export default function Header({
               locale === "nb" ? "uk-header__locale-btn--active" : ""
             }`}
             aria-pressed={locale === "nb"}
-            title={NB_TOOLTIPS[locale]}
+            title={pick(NB_TOOLTIPS)}
           >
             nb
           </button>
@@ -168,7 +200,7 @@ export default function Header({
               locale === "nn" ? "uk-header__locale-btn--active" : ""
             }`}
             aria-pressed={locale === "nn"}
-            title={NN_TOOLTIPS[locale]}
+            title={pick(NN_TOOLTIPS)}
           >
             nn
           </button>
@@ -179,12 +211,12 @@ export default function Header({
         {!authLoaded ? null : user ? (
           <>
             <Link href="/mine" className="uk-header__authlink">
-              {MINE_LABELS[locale]}
+              {pick(MINE_LABELS)}
             </Link>
             <Link
               href="/innstillingar"
               className="uk-header__authlink uk-header__authlink--truncate"
-              title={`${user.email ?? ""}${SETTINGS_TOOLTIPS[locale]}`}
+              title={`${user.email ?? ""}${pick(SETTINGS_TOOLTIPS)}`}
             >
               {user.email}
             </Link>
@@ -193,12 +225,12 @@ export default function Header({
               onClick={handleSignOut}
               className="uk-btn uk-btn--sm uk-btn--ghost"
             >
-              {LOGOUT_LABELS[locale]}
+              {pick(LOGOUT_LABELS)}
             </button>
           </>
         ) : (
           <Link href="/login" className="uk-btn uk-btn--sm">
-            {LOGIN_LABELS[locale]}
+            {pick(LOGIN_LABELS)}
           </Link>
         )}
       </div>

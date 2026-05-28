@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import Header from "./components/Header";
+import { cookies } from "next/headers";
+import Header, { type HeaderUiMode } from "./components/Header";
 import { LocaleProvider } from "@/lib/locale-context";
 import "./globals.css";
 import "./tokens.css";
 import "katex/dist/katex.min.css";
+
+const UI_MODE_COOKIE = "pilar-ui-mode";
 
 export const metadata: Metadata = {
   title: "Pilar — AI-konstruksjonsassistent",
@@ -28,6 +31,13 @@ const THEME_INIT_SCRIPT = `
 const LOCALE_INIT_SCRIPT = `
 (function() {
   try {
+    var uiCookie = document.cookie.split('; ').find(function(c) {
+      return c.indexOf('pilar-ui-mode=') === 0;
+    });
+    if (uiCookie && uiCookie.split('=')[1] === 'intl') {
+      document.documentElement.lang = 'en';
+      return;
+    }
     var l = localStorage.getItem('pilar-locale');
     if (l !== 'nb' && l !== 'nn') l = 'nb';
     document.documentElement.lang = l;
@@ -37,14 +47,18 @@ const LOCALE_INIT_SCRIPT = `
 })();
 `.trim();
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const uiMode: HeaderUiMode =
+    cookieStore.get(UI_MODE_COOKIE)?.value === "intl" ? "intl" : "no";
+
   return (
     <html
-      lang="nb"
+      lang={uiMode === "intl" ? "en" : "nb"}
       className="h-full antialiased"
       suppressHydrationWarning
     >
@@ -61,7 +75,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <LocaleProvider>
-          <Header />
+          <Header uiMode={uiMode} />
           {children}
         </LocaleProvider>
       </body>

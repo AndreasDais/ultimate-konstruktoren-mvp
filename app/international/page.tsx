@@ -76,6 +76,17 @@ const COPY: Copy = {
 
 const REGION_OPTIONS = Object.entries(REGION_LABELS) as [EngineeringRegionCode, string][];
 
+const UI_MODE_COOKIE = "pilar-ui-mode";
+
+function setUiModeCookie(mode: "no" | "intl") {
+  // 1 år, samme mønster som pilar-locale; server-readable for SSR av Header.
+  document.cookie = `${UI_MODE_COOKIE}=${mode}; path=/; max-age=31536000; samesite=lax`;
+}
+
+function uiModeForRegion(region: EngineeringRegionCode): "no" | "intl" {
+  return region === "NO" ? "no" : "intl";
+}
+
 function supportTone(level: string) {
   if (level === "supported") return "ok";
   if (level === "partial") return "warn";
@@ -114,6 +125,10 @@ export default function InternationalPilotPage() {
   );
 
   useEffect(() => {
+    // Å besøke /international aktiverer intl-modus. Lagra region kan
+    // overstyre i neste steg under (om brukar har valt NO før).
+    setUiModeCookie("intl");
+
     try {
       const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
       if (!raw) return;
@@ -122,6 +137,7 @@ export default function InternationalPilotPage() {
       const countryCode = parsed.region?.countryCode;
       if (countryCode && countryCode in REGION_LABELS) {
         setRegion(countryCode as EngineeringRegionCode);
+        setUiModeCookie(uiModeForRegion(countryCode as EngineeringRegionCode));
       }
 
       const family = parsed.standards?.family;
@@ -137,6 +153,7 @@ export default function InternationalPilotPage() {
     setRegion(nextRegion);
     setStandard(getRecommendedStandardForRegion(nextRegion));
     setSaved(false);
+    setUiModeCookie(uiModeForRegion(nextRegion));
   }
 
   async function saveContext() {
