@@ -39,6 +39,7 @@ type Copy = {
   back: string;
   whatThisDoes: string;
   bullets: string[];
+  termsLink: string;
 };
 
 const COPY: Copy = {
@@ -72,6 +73,7 @@ const COPY: Copy = {
     "prevent the agents from silently mixing Eurocode with other regional standards",
     "collect international pilot feedback on which standards should be prioritized first",
   ],
+  termsLink: "Terms of use →",
 };
 
 const REGION_OPTIONS = Object.entries(REGION_LABELS) as [EngineeringRegionCode, string][];
@@ -235,6 +237,23 @@ export default function InternationalPilotPage() {
           Open pilot feedback flow
         </Link>
       </section>
+
+      <div
+        style={{
+          marginTop: "3rem",
+          paddingTop: "1.5rem",
+          borderTop: "1px solid var(--border)",
+          textAlign: "center",
+          fontSize: "0.875rem",
+        }}
+      >
+        <Link
+          href="/terms"
+          style={{ color: "var(--fg-muted)", textDecoration: "none" }}
+        >
+          {COPY.termsLink}
+        </Link>
+      </div>
     </main>
   );
 }
