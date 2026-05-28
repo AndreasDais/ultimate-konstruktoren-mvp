@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import { type Locale } from "@/lib/locale";
@@ -13,7 +13,9 @@ import { RapportLoadingPilelinja } from "../RapportLoadingPilelinja";
 import { FormulaStack } from "../_components/FormulaStack";
 import "../rapport.css";
 import "./beregning.css";
-import { inferCalculationEnglishDisplay } from "@/lib/international/display";
+import { inferCalculationEnglishDisplay, isInternationalEnglishContext } from "@/lib/international/display";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
 
 const LABELS: Record<PilarDisplayLanguage, Record<string, string>> = {
   nb: {
@@ -118,7 +120,16 @@ export default function CalculationSheetPage() {
       latex: renderCalculationSheetLatex(calculationSheet),
     };
   }, [data, locale, reportUrl]);
-  const displayLanguage = (sheet?.meta.displayLanguage ?? locale) as keyof typeof LABELS;
+
+  // Engineering-context frå localStorage gjev oss "en" før sheet er klar
+  // (loading/error-state) slik at "Tilbake til full rapport"-knappen ikkje
+  // viser på norsk for intl-brukar.
+  const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  useEffect(() => {
+    setEngineeringContext(loadEngineeringContextFromStorage());
+  }, []);
+  const contextLang: PilarDisplayLanguage = isInternationalEnglishContext(engineeringContext) ? "en" : locale;
+  const displayLanguage = (sheet?.meta.displayLanguage ?? contextLang) as keyof typeof LABELS;
   const L = LABELS[displayLanguage];
 
   async function copyLatex() {
@@ -131,10 +142,10 @@ export default function CalculationSheetPage() {
   if (error) {
     return (
       <div className="rapport-loading">
-        <h1>{LABELS[locale].loadingError}</h1>
+        <h1>{L.loadingError}</h1>
         <p>{error}</p>
         <button onClick={() => router.push(`/rapport/${runId}`)} className="uk-btn">
-          {LABELS[locale].back}
+          {L.back}
         </button>
       </div>
     );
@@ -156,7 +167,7 @@ export default function CalculationSheetPage() {
         <div className="beregning-actions no-print">
           <div className="beregning-actions__left">
             <button className="uk-btn" onClick={() => router.push(`/rapport/${runId}`)}>
-              {LABELS[locale].back}
+              {L.back}
             </button>
           </div>
           <div className="beregning-actions__right">
