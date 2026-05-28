@@ -171,6 +171,6 @@ SKIP  dry-run or explicitly skipped live execution
 
 ## First implementation boundary
 
-The first implementation should only create the directory plan and dry-run
-manifest preview. Actual report extraction should wait until Chat B confirms the
-canonical read path for result/report text.
+The first implementation should only create the directory plan, dry-run manifest
+preview, bundle status, and offline grading commands. Actual report extraction
+should wait until Chat B confirms the canonical read path for result/report text.
