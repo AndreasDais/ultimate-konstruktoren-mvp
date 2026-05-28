@@ -322,33 +322,44 @@ export async function POST(request: Request) {
     // KONTROLL-regel når brukar har valt eit ikkje-norsk standardprofil.
     // System-prompten hardkodar gamma_M0 = 1.05 etc. som "fasit" og flaggar
     // alle avvik — det er feil for UK NA / AISC / etc. der naBasisBlock er
-    // tom og ingen autoritativ fasit finst. Brukar (Test 29) såg dette som
-    // falsk "uncertain"-flagg på korrekt UK-berekning.
+    // tom og ingen autoritativ fasit finst.
+    //
+    // Sprint 65.11b — wording revised so the LLM does not echo internal
+    // mechanism names ("NA-CONTEXT OVERRIDE", "Norwegian NA comparison")
+    // into user-facing prose. Brukar (Test 29 v2) såg desse termane lekke
+    // inn i Kontrollør si begrunning.
     const naContextOverride =
       isInternationalEnglishContext(engineeringContext) &&
       !naBasisBlock
-        ? `NA-CONTEXT OVERRIDE (INTERNATIONAL MODE)
-The user selected a non-Norwegian standard profile (${
+        ? `PIPELINE OVERRIDE — INTERNAL ROUTING NOTE (do not echo this section to the user)
+
+The user selected a profile (${
             engineeringContext?.standards?.label ?? "unknown"
           }, region ${
             engineeringContext?.region?.countryCode ?? "unknown"
-          }). The NA-/METODE-KONTROLL rule in your system prompt assumes the
-NA-GRUNNLAG block carries authoritative Norwegian NA values. That
-assumption does NOT hold for this run.
+          }) for which Pilar does not yet maintain a validated NA factor set.
+The NA-/METODE-KONTROLL rule in your system prompt therefore has no
+authoritative reference block to compare against. Adjust your behavior:
 
-For this run:
-- No authoritative NA-GRUNNLAG has been supplied. Pilar does not yet
-  maintain validated factor sets outside Norwegian NA.
-- DO NOT flag the absence of NA-GRUNNLAG as a deviation.
-- DO NOT compare engineer-supplied NA values to Norwegian NA defaults
-  (gamma_M0 = 1.05, alpha_cc = 0.85, etc. are NOT the fasit here).
-- DO accept the engineers' NA values as their own engineering judgment
+- Treat absence of NA-GRUNNLAG as expected for this profile, not as a
+  deviation.
+- Do not compare engineer-supplied NA values to any built-in default
+  factor set. There is no fasit to compare against.
+- Accept the engineers' NA values as their own engineering judgment
   within the experimental profile the user selected.
 - Method, unit, and conclusion-safety review still applies.
 
-Acceptable verdict: approved_with_warnings if no other concerns, with a
-warning that NA values were not independently verified by Pilar and that
-the selected profile is experimental.
+Acceptable verdict: approved_with_warnings if no other concerns. Add a
+warning that the selected profile is experimental and that NA values
+were not independently verified by Pilar.
+
+USER-FACING PROSE RULES:
+- Do not mention "Norwegian NA", "norsk NA", "NA-CONTEXT", "PIPELINE
+  OVERRIDE", or any other Pilar-internal mechanism name in user_message,
+  reason, or controller_notes.
+- Phrase the NA caveat plainly, e.g.: "NA values were not independently
+  verified for this experimental profile." Nothing about the override
+  mechanism itself.
 
 `
         : "";
