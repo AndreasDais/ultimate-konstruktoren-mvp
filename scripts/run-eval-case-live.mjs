@@ -217,6 +217,7 @@ function formatTextPlan(plan) {
     "live_pipeline_execution: false",
     "supabase_reads: false",
     "repo_writes: false",
+    `require_trace: ${plan.planned_action.require_trace}`,
   ].join("\n");
 }
 
