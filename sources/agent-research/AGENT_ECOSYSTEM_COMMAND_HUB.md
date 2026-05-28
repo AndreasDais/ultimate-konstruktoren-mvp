@@ -1,8 +1,91 @@
 # PILAR Agent Ecosystem Command Hub
 
 **Status:** Local command hub / implementation reference  
-**Sprint:** 38.2  
+**Sprint:** 38.2 (initial); 59.1 truthful workflow snapshot pinned below  
 **Purpose:** Provide one controlled entry point for local PILAR agent-ecosystem checks across Eval, Research, Guardrails and Observability.
+
+---
+
+## 0. Current non-writing gate (Sprint 59.1 truthful snapshot)
+
+This section is the load-bearing truth for "what does `npm run agent:all` actually do today." The per-sprint sections below it record how the gate grew over time, but they are append-only history — read this section first.
+
+### What `npm run agent:all` runs
+
+The gate runs the 22 steps in `scripts/pilar-agent-ecosystem-hub.mjs` (`commandGroups.all`, lines 212–238), in this order:
+
+```txt
+ 1. status                                       (read-only file inventory)
+ 2. validate                                     (eval-case JSONL)
+ 3. eval-readiness --check                       (check mode since Sprint 59.0c)
+ 4. eval-coverage --check
+ 5. research-topics
+ 6. research-memos
+ 7. guardrails-check
+ 8. observability-check
+ 9. report-qa-check
+10. report-qa-dry-run --check
+11. report-qa-fixture-check
+12. report-qa-fixtures-check
+13. report-qa-missing-input-check
+14. report-qa-unit-inconsistency-check
+15. report-qa-overconfident-conclusion-check
+16. report-qa-missing-disclaimer-check
+17. report-qa-nynorsk-check
+18. report-qa-english-aisc-diagnostic-check
+19. release-check
+20. release-readiness --check
+21. patch-planner-check
+22. health --check                               (check mode since Sprint 59.0d distinguishes spawn vs validator failure)
+```
+
+### Non-writing contract — verified
+
+Verified Sprint 59.1 by capturing `git status --short` before and after `npm run agent:all` on a clean tree. Diff was empty in both directions. The gate writes zero files. Health snapshot reported `Status: PASS, Required files: 78/78, Required npm scripts: 43/43, Local checks: 15/15`.
+
+Two changes upstream made this contract truthful, not just documented:
+
+- **Sprint 59.0c** (`fix: keep agent all eval readiness non-writing`) added `--check` mode to `scripts/run-eval-suite.mjs` and routed `agent:all` through it. Before that, step 3 silently rewrote `qa/evals/reports/latest-eval-readiness.md` on every gate run.
+- **Sprint 59.0d** (`fix: report health subprocess startup errors`) made the health snapshot surface `spawnSync` errors instead of reporting them as 15 silent validator failures. Sandboxed `EPERM` no longer masquerades as a product regression.
+
+### Writing commands (explicit, opt-in)
+
+These commands intentionally update artifacts and must never be called from `agent:all`:
+
+```bash
+npm run eval:coverage                              # writes qa/evals/reports/latest-eval-coverage.md
+npm run agent:health                               # writes sources/agent-research/status/latest-agent-ecosystem-health.md
+npm run eval:readiness                             # writes qa/evals/reports/latest-eval-readiness.md
+npm run release:readiness                          # writes sources/release-manager/reports/latest-release-readiness.md
+npm run report-qa:dry-run                          # writes Report QA dry-run artifact
+npm run context:packet -- <files...>               # writes /tmp/pilar-context.md and to clipboard
+```
+
+### Sprint workflow rules
+
+These rules apply to every Codex-driven sprint, regardless of size:
+
+1. Always start with `git status --short`. No new sprint on a dirty tree without an explicit decision.
+2. A sprint has one risk-reducing goal, typically 1–2 files.
+3. Before code: state files, behaviour change, risk, DB/schema effect.
+4. After edit: `git status --short` and `git diff --stat`.
+5. After test: `git status --short` (must be unchanged if the test was meant to be non-writing).
+6. The normal gate (`agent:all`) is reelt non-writing — if a step writes, fix it or move it out of the gate.
+7. Writing artifacts only update in their own explicit sprints.
+8. Runtime contracts come from existing typed/dataflow code (`lib/runrecord.ts`, `lib/report/report-model.ts`, `lib/result/types.ts`, `qa/grade.ts`, `lib/check/controller-hard-block.ts`) before any new schema is introduced.
+9. High-risk work is prioritised by safety and measurable product value, not sprint number.
+
+### How to keep this section honest
+
+- If a step is added or removed from `commandGroups.all`, update the list above in the same sprint.
+- If a check-mode flag is added that changes write semantics, update the gate truthful-contract note.
+- If a new writing command is introduced, add it to the writing-commands list with the artifact path.
+- Do not bump the snapshot sprint number unless the underlying gate sequence or write semantics actually changed.
+
+### Recommended next sprints
+
+- **59.2** — Fix `## 3. Non-writing gate` outdated 9-step list. Either prune the obsolete enumeration or replace it with a forward-reference to this section, so future readers do not follow the stale list.
+- **60.0** — Runtime contract audit: map existing Tolkar / A / B / Comparator / Controller / Reporter payloads against `lib/runrecord.ts`, the report model, and DB dataflow before introducing any new agent-contract JSON files. Goal is one truth, not two.
 
 ---
 
