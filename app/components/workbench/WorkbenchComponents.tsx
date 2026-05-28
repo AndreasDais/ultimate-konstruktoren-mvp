@@ -20,7 +20,7 @@ import { Fragment, useEffect, useState } from "react";
 import type { Locale } from "@/lib/locale";
 import type { Tone } from "@/lib/format";
 import type { Phase, ValueCategory } from "@/lib/workbench/types";
-import { WB_LABELS } from "@/lib/result/labels";
+import { WB_LABELS as BASE_WB_LABELS } from "@/lib/result/labels";
 import {
   CATEGORY_ORDER,
   CATEGORY_LABELS,
@@ -203,17 +203,20 @@ export function MissingChipStrip({
   fields,
   locale,
   onChipClick,
+  labels = BASE_WB_LABELS,
 }: {
   fields: string[];
   locale: Locale;
   onChipClick: (fieldText: string) => void;
+  /** Proxied WB_LABELS frå page.tsx — gir engelsk variant i intl-modus. */
+  labels?: typeof BASE_WB_LABELS;
 }) {
   if (!fields || fields.length === 0) return null;
 
   return (
     <div
       role="region"
-      aria-label={WB_LABELS.tolkarTreng[locale].replace("{n}", String(fields.length))}
+      aria-label={labels.tolkarTreng[locale].replace("{n}", String(fields.length))}
       className="pilar-block-appear"
       style={{
         marginTop: 12,
@@ -234,7 +237,7 @@ export function MissingChipStrip({
           fontWeight: 500,
         }}
       >
-        {WB_LABELS.tolkarTreng[locale].replace("{n}", String(fields.length))}
+        {labels.tolkarTreng[locale].replace("{n}", String(fields.length))}
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {fields.map((field) => {

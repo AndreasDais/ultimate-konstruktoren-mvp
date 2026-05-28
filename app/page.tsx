@@ -1673,6 +1673,7 @@ useEffect(() => {
                   fields={result.manglande_verdiar}
                   locale={locale}
                   onChipClick={(fieldText) => insertMissingFieldTemplate(fieldText)}
+                  labels={WB_LABELS}
                 />
               )}
 
