@@ -98,22 +98,35 @@ Maintain `SYSTEM_PROMPT_NB` and `SYSTEM_PROMPT_EN` per agent route. Pick at runt
 
 ### Option C — Locale-aware preamble in `buildAgentSystemPrompt`
 
-Keep Norwegian `SYSTEM_PROMPT` as the canonical body. In `buildAgentSystemPrompt`, prepend a hard meta-instruction that adapts to `PilarDisplayLanguage`:
+Keep Norwegian `SYSTEM_PROMPT` as the canonical body. In `buildAgentSystemPrompt`, prepend a hard meta-instruction that adapts to `PilarDisplayLanguage`.
 
-For English contexts:
+**The split is between two modes, not three languages:**
+
+**Norwegian mode (`nb`/`nn`):** no new preamble. The existing `wrapPromptWithLocale(prompt, locale)` already injects `SVARSPRÅK: BOKMÅL`/`SVARSPRÅK: NYNORSK` directives top and bottom. That works as-is — the user picked nb or nn in the header, the agent responds in that variety.
+
+**International mode (`isInternationalEnglishContext(context) === true`):** the shell is English, but the agent must mirror whatever language the user wrote their request in. Prepend:
+
 ```
-ROLE IDENTITY OVERRIDE
-You are Engineer A (Konstruktør A in the Norwegian source instructions below).
-The instructions that follow are in Norwegian — follow them precisely, but
-ALL OUTPUT must be in English. Translate "Konstruktør A" → "Engineer A",
-"Konstruktør B" → "Engineer B", "Samanliknar" → "Comparator",
-"Kontrollør" → "Controller", "Rapportør" → "Reporter", "Tolkar" → "Input Agent".
-Never use Norwegian role labels in your output.
+ROLE IDENTITY (INTERNATIONAL MODE)
+You are Engineer A (Konstruktør A in the Norwegian source instructions
+below). The instructions that follow are in Norwegian — follow them
+precisely as engineering guidance, but never copy Norwegian role labels
+into your output. Always use the English equivalents:
+  Tolkar       → Input Agent
+  Konstruktør A → Engineer A
+  Konstruktør B → Engineer B
+  Samanliknar  → Comparator
+  Kontrollør   → Controller
+  Rapportør    → Reporter
+
+OUTPUT LANGUAGE
+Detect the language the user wrote their request in. Respond in THAT
+language. Default to English when the user's language is unclear.
+Section headers and role labels stay in English (they mirror the app
+shell). Engineering prose mirrors the user's language.
 ```
 
-For Norwegian contexts: no preamble (current behaviour).
-
-**Pros:** minimal change (one helper function), single source of truth for the long prompt body, easy to revert, easy to add a third language. Builds directly on existing `buildAgentSystemPrompt` infrastructure.
+**Pros:** minimal change (one helper function), single source of truth for the long prompt body, easy to revert, easy to add a third language. Builds directly on existing `buildAgentSystemPrompt` infrastructure. Matches the product invariant the user articulated: shell language and content language are separate.
 **Cons:** relies on LLM honoring the meta-instruction; harder to verify than per-language prompts; the "translate these terms" list is hand-maintained.
 
 ### Option D — Post-process the output
@@ -150,18 +163,20 @@ A (bilingual identity in single prompt) is a half-measure that still relies on t
 
 All read-only/code-only; no DB changes; no migration.
 
-### 65.9 — Add English `PilarDisplayLanguage` preamble to `buildAgentSystemPrompt`
+### 65.9 — Add international-mode preamble to `buildAgentSystemPrompt`
 
 **Scope:** [lib/engineering-context/agent.ts](../../lib/engineering-context/agent.ts) only.
 
-- Resolve `PilarDisplayLanguage` from `context` using existing helpers (`displayLanguageForContext` or similar from `lib/international/display.ts`).
-- When language ≠ "nb"/"nn", prepend the role-identity-override block described in Option C §3.
-- The block must explicitly list the agent role translations and instruct "all output in {language}".
+- When `isInternationalEnglishContext(context) === true`, prepend the two-block preamble from Option C §3 (ROLE IDENTITY + OUTPUT LANGUAGE).
+- When the context is Norwegian, do nothing new — existing `wrapPromptWithLocale` already injects the nb/nn directive.
 - Do not change call sites — every route already calls `buildAgentSystemPrompt(SYSTEM_PROMPT, locale, engineeringContext)`. The preamble is invisible to them.
 
-**Verification:** existing eval case `pilar_eval_aisc_simple_beam_en_005` should pass more reliably. Run it manually after the change and capture before/after Norwegian-label leak rate.
+**Verification:**
+- Existing eval case `pilar_eval_aisc_simple_beam_en_005` should pass more reliably (English user → English prose, no "Konstruktør" leakage).
+- Existing eval case `pilar_eval_international_shell_language_en_007` (Canadian + French prose) is the cross-language test: French user input → French prose + English role labels. Run it manually after the change and capture before/after behaviour.
+- Spot-check that nb/nn runs are unchanged (no regression in Norwegian-mode output).
 
-**Risk:** preamble lengthens prompts by ~200 tokens. Cost impact: minor (one-time, cached if `cache_control: ephemeral` covers it; need to verify caching includes the preamble).
+**Risk:** preamble lengthens prompts by ~250 tokens in intl mode only. Cost impact: minor (one-time per prompt-version, cached when `cache_control: ephemeral` covers it; verify by inspecting `cache_read_tokens` on subsequent intl runs after the change lands).
 
 ### 65.10 — Per-agent preamble specialisation if needed
 
@@ -201,8 +216,8 @@ These do not block 65.9 but should be addressed when the data is available:
 
 1. **Does Anthropic's prompt caching include the preamble?** If `cache_control: ephemeral` is on the system block, the preamble inside it should cache. Verify after 65.9 lands by checking `cache_read_tokens` in `step_metrics`.
 2. **Does the LLM correctly follow "translate these specific role labels"?** Spot-check after 65.9 by reading Rapportør prose on 3-5 English-context runs.
-3. **What about French/German user prompts?** `engineeringContextUserMessageBlock` already says "answer in the same language as the user's prompt". Whether the preamble should be tri-/quad-lingual depends on whether we add `de`/`fr` to `PilarDisplayLanguage` (currently not). Defer.
-4. **Should the preamble be in the language it requests output in?** E.g. for English context, write the preamble in English ("You are Engineer A..."). Probably yes — increases the chance the model continues in English. The current `buildAgentSystemPrompt` already does this for the notation hint block.
+3. **French/German user prompts on international mode.** Resolved by the user-clarified design: international mode mirrors the user's request language regardless of which language. The "ALWAYS use the English equivalents" rule for role labels stays — role labels mirror the app shell (English in intl mode), prose mirrors the user. So a French user gets: English section headers + French engineering prose. This is intentional and matches international engineering report conventions.
+4. **The preamble itself is in English regardless of user input language.** Per Option C §3, the international-mode preamble is always written in English (the shell language), and instructs the model to detect the user's language and respond in it. We do not translate the preamble per user language — that would defeat the purpose (the preamble's job is to override the Norwegian role identity, not to be in the user's language).
 
 ---
 
