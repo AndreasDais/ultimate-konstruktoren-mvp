@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
 
 type ErrorReportStatus =
   | "open"
@@ -89,14 +87,12 @@ const SEVERITY_BADGE: Record<ErrorReportSeverity, BadgeStatus> = {
 };
 
 export default function ErrorReportsAdmin() {
-  const router = useRouter();
   const [reports, setReports] = useState<ErrorReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Review-modal state
   const [reviewModal, setReviewModal] = useState<ReviewModalState | null>(null);
@@ -131,27 +127,6 @@ export default function ErrorReportsAdmin() {
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
-
-  // Hent innlogga uses email for visning i topbar
-  useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) setUserEmail(user.email);
-    });
-  }, []);
-
-  const handleLogout = async () => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-    router.refresh();
-  };
 
   const quickUpdate = async (id: string, newStatus: ErrorReportStatus) => {
     setUpdatingId(id);
@@ -224,37 +199,6 @@ export default function ErrorReportsAdmin() {
 
   return (
     <div className="uk-shell">
-      <header
-        className="uk-topbar"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div className="uk-topbar__brand">
-          <div className="uk-topbar__logo">UK</div>
-          Engineeren — Admin
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {userEmail && (
-            <span
-              className="uk-mono"
-              style={{ fontSize: 11, color: "var(--fg-muted)" }}
-            >
-              {userEmail}
-            </span>
-          )}
-          <button
-            onClick={handleLogout}
-            className="uk-btn uk-btn--ghost"
-            style={{ fontSize: 12 }}
-          >
-            Logg ut
-          </button>
-        </div>
-      </header>
-
       <main>
         <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
           <header className="mb-10">
