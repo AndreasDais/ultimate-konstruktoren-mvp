@@ -30,6 +30,7 @@ const requiredTopLevel = [
   "domain",
   "standard_context",
   "display_language",
+  "target_agents",
   "input_text",
   "expected",
   "grader",
@@ -93,6 +94,18 @@ for (const [index, line] of lines.entries()) {
 
   if (!asArray(item.tags)) {
     fail(`line ${lineNumber}: tags must be an array`);
+  }
+
+  const targetAgents = asArray(item.target_agents);
+  if (!targetAgents || targetAgents.length === 0) {
+    fail(`line ${lineNumber}: target_agents must be a non-empty array (see RUNTIME_CONTRACT_AUDIT.md for valid agents)`);
+  } else {
+    for (const agent of targetAgents) {
+      if (typeof agent !== "string" || agent.trim() === "") {
+        fail(`line ${lineNumber}: target_agents entries must be non-empty strings`);
+        break;
+      }
+    }
   }
 
   if (!item.expected || typeof item.expected !== "object" || Array.isArray(item.expected)) {
