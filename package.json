@@ -60,7 +60,8 @@
     "report-qa:english-aisc-diagnostic": "node scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs",
     "report-qa:english-aisc-diagnostic:check": "node scripts/validate-report-qa-english-aisc-diagnostic-fixture.mjs",
     "context:packet": "node scripts/write-pilar-context-packet.mjs",
-    "pipeline:funnel": "node scripts/show-pipeline-funnel.mjs"
+    "pipeline:funnel": "node scripts/show-pipeline-funnel.mjs",
+    "forensics:british": "node scripts/show-british-forensics.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
