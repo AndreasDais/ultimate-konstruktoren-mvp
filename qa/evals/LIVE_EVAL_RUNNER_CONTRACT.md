@@ -79,6 +79,7 @@ run_id, if a run was created or inspected
 run_status
 eval_status: PASS | FAIL | WARN | SKIP
 artifact bundle path, if written outside the repo
+offline grading commands for the artifact bundle, if planned
 rule checks summary
 trace assertions summary
 manual_review_required
@@ -152,6 +153,7 @@ Missing trace data should produce `WARN` or `FAIL`, not a silent pass.
 ## First implementation boundary
 
 The current implementation starts with `--dry-run` and `--case-id` lookup only.
-It prints the planned runtime action and expected scratch paths. Actual pipeline
-execution should wait until Chat B confirms the runtime read path and artifact
-bundle are stable enough.
+It prints the planned runtime action, expected scratch paths, and offline
+grading commands for the planned artifact bundle. Actual pipeline execution
+should wait until Chat B confirms the runtime read path and artifact bundle are
+stable enough.
