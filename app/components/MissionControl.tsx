@@ -5,6 +5,7 @@ import "./mission-control.css";
 import { InfoPopover } from "@/app/components/InfoPopover";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { buildLocalizedLabelProxy, isInternationalEnglishContext, standardShortLabel } from "@/lib/international/display";
+import { buildComparatorTable } from "@/lib/compare/comparator-table";
 
 // Greske bokstavar (norsk byggfagleg konvensjon — alpha_cc → α_cc, rho_min → ρ_min)
 const GREEK_MAP: Record<string, string> = {
@@ -744,13 +745,25 @@ function ComparatorPanel({
   }
 
   const numDiffs = comparison.numeric_differences || [];
-  const allIdentical =
-    numDiffs.length === 0 ||
-    numDiffs.every((d) => (d.percent_diff || 0) === 0);
 
-  // Klassifisering (#6) — vi tek maks avvik blant alle felt. Tersklane (5%, 15%)
-  // er pre-launch-defaults; bør validerast mot fag for ulike variable-typar i V0.2.
-  const maxAvvik = Math.max(0, ...numDiffs.map((d) => d.percent_diff || 0));
+  // Samanlikningstabell (#5) — DETERMINISTISK nøkkel-paring via
+  // buildComparatorTable (same normalisering som Samanliknaren / agent_c).
+  // Erstattar tidlegare rå teikn-eksakt oppslag som mista B-verdiar når
+  // Konstruktør B stava ein nøkkel annleis enn Konstruktør A (komma vs
+  // understrek, store/små bokstavar). Sjå lib/compare/comparator-table.ts.
+  // Final calculation.results har forrang; streaming-results fyller hol
+  // dersom final er kortare enn det agenten faktisk streama.
+  const mergedA = { ...(streamingA.results ?? {}), ...(calculationA?.results ?? {}) };
+  const mergedB = { ...(streamingB.results ?? {}), ...(calculationB?.results ?? {}) };
+  const table = buildComparatorTable(mergedA, mergedB, numDiffs);
+  const tableRows = table.rows;
+
+  // Full semje krev minst eitt numerisk par, alle på 0 %, og ingen upara nøklar.
+  const allIdentical = table.allAgree;
+
+  // Klassifisering (#6) — maks kode-rekna avvik blant para felt. Tersklane
+  // (5 %, 15 %) er pre-launch-defaults; bør validerast mot fag i V0.2.
+  const maxAvvik = table.maxPercentDiff;
   const classification: "enige" | "nesten" | "avvik" =
     maxAvvik < 5 ? "enige" : maxAvvik < 15 ? "nesten" : "avvik";
   const badgeLabel =
@@ -765,46 +778,6 @@ function ComparatorPanel({
       : classification === "nesten"
       ? L.terskelNestenEnige[locale]
       : L.terskelAvvik[locale];
-
-  // Bygg verdi-rader (#5): kombiner Engineer A and Engineer B sine results-objekt til ein
-  // tabell der kvar rad er VERDI | A | B | AVVIK. Source-of-truth for
-  // talverdiar er calculation.results; comparison.numeric_differences gir
-  // oss percent_diff + severity per felt.
-  type TableRow = {
-    field: string;
-    valueA: string;
-    valueB: string;
-    percentDiff: number;
-    severity: "low" | "medium" | "high" | "critical";
-  };
-
-  const resultsA = calculationA?.results ?? {};
-  const resultsB = calculationB?.results ?? {};
-  // Streaming-results som fallback (#5-fix): final calculation.results frå
-  // agenten kan vere kortare enn det den faktisk berekna under streaming.
-  // Vi tek alle keys frå begge kjelder + use streaming.results om
-  // calculation.results manglar verdi.
-  const streamResultsA = streamingA.results ?? {};
-  const streamResultsB = streamingB.results ?? {};
-  const diffsByField = new Map(numDiffs.map((d) => [d.field, d]));
-  const allFieldsOrdered = Array.from(
-    new Set([
-      ...Object.keys(resultsA),
-      ...Object.keys(resultsB),
-      ...Object.keys(streamResultsA),
-      ...Object.keys(streamResultsB),
-    ])
-  );
-  const tableRows: TableRow[] = allFieldsOrdered.slice(0, 6).map((field) => {
-    const d = diffsByField.get(field);
-    return {
-      field,
-      valueA: resultsA[field] ?? streamResultsA[field] ?? "—",
-      valueB: resultsB[field] ?? streamResultsB[field] ?? "—",
-      percentDiff: d?.percent_diff ?? 0,
-      severity: d?.severity ?? "low",
-    };
-  });
 
   return (
     <div className="mc-compare mc-compare--ready mc-compare-slide-in">
@@ -865,7 +838,9 @@ function ComparatorPanel({
           {/* Data-rader */}
           {tableRows.map((row) => {
             const avvikColor =
-              row.percentDiff === 0
+              row.percentDiff === null
+                ? "var(--fg-muted, #94A3B8)"
+                : row.percentDiff === 0
                 ? "var(--tone-ok-fg, #166534)"
                 : row.severity === "low"
                 ? "var(--fg-2, #475569)"
@@ -881,7 +856,7 @@ function ComparatorPanel({
                   className="uk-mono"
                   style={{ color: avvikColor, textAlign: "right", fontWeight: 500 }}
                 >
-                  {row.percentDiff.toFixed(1)} %
+                  {row.percentDiff === null ? "—" : `${row.percentDiff.toFixed(1)} %`}
                 </span>
               </Fragment>
             );
@@ -898,8 +873,8 @@ function ComparatorPanel({
           </div>
           <div className="mc-compare-cell-note">
             {(() => {
-              const total = numDiffs.length;
-              const utanfor = numDiffs.filter((d) => (d.percent_diff || 0) >= 5).length;
+              const total = table.pairedCount;
+              const utanfor = table.aboveThresholdCount;
               if (allIdentical) return L.toAvToEinige[locale];
               if (utanfor === 0) return `${total} ${locale === "nn" ? "verdiar jamført" : "verdier jamført"}`;
               return `${total} ${locale === "nn" ? "jamført · " : "jamført · "}${utanfor} ${locale === "nn" ? "utanfor terskel" : "utenfor terskel"}`;
