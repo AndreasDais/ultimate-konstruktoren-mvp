@@ -14,6 +14,7 @@ function parseArgs(argv) {
     priority: "",
     domain: "",
     targetAgent: "",
+    tag: "",
     help: false,
   };
 
@@ -65,6 +66,17 @@ function parseArgs(argv) {
 
     if (token.startsWith("--target-agent=")) {
       args.targetAgent = token.slice("--target-agent=".length);
+      continue;
+    }
+
+    if (token === "--tag") {
+      args.tag = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--tag=")) {
+      args.tag = token.slice("--tag=".length);
       continue;
     }
 
@@ -135,6 +147,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --list-cases
   node scripts/grade-eval-artifact.mjs --list-cases --json
   node scripts/grade-eval-artifact.mjs --list-cases --priority P0 --target-agent pipeline
+  node scripts/grade-eval-artifact.mjs --list-cases --tag guardrail
 
 Scope:
   Offline deterministic text checks only. No LLM calls, no DB reads, no writes.
@@ -258,10 +271,12 @@ function matchesFilter(actual, expected) {
 function filterCases(cases, args) {
   return cases.filter((evalCase) => {
     const targetAgents = Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [];
+    const tags = Array.isArray(evalCase.tags) ? evalCase.tags : [];
     return (
       matchesFilter(evalCase.priority ?? "unknown", args.priority) &&
       matchesFilter(evalCase.domain ?? "unknown", args.domain) &&
-      (!args.targetAgent || targetAgents.some((agent) => matchesFilter(agent, args.targetAgent)))
+      (!args.targetAgent || targetAgents.some((agent) => matchesFilter(agent, args.targetAgent))) &&
+      (!args.tag || tags.some((tag) => matchesFilter(tag, args.tag)))
     );
   });
 }
