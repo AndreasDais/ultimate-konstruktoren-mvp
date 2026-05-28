@@ -1,9 +1,22 @@
+/* =========================================================
+   Admin intelligence-side — Pilar-native styling.
+
+   REDESIGN: sida brukte allereie Pilar-tokens, men med Vercel-
+   landing-geometri (radial-gradient-bg, 24px-kort, 0 18px 50px-
+   skuggar, color-mix-translucente flater, serif gigant-heading,
+   800/900-vekt, pille-knappar, linear-gradient-panel). Skrive om
+   til Pilar-konvensjonane: --r-lg/--r-md/--r-sm radius, --shadow-md,
+   solide flater, mono eyebrows (500-vekt), .uk-btn-knappar,
+   .uk-badge-merker.
+
+   Klassenamna er uendra slik at intelligence/page.tsx ikkje treng
+   endring.
+   ========================================================= */
+
 .intelligence-page {
   min-height: 100vh;
   padding: 34px 22px 72px;
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-bg) 70%, transparent), transparent 34rem),
-    var(--bg);
+  background: var(--bg);
   color: var(--fg);
 }
 
@@ -12,11 +25,11 @@
 .intelligence-panel,
 .intelligence-empty {
   max-width: 1120px;
-  margin: 0 auto 20px;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  margin: 0 auto 18px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.07);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .intelligence-hero {
@@ -29,10 +42,10 @@
 .intelligence-kicker {
   margin: 0 0 8px;
   color: var(--fg-muted);
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -44,11 +57,17 @@
 }
 
 .intelligence-hero h1 {
-  font-family: var(--font-serif, ui-serif, Georgia, serif);
-  font-size: clamp(34px, 4.8vw, 54px);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 600;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.intelligence-summary h2,
+.intelligence-panel h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .intelligence-hero p,
@@ -58,6 +77,7 @@
   line-height: 1.6;
 }
 
+/* Admin-snarvegar — matchar .uk-btn (rektangulær, 500-vekt) */
 .intelligence-admin-links {
   display: flex;
   flex-wrap: wrap;
@@ -66,17 +86,22 @@
 }
 
 .intelligence-admin-links a {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 7px 11px;
-  background: var(--surface-2);
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 0 12px;
+  background: var(--surface);
   color: var(--fg-2);
   text-decoration: none;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 500;
+  transition: background 120ms, border-color 120ms;
 }
 
 .intelligence-admin-links a:hover {
+  background: var(--surface-2);
   border-color: var(--border-strong);
   color: var(--fg);
 }
@@ -92,8 +117,8 @@
   flex-direction: column;
   gap: 6px;
   color: var(--fg-2);
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .intelligence-actions input,
@@ -102,58 +127,94 @@
 .intelligence-feedback-grid select,
 .intelligence-feedback-grid textarea {
   border: 1px solid var(--border-2);
-  border-radius: 14px;
+  border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--fg);
-  padding: 11px 13px;
+  padding: 9px 12px;
   font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms;
 }
 
+.intelligence-actions input:focus,
+.intelligence-actions select:focus,
+.intelligence-feedback-grid select:focus,
+.intelligence-feedback-grid textarea:focus {
+  border-color: var(--fg-2);
+  box-shadow: 0 0 0 3px var(--surface-3);
+}
+
+/* Primær-knapp — matchar .uk-btn--primary */
 .intelligence-actions button {
+  height: 38px;
+  padding: 0 14px;
   cursor: pointer;
   background: var(--fg);
+  border-color: var(--fg);
   color: var(--surface);
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 120ms, border-color 120ms;
+}
+
+.intelligence-actions button:hover {
+  background: var(--fg-2);
+  border-color: var(--fg-2);
 }
 
 .intelligence-actions button.secondary,
 .intelligence-summary button.secondary,
 .intelligence-panel button.secondary {
   border: 1px solid var(--border-2);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--fg);
   cursor: pointer;
   font: inherit;
-  font-weight: 800;
-  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  transition: background 120ms, border-color 120ms;
+}
+
+.intelligence-actions button.secondary:hover,
+.intelligence-summary button.secondary:hover,
+.intelligence-panel button.secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
 .intelligence-actions button:disabled,
 .intelligence-summary button.secondary:disabled,
 .intelligence-panel button.secondary:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
+/* Status-stripar — matchar .uk-stripe (farga venstrekant) */
 .intelligence-error,
 .intelligence-loading {
   max-width: 1120px;
-  margin: 0 auto 20px;
-  padding: 14px 18px;
-  border-radius: 16px;
+  margin: 0 auto 18px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .intelligence-error {
   background: var(--bad-bg);
   color: var(--bad);
   border: 1px solid var(--bad-border);
+  border-left: 3px solid var(--bad);
 }
 
 .intelligence-loading {
   background: var(--info-bg);
   color: var(--info);
   border: 1px solid var(--info-border);
+  border-left: 3px solid var(--info);
 }
 
 .intelligence-summary {
@@ -172,7 +233,7 @@
 .intelligence-metric-card {
   padding: 14px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: var(--surface-2);
 }
 
@@ -188,6 +249,8 @@
   margin-top: 6px;
   color: var(--fg);
   font-size: 26px;
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum';
 }
 
 .intelligence-panel,
@@ -195,14 +258,16 @@
   padding: 24px;
 }
 
+/* Accent-panel — flat flate med farga venstrekant i staden for
+   linear-gradient-tint (Pilar-stripe-mønster). */
 .intelligence-panel--accent {
   border-color: var(--info-border);
-  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--info-bg) 42%, var(--surface)) 100%);
+  border-left: 3px solid var(--info);
 }
 
 .intelligence-panel--actions {
-  border-color: var(--accent-bg);
-  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--accent-bg) 34%, var(--surface)) 100%);
+  border-color: var(--border-2);
+  border-left: 3px solid var(--accent);
 }
 
 .intelligence-stack {
@@ -215,7 +280,7 @@
 .intelligence-action-card {
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-md);
   background: var(--surface);
 }
 
@@ -228,6 +293,8 @@
 .intelligence-action-card h3 {
   margin: 10px 0 6px;
   color: var(--fg);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .intelligence-row {
@@ -246,32 +313,40 @@
 .intelligence-category {
   margin-left: 8px;
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
 }
 
+/* Badge — matchar .uk-badge (mono, 4px radius, 500-vekt) */
 .intelligence-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 2px 8px;
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .intelligence-badge--low,
 .intelligence-badge--deferred {
   background: var(--surface-3);
+  border-color: var(--border-2);
   color: var(--fg-2);
 }
 
 .intelligence-badge--medium,
 .intelligence-badge--proposed {
   background: var(--warn-bg);
+  border-color: var(--warn-border);
   color: var(--warn);
 }
 
@@ -279,6 +354,7 @@
 .intelligence-badge--critical,
 .intelligence-badge--rejected {
   background: var(--bad-bg);
+  border-color: var(--bad-border);
   color: var(--bad);
 }
 
@@ -287,12 +363,14 @@
 .intelligence-badge--implemented,
 .intelligence-badge--verified {
   background: var(--ok-bg);
+  border-color: var(--ok-border);
   color: var(--ok);
 }
 
 .intelligence-impact {
   margin-top: 10px;
-  font-weight: 800;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .intelligence-muted {
@@ -308,6 +386,8 @@
 .intelligence-action-group > h3 {
   margin: 0 0 10px;
   color: var(--fg);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .intelligence-feedback-grid {
@@ -322,13 +402,14 @@
   flex-direction: column;
   gap: 6px;
   color: var(--fg-2);
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .intelligence-feedback-grid textarea {
   min-height: 86px;
   resize: vertical;
+  line-height: 1.5;
 }
 
 .intelligence-action-buttons {
@@ -338,20 +419,34 @@
   margin-top: 14px;
 }
 
+/* Handlings-knappar — matchar .uk-btn-variantar */
 .intelligence-action-buttons button {
   cursor: pointer;
+  height: 32px;
   border: 1px solid var(--fg);
-  border-radius: 999px;
-  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  padding: 0 12px;
   background: var(--fg);
   color: var(--surface);
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 120ms, border-color 120ms;
+}
+
+.intelligence-action-buttons button:hover {
+  background: var(--fg-2);
+  border-color: var(--fg-2);
 }
 
 .intelligence-action-buttons button.secondary {
   background: var(--surface);
   color: var(--fg);
   border-color: var(--border-2);
+}
+
+.intelligence-action-buttons button.secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
 .intelligence-action-buttons button.danger {
@@ -362,21 +457,23 @@
 
 .intelligence-action-buttons button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .intelligence-plan {
   margin-top: 18px;
   padding: 16px;
   border: 1px solid var(--info-border);
-  border-radius: 18px;
-  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--info-bg) 40%, var(--surface)) 100%);
+  border-left: 3px solid var(--info);
+  border-radius: var(--r-md);
+  background: var(--surface);
 }
 
 .intelligence-plan h4 {
   margin: 4px 0 0;
   color: var(--fg);
-  font-size: 17px;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .intelligence-plan-grid {
@@ -392,20 +489,23 @@
   gap: 4px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
 }
 
 .intelligence-plan-grid strong,
 .intelligence-details h5 {
   color: var(--fg-muted);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
 }
 
 .intelligence-plan code {
   overflow-wrap: anywhere;
+  font-family: var(--font-mono);
   color: var(--accent);
   font-size: 12px;
 }
@@ -413,15 +513,16 @@
 .intelligence-details {
   margin-top: 12px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
   padding: 10px 12px;
 }
 
 .intelligence-details summary {
   cursor: pointer;
   color: var(--fg);
-  font-weight: 900;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .intelligence-details ul {
@@ -446,13 +547,6 @@
 .intelligence-plan-steps small {
   display: block;
   color: var(--fg-muted);
-}
-
-[data-palette="graphite"] .intelligence-hero,
-[data-palette="graphite"] .intelligence-summary,
-[data-palette="graphite"] .intelligence-panel,
-[data-palette="graphite"] .intelligence-empty {
-  box-shadow: none;
 }
 
 @media (max-width: 900px) {
