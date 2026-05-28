@@ -31,9 +31,9 @@
 
 **Certain:** the user-facing `user_message` is **clean** across all runs (English, no mechanism terms) — except T6's stray Norwegian "ikkje". So 65.11b closed the `user_message`/`reason` path but **not** `controller_notes`.
 
-**Open question (blocks severity call):** is `controller_notes` rendered to end users, or internal-only diagnostic? The 65.11b no-echo rule and the original forensics canary both treat `controller_notes` as a leak surface — but if it is internal-only, the Norwegian scaffolding there is by-design and only the term hygiene matters.
+**Resolved (was the open severity question):** `controller_notes` **is user-facing — conditionally.** `lib/result/kontrollor-chips.ts:310-320` renders it as the body of the "Requires professional review" chip whenever `manual_review_required = true`. The agent-d prompt (route.ts:172) frames it as *"interne kommentarar for manuell gjennomgang"* — that prompt-vs-UI mismatch is why the leak slipped. So the mechanism-term leak reaches users **exactly on the runs flagged for professional review** (the worst audience). Sweep quantification: of the 5 notes-leak runs, only **T9 (`2048f299`, uncertain, manual_review=true) actually displays it**; T2/T6/T7/T10 (manual_review=false) leak only into the DB row — chip not rendered.
 
-**Suggested direction:** if user-facing → extend the 65.11b no-echo rule (neutral terminology, no mechanism names) to `controller_notes`. If internal-only → document it as such so future audits don't re-flag it.
+**Suggested direction:** confirmed user-facing → extend the 65.11b no-echo rule (neutral terminology, no mechanism names) to `controller_notes` at the source (agent-d), cleaner than UI-side filtering. Exposure is narrow (manual-review runs only) so not urgent — but that audience is a reviewing engineer, who is exactly who shouldn't see Pilar-internal jargon.
 
 ---
 
