@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "@/lib/locale-context";
-import type { Locale } from "@/lib/locale";
+import type { HeaderUiMode } from "./Header";
 
 type Palette = "slate" | "stone" | "graphite";
+type LangKey = "nb" | "nn" | "en";
 
 const STORAGE_KEY = "pilar-theme";
 
-const OPTIONS: Record<Locale, { value: Palette; label: string; description: string }[]> = {
+const OPTIONS: Record<LangKey, { value: Palette; label: string; description: string }[]> = {
   nb: [
     { value: "slate", label: "Slate", description: "Lyst, kjølig" },
     { value: "stone", label: "Stone", description: "Lyst, varmt" },
@@ -20,17 +21,28 @@ const OPTIONS: Record<Locale, { value: Palette; label: string; description: stri
     { value: "stone", label: "Stone", description: "Lyst, varmt" },
     { value: "graphite", label: "Graphite", description: "Mørkt, teknisk" },
   ],
+  en: [
+    { value: "slate", label: "Slate", description: "Light, cool" },
+    { value: "stone", label: "Stone", description: "Light, warm" },
+    { value: "graphite", label: "Graphite", description: "Dark, technical" },
+  ],
 };
 
-const THEME_COPY: Record<Locale, { trigger: string; aria: string }> = {
+const THEME_COPY: Record<LangKey, { trigger: string; aria: string }> = {
   nb: { trigger: "Tema", aria: "Velg tema" },
   nn: { trigger: "Tema", aria: "Vel tema" },
+  en: { trigger: "Theme", aria: "Pick theme" },
 };
 
-export default function ThemeToggle() {
+type Props = {
+  uiMode?: HeaderUiMode;
+};
+
+export default function ThemeToggle({ uiMode = "no" }: Props) {
   const { locale } = useLocale();
-  const copy = THEME_COPY[locale];
-  const options = OPTIONS[locale];
+  const langKey: LangKey = uiMode === "intl" ? "en" : locale;
+  const copy = THEME_COPY[langKey];
+  const options = OPTIONS[langKey];
 
   const [palette, setPalette] = useState<Palette>(() => {
     if (typeof document === "undefined") return "slate";

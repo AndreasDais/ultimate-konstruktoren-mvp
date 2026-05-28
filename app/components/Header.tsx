@@ -174,7 +174,7 @@ export default function Header({
         </div>
       )}
 
-      <ThemeToggle />
+      <ThemeToggle uiMode={uiMode} />
 
       {localeToggleVisible && (
         <div
