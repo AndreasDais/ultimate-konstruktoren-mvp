@@ -33,6 +33,18 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
     nb: " ved hjelp av store språkmodeller og må kontrolleres av kvalifisert fagperson før bruk i reelle prosjekter.",
     nn: " ved hjelp av store språkmodellar og må kontrollerast av kvalifisert fagperson før bruk i reelle prosjekt.",
   },
+  s1P2Pre: {
+    nb: "Pilar er ikke erstatning for faglig ingeniørvurdering, og output er ",
+    nn: "Pilar er ikkje erstatning for fagleg ingeniørvurdering, og output er ",
+  },
+  s1P2Bold: {
+    nb: "ikke stemplet prosjektering",
+    nn: "ikkje stempla prosjektering",
+  },
+  s1P2Post: {
+    nb: ". Resultatene kan ikke brukes som verifisert dimensjoneringsgrunnlag eller leveres som sertifisert prosjekteringsdokumentasjon.",
+    nn: ". Resultata kan ikkje brukast som verifisert dimensjoneringsgrunnlag eller leverast som sertifisert prosjekteringsdokumentasjon.",
+  },
 
   // 2. Avgrensingar og ansvar
   s2Title: { nb: "2. Begrensninger og ansvar", nn: "2. Avgrensingar og ansvar" },
@@ -113,6 +125,9 @@ export default async function VilkarPage() {
           <Section title={VILKAR_LABELS.s1Title[locale]}>
             <p>
               {VILKAR_LABELS.s1P1Pre[locale]}<strong>{VILKAR_LABELS.s1P1Bold[locale]}</strong>{VILKAR_LABELS.s1P1Post[locale]}
+            </p>
+            <p>
+              {VILKAR_LABELS.s1P2Pre[locale]}<strong>{VILKAR_LABELS.s1P2Bold[locale]}</strong>{VILKAR_LABELS.s1P2Post[locale]}
             </p>
           </Section>
 
