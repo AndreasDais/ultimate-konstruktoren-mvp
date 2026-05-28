@@ -62,7 +62,8 @@
     "context:packet": "node scripts/write-pilar-context-packet.mjs",
     "pipeline:funnel": "node scripts/show-pipeline-funnel.mjs",
     "forensics:british": "node scripts/show-british-forensics.mjs",
-    "intl:test:analysis": "node scripts/show-intl-test-analysis.mjs"
+    "intl:test:analysis": "node scripts/show-intl-test-analysis.mjs",
+    "intl:test:run": "node scripts/run-intl-tests.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
