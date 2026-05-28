@@ -15,6 +15,7 @@ import { formatAnthropicError } from "@/lib/anthropic-errors";
 import { getSupabase } from "@/lib/supabase";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
+import { recordStepMessage } from "@/lib/step-messages/record-message";
 
 const PROMPT_VERSION = "agent_e_v0.3";
 const MODEL = PIPELINE_MODEL;
@@ -412,6 +413,17 @@ Generer JSON med executive_summary, technical_assessment og conclusion. Hugs ver
     promptVersion: PROMPT_VERSION,
     latencyMs: Date.now() - t0,
     ok: finalMessage.stop_reason !== "max_tokens",
+  });
+
+  // Sprint 65.4 — full coverage per AGENT_ROUTE_AUDIT.md F5. Soft-fail.
+  void recordStepMessage({
+    runId: run_id,
+    stepName: "rapportor",
+    model: MODEL,
+    promptVersion: PROMPT_VERSION,
+    temperature: null,
+    maxTokens: 4000,
+    rawMessage: finalMessage as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
   });
 
   // finalMessage gjev oss alle content-blokker — plukk text-blokken om vi

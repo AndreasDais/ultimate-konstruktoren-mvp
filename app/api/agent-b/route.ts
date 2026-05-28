@@ -13,6 +13,7 @@ import type { EngineeringContext } from "@/lib/engineering-context";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
+import { recordStepMessage } from "@/lib/step-messages/record-message";
 
 const SYSTEM_PROMPT = `<role>
 Du er Konstruktør B, ein UAVHENGIG KONTROLL-LØYSAR for Pilar — eit AI-basert verktøy for norsk byggfagleg praksis.
@@ -324,6 +325,17 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     promptVersion: PROMPT_VERSION,
     latencyMs: Date.now() - t0,
     ok: message.stop_reason !== "max_tokens",
+  });
+
+  // Sprint 65.4 — full coverage per AGENT_ROUTE_AUDIT.md F5. Soft-fail.
+  void recordStepMessage({
+    runId: run_id,
+    stepName: "konstruktor_b",
+    model: PIPELINE_MODEL,
+    promptVersion: PROMPT_VERSION,
+    temperature: null,
+    maxTokens: 32768,
+    rawMessage: message as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
   });
 
   const responseText = message.content

@@ -8,6 +8,7 @@ import { formatAnthropicError } from "@/lib/anthropic-errors";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { buildAgentSystemPrompt, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
 import { PIPELINE_MODEL } from "@/lib/models";
+import { recordStepMessage } from "@/lib/step-messages/record-message";
 import { recordStepMetric } from "@/lib/step-metrics";
 import { parseJsonWithFallback } from "@/lib/json/extract-json";
 
@@ -570,6 +571,18 @@ async function callTolkar(args: {
         promptVersion: PROMPT_VERSION,
         latencyMs,
         ok: message.stop_reason !== "max_tokens",
+      });
+
+      // Sprint 65.4 — full coverage per AGENT_ROUTE_AUDIT.md F5. Soft-fail.
+      // Tolkar uses requestId (runs før calculation_runs eksisterer).
+      void recordStepMessage({
+        requestId,
+        stepName: "tolkar",
+        model: PIPELINE_MODEL,
+        promptVersion: PROMPT_VERSION,
+        temperature: 0.1,
+        maxTokens: 3072,
+        rawMessage: message as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
       });
 
       const { error: reviewError } = await supabase

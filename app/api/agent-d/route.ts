@@ -14,6 +14,7 @@ import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 import { recordShadowCheck } from "@/lib/shadow/shadow-check";
 import { recordStepMetric } from "@/lib/step-metrics";
+import { recordStepMessage } from "@/lib/step-messages/record-message";
 import { PIPELINE_MODEL } from "@/lib/models";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
@@ -359,6 +360,17 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
       promptVersion: PROMPT_VERSION,
       latencyMs: Date.now() - t0,
       ok: message.stop_reason !== "max_tokens",
+    });
+
+    // Sprint 65.4 — full coverage per AGENT_ROUTE_AUDIT.md F5. Soft-fail.
+    void recordStepMessage({
+      runId: run_id,
+      stepName: "kontrollor",
+      model: PIPELINE_MODEL,
+      promptVersion: PROMPT_VERSION,
+      temperature: 0.3,
+      maxTokens: 4096,
+      rawMessage: message as unknown as Parameters<typeof recordStepMessage>[0]["rawMessage"],
     });
 
     const responseText = message.content
