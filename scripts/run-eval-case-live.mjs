@@ -129,6 +129,18 @@ function joinBundlePath(scratchDir, caseId, runId) {
   return [scratchDir.replace(/[\\/]+$/, ""), caseId, runId].join("/");
 }
 
+function quoteArg(value) {
+  return JSON.stringify(String(value));
+}
+
+function buildPlannedCommands(bundlePath) {
+  const quotedBundlePath = quoteArg(bundlePath);
+  return {
+    grade_bundle: `node scripts/grade-eval-artifact.mjs --bundle ${quotedBundlePath}`,
+    grade_bundle_json: `node scripts/grade-eval-artifact.mjs --bundle ${quotedBundlePath} --json`,
+  };
+}
+
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
   const manualReviewRequired = Boolean(evalCase.manual_review_required);
@@ -177,6 +189,7 @@ function buildDryRunPlan(evalCase, args) {
       repo_writes: false,
       require_trace: args.requireTrace,
     },
+    planned_commands: buildPlannedCommands(bundlePath),
   };
 }
 
@@ -192,6 +205,7 @@ function formatTextPlan(plan) {
     `manifest_schema: ${plan.manifest_preview.schema_version}`,
     `manifest_case_id: ${plan.manifest_preview.case_id}`,
     `manual_review_required: ${plan.manual_review_required}`,
+    `grade_command: ${plan.planned_commands.grade_bundle}`,
     "live_pipeline_execution: false",
     "supabase_reads: false",
     "repo_writes: false",
