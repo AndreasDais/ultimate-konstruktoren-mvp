@@ -213,6 +213,8 @@ function formatTextPlan(plan) {
     `artifact_files: ${plan.artifact_bundle.files.join(", ")}`,
     `manifest_schema: ${plan.manifest_preview.schema_version}`,
     `manifest_case_id: ${plan.manifest_preview.case_id}`,
+    `manifest_cases_path: ${plan.manifest_preview.source.cases_path}`,
+    `manifest_runner: ${plan.manifest_preview.source.runner}`,
     `manual_review_required: ${plan.manual_review_required}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
     `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
