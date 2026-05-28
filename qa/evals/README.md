@@ -39,6 +39,32 @@ node scripts/grade-eval-artifact.mjs --case-id pilar_eval_irrelevant_input_footb
 node scripts/grade-eval-artifact.mjs --case-id pilar_eval_irrelevant_input_football_004 --artifact /tmp/pilar-artifact.txt --json
 ```
 
+## List eval cases
+
+The artifact grader can also list cases without grading an artifact:
+
+```bash
+node scripts/grade-eval-artifact.mjs --list-cases
+node scripts/grade-eval-artifact.mjs --list-cases --json
+node scripts/grade-eval-artifact.mjs --list-cases --ids-only --display-language en
+node scripts/grade-eval-artifact.mjs --list-cases --count --tag i18n
+```
+
+Supported list filters:
+
+```txt
+--priority <P0|P1|...>
+--domain <domain>
+--standard-context <standard_context>
+--display-language <nb|nn|en>
+--target-agent <agent>
+--tag <tag>
+```
+
+Listing is read-only. It is meant to help parallel agents find relevant eval
+cases for patch planning and artifact grading; it does not run the live PILAR
+pipeline or update generated reports.
+
 The grader checks:
 
 ```txt
