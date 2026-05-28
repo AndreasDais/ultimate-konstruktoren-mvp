@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { sweepOrphanRuns } from "@/lib/calculation-runs/sweep-orphans";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -73,6 +74,15 @@ export async function POST(request: Request) {
 
     const userId = await getCurrentUserId();
     const supabase = getSupabase();
+
+    // Lazy orphan-cleanup (sprint 62.0). Fire-and-forget — sweep-feil skal
+    // aldri stoppe ein ny berekning. Dekker anonyme runs (som /mine-sweepen
+    // ikkje rører) + innlogga brukar sine egne. Sjå
+    // lib/calculation-runs/sweep-orphans.ts for terskel og åtferd.
+    void sweepOrphanRuns(
+      supabase,
+      userId ? { userId, includeAnonymous: true } : { anonymous: true },
+    );
 
     // Best-effort: oppdater requests.user_id viss innlogga.
     // Feil her stoppar ikkje køyringa — vi har framleis calculation_runs.user_id.

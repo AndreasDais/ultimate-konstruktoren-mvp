@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/locale";
 import { getLocaleFromCookies } from "@/lib/locale";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
+import { sweepOrphanRuns } from "@/lib/calculation-runs/sweep-orphans";
 import Link from "next/link";
 import { MineList, type MineRow } from "./MineList";
 
@@ -122,22 +123,10 @@ async function getUserCalculations(userId: string, locale: Locale): Promise<Mine
   const supabase = getSupabase();
 
   // === LAZY CLEANUP ===
-  // Marker orphaned "running"-runs eldre enn 30 min som "aborted". Skjer på
-  // kvar /mine-visit — billigare enn cron-jobb for pilot-skala. Typisk
-  // Pilar-berekning fullførar på 3-4 min, så 30 min er trygt: aktive runs
-  // vil aldri bli markert som krasja ved feil.
-  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-  const { error: cleanupError } = await supabase
-    .from("calculation_runs")
-    .update({ run_status: "aborted" })
-    .eq("user_id", userId)
-    .eq("run_status", "running")
-    .lt("started_at", thirtyMinAgo);
-
-  if (cleanupError) {
-    // Ikkje fatal — fall gjennom til vanleg lasting.
-    console.warn("[/mine] cleanup failed:", cleanupError.message);
-  }
+  // Sweep brukar sine egne orphan-runs. init-run gjer same sweep + anon
+  // ved kvar ny berekning (sprint 62.0); /mine-sweepen dekker brukarar
+  // som ikkje har starta nye berekningar nyleg.
+  await sweepOrphanRuns(supabase, { userId });
 
   // Query 1: alle calculation_runs for use
   const { data: runs, error: runsError } = await supabase
