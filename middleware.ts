@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit } from "@/lib/ratelimit";
+import { checkRateLimit, checkGlobalDailyCap } from "@/lib/ratelimit";
 
 /**
  * Bygg ein Supabase-klient med cookie-handling som auto-refreshar session,
@@ -42,6 +42,17 @@ export async function middleware(request: NextRequest) {
 
   // === RATE-LIMIT-BRANCH ===
   // Alle AI-tunge ruter går gjennom rate-limit-sjekk.
+  //
+  // /api/init-run er chokepointen for kostnad: eitt kall per køyring,
+  // før noko LLM-kall. Der gjeld BEGGE: det globale dagstaket (vern mot
+  // mange-IP-flaum) og per-IP-grensa (hindrar at éin IP brenn dagsbudsjettet).
+  if (pathname === "/api/init-run") {
+    const capped = await checkGlobalDailyCap();
+    if (capped) return capped;
+    const blocked = await checkRateLimit(request);
+    if (blocked) return blocked;
+    return NextResponse.next();
+  }
   if (
     pathname === "/api/input-agent" ||
     pathname.startsWith("/api/agent-")
@@ -144,6 +155,7 @@ export const config = {
     "/innstillingar/:path*",
     // Rate-limit (eksplisitt enumerert sidan path-to-regexp ikkje matchar
     // dash-prefix-pattern reint)
+    "/api/init-run",
     "/api/input-agent",
     "/api/agent-a",
     "/api/agent-b",

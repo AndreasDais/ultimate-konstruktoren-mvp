@@ -20,7 +20,8 @@ import { NextRequest, NextResponse } from "next/server";
 function makeLimiter(
   requests: number,
   window: "1 h" | "1 d",
-  prefix: string
+  prefix: string,
+  algorithm: "sliding" | "fixed" = "sliding"
 ): Ratelimit | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -34,7 +35,10 @@ function makeLimiter(
 
   return new Ratelimit({
     redis: new Redis({ url, token }),
-    limiter: Ratelimit.slidingWindow(requests, window),
+    limiter:
+      algorithm === "fixed"
+        ? Ratelimit.fixedWindow(requests, window)
+        : Ratelimit.slidingWindow(requests, window),
     analytics: true, // gir oss tal på blokkerte forsøk i Upstash-dashbordet
     prefix,
   });
@@ -43,6 +47,21 @@ function makeLimiter(
 // Module-level singletons — init éin gong per cold start
 const hourlyLimit = makeLimiter(600, "1 h", "pilar:hourly");
 const dailyLimit = makeLimiter(3000, "1 d", "pilar:daily");
+
+// Globalt dagleg run-tak — IKKJE per-IP. Vernar aggregert kostnad mot ein
+// trafikkbølgje frå mange ulike IP-ar (per-IP-grensene gjer ikkje det).
+// Taket les frå GLOBAL_DAILY_RUN_CAP slik at det kan tunast utan deploy.
+const parsedGlobalCap = Number(process.env.GLOBAL_DAILY_RUN_CAP);
+const GLOBAL_DAILY_RUN_CAP =
+  Number.isFinite(parsedGlobalCap) && parsedGlobalCap > 0
+    ? parsedGlobalCap
+    : 500;
+const globalDailyRunLimit = makeLimiter(
+  GLOBAL_DAILY_RUN_CAP,
+  "1 d",
+  "pilar:global-runs",
+  "fixed"
+);
 
 /**
  * Hent klient-IP frå request-headers. Vercel set X-Forwarded-For automatisk.
@@ -118,4 +137,53 @@ export async function checkRateLimit(
   }
 
   return null; // pass through
+}
+
+/**
+ * Globalt dagleg kostnadsvern. IKKJE per-IP — éin delt teljar for heile
+ * appen. Skal kallast på `/api/init-run` (chokepointen: eitt kall per
+ * køyring, før noko LLM-kall). Returnerer 429 når dagstaket er nådd.
+ *
+ * Fail-open: manglar Upstash-credentials, eller er Redis utilgjengeleg,
+ * slepp funksjonen gjennom. Det HARDE kostnadsvernet er det månadlege
+ * taket på Anthropic-API-nøkkelen (sett i Anthropic-konsollen) — app-cap-en
+ * er det grasiøse UX-laget, ikkje backstoppen.
+ */
+export async function checkGlobalDailyCap(): Promise<NextResponse | null> {
+  // Skip i lokal utvikling — same som checkRateLimit.
+  if (process.env.NODE_ENV === "development") return null;
+
+  // Ingen credentials — fail-open (sjå doc over).
+  if (!globalDailyRunLimit) return null;
+
+  try {
+    const result = await globalDailyRunLimit.limit("global");
+    if (result.success) return null;
+
+    const retryAfterSec = Math.max(
+      1,
+      Math.ceil((result.reset - Date.now()) / 1000),
+    );
+    return NextResponse.json(
+      {
+        error: "Pilar is at capacity right now.",
+        detail:
+          "The daily calculation limit has been reached. Please try again tomorrow.",
+        retryAfter: retryAfterSec,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfterSec),
+          "X-RateLimit-Limit": String(result.limit),
+          "X-RateLimit-Remaining": String(result.remaining),
+          "X-RateLimit-Reset": String(result.reset),
+        },
+      },
+    );
+  } catch (err) {
+    // Redis utilgjengeleg: fail-open. Anthropic-konsoll-taket er backstoppen.
+    console.error("[ratelimit] global cap-sjekk feila, slepp gjennom:", err);
+    return null;
+  }
 }
