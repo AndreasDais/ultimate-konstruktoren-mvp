@@ -14,6 +14,7 @@ import { checkLoadCombination } from "@/lib/check/load-combination-check";
 import { applyControllerHardBlock } from "@/lib/check/controller-hard-block";
 import { recordShadowCheck } from "@/lib/shadow/shadow-check";
 import { recordStepMetric } from "@/lib/step-metrics";
+import { PIPELINE_MODEL } from "@/lib/models";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -335,7 +336,7 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
 
     const t0 = Date.now();
     const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: PIPELINE_MODEL,
       max_tokens: 4096,
       temperature: 0.3,
       system: [
