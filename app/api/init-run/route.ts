@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       run_type: rawRunType,
       display_language: rawDisplayLanguage,
       eval_case_id: rawEvalCaseId,
+      engineering_context: rawEngineeringContext,
     } = await request.json();
 
     // Visningsspraak: rekna klientside (displayLanguageForContext). Berre
@@ -76,6 +77,19 @@ export async function POST(request: Request) {
       rawEvalCaseId.trim().length > 0 &&
       rawEvalCaseId.length <= 200
         ? rawEvalCaseId.trim()
+        : null;
+
+    // Sprint D — engineering_context per run (G6 i TRACE_SURFACE_AUDIT.md).
+    // Konteksten er allereie sendt inline til kvar agent; vi lagrar han no
+    // òg på runet sjølv så forensics-query kan filtrere/joine på profil.
+    // Same conditional-insert mønster som eval_case_id: feltet kjem berre
+    // i payloaden når klienten sender det, så produksjon overlever sjølv om
+    // migrationen ikkje er køyrd enno.
+    const engineering_context =
+      rawEngineeringContext !== null &&
+      typeof rawEngineeringContext === "object" &&
+      !Array.isArray(rawEngineeringContext)
+        ? rawEngineeringContext
         : null;
 
     if (!request_id) {
@@ -127,6 +141,9 @@ export async function POST(request: Request) {
     };
     if (eval_case_id !== null) {
       insertPayload.eval_case_id = eval_case_id;
+    }
+    if (engineering_context !== null) {
+      insertPayload.engineering_context = engineering_context;
     }
 
     const { data, error } = await supabase
