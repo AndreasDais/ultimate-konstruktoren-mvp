@@ -14,6 +14,7 @@ function parseArgs(argv) {
     count: false,
     priority: "",
     domain: "",
+    standardContext: "",
     targetAgent: "",
     tag: "",
     help: false,
@@ -61,6 +62,17 @@ function parseArgs(argv) {
 
     if (token.startsWith("--domain=")) {
       args.domain = token.slice("--domain=".length);
+      continue;
+    }
+
+    if (token === "--standard-context") {
+      args.standardContext = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--standard-context=")) {
+      args.standardContext = token.slice("--standard-context=".length);
       continue;
     }
 
@@ -153,6 +165,7 @@ Usage:
   node scripts/grade-eval-artifact.mjs --list-cases
   node scripts/grade-eval-artifact.mjs --list-cases --json
   node scripts/grade-eval-artifact.mjs --list-cases --priority P0 --target-agent pipeline
+  node scripts/grade-eval-artifact.mjs --list-cases --standard-context aisc_asce_aci_experimental
   node scripts/grade-eval-artifact.mjs --list-cases --tag guardrail
   node scripts/grade-eval-artifact.mjs --list-cases --count --tag i18n
 
@@ -282,6 +295,7 @@ function filterCases(cases, args) {
     return (
       matchesFilter(evalCase.priority ?? "unknown", args.priority) &&
       matchesFilter(evalCase.domain ?? "unknown", args.domain) &&
+      matchesFilter(evalCase.standard_context ?? "unknown", args.standardContext) &&
       (!args.targetAgent || targetAgents.some((agent) => matchesFilter(agent, args.targetAgent))) &&
       (!args.tag || tags.some((tag) => matchesFilter(tag, args.tag)))
     );
