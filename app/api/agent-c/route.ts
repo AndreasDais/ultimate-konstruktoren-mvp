@@ -3,6 +3,7 @@ import { jsonrepair } from "jsonrepair";
 import { getSupabase } from "@/lib/supabase";
 import { coerceLocale, type Locale } from "@/lib/locale";
 import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngineeringContextPayload } from "@/lib/engineering-context/agent";
+import { isInternationalEnglishContext } from "@/lib/international/display";
 import {
   compareResults,
   normalizeResultKey,
@@ -152,6 +153,15 @@ export async function POST(request: Request) {
     const comparisonBlock = buildComparisonBlock(comparison);
 
     // === BYGG USER MESSAGE ===
+    // Sprint 65.10 — locale-aware tail per AGENT_PROMPT_LOCALE_PLAN.md §5.
+    // Tidlegare hardkoda norsk hale overstyrte 65.9-preamble fordi LLM
+    // prioriterer siste instruks. Brukar (Test 29) observerte at agent-c
+    // svarte på nynorsk med "Konstruktør A/B" i engelske kjøringar.
+    const isIntlContext = isInternationalEnglishContext(engineeringContext);
+    const tailInstruction = isIntlContext
+      ? `Compare these two solutions systematically per system instruction. Also check internal consistency in each engineer. In all prose fields (method_differences, assumption_differences, summary, likely_cause) refer to the two solutions as "Engineer A" and "Engineer B" — never "Agent A/B" and never "Konstruktør A/B". All prose must be in the language the user wrote their request in (English in international mode).`
+      : `Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjekk også intern konsistens i kvar konstruktør. Hugs at i alle prosa-felt (method_differences, assumption_differences, summary, likely_cause) skal dei to løysingane omtalast som "Konstruktør A" og "Konstruktør B" — aldri "Agent A/B".`;
+
     const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}ENGINEER A RESPONSE:
 ${JSON.stringify(agent_a_output, null, 2)}
 
@@ -159,7 +169,7 @@ ENGINEER B RESPONSE:
 ${JSON.stringify(agent_b_output, null, 2)}
 
 ${comparisonBlock}
-Samanlikne desse to løysingane systematisk i samsvar med systeminstruksen. Sjekk også intern konsistens i kvar konstruktør. Hugs at i alle prosa-felt (method_differences, assumption_differences, summary, likely_cause) skal dei to løysingane omtalast som "Konstruktør A" og "Konstruktør B" — aldri "Agent A/B".`;
+${tailInstruction}`;
 
     // === KALL CLAUDE ===
     const client = new Anthropic({
