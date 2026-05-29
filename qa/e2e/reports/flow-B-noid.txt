@@ -40,7 +40,7 @@ VEd (maksimal skjærkraft ved opplag)
 Tolkning
 TOLKER
 
-Forespørselen gjelder en enkel statikkontroll av en fritt opplagd bjelke med kjent spennvidde og dimensjonerende last. Tolka
+Forespørselen er en enkel statikkoppgave for en fritt opplagt bjelke med jevnt fordelt dimen
 
 ▶
 Vis full tolkning og tolkede verdier (4)

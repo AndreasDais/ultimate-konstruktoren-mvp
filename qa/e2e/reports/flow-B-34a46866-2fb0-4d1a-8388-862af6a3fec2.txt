@@ -1,0 +1,266 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+← Tilbake
+INNHOLD
+Sammendrag
+Beregning
+Vurdering
+Kontroll
+METADATA
+ID
+PILAR-34A46866
+DATO
+29. mai 2026
+VERSJON
+Rapportør v0.3
+BEREGNINGSNOTAT
+·
+PILAR-34A46866
+29. MAI 2026
+Kapasitetskontroll av stålbjelke
+
+L = 6,0 m · qEd = 12,0 kN/m
+
+DOKUMENT-ID
+PILAR-34A46866
+DATO
+29. mai 2026
+STATUS
+FORELØPIG GODKJENT
+VERSJON
+Rapportør v0.3
+NETTVERSJON + PIPELINE
+Skann for nettversjon
+
+Åpner rapporten med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.
+
+RAPPORTLENKE
+http://localhost:3000/rapport/34a46866-2fb0-4d1a-8388-862af6a3fec2
+NØKKELRESULTATER
+MEd
+54,0
+kNm
+VEd
+36,0
+kN
+qEd
+12,0
+kN/m
+L
+6,0
+m
+100
+/100
+HØY
+
+Beregningen er foreløpig godkjent. Resultatet skal kontrolleres av ansvarlig fagperson før bruk.
+
+VIKTIG MERKNAD
+·
+AI-GENERERT DOKUMENT
+
+Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.
+
+01
+Sammendrag
+
+Beregningen gjelder bestemmelse av lastvirkning for en fritt opplagt stålbjelke med spennvidde L = 6,0 m og jevnt fordelt dimensjonerende last qEd = 12,0 kN/m. Konstruktør A og Konstruktør B er i fullstendig numerisk overensstemmelse: maksimalt bøyemoment er MEd = 54,0 kNm og maksimal skjærkraft er VEd = 36,0 kN. Kontrollør har godkjent beregningen som foreløpig grunnlag, og resultatet skal kontrolleres av ansvarlig fagperson før bruk i prosjektering.
+
+FORESPØRSEL
+Eg har ein fritt opplagd stålbjelke med spennvidde L = 6,0 m og jamt fordelt dimensjonerande last qEd = 12 kN/m.
+
+Rekn ut:
+1. Maksimalt bøyemoment.
+2. Maksimal skjærkraft ved opplag.
+3. Kort forklaring av kvar moment og skjærkraft er størst.
+
+Svar på norsk/nynorsk.
+Bruk kN, m og kNm.
+Ikkje bruk AISC, ASCE, kip, ft eller amerikanske lastkombinasjonar.
+Dette er berre ein enkel statikk-kontroll, ikkje full kapasitetskontroll etter Eurokode.
+02
+Beregning
+ORDLISTE
+MEd
+dimensjonerande bøyemoment (kNm)
+VEd
+dimensjonerande skjærkraft (kN)
+qEd
+dimensjonerande fordelt last (kN/m)
+L
+spennvidde (m)
+02.1 — FORUTSETNINGER
+.01
+qEd = 12,0 kN/m er allerede en dimensjonerende last — ingen ytterligere lastfaktorering utføres
+.02
+Lasten er symmetrisk og jevnt fordelt over hele spennet L = 6,0 m
+.03
+Bjelken er fritt opplagt i begge ender (simpelt støttet)
+.04
+Beregningen gir lastvirkning (MEd og VEd), ikke kapasitetskontroll
+.05
+Positivt moment defineres som sagging (strekk i underkant)
+.06
+Skjærkraft positiv oppad på venstre snittflate (norsk konvensjon)
+02.2 — RESULTAT
+DIMENSJONERENDE
+MEd	54,0 kNm
+VEd	36,0 kN
+qEd	12,0 kN/m
+INPUT OG GEOMETRI
+L	6,0 m
+02.3 — STEGVIS UTREGNING
+STEG 01
+Maksimalt bøyemoment i midtspenn
+M
+Ed
+	​
+
+	​
+
+=
+8
+q
+Ed
+	​
+
+⋅L
+2
+	​
+
+=
+8
+12,0⋅6,0
+2
+	​
+
+=
+8
+12,0⋅36,0
+	​
+
+=
+8
+432,0
+	​
+
+=54,0 kNm
+	​
+
+Vis prosa-utregning
+STEG 02
+Maksimal skjærkraft ved opplag
+V
+Ed
+	​
+
+	​
+
+=
+2
+q
+Ed
+	​
+
+⋅L
+	​
+
+=
+2
+12,0⋅6,0
+	​
+
+=
+2
+72,0
+	​
+
+=36,0 kN
+	​
+
+Vis prosa-utregning
+03
+Vurdering
+03.1 — FAGLIG VURDERING
+
+Beregningen er en ren lastvirkningsanalyse — den bestemmer lasteffektene MEd og VEd, ikke kapasiteten til et bestemt profil. Maksimalt bøyemoment opptrer i midtspennet, der den akkumulerte effekten av den jevnt fordelte lasten over hele spennet er størst og skjærkraften er null. Maksimal skjærkraft opptrer ved opplagrene, der den totale lasten overføres til understøttingen, og avtar lineært mot null i midtspennet for en symmetrisk lastsituasjon. Begge konstruktørene har beregnet opplagsreaksjonene via symmetriargumentet og anvendt standardformler for fritt opplagret bjelke, og Konstruktør B har i tillegg verifisert momentresultatet ved en uavhengig momentlikevekt ved snitt i midtspennet — begge fremgangsmåtene gir identisk resultat. Høy konfidens hos begge konstruktører, fullstendig metodisk samsvar og ingen interne konsistensproblemer underbygger at tallverdiene er robuste innenfor de oppgitte forutsetningene. Det er ikke utført kapasitetskontroll, nedbøyingskontroll eller vippeknekkingskontroll — disse krever profildata og stivhetsopplysninger som ikke er del av denne forespørselen.
+
+03.2 — HVA ER IKKE BEREGNET
+IKKE DEKKET AV DENNE RAPPORTEN
+Kapasitetskontroll (MRd, VRd, eta) er ikke utført	profildata er ikke oppgitt
+Nedbøyingskontroll (SLS) er ikke utført	EI er ikke oppgitt
+Vippeknekkingskontroll er ikke utført	tverrsnittsgeometri og understøttingsforhold er ikke oppgitt
+Lokale effekter ved opplag (opplagstrykk, tverrkrefter) er ikke vurdert	—
+04
+Kontroll
+04.1 — KONSTRUKTØRKONTROLL
+
+Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B). Begge kom frem til numerisk identiske verdier, vist i tabellen under.
+
+STØRRELSE	KONSTRUKTØR A	KONSTRUKTØR B	SAMSVAR
+MEd	54,0 kNm	54,0 kNm	✓
+VEd	36,0 kN	36,0 kN	✓
+qEd	12,0 kN/m	12,0 kN/m	✓
+L	6,0 m	6,0 m	✓
+04.2 — KONTROLLØRENS AVGJØRELSE
+AVGJØRELSE
+FORELØPIG GODKJENT
+
+Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.
+
+04.3 — KONKLUSJON
+
+Kontrollør har godkjent beregningen uten reservasjoner som foreløpig grunnlag for videre prosjektering. Resultatet MEd = 54,0 kNm og VEd = 36,0 kN representerer lastvirkning og må følges opp med kapasitetskontroll mot valgt profil før endelig dimensjonering kan fastslås. Ansvarlig fagperson skal verifisere resultatet før det legges til grunn i prosjektet.
+
+FORELØPIG
+Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.
+KONTROLLERT AV
+Navn · stilling · foretak
+SIGNATUR
+Manuell signering
+DATO
+DD.MM.ÅÅÅÅ
+Pilar
+PILAR-34A46866
+·
+Generert 29. mai 2026
+·
+Rapportør v0.3
+http://localhost:3000/rapport/34a46866-2fb0-4d1a-8388-862af6a3fec2
+SKANN FOR NETTVERSJON
+HANDLINGER
+Last ned PDF
+Last ned Word
+Vis kun beregninger
+Lag ny beregning fra denne →
+Se Mission Control →
+Meld feil i rapporten
+Gi tilbakemelding på piloten
+KONTROLLSTATUS
+Input-tolkning
+i
+KLAR
+Konstruktør A
+i
+HIGH
+Konstruktør B
+i
+HIGH
+Sammenligning
+i
+ENIGE
+Kontrollør
+i
+GODKJENT
+Fagperson
+i
+IKKE KONTROLLERT
+≡
+Ordliste

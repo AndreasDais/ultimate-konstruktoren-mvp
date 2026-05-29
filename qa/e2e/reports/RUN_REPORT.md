@@ -4,139 +4,139 @@
 **Date:** 2026-05-29
 **Tester:** Synthetic User / E2E lane (automated, headless Chromium via puppeteer)
 **Environment:** local dev — `http://localhost:3000`
-**Commit/branch:** `main` @ `93e693b`
+**Commit/branch:** `main`
 **Command:** `node qa/e2e/synthetic-user.mjs --flow B,A --timeout 240`
 
-The runner drives a real browser through the same path a user takes
-(`input → interpret → Start beregning → /rapport/<runId>`), then asserts the
+The runner drives a real browser through the user path
+(`input → interpret → Start calculation → /rapport/<runId>`), asserts the
 checklist's must-show / must-not-show strings against the **generated** report
-text (verbatim prompt echoes are stripped, so the model is judged on its own
-output, not the user's wording). Full report text, a screenshot, and the
-`/api/*` trace are saved per flow.
+text (prompt echoes stripped), and — critically — **activates and verifies the
+engineering context** so each flow runs in the intended display language.
 
 ---
 
 ## Summary
 
-| Flow | Name | Verdict | reportReady | PDF | Word | missing | forbidden |
+| Flow | Mode | display_language | Verdict | missing | forbidden | PDF | Word |
 |---|---|---|---|---|---|---|---|
-| B | Norwegian Eurocode sanity | **PASS** | yes | yes | yes | 0 | 0 |
-| A | English/AISC diagnostic | **FAIL** | yes | yes | yes | 8 | 6 |
+| A | English / AISC (US/intl) | `en` ✓ (expected `en`) | **PASS** | 0 | 0 | yes | yes |
+| B | Norwegian / Eurocode | `nb` ✓ (expected `nb`) | **PASS** | 0 | 0 | yes | yes |
 
-Process exit code: `1` (Flow A failed). Flow B is the regression gate and
-reproduces the previously-recorded clean result, which confirms the runner
-itself is sound — so Flow A's failure is a real product finding, not a harness
-artifact.
+Process exit code: `0`. Both flows ran in the correct display language (verified
+from the DB via `/api/runs/[id]`), produced a full report, and contained **no
+forbidden cross-locale strings** in generated content.
+
+---
+
+## ⚠️ Correction to the earlier run (important)
+
+An earlier version of this report claimed Flow A revealed a **locale-separation
+defect** (Norwegian shell/labels in an English run). **That was wrong — an
+artifact of the test harness, not a product bug.** The runner was pasting the
+English prompt *without activating international/US context*, so PILAR ran in its
+**default Norwegian mode** (`display_language=nb`), where a Norwegian shell is
+*correct behavior*. Verified via `/api/runs/<runId>` → `display_language: "nb"`
+on that run.
+
+Root cause and fix:
+
+- `display_language` is `displayLanguageForContext(locale, engineeringContext)`
+  (`app/page.tsx`); it resolves to `"en"` only when an international
+  `engineeringContext` is present (`lib/international/display.ts`).
+- That context is loaded from `localStorage["pilar-engineering-context-v2"]`
+  (set via the `/international` selector). The harness never set it.
+- **Fix:** the runner now seeds that localStorage key with a US/AISC context for
+  Flow A (and clears it for Flow B), drives the workbench **bilingually** (en
+  labels: "Start calculation →", "Interpret task →", "Interpreting…"), and
+  **self-verifies** `display_language` against `/api/runs/[id]`, failing the flow
+  as an *invalid test* if the mode didn't take. A harness mishap can no longer
+  masquerade as a product defect.
+
+---
+
+## Flow A — English/AISC diagnostic — PASS
+
+```txt
+Run ID:  a32286bb-25b4-4923-aa25-262e573e3fef
+URL:     http://localhost:3000/rapport/a32286bb-25b4-4923-aa25-262e573e3fef
+display_language: en  (verified via /api/runs/[id])
+textLen: 11261 chars
+
+Result page opened:  yes
+Full report opened:  yes (Summary / Calculation / Assessment / Review)
+Word download:       present     PDF download: present
+
+must-show:  all present — Engineer A, Engineer B, Engineer comparison,
+            Controller, preliminary, High/Medium/Low, Calculation note,
+            Assumptions, Warnings
+forbidden:  none
+
+Decision: PASS
+```
+
+**In genuine English/US mode PILAR behaves correctly:**
+
+- Shell is English: `PilarAI STRUCTURAL ASSISTANT`, `Summary / Calculation /
+  Assessment / Review`, `Download PDF`, `Download Word`, `Glossary`.
+- Agent labels are English: "Engineer A" (×5), "ENGINEER COMPARISON",
+  "Controller" — **zero occurrences of "Konstruktør"/"Kontrollør"** in generated
+  content.
+- Engineering is correct and US-flavoured (LRFD `1.2D + 1.6L`, `Mu`, `Vu`,
+  kip·ft), and the **AISC guard holds**: it refuses to certify capacity (`φb·Mn`,
+  LTB) without verified AISC section properties and does not invent `Zx, Sx, J,
+  Cw, rts, Lp, Lr`. Result marked preliminary, licensed-engineer verification
+  required. ✔
+
+Earlier this run intermittently warned `missing:["Comparator"]` — the literal
+word "Comparator" only renders when A and B disagree; when they agree the section
+is "Engineer comparison". The must-show now accepts either (not a product issue).
+
+Evidence: flow-A-result.json · flow-A-a32286bb-….txt · flow-A-a32286bb-….png ·
+flow-A-api.log · flow-A-noid.{txt,png}
 
 ---
 
 ## Flow B — Norwegian Eurocode sanity — PASS
 
 ```txt
-Run ID:  f894f6a8-aa02-4024-a0dc-04b7b7bafcfe
-URL:     http://localhost:3000/rapport/f894f6a8-aa02-4024-a0dc-04b7b7bafcfe
-Prompt:  qa/e2e/prompts/norwegian-simple-beam.txt
-textLen: 6525 chars
+Run ID:  34a46866-2fb0-4d1a-8388-862af6a3fec2
+URL:     http://localhost:3000/rapport/34a46866-2fb0-4d1a-8388-862af6a3fec2
+display_language: nb  (verified via /api/runs/[id])
+textLen: 6012 chars
 
 Result page opened:  yes
-Full report opened:  yes  (Sammendrag / Beregning / Vurdering / Kontroll)
-Word download works: present (button)
-PDF download works:  present (button)
+Full report opened:  yes (Sammendrag / Beregning / Vurdering / Kontroll)
+Word download:       present     PDF download: present
 
-must-show hits:      all present (kN/m, kNm, kN, maksimalt bøyemoment,
-                     skjærkraft, fritt opplagd bjelke)
-Forbidden hits:      none
-Engineering concern: none — MEd = 54,0 kNm, VEd = 36,0 kN for L = 6,0 m,
-                     qEd = 12,0 kN/m (wL²/8, wL/2 — correct). Agents A/B match,
-                     Controller approves at low risk.
-
-Evidence: flow-B-result.json · flow-B-f894f6a8-….txt · flow-B-f894f6a8-….png ·
-          flow-B-api.log · flow-B-noid.{txt,png}
+must-show:  all present — kN/m, kNm, kN, maksimalt bøyemoment, skjærkraft,
+            fritt opplagd/opplagret bjelke
+forbidden:  none (no AISC / ASCE / kip / ft / LRFD leakage in generated content)
 
 Decision: PASS
 ```
 
----
-
-## Flow A — English/AISC diagnostic — FAIL
-
-```txt
-Run ID:  e7e5a3ef-76ef-4b11-aba3-71f720d2bef2
-URL:     http://localhost:3000/rapport/e7e5a3ef-76ef-4b11-aba3-71f720d2bef2
-Prompt:  qa/e2e/prompts/english-aisc-simple-beam.txt
-textLen: 9316 chars
-
-Result page opened:  yes
-Full report opened:  yes
-Word download works: present (button)
-PDF download works:  present (button)
-
-missing (must-show absent):
-  Engineer A, Engineer B, Comparator, Controller,
-  Preliminarily approved / preliminary, Calculation note, Assumptions, Warnings
-forbidden (must-not-show present, in GENERATED content):
-  Konstruktør, Kontrollør, FØREBELS, FORELØPIG, GOD, NS-EN
-
-Decision: FAIL
-```
-
-### Root cause — locale separation defect (display language not honored)
-
-The **numeric engineering is correct and US-flavoured** — the guardrail held:
-
-- LRFD load combination `1.2D + 1.6L` (ASCE 7), `wu`, `Mu`, `Vu` computed and
-  cross-checked by both constructors; US units throughout (kip·ft, ft, ksi).
-- It correctly **refuses** to certify capacity: states `φb·Mn` (LTB) and
-  `φv·Vn` cannot be evaluated without AISC 360 section properties for W12x26,
-  and explicitly does **not** invent `Zx, Sx, J, Cw, rts, Lp, Lr`. Result
-  marked preliminary, verification by a licensed engineer required. ✔
-
-But **the English/US display language is not propagated to the UI shell or the
-agent output language**:
-
-1. **Agent role labels are hardcoded Norwegian** — "Konstruktør A/B",
-   "Kontrollør" appear even inside English sentences (e.g. *"Both **Konstruktør
-   A** and **Konstruktør B** are in full numerical agreement"*). The English
-   labels Engineer A/B, Comparator, Controller never render.
-2. **Status/risk badges are Norwegian** — "FORELØPIG GODKJENT", standalone
-   risk rating "GOD", section headers `KONSTRUKTØRKONTROLL` /
-   `KONTROLLØRENS AVGJØRELSE`.
-3. **Much of the assessment/control narrative is in Norwegian/nynorsk**
-   (e.g. the "Vurdering" body, "FØREBELS"/"førebels"), not English.
-
-### Note on the `NS-EN` hit (soft)
-
-`NS-EN` is flagged from generated line: *"Pilar er normalt basert på
-EC3/EC2/NS-EN metodikk. Dette beregningssteget følger ASCE 7 LRFD og AISC 360 —
-[EC-]verdiene er ikke gyldige her og er ikke brukt."* This is a
-**contextually-correct disclaimer** (it says Eurocode is *not* used), not a
-harmful Eurocode leak — but it is still Norwegian-language generated content and
-trips the must-not-show list. The prompt's own `NS-EN`/`Eurocode 3` mentions
-(in the "do not use …" instruction) are correctly excluded by prompt-echo
-stripping.
-
-### Recommended follow-up (Runtime/UI lanes — not this lane)
-
-Propagate `display_language = en` (US context) to: agent role labels, status
-badges, section headers, and the assessment/control generation language. Track
-as a locale-separation bug. **No fix attempted here** — synthetic-user/E2E lane
-is read-only against the app (see lane boundary).
-
-Evidence: flow-A-result.json · flow-A-e7e5a3ef-….txt · flow-A-e7e5a3ef-….png ·
-flow-A-api.log · flow-A-noid.{txt,png}
+Evidence: flow-B-result.json · flow-B-34a46866-….txt · flow-B-34a46866-….png ·
+flow-B-api.log · flow-B-noid.{txt,png}
 
 ---
 
 ## Notes & caveats
 
-- **LLM variance:** the exact forbidden/missing sets vary slightly run-to-run
-  (an earlier run surfaced `Eurocode 3` and found "preliminary"); the structural
-  finding — Norwegian shell + agent language in an English-context run — is
-  consistent across every Flow A run.
-- **Runner resilience baked in:** streaming-aware interpret gate (don't click
-  "Start beregning" while interpretation is still streaming), streaming-aware
-  report wait (wait for content to grow past the shell and stabilize),
-  `evalSafe` retry for detached-frame/destroyed-context errors during streaming,
-  and `run_id` capture from the `/api/init-run` response.
-- **Scope:** assertions run on report text with prompt echoes removed; the full
-  text is still saved unmodified as evidence.
+- **Intermittent pipeline stall (infrastructure, not product/runner).** On the
+  combined `B,A` run, Flow B once stalled: `init-run → agent-a → agent-b →
+  agent-e` fired but `agent-c`/`agent-d` never completed and the run stayed
+  `status=running` with no controller decision. This matches the documented
+  Cloudflare/Anthropic intermittent-degradation failure mode. Re-running Flow B
+  alone passed. If a flow fails with `reportReady=false`, check `/api/runs/<id>`
+  before assuming a defect.
+- **LLM/content variance** shifts wording run-to-run; assertions use OR-groups
+  for legitimate variants (e.g. "fritt opplagd" vs bokmål "fritt opplagret";
+  "Comparator" vs "Engineer comparison").
+- **Runner resilience:** seeds + verifies engineering context (display language);
+  bilingual workbench matchers; streaming-aware interpret gate (don't click
+  "Start" mid-stream); streaming-aware report wait (grow past shell + stabilize);
+  `evalSafe` retry for detached-frame errors; `run_id` from `/api/init-run`;
+  prompt-echo stripping so guardrails judge generated output, not the user's
+  words.
+- **Scope:** read-only against the app — no app code, prompts, schema, report/
+  PDF/Word, or i18n touched.

@@ -3,15 +3,15 @@
   "name": "Norwegian Eurocode sanity",
   "verdict": "PASS",
   "reportReady": true,
-  "runId": "f894f6a8-aa02-4024-a0dc-04b7b7bafcfe",
-  "url": "http://localhost:3000/rapport/f894f6a8-aa02-4024-a0dc-04b7b7bafcfe",
+  "runId": "34a46866-2fb0-4d1a-8388-862af6a3fec2",
+  "url": "http://localhost:3000/rapport/34a46866-2fb0-4d1a-8388-862af6a3fec2",
   "missing": [],
   "forbidden": [],
   "hasPdf": true,
   "hasWord": true,
-  "textLen": 6525,
-  "scanLen": 6088,
-  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-B-f894f6a8-aa02-4024-a0dc-04b7b7bafcfe.png",
+  "textLen": 6012,
+  "scanLen": 5575,
+  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-B-34a46866-2fb0-4d1a-8388-862af6a3fec2.png",
   "controls": [
     "PilarAI-KONSTRUKSJONSASSISTENT",
     "Tema▾",
@@ -32,5 +32,7 @@
     "Meld feil i rapporten",
     "Gi tilbakemelding på piloten",
     "≡Ordliste"
-  ]
+  ],
+  "displayLanguage": "nb",
+  "expectLanguage": "nb"
 }

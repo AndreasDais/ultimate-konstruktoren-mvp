@@ -15,53 +15,48 @@ Mission Control
 →
 3
 Rapport
-NY BEREGNING
-Beskriv oppgaven
+NEW CALCULATION
+Describe the task
 
-Skriv inn forespørselen. Pilar leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.
+Enter the request. PILAR reads it and shows the interpretation here — you can edit and interpret again before starting the calculation.
 
 Workbench er steg 1 av 3. Skriv inn hva du vil beregne — Pilar leser og viser deg hva den forstod, så du kan rette opp før beregningen starter.
 ×
-Skriv inn en konstruksjonsoppgave
-+ Last opp støttefil
-PDF, PNG, DOCX — Pilar ser oppgaven og vedlegget saman.
-▸ Se 3 eksempel
-
-Pilar trenger 2 felt til — klikk for å sette inn
-
-+ AISC 360 seksjonsdata for W12x26
-+ AISC 360 kapasitetsformlar
-AI-generert · krever faglig kontroll
-Tolk på nytt →
+Describe a structural engineering task
++ Upload support file
+PDF, PNG, DOCX — PILAR reads the task and attachment together.
+▸ See 3 examples
+AI-generated · requires professional verification
+Interpret again →
 STATUS
 I
-DELVIS KLAR
-Stål · 2 element mangler input
-Hva kan beregnes nå
+PARTLY READY
+Steel · 0 items need more input
+What can be calculated now
 ●
-wu (LRFD-faktorert jamn last) = 1,2 × 0,45 + 1,6 × 0,80
+wu — LRFD factored uniform load (1.2D + 1.6L)
 ●
-Mu (maksimalt faktorert bøyemoment) = wu × L² / 8
+Mu — maximum factored bending moment at midspan
 ●
-Vu (maksimalt faktorert skjærkraft) = wu × L / 2
+Vu — maximum factored shear at supports
 ○
-φbMn (nominell bøyekapasitet med LTB-reduksjon) — krev AISC 360 seksjonsdata og kapasitetsformlar som ikkje er implementert
-KREVER MER INPUT
+phi_b * Mn (LTB capacity) — requires verified AISC section properties (Zx, Lp, Lr, J, Cw, rts, ho) from AISC Manual Table 1-1; these are not available in this session and must not be invented
+NEEDS MORE INPUT
 ○
-φvVn (skjærkapasitet) — krev AISC 360 §G2 og seksjonsdata
-KREVER MER INPUT
+phi_v * Vn (shear capacity) — requires verified Aw, kv, and h/tw from AISC Manual
+NEEDS MORE INPUT
 ○
-Utnyttingsgrad Mu / φbMn — krev φbMn
-KREVER MER INPUT
-Tolkning
-TOLKER
+Final AISC 360 code compliance check — blocked by missing verified section properties
+NEEDS MORE INPUT
+Interpretation
+INTERPRETER
 
-Forespørselen er fagleg gyldig og klart formulert, men nyttar AISC/ASCE 7-metodikk som Pilar sine berekningsagen
+The request is interpreted as a demand-side LRFD calculation for a W12x26 simply supported beam under gravity loads, follow
 
 ▶
-Vis full tolkning og tolkede verdier (9)
+Show full interpretation and parsed values (11)
 
-Stemmer tolkningen? Da kan du starte beregningen.
+Does the interpretation look right? Then start the calculation.
 
-Avbryt
-Start beregning · 2 antakelser brukt
+Cancel
+Start calculation →

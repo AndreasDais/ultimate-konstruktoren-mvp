@@ -46,6 +46,30 @@ const FLOWS_REQUESTED = getArg('--flow', 'A,B')
   .map((s) => s.trim().toUpperCase())
   .filter(Boolean);
 
+// ---- engineering context (controls display language) ---------------------
+// localStorage key the app loads engineering context from (lib/engineering-context/profiles.ts).
+const ENGINEERING_CONTEXT_STORAGE_KEY = 'pilar-engineering-context-v2';
+// US/AISC context — exactly what the /international selector persists. Seeding this
+// makes displayLanguageForContext() resolve to "en", so Flow A runs in international/
+// English mode. WITHOUT it PILAR defaults to Norwegian (display_language "nb") and the
+// Flow A English-label assertions are meaningless. countryCode must NOT be "NO" or the
+// app discards it on load (Norway = the default Norwegian flow).
+const US_AISC_CONTEXT = {
+  language: 'en',
+  languagePolicy: { uiLocale: 'en', outputMode: 'same_as_prompt', fallbackLanguage: 'en' },
+  region: { countryCode: 'US', countryName: 'United States' },
+  standards: { family: 'aisc_asce_aci', label: 'AISC / ASCE / ACI', supportLevel: 'experimental', confidence: 'user_selected' },
+  outputPreferences: { units: 'imperial', notationStyle: 'us_customary' },
+};
+
+// Workbench controls are bilingual — nb default vs en international labels
+// (lib/result/labels.ts + page.tsx override map). Match BOTH so the runner drives
+// either mode: "Start beregning →"/"Start calculation →", "Tolk oppgaven →"/
+// "Interpret task →", "● STREAMER"/"Tolker..."/"● STREAMING"/"Interpreting...".
+const RE_INTERPRET = /Tolk oppgave|Tolk oppgåva|Tolk på nytt|Interpret task|Interpret again/i;
+const RE_START = /Start beregning|Start berekning|Start calculation/i;
+const RE_STREAMING = /STREAMER|STREAMING|Tolker\.\.\.|Interpreting\.\.\./i;
+
 // ---- flow definitions (from checklist §4 / §5) ---------------------------
 // mustShow:    array of OR-groups; a group passes if ANY alternative is present
 //              (case-insensitive substring — lenient, since we *want* to find these).
@@ -58,8 +82,12 @@ const FLOWS = {
     label: 'A',
     name: 'English/AISC diagnostic',
     promptFile: 'english-aisc-simple-beam.txt',
+    context: US_AISC_CONTEXT, // activate international/US => display_language "en"
+    expectLanguage: 'en',
     mustShow: [
-      ['Engineer A'], ['Engineer B'], ['Comparator'], ['Controller'],
+      ['Engineer A'], ['Engineer B'],
+      ['Comparator', 'Engineer comparison', 'Comparison'], // labelled "Engineer comparison" when A/B agree
+      ['Controller'],
       ['Preliminarily approved', 'preliminary'],
       ['High', 'Medium', 'Low'],
       ['Calculation note'], ['Assumptions'], ['Warnings'],
@@ -74,11 +102,14 @@ const FLOWS = {
     label: 'B',
     name: 'Norwegian Eurocode sanity',
     promptFile: 'norwegian-simple-beam.txt',
+    context: null, // Norwegian default (no international context) => display_language "nb"
+    expectLanguage: 'nb',
     mustShow: [
       ['kN/m'], ['kNm'], ['kN'],
       ['maksimalt bøyemoment', 'største bøyemoment'],
       ['skjærkraft'],
-      ['fritt opplagd bjelke'],
+      // "simply supported beam" — bokmål "opplagret" / nynorsk "opplagd", often "stålbjelke"
+      ['fritt opplagd bjelke', 'fritt opplagret bjelke', 'fritt opplagd', 'fritt opplagret'],
     ],
     mustNotShow: ['AISC', 'ASCE', 'kip', 'ft', 'W12x26', 'ASTM A992', 'LRFD'],
   },
@@ -129,11 +160,32 @@ async function runFlow(flow) {
     label: flow.label, name: flow.name, verdict: 'FAIL', reportReady: false,
     runId: null, url: null, missing: [], forbidden: [], hasPdf: false,
     hasWord: false, textLen: 0, scanLen: 0, screenshot: null, controls: [],
+    displayLanguage: null, expectLanguage: flow.expectLanguage,
   };
   const api = [];
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 1200 });
+
+    // Activate the engineering context BEFORE any page script runs, so page.tsx's
+    // loadEngineeringContextFromStorage() picks it up on mount. Flow A => US/AISC
+    // (display_language "en"); Flow B => cleared (Norwegian default "nb"). Each flow
+    // uses a fresh browser, so this is the only state seeded.
+    if (flow.context) {
+      await page.evaluateOnNewDocument((ctx, key) => {
+        try {
+          localStorage.setItem(key, JSON.stringify(ctx));
+          document.cookie = 'pilar-ui-mode=intl; path=/; max-age=31536000; samesite=lax';
+        } catch { /* storage blocked */ }
+      }, flow.context, ENGINEERING_CONTEXT_STORAGE_KEY);
+    } else {
+      await page.evaluateOnNewDocument((key) => {
+        try {
+          localStorage.removeItem(key);
+          document.cookie = 'pilar-ui-mode=no; path=/; max-age=31536000; samesite=lax';
+        } catch { /* storage blocked */ }
+      }, ENGINEERING_CONTEXT_STORAGE_KEY);
+    }
 
     // Streaming run detaches frames / destroys execution contexts mid-evaluate.
     // Retry transient context errors a few times before giving up.
@@ -183,7 +235,7 @@ async function runFlow(flow) {
     await sleep(500);
 
     // 2. interpret (resilient — auto-interpret may already have run)
-    const tolk = await handleByText(/Tolk oppgaven|Tolk på nytt|^Tolk\b/);
+    const tolk = await handleByText(RE_INTERPRET);
     if (tolk) await tolk.click();
 
     // 3. wait until interpretation streaming FINISHES and "Start beregning" is
@@ -193,15 +245,17 @@ async function runFlow(flow) {
     //    enabled + no active streaming indicator.
     let startReady = false;
     for (let i = 0; i < 120; i++) {
-      const s = await evalSafe(() => {
+      const s = await evalSafe((startSrc, streamSrc) => {
+        const reStart = new RegExp(startSrc, 'i');
+        const reStream = new RegExp(streamSrc, 'i');
         const sb = [...document.querySelectorAll('button')]
-          .find((b) => /Start beregning/i.test(b.textContent || ''));
+          .find((b) => reStart.test(b.textContent || ''));
         return {
           present: !!sb,
           disabled: sb ? !!sb.disabled : true,
-          streaming: /STREAMER|Tolker\.\.\./i.test(document.body.innerText),
+          streaming: reStream.test(document.body.innerText),
         };
-      });
+      }, RE_START.source, RE_STREAMING.source);
       if (s.present && !s.disabled && !s.streaming) { startReady = true; break; }
       await sleep(1000);
     }
@@ -219,7 +273,7 @@ async function runFlow(flow) {
     } else {
       // 4. start the run (clear pre-run API noise first)
       api.length = 0;
-      const sb = await handleByText(/Start beregning/);
+      const sb = await handleByText(RE_START);
       if (sb) await sb.click();
 
       // 5. wait for the run pipeline to finish and the report to FULLY render.
@@ -291,8 +345,22 @@ async function runFlow(flow) {
         result.missing = flow.mustShow.filter((g) => !hasGroup(scanText, g)).map((g) => g.join(' / '));
         result.forbidden = flow.mustNotShow.filter((tok) => hasToken(scanText, tok));
 
-        // verdict: forbidden hit = guardrail breach (FAIL); missing only = WARN
-        if (result.forbidden.length > 0) result.verdict = 'FAIL';
+        // verify the run executed in the intended display language — authoritative
+        // DB value via the self-serve endpoint (no SQL). If it didn't, context
+        // activation failed and the language assertions are not meaningful.
+        if (result.runId) {
+          try {
+            const resp = await fetch(`${BASE}/api/runs/${result.runId}`);
+            if (resp.ok) result.displayLanguage = (await resp.json())?.run?.display_language ?? null;
+          } catch { /* endpoint unavailable */ }
+        }
+
+        // verdict: wrong display language = invalid test (FAIL); forbidden hit =
+        // guardrail breach (FAIL); missing must-show only = warning.
+        if (result.displayLanguage && result.displayLanguage !== flow.expectLanguage) {
+          result.verdict = 'FAIL';
+          result.note = `display_language='${result.displayLanguage}' but expected '${flow.expectLanguage}' — context activation failed; language assertions not meaningful`;
+        } else if (result.forbidden.length > 0) result.verdict = 'FAIL';
         else if (result.missing.length > 0) result.verdict = 'PASS WITH WARNINGS';
         else result.verdict = 'PASS';
 
@@ -327,8 +395,9 @@ for (const flow of flowsToRun) {
   try {
     const r = await runFlow(flow);
     results.push(r);
-    console.log(`Flow ${r.label}: ${r.verdict} | reportReady=${r.reportReady} runId=${r.runId || '-'}`);
+    console.log(`Flow ${r.label}: ${r.verdict} | reportReady=${r.reportReady} lang=${r.displayLanguage || '?'} (want ${r.expectLanguage}) runId=${r.runId || '-'}`);
     console.log(`  url=${r.url || '-'}`);
+    if (r.note) console.log(`  note=${r.note}`);
     console.log(`  missing=${JSON.stringify(r.missing)}`);
     console.log(`  forbidden=${JSON.stringify(r.forbidden)}`);
     console.log(`  hasPdf=${r.hasPdf} hasWord=${r.hasWord} textLen=${r.textLen}`);
