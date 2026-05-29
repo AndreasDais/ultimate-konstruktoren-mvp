@@ -54,6 +54,8 @@ Same failure (DB write fails because Supabase is briefly unreachable), three beh
 
 **Evidence:** [lib/supabase.ts:17](../../lib/supabase.ts).
 
+**✅ RESOLVED — commit `1472b68`.** `lib/supabase.ts` now wraps `global.fetch` with `createResilientFetch` ([lib/resilient-fetch.ts](../../lib/resilient-fetch.ts), 8 unit tests): bounded retry-with-backoff + per-attempt timeout. SAFETY: a WRITE retries ONLY on provably pre-send connect errors (`UND_ERR_CONNECT_TIMEOUT`/`ECONNREFUSED`/`ENOTFOUND`/`EAI_AGAIN`) — a retry can never duplicate a row; idempotent GET/HEAD retry on any transient error; HTTP responses (incl. 5xx) pass through untouched; caller aborts propagate. F-open-1 (consistent failure *policy* across routes) is still open.
+
 **Impact:** each failing write blocks on undici's default ~10 s connect timeout with no overall request cap; a multi-write request can stack to minute-long hangs during an outage. A central fetch timeout + small retry (mirroring the Anthropic `maxRetries: 5` convention) would bound the blast radius and likely prevent the request pile-up that preceded the dev-server restart window (tests 9–10).
 
 ---
