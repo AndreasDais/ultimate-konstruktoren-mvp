@@ -53,22 +53,27 @@
   text-wrap: balance;
 }
 .intl-hero__lead {
-  margin: 0 0 26px;
+  margin: 0;
   max-width: 640px;
   color: var(--fg-2);
   font-size: clamp(15px, 1.3vw, 16.5px);
   line-height: 1.6;
 }
-.intl-hero__cta {
+.intl-cta {
   height: 42px;
   padding: 0 20px;
   font-size: 14px;
+}
+/* CTA flytta ned i gapet mellom config-grid og below-seksjonen */
+.intl-cta-row {
+  display: flex;
+  margin: 28px 0;
 }
 .arrow {
   display: inline-block;
   transition: transform 160ms var(--ease);
 }
-.intl-hero__cta:hover .arrow,
+.intl-cta:hover .arrow,
 .intl-fb__link:hover .arrow {
   transform: translateX(3px);
 }
