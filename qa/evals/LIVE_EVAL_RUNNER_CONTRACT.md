@@ -81,6 +81,7 @@ domain
 standard_context
 display_language
 target_agents
+dry_run
 run_id, if a run was created or inspected
 run_status
 eval_status: PASS | FAIL | WARN | SKIP
