@@ -62,6 +62,18 @@ function getLanguage(evalCase) {
   return evalCase.display_language || evalCase.displayLanguage || evalCase.language || "missing";
 }
 
+function getGeneratedProseLocale(evalCase) {
+  const expected = evalCase.expected || {};
+  return (
+    evalCase.generated_prose_locale ||
+    evalCase.report_locale ||
+    evalCase.report_prose_locale ||
+    expected.generated_prose_locale ||
+    expected.report_locale ||
+    "same_as_display_shell"
+  );
+}
+
 function getStandard(evalCase) {
   return evalCase.standard_context || evalCase.standardContext || evalCase.standard || "missing";
 }
@@ -166,6 +178,7 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
   const byDomain = new Map();
   const byStandard = new Map();
   const byLanguage = new Map();
+  const byGeneratedProseLocale = new Map();
   const byManualReview = new Map();
   const byTargetAgent = new Map();
   const byUnitExpectation = new Map();
@@ -182,6 +195,7 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
     countInto(byDomain, getDomain(evalCase));
     countInto(byStandard, getStandard(evalCase));
     countInto(byLanguage, getLanguage(evalCase));
+    countInto(byGeneratedProseLocale, getGeneratedProseLocale(evalCase));
     countInto(byManualReview, String(Boolean(evalCase.manual_review_required)));
 
     const agents = getTargetAgents(evalCase);
@@ -221,7 +235,8 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
     `## Coverage by target agent\n\nA case is counted once per target agent, so cross-agent cases (e.g. ["konstruktor_a","kontrollor"]) add to both. Agents seeded from taxonomy show as zero when no case targets them — that is a real coverage gap, not a missing field.\n\n${markdownTable(byTargetAgent, "Target agent")}\n` +
     `## Coverage by domain\n\n${markdownTable(byDomain, "Domain")}\n` +
     `## Coverage by standard context\n\n${markdownTable(byStandard, "Standard context")}\n` +
-    `## Coverage by display language\n\n${markdownTable(byLanguage, "Display language")}\n` +
+    `## Coverage by display language\n\nThis is the UI/report shell language requested by the eval case. It should not be treated as proof that generated engineering prose was rewritten after report generation.\n\n${markdownTable(byLanguage, "Display language")}\n` +
+    `## Generated prose locale expectation\n\nThis summarizes explicit generated/report prose locale expectations separately from display shell language. Cases without a separate field are counted as \`same_as_display_shell\`.\n\n${markdownTable(byGeneratedProseLocale, "Generated prose locale")}\n` +
     `## Unit and symbol expectations\n\nThese tables summarize explicit unit checks and symbolic numeric-expression anchors. They are coverage metadata only; numeric expression grading is still handled separately from text artifact checks.\n\n` +
     `### Unit expectations\n\n${markdownTable(byUnitExpectation, "Unit expectation")}\n` +
     `### Numeric expectation units\n\n${markdownTable(byNumericExpectationUnit, "Numeric expectation unit")}\n` +
