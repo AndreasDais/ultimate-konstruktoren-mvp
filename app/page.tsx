@@ -469,6 +469,12 @@ export default function Home() {
         }
       : null);
 
+  // Motstrid (string[]) frå Tolkar: kjem inn via onComplete-spreaden (sjå handleTolk).
+  // Ikkje på AgentResult-typen enno — eit eige felt paa den delte typen høyrer til
+  // Lane A / runtime-kontrakten, so her les vi defensivt for aa halde endringa i UI-lane.
+  const tolkingMotstrid: string[] =
+    (tolkingView as { motstrid?: string[] } | null)?.motstrid ?? [];
+
   // Last state tilbake frå sessionStorage når use kjem tilbake frå /rapport.
   // Legacy-phases "input" og "result" mappast til ny "workbench"-phase.
   //
@@ -2048,6 +2054,18 @@ useEffect(() => {
                                       displayLanguage={pageDisplayLanguage}
                                     />
                                   </div>
+                                )}
+
+                                {tolkingMotstrid.length > 0 && (
+                                  <ListSection
+                                    label={
+                                      locale === "nn"
+                                        ? "⚠ Mogleg motstrid i inndata"
+                                        : "⚠ Mulig motstrid i inndata"
+                                    }
+                                    items={tolkingMotstrid}
+                                    tone="warn"
+                                  />
                                 )}
 
                                 {tolkingView.manglande_verdiar?.length > 0 && (
