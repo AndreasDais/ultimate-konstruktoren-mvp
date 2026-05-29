@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReportModel, type UpstreamReportData } from "./build-report-model";
+import { buildReportModel, buildComparisonRowsFromResults, type UpstreamReportData } from "./build-report-model";
 import { validateReportModel } from "./validate-report-model";
 
 const sample: UpstreamReportData = {
@@ -77,5 +77,60 @@ describe("buildReportModel", () => {
 
     const validation = validateReportModel(model);
     expect(validation.ok).toBe(true);
+  });
+});
+
+describe("buildComparisonRowsFromResults", () => {
+  it("parar greek-symbol mot ASCII-namn (σ_Rd vs sigma_Rd) — ikkje to «-»-rader", () => {
+    const rows = buildComparisonRowsFromResults(
+      { "σ_Rd": "355 MPa" },
+      { sigma_Rd: "355 N/mm²" },
+      "nb",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].constructorA).not.toBe("-");
+    expect(rows[0].constructorB).not.toBe("-");
+    expect(rows[0].match).toBe(true);
+  });
+
+  it("match er eining-aware (623 cm³ == 623000 mm³)", () => {
+    const rows = buildComparisonRowsFromResults(
+      { W_pl: "623 cm³" },
+      { W_pl: "623000 mm³" },
+      "nb",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].match).toBe(true);
+  });
+
+  it("engelsk desimal blir ikkje mis-parsa (2.880 == 2.88 kip/ft)", () => {
+    const rows = buildComparisonRowsFromResults(
+      { w: "2.880 kip/ft" },
+      { w: "2.88 kip/ft" },
+      "en",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].match).toBe(true);
+  });
+
+  it("ekte avvik gir match=false (20 vs 25 kNm)", () => {
+    const rows = buildComparisonRowsFromResults(
+      { M_Ed: "20 kNm" },
+      { M_Ed: "25 kNm" },
+      "nb",
+    );
+    expect(rows[0].match).toBe(false);
+  });
+
+  it("nøkkel berre A rapporterte: B = «-», match=false, men raden er ikkje skjult", () => {
+    const rows = buildComparisonRowsFromResults(
+      { M_Ed: "25 kNm", g_k: "6 kN/m" },
+      { M_Ed: "25 kNm" },
+      "nb",
+    );
+    const gk = rows.find((r) => r.constructorB === "-");
+    expect(gk).toBeTruthy();
+    expect(gk?.constructorA).not.toBe("-");
+    expect(gk?.match).toBe(false);
   });
 });

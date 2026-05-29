@@ -1,5 +1,6 @@
 import { confidenceLabel, decisionStatusLabel, decisionStatusShort, formatPromptVersion, inputStatusLabel, matchPhrase, matchStatusShort, } from "@/lib/format";
 import type { Locale } from "@/lib/locale";
+import { compareResults } from "@/lib/compare/result-compare";
 import { polishEnglishGeneratedText, sprint335PolishEnglishText,
   polishNorwegianRoleText
 } from "@/lib/international/display";
@@ -269,64 +270,65 @@ function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
   return selected.length > 0 ? selected : rows.slice(0, 4).map((row) => ({ ...row }));
 }
 
-function numericValue(raw: string): number | null {
-  const token = raw.replace(/\s/g, "").match(/-?[\d.,]+/);
-  if (!token) return null;
-  const parsed = Number.parseFloat(token[0].replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-}
+const REPORT_MATCH_TOLERANCE_PCT = 0.1; // ~0,1 % — bevarer gamal valuesMatch-terskel (diff/scale <= 0,001)
 
-function valuesMatch(a: string, b: string): boolean {
-  if (a === "-" || b === "-") return false;
-  if (a === b) return true;
-  const aNum = numericValue(a);
-  const bNum = numericValue(b);
-  if (aNum === null || bNum === null) return false;
-  const diff = Math.abs(aNum - bNum);
-  const scale = Math.max(1, Math.abs(aNum), Math.abs(bNum));
-  // Små avrundingsforskjellar som 15,075 vs 15,08 skal ikkje gi avvik
-  // i kontrolltabellen. Reelle avvik som 2760 vs 2568 blir framleis fanga.
-  return diff <= 0.01 || diff / scale <= 0.001;
+/**
+ * Byggjer kontrolltabellens A/B-rader med DETERMINISTISK nøkkel-paring
+ * (compareResults / normalizeResultKey) — same kjelde som Samanliknaren og
+ * Mission Control. Erstattar den tidlegare ad-hoc paringa (canonicalResultKey
+ * + ikkje-eining-aware valuesMatch + tusenskilje-stripping i numericValue) som
+ * (a) ikkje para greek-symbol som σ/φ, (b) flagga cm³ vs mm³ som avvik, og
+ * (c) mis-parsa engelsk desimal (2.880 → 2880). Nøklar berre éin konstruktør
+ * rapporterte blir eigne rader med «-» på motsett side (ikkje skjult, ikkje
+ * falsk match).
+ */
+export function buildComparisonRowsFromResults(
+  resultsA: Record<string, string>,
+  resultsB: Record<string, string>,
+  displayLanguage: PilarDisplayLanguage,
+): ComparisonRow[] {
+  const cmp = compareResults(resultsA, resultsB);
+  const display = (v: string): string => (v && v !== "-" ? compactReportText(v) : "-");
+
+  type Raw = { key: string; a: string; b: string; match: boolean };
+  const rows: Raw[] = [];
+
+  for (const p of cmp.paired) {
+    const a = p.aValue || "-";
+    const b = p.bValue || "-";
+    // Match: eksakt lik streng (dekkjer ikkje-numeriske verdiar) ELLER eining-
+    // aware kode-rekna avvik under terskel. compareResults gjer cm³/mm³, kN/N
+    // likeverdige, og parsar både norsk og engelsk desimal korrekt.
+    const match =
+      a !== "-" &&
+      b !== "-" &&
+      (a === b || (p.percentDiff !== null && p.percentDiff <= REPORT_MATCH_TOLERANCE_PCT));
+    rows.push({ key: p.key, a, b, match });
+  }
+  for (const key of cmp.onlyA) {
+    rows.push({ key, a: resultsA[key] || "-", b: "-", match: false });
+  }
+  for (const key of cmp.onlyB) {
+    rows.push({ key, a: "-", b: resultsB[key] || "-", match: false });
+  }
+
+  return rows
+    .sort((x, y) => resultPriorityScore(x.key) - resultPriorityScore(y.key))
+    .slice(0, 12)
+    .map((row) => ({
+      label: localizeResultLabel(displayResultLabel(row.key), displayLanguage),
+      constructorA: display(row.a),
+      constructorB: display(row.b),
+      match: row.match,
+    }));
 }
 
 function buildComparisonRows(data: UpstreamReportData, displayLanguage: PilarDisplayLanguage): ComparisonRow[] {
-  const resultsA = data.agentA.structured_output.results ?? {};
-  const resultsB = data.agentB.structured_output.results ?? {};
-  const groups = new Map<string, { label: string; a: string; b: string; score: number }>();
-
-  for (const [sourceLabel, raw] of Object.entries(resultsA)) {
-    const canonical = canonicalResultKey(sourceLabel);
-    const current = groups.get(canonical);
-    const score = resultPriorityScore(sourceLabel);
-    groups.set(canonical, {
-      label: current && current.score < score ? current.label : displayResultLabel(sourceLabel),
-      a: compactReportText(raw),
-      b: current?.b ?? "-",
-      score: Math.min(score, current?.score ?? score),
-    });
-  }
-
-  for (const [sourceLabel, raw] of Object.entries(resultsB)) {
-    const canonical = canonicalResultKey(sourceLabel);
-    const current = groups.get(canonical);
-    const score = resultPriorityScore(sourceLabel);
-    groups.set(canonical, {
-      label: current && current.score < score ? current.label : displayResultLabel(sourceLabel),
-      a: current?.a ?? "-",
-      b: compactReportText(raw),
-      score: Math.min(score, current?.score ?? score),
-    });
-  }
-
-  return Array.from(groups.values())
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 12)
-    .map((row) => ({
-      label: localizeResultLabel(row.label, displayLanguage),
-      constructorA: row.a || "-",
-      constructorB: row.b || "-",
-      match: valuesMatch(row.a || "-", row.b || "-"),
-    }));
+  return buildComparisonRowsFromResults(
+    data.agentA.structured_output.results ?? {},
+    data.agentB.structured_output.results ?? {},
+    displayLanguage,
+  );
 }
 
 function buildPipelineStatus(data: UpstreamReportData, locale: Locale, displayLanguage: PilarDisplayLanguage): PipelineStatusRow[] {
