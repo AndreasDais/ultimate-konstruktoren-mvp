@@ -64,10 +64,12 @@
   padding: 0 20px;
   font-size: 14px;
 }
-/* CTA flytta ned i gapet mellom config-grid og below-seksjonen */
+/* CTA i gapet mellom config-grid og below — midtstilt og stram topp-margin so
+   den ikkje flyt i det asymmetriske kvitrommet under det kortare venstre panelet. */
 .intl-cta-row {
   display: flex;
-  margin: 28px 0;
+  justify-content: center;
+  margin-top: 16px;
 }
 .arrow {
   display: inline-block;
