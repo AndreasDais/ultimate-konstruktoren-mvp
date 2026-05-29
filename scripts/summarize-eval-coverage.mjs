@@ -81,6 +81,15 @@ function expectedList(evalCase, key) {
   return Array.isArray(value) ? value : [];
 }
 
+function numericExpectations(evalCase) {
+  const expected = evalCase.expected || {};
+  return Array.isArray(expected.numeric_expectations) ? expected.numeric_expectations : [];
+}
+
+function expressionSymbols(expression) {
+  return [...new Set(String(expression || "").match(/[A-Za-z][A-Za-z0-9_]*/g) || [])];
+}
+
 function validateCases(cases, taxonomy) {
   const warnings = [];
   const errors = [];
@@ -159,6 +168,9 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
   const byLanguage = new Map();
   const byManualReview = new Map();
   const byTargetAgent = new Map();
+  const byUnitExpectation = new Map();
+  const byNumericExpectationUnit = new Map();
+  const byNumericExpressionSymbol = new Map();
 
   // Seed the agent map with the full taxonomy so zero-coverage agents are
   // visible as gaps, not hidden.
@@ -183,6 +195,17 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
         countInto(byTargetAgent, agent);
       }
     }
+
+    for (const unit of expectedList(evalCase, "unit_expectations")) {
+      countInto(byUnitExpectation, unit);
+    }
+
+    for (const expectation of numericExpectations(evalCase)) {
+      countInto(byNumericExpectationUnit, expectation.unit || "missing");
+      for (const symbol of expressionSymbols(expectation.expression)) {
+        countInto(byNumericExpressionSymbol, symbol);
+      }
+    }
   }
 
   const requiredDimensions = taxonomy.required_eval_dimensions || [];
@@ -199,6 +222,10 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
     `## Coverage by domain\n\n${markdownTable(byDomain, "Domain")}\n` +
     `## Coverage by standard context\n\n${markdownTable(byStandard, "Standard context")}\n` +
     `## Coverage by display language\n\n${markdownTable(byLanguage, "Display language")}\n` +
+    `## Unit and symbol expectations\n\nThese tables summarize explicit unit checks and symbolic numeric-expression anchors. They are coverage metadata only; numeric expression grading is still handled separately from text artifact checks.\n\n` +
+    `### Unit expectations\n\n${markdownTable(byUnitExpectation, "Unit expectation")}\n` +
+    `### Numeric expectation units\n\n${markdownTable(byNumericExpectationUnit, "Numeric expectation unit")}\n` +
+    `### Numeric expression symbols\n\n${markdownTable(byNumericExpressionSymbol, "Numeric expression symbol")}\n` +
     `## Manual review requirement\n\n${markdownTable(byManualReview, "Manual review required")}\n` +
     `## Required eval dimensions from taxonomy\n\n` +
     (requiredDimensions.length > 0 ? requiredDimensions.map((item) => `- ${item}`).join("\n") : "No required dimensions listed.") +
