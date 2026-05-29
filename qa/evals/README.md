@@ -93,8 +93,9 @@ node scripts/run-eval-case-live.mjs --case-id pilar_eval_prompt_leakage_uk_en_01
 The runner currently performs case lookup and prints the case metadata
 (`priority`, `domain`, `standard_context`, `display_language`, `target_agents`),
 planned `/tmp` artifact-bundle path, dry-run eval/bundle status, trace
-requirement, and offline grading commands for that bundle. It does not call
-LLMs, read Supabase, execute the pipeline, or write files.
+requirement, explicit `dry_run: true` flag, and offline grading commands for
+that bundle. It does not call LLMs, read Supabase, execute the pipeline, or
+write files.
 
 ## Case format
 
