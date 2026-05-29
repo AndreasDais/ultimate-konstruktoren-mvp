@@ -25,6 +25,7 @@ The monitor must:
 6. Keep professional-review disclaimers and provisional trust wording sacred.
 7. Separate dry-run, fixture, cached, and live evidence.
 8. Ask for pasted summaries when the monitor lacks facts.
+9. Keep monitor commits isolated from worker-lane commits.
 ```
 
 ## 2. Required input from each lane
@@ -115,7 +116,71 @@ Live Supabase/LLM read in eval dry-run       RED      Stop; repair boundary.
 Sprint 50 completed                         DONE     Stop lane.
 ```
 
-## 6. Product safety checks
+## 6. Commit isolation rules
+
+The monitor must be stricter at commit time than during normal reading. This is
+especially important because Eval currently runs on `main`, so Eval work and
+monitor docs can be dirty at the same time.
+
+Before staging a monitor commit:
+
+```bash
+git status --short
+git diff --name-only
+git diff --cached --name-only
+```
+
+Allowed staged files for a monitor commit:
+
+```txt
+sources/agent-research/PILAR_LANE_MONITOR_PROTOCOL.md
+sources/agent-research/PILAR_LANE_MONITOR_SCORECARD.md
+sources/agent-research/WORLD_CLASS_AGENT_ECOSYSTEM_50_SPRINT_PLAN.md
+sources/agent-research/*MONITOR*.md
+```
+
+Not allowed in a monitor commit:
+
+```txt
+qa/evals/**
+scripts/*eval*
+app/**
+lib/**
+sources/release-manager/**
+sources/guardrails/**
+sources/observability/**
+supabase/**
+package.json
+generated latest-* reports
+```
+
+If any worker-lane file is already staged, do not commit. First unstage only the
+worker-lane files:
+
+```bash
+git restore --staged <worker-lane-files>
+```
+
+Then re-check:
+
+```bash
+git diff --cached --name-only
+```
+
+If the staged set is empty after unstaging, stop and report that the monitor
+change was already committed elsewhere or that there is nothing safe to commit.
+Do not create a no-op commit.
+
+Monitor commit messages should use:
+
+```txt
+DOCS: ...
+```
+
+Worker-lane commits must not include monitor files unless the human explicitly
+approves a combined coordination commit.
+
+## 7. Product safety checks
 
 Every review must explicitly consider:
 
@@ -129,7 +194,7 @@ secret_boundary              - service-role keys and raw provider internals stay
 evidence_boundary            - dry-run, fixture, cached, live are not conflated
 ```
 
-## 7. Response templates
+## 8. Response templates
 
 ### All-lane review
 
@@ -188,7 +253,7 @@ dirty status, and next proposed sprint. I will then return GREEN, YELLOW, RED,
 or DONE.
 ```
 
-## 8. Monitor memory rules
+## 9. Monitor memory rules
 
 The monitor may remember the latest pasted summaries in the conversation, but
 must treat repo files and current summaries as stronger evidence than memory.
@@ -198,7 +263,7 @@ The monitor must not assume a lane has completed a sprint just because the plan
 exists. A sprint only counts as done when the lane reports files, gates, and
 commit or explicitly reports a no-code completion.
 
-## 9. Escalation paths
+## 10. Escalation paths
 
 ```txt
 Eval drift       -> ask Chat A for handoff to Runtime/Ops, or stop.
@@ -209,7 +274,7 @@ Safety drift     -> RED, stop, repair before more sprint work.
 Missing evidence -> YELLOW unless there is a safety issue, then RED.
 ```
 
-## 10. Monitor closeout
+## 11. Monitor closeout
 
 When all lanes are DONE or stopped, the monitor should produce:
 
