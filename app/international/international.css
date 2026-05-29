@@ -64,11 +64,14 @@
   padding: 0 20px;
   font-size: 14px;
 }
-/* CTA i gapet mellom config-grid og below — midtstilt og stram topp-margin so
-   den ikkje flyt i det asymmetriske kvitrommet under det kortare venstre panelet. */
+/* CTA bur no INNE i venstre grid-kolonne (.intl-grid__left), rett under
+   config-panelet — venstrejustert, fyller kvitrommet som det høgre (taller)
+   preview-panelet elles ville late stå tomt. */
+.intl-grid__left {
+  min-width: 0;
+}
 .intl-cta-row {
   display: flex;
-  justify-content: center;
   margin-top: 16px;
 }
 .arrow {

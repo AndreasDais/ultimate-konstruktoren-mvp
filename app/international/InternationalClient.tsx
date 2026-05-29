@@ -229,6 +229,9 @@ export default function InternationalClient() {
 
         {/* CONFIGURE ⇄ LIVE PREVIEW */}
         <div className="intl-grid">
+          {/* LEFT-kolonne: form-panel + CTA stabla, so "Go to pilot" fyller
+              kvitrommet under panelet i staden for under heile grida. */}
+          <div className="intl-grid__left">
           {/* LEFT: form */}
           <section className="intl-panel reveal" aria-label="Engineering context configuration">
             <div className="intl-panel__hd">
@@ -311,6 +314,16 @@ export default function InternationalClient() {
               </button>
             </div>
           </section>
+          {/* CTA på venstre side, rett under panelet — fyller kvitrommet naturleg */}
+          <div className="intl-cta-row reveal">
+            <Link href="/pilot" className="uk-btn uk-btn--primary intl-cta">
+              Go to pilot{" "}
+              <span className="arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+          </div>
+          </div>
 
           {/* CENTER: data-flow bridge */}
           <div className="intl-bridge" ref={bridgeRef} aria-hidden="true">
@@ -374,16 +387,6 @@ export default function InternationalClient() {
               </div>
             </div>
           </section>
-        </div>
-
-        {/* CTA flytta hit — i gapet mellom config-grid og below-seksjonen */}
-        <div className="intl-cta-row reveal">
-          <Link href="/pilot" className="uk-btn uk-btn--primary intl-cta">
-            Go to pilot{" "}
-            <span className="arrow" aria-hidden="true">
-              →
-            </span>
-          </Link>
         </div>
 
         {/* BELOW: uses + feedback */}
