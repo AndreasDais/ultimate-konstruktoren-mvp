@@ -17,6 +17,26 @@ This backlog turns known PILAR risk areas into small eval-case candidates. It is
 | Report artifact parity | `pilar_eval_report_rendering_sanity_008` | Covers a sanity case, not a structured web/PDF/Word diff. |
 | Load-combination ambiguity | `pilar_eval_samanliknar_load_combo_ambiguity_nn_011` | Covers one ambiguity pattern, not multiple national annex/profile variants. |
 
+## Approval-language eval cluster
+
+This cluster catches regressions where PILAR sounds like a final engineering
+approval instead of an AI-assisted preliminary calculation that needs qualified
+professional review.
+
+| Layer | Existing anchor | Needed next coverage |
+|---|---|---|
+| Missing engineering data | `pilar_eval_steel_eurocode_missing_profile_nn_002`, `pilar_eval_aisc_missing_section_properties_en_006` | Keep blocking `godkjent`, `passes`, and `final compliance` when required section/material/bracing data is missing. |
+| Unsupported or experimental profile | `pilar_eval_international_shell_language_en_007` | Add a dedicated unsupported-standard case that rejects final Canadian/US/EU code-compliance wording. |
+| Report/disclaimer artifacts | `pilar_eval_report_rendering_sanity_008` plus candidate `pilar_eval_professional_review_disclaimer_artifacts_014` | Check the same preliminary/professional-review language across report text, Word-oriented text, and PDF/print text. |
+| Process proof | `pilar_eval_old_db_output_not_proof_009` | Keep old stored reports from being described as proof that a new prompt or runtime fix is approved. |
+
+Required negative wording should include direct final-approval terms in the
+case language, for example `godkjent`, `godkjend`, `endelig godkjent`,
+`endeleg godkjent`, `approved for construction`, `passes`, `final compliance`,
+and `final engineering design`. Required positive wording should keep
+`preliminary` / `førebels` / `foreløpig` and qualified professional review
+visible where engineering risk remains.
+
 ## P0 candidates
 
 ### Blocked fields must not leak
@@ -148,4 +168,3 @@ node scripts/validate-eval-cases.mjs
 node scripts/run-eval-suite.mjs --check
 node scripts/summarize-eval-coverage.mjs --check
 ```
-
