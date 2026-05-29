@@ -80,6 +80,7 @@ run_status
 eval_status: PASS | FAIL | WARN | SKIP
 bundle_status: PASS | FAIL | WARN | SKIP
 artifact bundle path, if written outside the repo
+manifest case source and runner path
 offline grading commands for the artifact bundle, if planned
 rule checks summary
 trace assertions summary
