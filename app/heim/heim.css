@@ -14,6 +14,7 @@
   --pad-x: clamp(20px, 5vw, 88px);
   --maxw: 1320px;
   --flow-w: 940px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .lp .mono {
@@ -441,11 +442,12 @@
 .lp .report-doc__txt { font-size: 13px; color: var(--fg-2); }
 .lp .report-doc__txt strong { color: var(--fg); font-weight: 600; }
 
-/* reveal-animasjon */
-.lp .reveal {
+/* reveal-animasjon — initial-skjult gata bak .js-anim (sett av init-script
+   foer paint), saa sida renderer fullstendig utan JS. */
+.js-anim .lp .reveal {
   opacity: 0;
   transform: translateY(18px);
-  transition: opacity 0.65s cubic-bezier(0.22,0.61,0.36,1), transform 0.65s cubic-bezier(0.22,0.61,0.36,1);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
 }
 .lp .reveal.in { opacity: 1; transform: none; }
 
@@ -486,8 +488,28 @@
   .lp .stage { padding: 20px; gap: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lp .reveal { opacity: 1; transform: none; transition: none; }
-  .lp .btn { transition: none; }
+  /* !important vinn uavhengig av kjelderekkjefoelgje — slaar av alle
+     landing-animasjonar og viser element i ferdig tilstand. */
+  .js-anim .lp .reveal,
+  .js-anim .lp .connector,
+  .js-anim .lp .branch__stem,
+  .js-anim .lp .branch__bar,
+  .js-anim .lp .branch__drop,
+  .js-anim .lp .lanes .engineer__step,
+  .js-anim .lp .lanes__chip,
+  .js-anim .lp .compare-strip .compare-row,
+  .js-anim .lp .compare-strip .demo__verdict,
+  .js-anim .lp .demo.anim .demo__row,
+  .js-anim .lp .demo.anim .demo__hr,
+  .js-anim .lp .demo.anim .demo__verdict {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .lp .demo__verdict-dot { animation: none !important; }
+  .lp .demo__caret { display: none !important; }
+  .lp .btn,
+  .lp .header__inner { transition: none !important; }
 }
 
 /* ===================== Region-pop-up ===================== */
@@ -524,3 +546,80 @@
 }
 .lp .region-modal__actions { display: flex; gap: 12px; }
 .lp .region-modal__actions .btn { flex: 1; justify-content: center; }
+
+/* =========================================================
+   Animasjonar (porta frå Claude Design §5). Initial-skjulte
+   tilstandar gata bak .js-anim. Reveal-observeren i HeimClient
+   set .in og driv connector/branch/lanes/comparator under.
+   ========================================================= */
+
+/* 5.3 pipeline-koplingar teiknar seg */
+.js-anim .lp .connector { transform: scaleY(0); transform-origin: top center; transition: transform 0.5s var(--ease); }
+.lp .connector.in { transform: scaleY(1); }
+
+/* 5.4 greiner — split/merge teiknar seg i rekkjefoelgje */
+.js-anim .lp .branch__stem { transform: translateX(-50%) scaleY(0); transform-origin: top center; transition: transform 0.4s var(--ease); }
+.lp .branch.in .branch__stem { transform: translateX(-50%) scaleY(1); }
+.js-anim .lp .branch__bar { transform: scaleX(0); transform-origin: center; transition: transform 0.45s var(--ease) 0.22s; }
+.lp .branch.in .branch__bar { transform: scaleX(1); }
+.js-anim .lp .branch__drop { transform: scaleY(0); transform-origin: top center; transition: transform 0.36s var(--ease) 0.5s; }
+.lp .branch.in .branch__drop { transform: scaleY(1); }
+.js-anim .lp .branch.is-merge .branch__stem,
+.js-anim .lp .branch.is-merge .branch__drop { transform-origin: bottom center; }
+.js-anim .lp .branch.is-merge .branch__drop { transition-delay: 0s; }
+.js-anim .lp .branch.is-merge .branch__bar { transition-delay: 0.3s; }
+.js-anim .lp .branch.is-merge .branch__stem { transition-delay: 0.5s; }
+
+/* 5.5 to ingeniorar reknar i takt (identisk delay i begge kolonnar) */
+.js-anim .lp .lanes .engineer__step { opacity: 0; transform: translateY(7px); transition: opacity 0.45s ease, transform 0.45s var(--ease); }
+.lp .lanes.in .engineer__step { opacity: 1; transform: none; }
+.lp .lanes.in .engineer__body .engineer__step:nth-child(1) { transition-delay: 0.15s; }
+.lp .lanes.in .engineer__body .engineer__step:nth-child(2) { transition-delay: 0.32s; }
+.lp .lanes.in .engineer__body .engineer__step:nth-child(3) { transition-delay: 0.49s; }
+.js-anim .lp .lanes__chip { opacity: 0; transition: opacity 0.5s ease 0.55s; }
+.lp .lanes.in .lanes__chip { opacity: 1; }
+
+/* 5.6 comparator-samordning "snap" */
+.js-anim .lp .compare-strip .compare-row { opacity: 0; transition: opacity 0.5s ease, transform 0.5s var(--ease); }
+.js-anim .lp .compare-strip .compare-row:nth-of-type(1) { transform: translateX(-16px); }
+.js-anim .lp .compare-strip .compare-row:nth-of-type(2) { transform: translateX(16px); }
+.lp .stage.in .compare-strip .compare-row { opacity: 1; transform: none; transition-delay: 0.15s; }
+.js-anim .lp .compare-strip .demo__verdict { opacity: 0; transform: scale(0.96); transition: opacity 0.4s ease 0.45s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.45s; }
+.lp .stage.in .compare-strip .demo__verdict { opacity: 1; transform: none; animation: lpOkGlow 1.1s ease 0.5s 1; }
+@keyframes lpOkGlow {
+  0% { box-shadow: 0 0 0 0 var(--ok-bg); }
+  45% { box-shadow: 0 0 0 5px var(--ok-bg); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+/* 5.7 pustande live-prikk (begge groene piller) — rein CSS, alltid paa */
+.lp .demo__verdict-dot { animation: lpDotBreathe 2.6s ease-in-out infinite, lpDotHalo 2.6s ease-out infinite; }
+@keyframes lpDotBreathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+@keyframes lpDotHalo {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 38%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ok) 0%, transparent); }
+}
+
+/* 5.8 demokort sjolvspelar (hero) — .anim er i markup, .r1/.r2/.r3 frå JS */
+.js-anim .lp .demo.anim .demo__row,
+.js-anim .lp .demo.anim .demo__hr,
+.js-anim .lp .demo.anim .demo__verdict { opacity: 0; transition: opacity 0.5s ease, transform 0.5s var(--ease); }
+.js-anim .lp .demo.anim .demo__row { transform: translateY(8px); }
+.lp .demo.anim.r1 .demo__row.is-you { opacity: 1; transform: none; }
+.lp .demo.anim.r2 .demo__row.is-pilar { opacity: 1; transform: none; }
+.lp .demo.anim.r2 .demo__hr { opacity: 1; }
+.lp .demo.anim.r3 .demo__verdict { opacity: 1; }
+.lp .demo__caret {
+  display: inline-block;
+  width: 2px; height: 1.05em;
+  background: var(--fg-muted);
+  margin-left: 1px;
+  vertical-align: -0.16em;
+  animation: lpCaretBlink 0.9s steps(1) infinite;
+}
+@keyframes lpCaretBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* 5.10 sticky-header kondensering */
+.lp .header__inner { transition: padding 180ms ease; }
+.lp .header--condensed .header__inner { padding-top: 10px; padding-bottom: 10px; }
+.lp .header--condensed { box-shadow: var(--shadow-sm); }

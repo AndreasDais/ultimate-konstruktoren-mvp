@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import MarketingHeader from "@/app/components/MarketingHeader";
 import { RegionModal } from "./RegionModal";
@@ -180,6 +180,8 @@ export default function HeimClient({
 }) {
   const t = COPY[lang];
 
+  const demoRef = useRef<HTMLDivElement>(null);
+
   // Scroll-reveal med mild stagger (frå Claude Design-mockupen).
   // CSS handterer reduced-motion (gjer .reveal synleg utan transition).
   useEffect(() => {
@@ -205,6 +207,52 @@ export default function HeimClient({
       io.observe(el);
     });
     return () => io.disconnect();
+  }, []);
+
+  // Demokort sjolvspelar: type "Du"-meldinga, fade inn formel + verdict.
+  // .anim ligg alt i markup; .js-anim (init-script) skjuler radene foer paint
+  // saa det ikkje flash-ar. Reduced-motion → vis ferdig tilstand med ein gong.
+  useEffect(() => {
+    const demo = demoRef.current;
+    if (!demo) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      demo.classList.add("r1", "r2", "r3");
+      return;
+    }
+    const youMsg = demo.querySelector<HTMLElement>(".demo__row.is-you .demo__msg");
+    if (!youMsg) {
+      demo.classList.add("r1", "r2", "r3");
+      return;
+    }
+    const full = youMsg.textContent ?? "";
+    youMsg.textContent = "";
+    const caret = document.createElement("span");
+    caret.className = "demo__caret";
+    caret.setAttribute("aria-hidden", "true");
+    youMsg.appendChild(caret);
+
+    let cancelled = false;
+    let timer = window.setTimeout(tick, 350);
+    let i = 0;
+    function tick() {
+      if (cancelled || !youMsg) return;
+      demo?.classList.add("r1");
+      if (i <= full.length) {
+        youMsg.textContent = full.slice(0, i);
+        youMsg.appendChild(caret);
+        i += 1;
+        timer = window.setTimeout(tick, 20 + Math.random() * 26);
+      } else {
+        caret.remove();
+        demo?.classList.add("r2");
+        timer = window.setTimeout(() => demo?.classList.add("r3"), 1150);
+      }
+    }
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -233,7 +281,7 @@ export default function HeimClient({
           </div>
 
           {/* Signatur-demokort */}
-          <div className="demo" aria-label="Pilar">
+          <div className="demo anim" ref={demoRef} aria-label="Pilar">
             <div className="demo__bar">
               <span className="demo__bar-label">{t.demoBar}</span>
               <span className="demo__bar-dots" aria-hidden="true">
@@ -243,11 +291,11 @@ export default function HeimClient({
               </span>
             </div>
             <div className="demo__body">
-              <div className="demo__row">
+              <div className="demo__row is-you">
                 <span className="demo__who">{t.you}</span>
                 <span className="demo__msg">{t.demoInput}</span>
               </div>
-              <div className="demo__row">
+              <div className="demo__row is-pilar">
                 <span className="demo__who">Pilar</span>
                 <span className="demo__msg m">
                   <span className="m-v">M</span>

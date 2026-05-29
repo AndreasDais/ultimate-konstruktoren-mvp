@@ -19,5 +19,17 @@ export default async function HeimPage() {
   // Modal viser berre naar brukaren ikkje har valt region enno.
   const hasRegionChoice = uiMode === "intl" || uiMode === "no";
 
-  return <HeimClient lang={lang} showRegionModal={!hasRegionChoice} />;
+  return (
+    <>
+      {/* Set js-anim paa <html> FOER paint, scopa til /heim. Gjer at
+          initial-skjulte animasjons-tilstandar gjeld fraa fyrste paint
+          (ingen flash), men sida renderer fullstendig om JS er av. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: "try{document.documentElement.classList.add('js-anim')}catch(e){}",
+        }}
+      />
+      <HeimClient lang={lang} showRegionModal={!hasRegionChoice} />
+    </>
+  );
 }

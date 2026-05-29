@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 
@@ -23,8 +24,29 @@ const LOGIN: Record<Lang, string> = {
  * Klassenamna matchar .lp-scopa CSS i heim.css.
  */
 export default function MarketingHeader({ lang }: { lang: Lang }) {
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Sticky-header kondensering: mindre padding + liten skugge ved scroll.
+  // rAF-throttla scroll-listener (frå Claude Design §5.10).
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        el.classList.toggle("header--condensed", window.scrollY > 24);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="header">
+    <header className="header" ref={headerRef}>
       <div className="header__inner">
         <Link href="/heim" className="brand" aria-label="Pilar">
           <span className="brand__mark" aria-hidden="true">
