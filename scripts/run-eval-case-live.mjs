@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
 
 const DEFAULT_CASES = "qa/evals/pilar-core-evals.jsonl";
 const DEFAULT_SCRATCH_DIR = "/tmp/pilar-live-eval";
@@ -136,6 +137,15 @@ function joinBundlePath(scratchDir, caseId, runId) {
   return [scratchDir.replace(/[\\/]+$/, ""), caseId, runId].join("/");
 }
 
+function assertOutsideRepo(bundlePath) {
+  const repoRoot = path.resolve(".");
+  const resolvedBundlePath = path.resolve(bundlePath);
+  const relativeToRepo = path.relative(repoRoot, resolvedBundlePath);
+  if (relativeToRepo && !relativeToRepo.startsWith("..") && !path.isAbsolute(relativeToRepo)) {
+    throw new Error(`planned artifact bundle path must be outside the repo: ${bundlePath}`);
+  }
+}
+
 function quoteArg(value) {
   return JSON.stringify(String(value));
 }
@@ -150,6 +160,7 @@ function buildPlannedCommands(bundlePath) {
 
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
+  assertOutsideRepo(bundlePath);
   const manualReviewRequired = Boolean(evalCase.manual_review_required);
   const plannedManifest = {
     schema_version: BUNDLE_SCHEMA_VERSION,
@@ -262,7 +273,14 @@ function main() {
     process.exit(2);
   }
 
-  const plan = buildDryRunPlan(evalCase, args);
+  let plan;
+  try {
+    plan = buildDryRunPlan(evalCase, args);
+  } catch (error) {
+    console.error(`FAILED live eval runner: ${error.message}`);
+    process.exit(2);
+  }
+
   console.log(args.json ? JSON.stringify(plan, null, 2) : formatTextPlan(plan));
 }
 
