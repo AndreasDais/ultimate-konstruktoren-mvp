@@ -148,23 +148,37 @@ export default function InternationalClient() {
   // Scroll-reveal.
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLElement>(".intl .reveal"));
+    // Brua er ikkje .reveal (den teiknar si eiga linje), men vi observerer ho
+    // for å trigge draw-on (§3.11a) + ein innleiande flyt-puls (#16).
+    const bridge = bridgeRef.current;
+    if (bridge) els.push(bridge);
     if (reduce || typeof IntersectionObserver === "undefined") {
       els.forEach((el) => el.classList.add("in"));
       return;
     }
+    let pulseTimer: number | undefined;
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
             e.target.classList.add("in");
             io.unobserve(e.target);
+            if (e.target === bridge) {
+              pulseTimer = window.setTimeout(() => {
+                pulse(bridgeRef.current, "flow");
+                pulse(ctxRef.current, "pulse");
+              }, 760);
+            }
           }
         });
       },
       { threshold: 0.15, rootMargin: "0px 0px -6% 0px" },
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      if (pulseTimer) window.clearTimeout(pulseTimer);
+    };
   }, [reduce]);
 
   // Puls bru + ctx-kort på kvar endring; badge-puls berre når support-nivået skiftar.
@@ -336,7 +350,7 @@ export default function InternationalClient() {
           </div>
 
           {/* RIGHT: live engineering context */}
-          <section className="intl-panel intl-ctx reveal" ref={ctxRef} aria-live="polite">
+          <section className="intl-panel intl-ctx reveal assemble" ref={ctxRef} aria-live="polite">
             <div className="intl-panel__hd">
               <div className="intl-panel__hd-l">
                 <span className="live-dot" aria-hidden="true" />

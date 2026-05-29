@@ -597,6 +597,71 @@
   100% { opacity: 1; transform: none; }
 }
 
+/* === ENTRÉ-ANIMASJONAR (§3.11) ============================
+   Same vokabular som landing-sida: brua teiknar seg, ctx-kortet monterer
+   seg sjølv stykke for stykke, "used to"-lista kaskaderer, badge-prikken
+   pustar. Hidden-statane gata bak .js-anim; .in blir lagt av IO (§5). */
+
+/* (a) brua teiknar linja si når den kjem i syne */
+.js-anim .intl-bridge__line {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.5s var(--ease) 0.15s;
+}
+.intl-bridge.in .intl-bridge__line {
+  transform: scaleX(1);
+}
+.js-anim .intl-bridge__chev,
+.js-anim .intl-bridge__label {
+  opacity: 0;
+  transition: opacity 0.35s ease 0.55s;
+}
+.intl-bridge.in .intl-bridge__chev,
+.intl-bridge.in .intl-bridge__label {
+  opacity: 1;
+}
+
+/* (b) ctx-kortet monterer seg sjølv: badge -> namn -> desc -> chips -> limit */
+.js-anim .intl-ctx.assemble .intl-badge,
+.js-anim .intl-ctx.assemble .intl-ctx__name,
+.js-anim .intl-ctx.assemble .intl-ctx__desc,
+.js-anim .intl-ctx.assemble .intl-chips,
+.js-anim .intl-ctx.assemble .intl-limit {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+.intl-ctx.assemble.in .intl-badge     { opacity: 1; transform: none; transition-delay: 0.20s; }
+.intl-ctx.assemble.in .intl-ctx__name { opacity: 1; transform: none; transition-delay: 0.32s; }
+.intl-ctx.assemble.in .intl-ctx__desc { opacity: 1; transform: none; transition-delay: 0.42s; }
+.intl-ctx.assemble.in .intl-chips     { opacity: 1; transform: none; transition-delay: 0.52s; }
+.intl-ctx.assemble.in .intl-limit     { opacity: 1; transform: none; transition-delay: 0.62s; }
+
+/* (c) "used to"-lista kaskaderer inn */
+.js-anim .intl-uses__list li {
+  opacity: 0;
+  transform: translateY(7px);
+  transition: opacity 0.45s ease, transform 0.45s var(--ease);
+}
+.intl .reveal.in .intl-uses__list li { opacity: 1; transform: none; }
+.intl .reveal.in .intl-uses__list li:nth-child(1) { transition-delay: 0.12s; }
+.intl .reveal.in .intl-uses__list li:nth-child(2) { transition-delay: 0.22s; }
+.intl .reveal.in .intl-uses__list li:nth-child(3) { transition-delay: 0.32s; }
+.intl .reveal.in .intl-uses__list li:nth-child(4) { transition-delay: 0.42s; }
+
+/* (d) pustande badge-prikk — currentColor følgjer level-fargen */
+.intl-badge__dot {
+  animation: badgeBreathe 2.6s ease-in-out infinite, badgeHalo 2.6s ease-out infinite;
+}
+@keyframes badgeBreathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.8); }
+}
+@keyframes badgeHalo {
+  0%        { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 38%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent); }
+}
+
 /* === RESPONSIV ============================================ */
 @media (max-width: 860px) {
   .intl-grid {
@@ -673,5 +738,28 @@
   .intl-badge__dot,
   .arrow {
     transition: none !important;
+  }
+  /* entré-animasjonar (§3.11) -> ferdig tilstand momentant */
+  .js-anim .intl-bridge__line {
+    transform: scaleX(1);
+    transition: none;
+  }
+  .js-anim .intl-bridge__chev,
+  .js-anim .intl-bridge__label {
+    opacity: 1;
+    transition: none;
+  }
+  .js-anim .intl-ctx.assemble .intl-badge,
+  .js-anim .intl-ctx.assemble .intl-ctx__name,
+  .js-anim .intl-ctx.assemble .intl-ctx__desc,
+  .js-anim .intl-ctx.assemble .intl-chips,
+  .js-anim .intl-ctx.assemble .intl-limit,
+  .js-anim .intl-uses__list li {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .intl-badge__dot {
+    animation: none !important;
   }
 }
