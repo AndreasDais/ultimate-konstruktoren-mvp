@@ -210,6 +210,7 @@ function formatTextPlan(plan) {
     `standard_context: ${plan.standard_context}`,
     `display_language: ${plan.display_language}`,
     `target_agents: ${plan.target_agents.join(", ")}`,
+    `dry_run: ${plan.dry_run}`,
     `run_id: ${plan.run_id}`,
     `run_status: ${plan.run_status}`,
     `eval_status: ${plan.eval_status}`,
