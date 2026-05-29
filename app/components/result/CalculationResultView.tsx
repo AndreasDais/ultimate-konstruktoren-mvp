@@ -865,6 +865,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                         calculationType={result?.berekningstype ?? null}
                         displayLanguage={displayLanguage}
                         resultRoles={calculationA.result_roles}
+                        runId={currentRunId}
                       />
                     )}
 
