@@ -6,9 +6,9 @@ import { buildAgentSystemPrompt, engineeringContextUserMessageBlock, parseEngine
 import { isInternationalEnglishContext } from "@/lib/international/display";
 import {
   compareResults,
-  normalizeResultKey,
   type ResultComparison,
 } from "@/lib/compare/result-compare";
+import { reconcileNumericDifferences } from "@/lib/compare/reconcile-numeric-differences";
 import { normalizeConsistencyIssues } from "@/lib/compare/consistency-issues";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
@@ -264,37 +264,14 @@ ${tailInstruction}`;
       only_a: comparison.onlyA,
       only_b: comparison.onlyB,
     };
-    // Bygg oppslag: normalisert nøkkel -> kode-rekna para felt.
-    const pairedByNorm = new Map(
-      comparison.paired.map((p) => [normalizeResultKey(p.key), p]),
+    // F1 + F9 + hallusinasjons-drop: behald BERRE para nøklar, overstyr tala
+    // med kode-fasit, og dropp felt LLM-en fann opp (verken para eller upara
+    // — den gamle koden slapp slike gjennom med LLM-dikta verdiar).
+    // Sjå lib/compare/reconcile-numeric-differences.ts.
+    parsed.numeric_differences = reconcileNumericDifferences(
+      parsed.numeric_differences,
+      comparison,
     );
-    const unpairedNorm = new Set(
-      [...comparison.onlyA, ...comparison.onlyB].map(normalizeResultKey),
-    );
-    if (Array.isArray(parsed.numeric_differences)) {
-      parsed.numeric_differences = parsed.numeric_differences
-        // F1: dropp rader for nøklar only éin konstruktør rapporterte.
-        .filter(
-          (d: { field?: unknown }) =>
-            !unpairedNorm.has(normalizeResultKey(String(d.field ?? ""))),
-        )
-        // F9: overstyr tala med dei kode-rekna verdiane for para nøklar.
-        .map((d: Record<string, unknown>) => {
-          const hit = pairedByNorm.get(
-            normalizeResultKey(String(d.field ?? "")),
-          );
-          if (!hit) return d;
-          return {
-            ...d,
-            agent_a_value: hit.aValue,
-            agent_b_value: hit.bValue,
-            percent_diff:
-              hit.percentDiff === null
-                ? (d.percent_diff ?? null)
-                : Math.round(hit.percentDiff * 10) / 10,
-          };
-        });
-    }
 
     // === LAGRE COMPARISON ===
     let supabase;
