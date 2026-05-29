@@ -75,6 +75,12 @@ Text output should include:
 
 ```txt
 case_id
+title
+priority
+domain
+standard_context
+display_language
+target_agents
 run_id, if a run was created or inspected
 run_status
 eval_status: PASS | FAIL | WARN | SKIP
