@@ -122,6 +122,17 @@ describe("buildComparisonRowsFromResults", () => {
     expect(rows[0].match).toBe(false);
   });
 
+  it("kappar ikkje rader under ~40 — count må vere ærleg for «+N til»-indikatoren", () => {
+    const a: Record<string, string> = {};
+    const b: Record<string, string> = {};
+    for (let i = 0; i < 15; i++) {
+      a[`k_${i}`] = `${i} kN`;
+      b[`k_${i}`] = `${i} kN`;
+    }
+    const rows = buildComparisonRowsFromResults(a, b, "nb");
+    expect(rows).toHaveLength(15); // ikkje kappa til 12
+  });
+
   it("nøkkel berre A rapporterte: B = «-», match=false, men raden er ikkje skjult", () => {
     const rows = buildComparisonRowsFromResults(
       { M_Ed: "25 kNm", g_k: "6 kN/m" },

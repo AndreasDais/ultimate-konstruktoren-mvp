@@ -87,6 +87,21 @@ describe("buildComparatorTable", () => {
     expect(buildComparatorTable({ x: "5 kN", y: "1" }, { x: "5 kN" }, []).allAgree).toBe(false);
   });
 
+  it("rapporterer totalRows og hiddenRows når lista er kappa", () => {
+    const a = { k1: "1", k2: "2", k3: "3", k4: "4" };
+    const b = { k1: "1", k2: "2", k3: "3", k4: "4" };
+    const table = buildComparatorTable(a, b, [], 2);
+    expect(table.rows).toHaveLength(2);
+    expect(table.totalRows).toBe(4);
+    expect(table.hiddenRows).toBe(2);
+  });
+
+  it("hiddenRows er 0 når alt får plass", () => {
+    const table = buildComparatorTable({ x: "1" }, { x: "1" }, [], 6);
+    expect(table.totalRows).toBe(1);
+    expect(table.hiddenRows).toBe(0);
+  });
+
   it("degraderer trygt på tomme/null input", () => {
     const table = buildComparatorTable({}, {}, []);
     expect(table.rows).toEqual([]);

@@ -44,6 +44,10 @@ export type ComparatorTable = {
   maxPercentDiff: number;
   /** Sann berre når det finst minst eitt numerisk par, alle er 0 %, og ingen upara nøklar. */
   allAgree: boolean;
+  /** Totalt tal rader (para + upara) FØR kapping til `limit`. */
+  totalRows: number;
+  /** Tal rader som er skjult av `limit`-kappinga (0 når alt får plass). */
+  hiddenRows: number;
 };
 
 /** Lausare form enn ComparisonResult["numeric_differences"] — vi les berre field/severity. */
@@ -123,11 +127,15 @@ export function buildComparatorTable(
     cmp.onlyB.length === 0 &&
     numericPaired.every((x) => x === 0);
 
+  const allRows = [...pairedRows, ...onlyARows, ...onlyBRows];
+  const rows = allRows.slice(0, limit);
   return {
-    rows: [...pairedRows, ...onlyARows, ...onlyBRows].slice(0, limit),
+    rows,
     pairedCount: cmp.paired.length,
     aboveThresholdCount,
     maxPercentDiff,
     allAgree,
+    totalRows: allRows.length,
+    hiddenRows: allRows.length - rows.length,
   };
 }

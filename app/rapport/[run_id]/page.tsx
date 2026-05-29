@@ -1874,6 +1874,21 @@ export default function RapportPage() {
                   </tbody>
                 </table>
               )}
+              {reportModel.control.comparisonRows.length > reportControlRows.length && (() => {
+                const shown = reportControlRows.length;
+                const total = reportModel.control.comparisonRows.length;
+                const text =
+                  reportDisplayLanguage === "en"
+                    ? `Showing the ${shown} most important of ${total} compared values.`
+                    : reportDisplayLanguage === "nn"
+                    ? `Viser dei ${shown} viktigaste av ${total} jamførte verdiane.`
+                    : `Viser de ${shown} viktigste av ${total} sammenlignede verdiene.`;
+                return (
+                  <p style={{ fontSize: 12, color: "var(--fg-muted)", fontStyle: "italic", marginTop: 8 }}>
+                    {text}
+                  </p>
+                );
+              })()}
             </div>
 
             {/* 04.2 Controllerens avgjørelse — verdict-box med mørk header

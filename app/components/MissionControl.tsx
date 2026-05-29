@@ -118,6 +118,7 @@ const MC_LABELS: Record<string, Record<Locale, string>> = {
   // Samanlikningstabell (#5)
   tabellVerdi: { nb: "VERDI", nn: "VERDI" },
   tabellAvvik: { nb: "AVVIK", nn: "AVVIK" },
+  fleireRader: { nb: "+{n} flere verdier (viser {shown} av {total})", nn: "+{n} fleire verdiar (viser {shown} av {total})" },
   toAvToEinige: { nb: "2 av 2 metoder enige", nn: "2 av 2 metodar einige" },
   doneToComparator: { nb: "Ferdig — leverer resultat til Sammenligneren", nn: "Ferdig — leverer resultat til Samanliknaren" },
   avvikAVurdere: { nb: "avvik å vurdere", nn: "avvik å vurdere" },
@@ -228,6 +229,7 @@ export default function MissionControl({
     videreKontrollor: "Continue to controller",
     tabellVerdi: "VALUE",
     tabellAvvik: "DIFFERENCE",
+    fleireRader: "+{n} more values (showing {shown} of {total})",
     toAvToEinige: "2 of 2 methods agree",
     avvikAVurdere: "differences to review",
   });
@@ -861,6 +863,24 @@ function ComparatorPanel({
               </Fragment>
             );
           })}
+        </div>
+      )}
+
+      {/* «+N til»-indikator — ingen stille avkutting når tabellen er kappa */}
+      {table.hiddenRows > 0 && (
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--fg-muted, #94A3B8)",
+            fontStyle: "italic",
+            marginTop: -8,
+            marginBottom: 16,
+          }}
+        >
+          {L.fleireRader[locale]
+            .replace("{n}", String(table.hiddenRows))
+            .replace("{shown}", String(table.totalRows - table.hiddenRows))
+            .replace("{total}", String(table.totalRows))}
         </div>
       )}
 

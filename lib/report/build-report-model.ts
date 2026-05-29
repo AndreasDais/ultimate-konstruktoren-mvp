@@ -271,6 +271,10 @@ function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
 }
 
 const REPORT_MATCH_TOLERANCE_PCT = 0.1; // ~0,1 % — bevarer gamal valuesMatch-terskel (diff/scale <= 0,001)
+// Generøs øvre grense slik at comparisonRows.length er ærleg for «+N til»-
+// indikatoren (web + DOCX kappar til 8 for visning). Tidlegare 12 gav for låg
+// total for utrekningar med mange nøklar. Bound mot patologiske tilfelle.
+const MAX_REPORT_COMPARISON_ROWS = 40;
 
 /**
  * Byggjer kontrolltabellens A/B-rader med DETERMINISTISK nøkkel-paring
@@ -314,7 +318,7 @@ export function buildComparisonRowsFromResults(
 
   return rows
     .sort((x, y) => resultPriorityScore(x.key) - resultPriorityScore(y.key))
-    .slice(0, 12)
+    .slice(0, MAX_REPORT_COMPARISON_ROWS)
     .map((row) => ({
       label: localizeResultLabel(displayResultLabel(row.key), displayLanguage),
       constructorA: display(row.a),
