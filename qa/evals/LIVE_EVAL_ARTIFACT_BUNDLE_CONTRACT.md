@@ -68,6 +68,24 @@ artifact-parity-summary.json
 
 ## manifest.json
 
+Required top-level keys:
+
+```txt
+schema_version
+case_id
+run_id
+created_at
+manual_review_required
+source
+```
+
+Required `source` keys:
+
+```txt
+cases_path
+runner
+```
+
 ```json
 {
   "schema_version": "live-eval-artifact-bundle.v0",
