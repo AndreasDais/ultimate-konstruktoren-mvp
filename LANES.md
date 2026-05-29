@@ -66,6 +66,8 @@ qa/evals/**
 scripts/run-eval-suite.mjs
 scripts/validate-eval-cases.mjs
 scripts/run-eval-case-live.mjs        # currently UNTRACKED on main
+scripts/summarize-eval-coverage.mjs
+scripts/grade-eval-artifact.mjs
 sources/agent-research/eval/**
 ```
 
@@ -139,6 +141,9 @@ AGENTS.md / CLAUDE.md / LANES.md / README.md
    the `/heim` landing page), so `HEAD` can advance mid-session. Re-run
    `git log --oneline -3` before staging, and stage only your lane's files
    (never `git add -A`) so you don't sweep up another session's pending work.
+4. **YELLOW: Runtime sync needed.** `1f73dfd test: inventory input prompt
+   version gap` was test-only on `main`, but touched Runtime-owned `lib/report/**`;
+   Runtime must sync/acknowledge before follow-up work continues.
 
 ---
 
