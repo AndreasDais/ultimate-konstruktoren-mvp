@@ -78,6 +78,17 @@ function getStandard(evalCase) {
   return evalCase.standard_context || evalCase.standardContext || evalCase.standard || "missing";
 }
 
+function getStandardFamily(evalCase) {
+  const standard = String(getStandard(evalCase)).toLowerCase();
+  if (standard === "missing" || standard === "unknown") return "unknown";
+  if (standard === "any") return "any";
+  if (standard.includes("eurocode")) return "eurocode";
+  if (standard.includes("aisc") || standard.includes("asce") || standard.includes("aci")) {
+    return "aisc_asce_aci";
+  }
+  return "other";
+}
+
 function getDomain(evalCase) {
   return evalCase.domain || "missing";
 }
@@ -177,6 +188,7 @@ function validateCases(cases, taxonomy) {
 function buildReport({ cases, taxonomy, errors, warnings }) {
   const byDomain = new Map();
   const byStandard = new Map();
+  const byStandardFamily = new Map();
   const byLanguage = new Map();
   const byGeneratedProseLocale = new Map();
   const byManualReview = new Map();
@@ -194,6 +206,7 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
   for (const evalCase of cases) {
     countInto(byDomain, getDomain(evalCase));
     countInto(byStandard, getStandard(evalCase));
+    countInto(byStandardFamily, getStandardFamily(evalCase));
     countInto(byLanguage, getLanguage(evalCase));
     countInto(byGeneratedProseLocale, getGeneratedProseLocale(evalCase));
     countInto(byManualReview, String(Boolean(evalCase.manual_review_required)));
@@ -235,6 +248,7 @@ function buildReport({ cases, taxonomy, errors, warnings }) {
     `## Coverage by target agent\n\nA case is counted once per target agent, so cross-agent cases (e.g. ["konstruktor_a","kontrollor"]) add to both. Agents seeded from taxonomy show as zero when no case targets them — that is a real coverage gap, not a missing field.\n\n${markdownTable(byTargetAgent, "Target agent")}\n` +
     `## Coverage by domain\n\n${markdownTable(byDomain, "Domain")}\n` +
     `## Coverage by standard context\n\n${markdownTable(byStandard, "Standard context")}\n` +
+    `## Coverage by standard family\n\nThis clusters raw standard_context metadata into broad planning buckets such as Eurocode, AISC/ASCE/ACI, unknown, any, and other. It is coverage metadata only, not proof of standard compliance.\n\n${markdownTable(byStandardFamily, "Standard family")}\n` +
     `## Coverage by display language\n\nThis is the UI/report shell language requested by the eval case. It should not be treated as proof that generated engineering prose was rewritten after report generation.\n\n${markdownTable(byLanguage, "Display language")}\n` +
     `## Generated prose locale expectation\n\nThis summarizes explicit generated/report prose locale expectations separately from display shell language. Cases without a separate field are counted as \`same_as_display_shell\`.\n\n${markdownTable(byGeneratedProseLocale, "Generated prose locale")}\n` +
     `## Unit and symbol expectations\n\nThese tables summarize explicit unit checks and symbolic numeric-expression anchors. They are coverage metadata only; numeric expression grading is still handled separately from text artifact checks.\n\n` +
