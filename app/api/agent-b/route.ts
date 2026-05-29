@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { jsonrepair } from "jsonrepair";
+import { parseAgentJson } from "@/lib/json/parse-agent-json";
 import { getSupabase } from "@/lib/supabase";
 import { formatAnthropicError } from "@/lib/anthropic-errors";
 import {
@@ -343,52 +343,31 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     .map((block) => (block as { type: "text"; text: string }).text)
     .join("");
 
-  const cleaned = responseText.replace(/^```json\s*|\s*```$/g, "").trim();
-
-  let parsed;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (initialErr) {
-    // Forsøk reparasjon med jsonrepair før vi gir opp.
-    // Vanleg årsak: LaTeX-backslash (\sigma, \cdot) som ikkje er korrekt
-    // dobbel-escapa i JSON-strings. jsonrepair fiksar denne typen automatisk.
-    try {
-      const repaired = jsonrepair(cleaned);
-      parsed = JSON.parse(repaired);
-      console.warn("[agent-b] JSON reparert via jsonrepair fallback", {
-        stop_reason: message.stop_reason,
-        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
-      });
-    } catch (parseErr) {
-      console.error("[agent-b] JSON.parse feila (også etter jsonrepair):", {
-        stop_reason: message.stop_reason,
-        raw_length: responseText.length,
-        first_500_chars: responseText.slice(0, 500),
-        last_500_chars: responseText.slice(-500),
-        error_context: (() => {
-          const errMsg = initialErr instanceof Error ? initialErr.message : "";
-          const m = errMsg.match(/position (\d+)/);
-          if (!m) return null;
-          const p = parseInt(m[1], 10);
-          return {
-            position: p,
-            context_200_chars: responseText.slice(Math.max(0, p - 100), p + 100),
-          };
-        })(),
-        initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
-        parseErr: parseErr instanceof Error ? parseErr.message : String(parseErr),
-      });
-      const wasTruncated = message.stop_reason === "max_tokens";
-      return {
-        ok: false,
-        status: 500,
-        error: wasTruncated
-          ? "Engineer B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
-          : "Klarte ikkje parse Engineer B sitt svar som JSON",
-        raw: responseText,
-        stopReason: message.stop_reason ?? undefined,
-      };
-    }
+  // Robust JSON-uthenting: hentar det første balanserte {...}-objektet sjølv
+  // om modellen skreiv synleg prosa FØR objektet — Konstruktør B sin
+  // "**Pre-JSON reasoning ...**" (run 516ebe3e, 2026-05-29). Den gamle naive
+  // ```json-strippinga + jsonrepair laga ein garbage-array (keys [0..20]) som
+  // sletta heile B-svaret (results + short_conclusion). parseAgentJson
+  // returnerer null på trunkert/ugyldig svar → ærleg feil i staden for garbage.
+  // Sjå lib/json/parse-agent-json.ts.
+  const parsed = parseAgentJson(responseText);
+  if (!parsed) {
+    const wasTruncated = message.stop_reason === "max_tokens";
+    console.error("[agent-b] Fann ikkje gyldig JSON-objekt i svaret", {
+      stop_reason: message.stop_reason,
+      raw_length: responseText.length,
+      first_500_chars: responseText.slice(0, 500),
+      last_500_chars: responseText.slice(-500),
+    });
+    return {
+      ok: false,
+      status: 500,
+      error: wasTruncated
+        ? "Engineer B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
+        : "Klarte ikkje parse Engineer B sitt svar som JSON",
+      raw: responseText,
+      stopReason: message.stop_reason ?? undefined,
+    };
   }
 
   try {
