@@ -216,6 +216,7 @@ function formatTextPlan(plan) {
     `eval_status: ${plan.eval_status}`,
     `bundle_status: ${plan.bundle_status}`,
     `artifact_bundle: ${plan.artifact_bundle.path}`,
+    "bundle_write_plan: temp_path_only; dry_run writes no files",
     `artifact_files: ${plan.artifact_bundle.files.join(", ")}`,
     `manifest_schema: ${plan.manifest_preview.schema_version}`,
     `manifest_case_id: ${plan.manifest_preview.case_id}`,
