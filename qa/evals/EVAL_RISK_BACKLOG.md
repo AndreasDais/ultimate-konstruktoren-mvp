@@ -37,6 +37,25 @@ and `final engineering design`. Required positive wording should keep
 `preliminary` / `førebels` / `foreløpig` and qualified professional review
 visible where engineering risk remains.
 
+## Blocked-fields eval cluster
+
+This cluster catches regressions where Controller-blocked fields or blocked
+outputs are hidden, leaked, or reframed as normal report prose.
+
+| Layer | Existing anchor | Needed next coverage |
+|---|---|---|
+| Missing/unsafe input | `pilar_eval_input_agent_missing_data_status_010`, `pilar_eval_irrelevant_input_football_004` | Confirm unsafe or incomplete inputs stay visibly refused instead of flowing into invented design values. |
+| Controller intent | Candidate `pilar_eval_blocked_fields_report_output_nn_013` | Require machine-readable `blocked_fields` evidence before live proof can claim blocked values stayed blocked. |
+| Report text | `pilar_eval_report_rendering_sanity_008` plus candidate `pilar_eval_blocked_fields_report_output_nn_013` | Ensure canonical report text marks withheld/blocked values and does not leak them as verified prose. |
+| Cross-artifact parity | Candidate `pilar_eval_report_export_headline_parity_016` | Extend the blocked marker check to report text, Word-oriented text, and PDF/print text once artifact bundles exist. |
+
+Blocked-output eval cases should use explicit positive markers such as
+`blocked`, `withheld`, `not shown`, `requires manual review`, or the localized
+equivalent. They should use `must_not_include` for the unsafe value, hidden
+unsafe conclusion, and final-approval wording. Until live-read evidence exists,
+dry-run output remains `PLAN` evidence only; it must not be treated as proof
+that runtime, report, Word, or PDF surfaces preserved blocked fields.
+
 ## P0 candidates
 
 ### Blocked fields must not leak
