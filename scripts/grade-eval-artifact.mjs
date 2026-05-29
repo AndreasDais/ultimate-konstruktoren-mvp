@@ -313,6 +313,7 @@ function gradeArtifact(evalCase, artifactText) {
   return {
     case_id: evalCase.case_id,
     status: failed.length === 0 ? "PASS" : "FAIL",
+    artifact_boundary: "offline_text_artifact_only",
     checked: checks.length,
     failed: failed.length,
     skipped,
@@ -368,6 +369,8 @@ function formatCaseIds(cases) {
 function formatTextResult(result) {
   const lines = [
     `${result.status} ${result.case_id}: ${result.checked - result.failed}/${result.checked} deterministic text checks passed`,
+    `SOURCE ${result.artifact_source}: ${result.artifact_path}`,
+    `BOUNDARY ${result.artifact_boundary}: no UI scraping, no app routes, no DB reads`,
   ];
 
   for (const check of result.checks) {
@@ -386,6 +389,31 @@ function readArtifactText(args) {
   if (args.artifactPath === "-") return fs.readFileSync(0, "utf8");
   if (args.bundlePath) return fs.readFileSync(path.join(args.bundlePath, "report-text.txt"), "utf8");
   return fs.readFileSync(args.artifactPath, "utf8");
+}
+
+function resolveArtifactSource(args) {
+  if (args.text) {
+    return {
+      artifact_source: "inline_text",
+      artifact_path: "inline --text",
+    };
+  }
+  if (args.artifactPath === "-") {
+    return {
+      artifact_source: "stdin_text_artifact",
+      artifact_path: "stdin",
+    };
+  }
+  if (args.bundlePath) {
+    return {
+      artifact_source: "bundle_report_text",
+      artifact_path: path.join(args.bundlePath, "report-text.txt"),
+    };
+  }
+  return {
+    artifact_source: "text_artifact_file",
+    artifact_path: args.artifactPath,
+  };
 }
 
 function readBundleManifest(bundlePath) {
@@ -468,6 +496,7 @@ function main() {
 
   const artifactText = readArtifactText(args);
   const result = gradeArtifact(evalCase, artifactText);
+  Object.assign(result, resolveArtifactSource(args));
 
   console.log(args.json ? JSON.stringify(result, null, 2) : formatTextResult(result));
   if (result.status !== "PASS") process.exit(1);
