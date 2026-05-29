@@ -14,8 +14,8 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 
 ```txt
 Integrator checkout: main, dirty after 68A.5; Eval 68A.6 appears in progress
-Runtime worktree:    codex/lane-runtime, dirty after 68B.4; likely 68B.5 in progress
-Ops worktree:        codex/lane-ops, dirty after 68C.6; likely 68C.7 in progress
+Runtime worktree:    codex/lane-runtime, dirty after 68B.5; likely 68B.6 in progress
+Ops worktree:        codex/lane-ops, dirty after 68C.7; likely 68C.8 in progress
 Eval lane:           still on main unless a dedicated worktree is created
 ```
 
@@ -24,9 +24,9 @@ Eval lane:           still on main unless a dedicated worktree is created
 | Lane | Latest known sprint | Latest known commit | Monitor verdict | Next allowed sprint |
 |---|---:|---|---|---:|
 | Chat A / Eval | 68A.5 committed; 68A.6 appears in progress | `56e269b EVAL: reject repo-internal bundle paths` | YELLOW until dirty eval runner change is committed or explained | finish 68A.6 |
-| Chat B / Runtime | 68B.4 committed; 68B.5 appears in progress | `4c10f50 test: preserve terminal run ids` | YELLOW until dirty test is committed or explained | finish 68B.5 |
-| Chat C / Ops | 68C.6 committed; 68C.7 appears in progress | `0b289d9 OPS: document sandbox EPERM release gate note` | YELLOW until dirty docs file is committed or explained | finish 68C.7 |
-| Monitor | scorecard active | `e0149ca DOCS: add lane monitor scorecard` | GREEN | review pasted lane summaries |
+| Chat B / Runtime | 68B.5 committed; 68B.6 appears in progress | `b5c9adf test: ensure unique terminal step ids` | YELLOW until dirty test is committed or explained | finish 68B.6 |
+| Chat C / Ops | 68C.7 committed; 68C.8 appears in progress | `6bb637b OPS: document generated artifact no-refresh rule` | YELLOW until dirty docs file is committed or explained | finish 68C.8 |
+| Monitor | scorecard active | `9d8c176 DOCS: refresh lane monitor scorecard` | GREEN | review pasted lane summaries |
 
 ## 3. Immediate Next Prompts
 
@@ -44,8 +44,9 @@ files changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat B
 
 ```txt
-Finish 68B.5:
-Step id uniqueness: test no duplicate terminal step ids in a run trace.
+Finish 68B.6:
+Raw provider id boundary: preserve raw message ids only inside safe raw
+metadata.
 
 Stay inside Runtime lane files. Do not change prompts or schema. Report files
 changed, gates run, commit, dirty status, and next proposed sprint.
@@ -54,8 +55,8 @@ changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat C
 
 ```txt
-Finish 68C.7:
-Generated artifact no-refresh rule: add explicit no-refresh note to release docs.
+Finish 68C.8:
+Integration merge order note: one lane branch at a time, gates after each merge.
 
 Stay inside Ops lane files. Keep gates non-writing. Report files changed, gates
 run, commit, dirty status, and next proposed sprint.
@@ -73,12 +74,12 @@ Eval dirty file:
 
 Runtime dirty file:
 - C:/Users/rayma/Code/pilar-lane-runtime/lib/step-messages/record-message.test.ts
-- Likely current sprint: 68B.5
+- Likely current sprint: 68B.6
 - Monitor action: wait for Chat B summary/commit before marking GREEN.
 
 Ops dirty file:
-- C:/Users/rayma/Code/pilar-lane-ops/sources/release-manager/reports/README.md
-- Likely current sprint: 68C.7
+- C:/Users/rayma/Code/pilar-lane-ops/sources/release-manager/OPS_INTEGRATION_MERGE_CHECKLIST.md
+- Likely current sprint: 68C.8
 - Monitor action: wait for Chat C summary/commit before marking GREEN.
 ```
 
@@ -156,8 +157,8 @@ Consider a future Chat D / Synthetic User only after:
 
 ```txt
 Chat A passes 68A.6
-Chat B finishes and commits 68B.5
-Chat C finishes and commits 68C.7
+Chat B finishes and commits 68B.6
+Chat C finishes and commits 68C.8
 all worktrees are clean
 the monitor receives complete sprint summaries
 ```
