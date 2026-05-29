@@ -27,6 +27,7 @@ function parseArgs(argv) {
   const args = {
     casesPath: DEFAULT_CASES,
     caseId: "",
+    runId: "",
     scratchDir: DEFAULT_SCRATCH_DIR,
     dryRun: true,
     requireTrace: false,
@@ -79,6 +80,17 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (token === "--run-id") {
+      args.runId = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--run-id=")) {
+      args.runId = token.slice("--run-id=".length);
+      continue;
+    }
+
     if (token === "--scratch-dir") {
       args.scratchDir = requireValue(argv, index, token);
       index += 1;
@@ -102,16 +114,28 @@ function requireValue(argv, index, token) {
   return value;
 }
 
+function validateRunIdInput(runId) {
+  if (!runId) return;
+  if (runId.length > 128) {
+    throw new Error("--run-id must be 128 characters or fewer");
+  }
+  if (!/^[A-Za-z0-9._:-]+$/.test(runId)) {
+    throw new Error("--run-id may only contain letters, numbers, dots, underscores, colons, and hyphens");
+  }
+}
+
 function printHelp() {
   console.log(`PILAR live eval single-case runner
 
 Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --dry-run
   node scripts/run-eval-case-live.mjs --case-id <id> --scratch-dir /tmp/pilar-live-eval
+  node scripts/run-eval-case-live.mjs --case-id <id> --run-id <id> --json
   node scripts/run-eval-case-live.mjs --case-id <id> --json
 
 Options:
   --cases <path>        Eval case JSONL path. Defaults to qa/evals/pilar-core-evals.jsonl.
+  --run-id <id>         Future live-read run id input. Validated, but not read yet.
   --scratch-dir <path>  Planned artifact bundle root. Defaults to /tmp/pilar-live-eval.
   --require-trace       Plan trace evidence as required for future live execution.
   --json                Emit the dry-run plan as stable JSON.
@@ -177,6 +201,7 @@ function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
   assertOutsideRepo(bundlePath);
   const manualReviewRequired = Boolean(evalCase.manual_review_required);
+  const requestedRunId = args.runId || null;
   const plannedManifest = {
     schema_version: BUNDLE_SCHEMA_VERSION,
     case_id: evalCase.case_id,
@@ -197,6 +222,7 @@ function buildDryRunPlan(evalCase, args) {
     standard_context: evalCase.standard_context ?? "unknown",
     display_language: evalCase.display_language ?? "unknown",
     target_agents: Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [],
+    requested_run_id: requestedRunId,
     run_id: null,
     run_status: "SKIP",
     eval_status: "SKIP",
@@ -221,6 +247,14 @@ function buildDryRunPlan(evalCase, args) {
       failed: 0,
       warnings: ["dry-run only; trace assertions were not executed"],
     },
+    run_id_contract: {
+      accepted: Boolean(requestedRunId),
+      live_read_enabled: false,
+      supabase_reads: false,
+      refusal_reason: requestedRunId
+        ? "run id input accepted for future live-read; runtime evidence reads are not implemented"
+        : null,
+    },
     planned_action: {
       live_pipeline_execution: false,
       supabase_reads: false,
@@ -241,6 +275,7 @@ function formatTextPlan(plan) {
     `display_language: ${plan.display_language}`,
     `target_agents: ${plan.target_agents.join(", ")}`,
     `dry_run: ${plan.dry_run}`,
+    `requested_run_id: ${plan.requested_run_id}`,
     `run_id: ${plan.run_id}`,
     `run_status: ${plan.run_status}`,
     `eval_status: ${plan.eval_status}`,
@@ -256,6 +291,7 @@ function formatTextPlan(plan) {
     `manual_review_required: ${plan.manual_review_required}`,
     `rule_summary: checked=${plan.rule_summary.checked}, failed=${plan.rule_summary.failed}, skipped=${plan.rule_summary.skipped.length}`,
     `trace_summary: checked=${plan.trace_summary.checked}, failed=${plan.trace_summary.failed}, warnings=${plan.trace_summary.warnings.length}`,
+    `run_id_contract: accepted=${plan.run_id_contract.accepted}, live_read_enabled=${plan.run_id_contract.live_read_enabled}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
     `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
     "live_pipeline_execution: false",
@@ -281,6 +317,13 @@ function main() {
 
   if (!args.caseId) {
     console.error("FAILED live eval runner: --case-id is required");
+    process.exit(2);
+  }
+
+  try {
+    validateRunIdInput(args.runId);
+  } catch (error) {
+    console.error(`FAILED live eval runner: ${error.message}`);
     process.exit(2);
   }
 
