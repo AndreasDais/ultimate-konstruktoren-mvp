@@ -277,6 +277,31 @@ function checkForbidden(terms, artifact) {
   });
 }
 
+function severityForCheck(label) {
+  if (label === "must_not_include") return "critical";
+  if (label === "must_include") return "major";
+  if (label === "unit_expectations") return "major";
+  if (label === "required_warnings_if_missing") return "warning";
+  return "warning";
+}
+
+function addSeverity(check) {
+  return {
+    ...check,
+    severity: check.passed ? "none" : severityForCheck(check.label),
+  };
+}
+
+function summarizeSeverity(failedChecks) {
+  return failedChecks.reduce(
+    (summary, check) => {
+      summary[check.severity] = (summary[check.severity] ?? 0) + 1;
+      return summary;
+    },
+    { critical: 0, major: 0, warning: 0 },
+  );
+}
+
 function gradeArtifact(evalCase, artifactText) {
   const expected = evalCase.expected ?? {};
   const checks = [
@@ -291,7 +316,7 @@ function gradeArtifact(evalCase, artifactText) {
       ],
       artifactText,
     ),
-  ];
+  ].map(addSeverity);
 
   const skipped = [];
   if (Array.isArray(expected.numeric_expectations) && expected.numeric_expectations.length > 0) {
@@ -316,6 +341,7 @@ function gradeArtifact(evalCase, artifactText) {
     artifact_boundary: "offline_text_artifact_only",
     checked: checks.length,
     failed: failed.length,
+    severity_summary: summarizeSeverity(failed),
     skipped,
     checks,
   };
@@ -374,7 +400,8 @@ function formatTextResult(result) {
   ];
 
   for (const check of result.checks) {
-    lines.push(`${check.passed ? "OK" : "FAIL"} ${check.label}: ${check.term}`);
+    const severity = check.passed ? "" : ` [${check.severity}]`;
+    lines.push(`${check.passed ? "OK" : "FAIL"}${severity} ${check.label}: ${check.term}`);
   }
 
   for (const item of result.skipped) {
