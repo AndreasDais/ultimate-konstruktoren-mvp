@@ -15,6 +15,13 @@ const LIVE_EVAL_INPUT_PROMPT_VERSION_GAP = {
   reason: "live eval read mode needs the input-agent prompt version alongside downstream agent prompt versions",
 } as const;
 
+const REPORT_MODEL_BLOCKED_FIELD_AUDIT_FINDING = {
+  reportField: "calculation.resultRows",
+  sourceField: "agentA.structured_output.results",
+  blockedOutput: "results_a",
+  risk: "blocked controller evidence can still be rendered as ordinary report results",
+} as const;
+
 const sample: UpstreamReportData = {
   report: {
     id: "54461fb9-68f2-40f1-8749-57e84dd115cf",
@@ -116,6 +123,44 @@ describe("buildReportModel", () => {
     expect(agentOutputQuery).toContain("prompt_version");
     expect(tolkingMapping).toContain("inputReview.input_status");
     expect(tolkingMapping).not.toContain("prompt_version");
+  });
+
+  it("identifies results_a as a ReportModel field that can bypass blocked_outputs", () => {
+    const blockedResultsData: UpstreamReportData = {
+      ...sample,
+      agentA: {
+        ...sample.agentA,
+        structured_output: {
+          ...sample.agentA.structured_output,
+          results: { M_Ed: "99 kNm" },
+        },
+      },
+      controllerDecision: {
+        ...sample.controllerDecision!,
+        decision_status: "uncertain",
+        user_message: "Resultata fra Konstruktør A er blokkerte.",
+        blocked_outputs: ["results_a"],
+      },
+    };
+
+    const model = buildReportModel(blockedResultsData, {
+      locale: "nb",
+      reportUrl: "https://pilar.example/rapport/54461fb9-68f2-40f1-8749-57e84dd115cf",
+    });
+
+    expect(REPORT_MODEL_BLOCKED_FIELD_AUDIT_FINDING).toEqual({
+      reportField: "calculation.resultRows",
+      sourceField: "agentA.structured_output.results",
+      blockedOutput: "results_a",
+      risk: "blocked controller evidence can still be rendered as ordinary report results",
+    });
+    expect(model.control.decisionCode).toBe("uncertain");
+    expect(blockedResultsData.controllerDecision?.blocked_outputs).toContain("results_a");
+    expect(model.calculation.resultRows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "MEd", value: "99", unit: "kNm" }),
+      ]),
+    );
   });
 });
 
