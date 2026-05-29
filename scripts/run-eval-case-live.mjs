@@ -222,6 +222,8 @@ function formatTextPlan(plan) {
     `manifest_cases_path: ${plan.manifest_preview.source.cases_path}`,
     `manifest_runner: ${plan.manifest_preview.source.runner}`,
     `manual_review_required: ${plan.manual_review_required}`,
+    `rule_summary: checked=${plan.rule_summary.checked}, failed=${plan.rule_summary.failed}, skipped=${plan.rule_summary.skipped.length}`,
+    `trace_summary: checked=${plan.trace_summary.checked}, failed=${plan.trace_summary.failed}, warnings=${plan.trace_summary.warnings.length}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
     `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
     "live_pipeline_execution: false",
