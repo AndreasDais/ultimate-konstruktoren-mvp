@@ -158,6 +158,14 @@ function buildPlannedCommands(bundlePath) {
   };
 }
 
+function buildPlannedFileInventory() {
+  return BUNDLE_FILES.map((file) => ({
+    file,
+    planned: true,
+    written: false,
+  }));
+}
+
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
   assertOutsideRepo(bundlePath);
@@ -192,6 +200,7 @@ function buildDryRunPlan(evalCase, args) {
       path: bundlePath,
       files: BUNDLE_FILES,
     },
+    planned_file_inventory: buildPlannedFileInventory(),
     manifest_preview: plannedManifest,
     planned_manifest: plannedManifest,
     rule_summary: {
