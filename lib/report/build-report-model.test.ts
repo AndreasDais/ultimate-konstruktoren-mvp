@@ -19,7 +19,7 @@ const REPORT_MODEL_BLOCKED_FIELD_AUDIT_FINDING = {
   reportField: "calculation.resultRows",
   sourceField: "agentA.structured_output.results",
   blockedOutput: "results_a",
-  risk: "blocked controller evidence can still be rendered as ordinary report results",
+  invariant: "blocked controller evidence must not render as ordinary report results",
 } as const;
 
 const sample: UpstreamReportData = {
@@ -125,7 +125,7 @@ describe("buildReportModel", () => {
     expect(tolkingMapping).not.toContain("prompt_version");
   });
 
-  it("identifies results_a as a ReportModel field that can bypass blocked_outputs", () => {
+  it("omits results_a from ReportModel result rows when controller blocks it", () => {
     const blockedResultsData: UpstreamReportData = {
       ...sample,
       agentA: {
@@ -152,11 +152,17 @@ describe("buildReportModel", () => {
       reportField: "calculation.resultRows",
       sourceField: "agentA.structured_output.results",
       blockedOutput: "results_a",
-      risk: "blocked controller evidence can still be rendered as ordinary report results",
+      invariant: "blocked controller evidence must not render as ordinary report results",
     });
     expect(model.control.decisionCode).toBe("uncertain");
+    expect(model.control.controllerText).toContain("blokkerte");
     expect(blockedResultsData.controllerDecision?.blocked_outputs).toContain("results_a");
-    expect(model.calculation.resultRows).toEqual(
+    expect(model.calculation.resultRows).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "MEd", value: "99", unit: "kNm" }),
+      ]),
+    );
+    expect(model.keyResults).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "MEd", value: "99", unit: "kNm" }),
       ]),

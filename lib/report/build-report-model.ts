@@ -366,6 +366,10 @@ function decisionStatusCode(data: UpstreamReportData): string {
   return data.controllerDecision?.decision_status ?? "unknown";
 }
 
+function isBlockedOutput(data: UpstreamReportData, output: string): boolean {
+  return (data.controllerDecision?.blocked_outputs ?? []).includes(output);
+}
+
 function displayDate(createdAt: string, locale: Locale, displayLanguage: PilarDisplayLanguage = locale): string {
   const dateTag = displayLanguage === "en" ? "en-US" : locale === "nb" ? "nb-NO" : "nn-NO";
   const parsed = new Date(createdAt);
@@ -512,7 +516,8 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     text: [data.run.request.raw_text, data.report.executive_summary, data.report.technical_assessment, data.report.conclusion].join("\n"),
   });
   const primary = data.agentA;
-  const resultRows = resultRowsFrom(primary.structured_output.results, displayLanguage);
+  const primaryResults = isBlockedOutput(data, "results_a") ? {} : primary.structured_output.results;
+  const resultRows = resultRowsFrom(primaryResults, displayLanguage);
   const keyResults = keyResultsFrom(resultRows);
   const tillit = data.report.tillit_score === null || data.report.tillit_score === undefined
     ? { label: LABELS.ukjent[displayLanguage], labelKey: "unknown" }
