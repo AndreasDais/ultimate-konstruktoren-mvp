@@ -151,6 +151,17 @@ function buildPlannedCommands(bundlePath) {
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
   const manualReviewRequired = Boolean(evalCase.manual_review_required);
+  const plannedManifest = {
+    schema_version: BUNDLE_SCHEMA_VERSION,
+    case_id: evalCase.case_id,
+    run_id: null,
+    created_at: null,
+    manual_review_required: manualReviewRequired,
+    source: {
+      cases_path: args.casesPath,
+      runner: RUNNER_PATH,
+    },
+  };
 
   return {
     case_id: evalCase.case_id,
@@ -170,17 +181,8 @@ function buildDryRunPlan(evalCase, args) {
       path: bundlePath,
       files: BUNDLE_FILES,
     },
-    manifest_preview: {
-      schema_version: BUNDLE_SCHEMA_VERSION,
-      case_id: evalCase.case_id,
-      run_id: null,
-      created_at: null,
-      manual_review_required: manualReviewRequired,
-      source: {
-        cases_path: args.casesPath,
-        runner: RUNNER_PATH,
-      },
-    },
+    manifest_preview: plannedManifest,
+    planned_manifest: plannedManifest,
     rule_summary: {
       checked: 0,
       failed: 0,
