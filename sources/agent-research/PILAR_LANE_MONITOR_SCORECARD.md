@@ -13,9 +13,9 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main, dirty after 68A.5; Eval 68A.6 appears in progress
-Runtime worktree:    codex/lane-runtime, dirty after 68B.5; likely 68B.6 in progress
-Ops worktree:        codex/lane-ops, dirty after 68C.7; likely 68C.8 in progress
+Integrator checkout: main, dirty after 68A.6; Eval 68A.7 appears in progress
+Runtime worktree:    codex/lane-runtime, dirty after 68B.6; likely 68B.7 in progress
+Ops worktree:        codex/lane-ops, dirty after 68C.8; likely 68C.9 in progress
 Eval lane:           still on main unless a dedicated worktree is created
 ```
 
@@ -23,19 +23,18 @@ Eval lane:           still on main unless a dedicated worktree is created
 
 | Lane | Latest known sprint | Latest known commit | Monitor verdict | Next allowed sprint |
 |---|---:|---|---|---:|
-| Chat A / Eval | 68A.5 committed; 68A.6 appears in progress | `56e269b EVAL: reject repo-internal bundle paths` | YELLOW until dirty eval runner change is committed or explained | finish 68A.6 |
-| Chat B / Runtime | 68B.5 committed; 68B.6 appears in progress | `b5c9adf test: ensure unique terminal step ids` | YELLOW until dirty test is committed or explained | finish 68B.6 |
-| Chat C / Ops | 68C.7 committed; 68C.8 appears in progress | `6bb637b OPS: document generated artifact no-refresh rule` | YELLOW until dirty docs file is committed or explained | finish 68C.8 |
-| Monitor | scorecard active | `9d8c176 DOCS: refresh lane monitor scorecard` | GREEN | review pasted lane summaries |
+| Chat A / Eval | 68A.6 committed; 68A.7 appears in progress | `139d2e0 EVAL: expose planned file inventory` | YELLOW until dirty eval runner/docs change is committed or explained | finish 68A.7 |
+| Chat B / Runtime | 68B.6 committed; 68B.7 appears in progress | `afcd666 test: keep provider ids in raw metadata` | YELLOW until dirty test is committed or explained | finish 68B.7 |
+| Chat C / Ops | 68C.8 committed; 68C.9 appears in progress | `0569262 OPS: document integration merge order` | YELLOW until dirty docs file is committed or explained | finish 68C.9 |
+| Monitor | scorecard active | `7107110 DOCS: update lane monitor scorecard` | GREEN | review pasted lane summaries |
 
 ## 3. Immediate Next Prompts
 
 ### Chat A
 
 ```txt
-Finish 68A.6:
-Bundle file inventory contract: name every planned evidence file without
-creating it.
+Finish 68A.7:
+Bundle status taxonomy: separate SKIP, PLAN, READY, MISSING, FAIL.
 
 Stay inside Eval lane files. Keep dry-run and live evidence separate. Report
 files changed, gates run, commit, dirty status, and next proposed sprint.
@@ -44,9 +43,9 @@ files changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat B
 
 ```txt
-Finish 68B.6:
-Raw provider id boundary: preserve raw message ids only inside safe raw
-metadata.
+Finish 68B.7:
+Prompt version visibility: expose or test prompt version metadata only if
+already recorded.
 
 Stay inside Runtime lane files. Do not change prompts or schema. Report files
 changed, gates run, commit, dirty status, and next proposed sprint.
@@ -55,8 +54,9 @@ changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat C
 
 ```txt
-Finish 68C.8:
-Integration merge order note: one lane branch at a time, gates after each merge.
+Finish 68C.9:
+Integration conflict stop note: stop on conflict; do not ask lanes to code
+around unresolved merge.
 
 Stay inside Ops lane files. Keep gates non-writing. Report files changed, gates
 run, commit, dirty status, and next proposed sprint.
@@ -69,17 +69,18 @@ These are not monitor-owned changes. Do not stage or edit them from this lane.
 ```txt
 Eval dirty file:
 - C:/Users/rayma/Code/ultimate-konstruktoren-mvp/scripts/run-eval-case-live.mjs
-- Likely current sprint: 68A.6
+- C:/Users/rayma/Code/ultimate-konstruktoren-mvp/qa/evals/LIVE_EVAL_ARTIFACT_BUNDLE_CONTRACT.md
+- Likely current sprint: 68A.7
 - Monitor action: wait for Chat A summary/commit before marking GREEN.
 
 Runtime dirty file:
 - C:/Users/rayma/Code/pilar-lane-runtime/lib/step-messages/record-message.test.ts
-- Likely current sprint: 68B.6
+- Likely current sprint: 68B.7
 - Monitor action: wait for Chat B summary/commit before marking GREEN.
 
 Ops dirty file:
 - C:/Users/rayma/Code/pilar-lane-ops/sources/release-manager/OPS_INTEGRATION_MERGE_CHECKLIST.md
-- Likely current sprint: 68C.8
+- Likely current sprint: 68C.9
 - Monitor action: wait for Chat C summary/commit before marking GREEN.
 ```
 
@@ -156,9 +157,9 @@ Monitor - this control loop
 Consider a future Chat D / Synthetic User only after:
 
 ```txt
-Chat A passes 68A.6
-Chat B finishes and commits 68B.6
-Chat C finishes and commits 68C.8
+Chat A finishes and commits 68A.7
+Chat B finishes and commits 68B.7
+Chat C finishes and commits 68C.9
 all worktrees are clean
 the monitor receives complete sprint summaries
 ```

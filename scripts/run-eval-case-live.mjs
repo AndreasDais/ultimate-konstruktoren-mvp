@@ -7,6 +7,13 @@ const DEFAULT_SCRATCH_DIR = "/tmp/pilar-live-eval";
 const DRY_RUN_ID = "dry-run";
 const BUNDLE_SCHEMA_VERSION = "live-eval-artifact-bundle.v0";
 const RUNNER_PATH = "scripts/run-eval-case-live.mjs";
+const BUNDLE_STATUS_TAXONOMY = Object.freeze({
+  SKIP: "no bundle planning or live execution was requested",
+  PLAN: "dry-run bundle plan only; no files written",
+  READY: "bundle evidence is present and sufficient for deterministic grading",
+  MISSING: "required bundle evidence is absent or incomplete",
+  FAIL: "bundle generation or deterministic bundle checks failed",
+});
 const BUNDLE_FILES = [
   "manifest.json",
   "runrecord-summary.json",
@@ -193,7 +200,8 @@ function buildDryRunPlan(evalCase, args) {
     run_id: null,
     run_status: "SKIP",
     eval_status: "SKIP",
-    bundle_status: "SKIP",
+    bundle_status: "PLAN",
+    bundle_status_taxonomy: BUNDLE_STATUS_TAXONOMY,
     dry_run: true,
     manual_review_required: manualReviewRequired,
     artifact_bundle: {
@@ -237,6 +245,7 @@ function formatTextPlan(plan) {
     `run_status: ${plan.run_status}`,
     `eval_status: ${plan.eval_status}`,
     `bundle_status: ${plan.bundle_status}`,
+    `bundle_status_taxonomy: ${Object.keys(plan.bundle_status_taxonomy).join(", ")}`,
     `artifact_bundle: ${plan.artifact_bundle.path}`,
     "bundle_write_plan: temp_path_only; dry_run writes no files",
     `artifact_files: ${plan.artifact_bundle.files.join(", ")}`,

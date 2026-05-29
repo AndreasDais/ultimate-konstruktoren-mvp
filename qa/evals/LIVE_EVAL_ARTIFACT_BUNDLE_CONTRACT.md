@@ -122,8 +122,8 @@ Plain text extracted from canonical report/result data. It should be suitable
 for `scripts/grade-eval-artifact.mjs --artifact <file>`.
 
 If the report text cannot be extracted, the runner should write a clear marker
-and set bundle status to `WARN` or `FAIL`; it should not produce an empty file
-that looks like valid evidence.
+and set bundle status to `MISSING` or `FAIL`; it should not produce an empty
+file that looks like valid evidence.
 
 ## trace-events-summary.json
 
@@ -181,10 +181,11 @@ The future runner should report the overall bundle status separately from the
 rule-grader status:
 
 ```txt
-PASS  report text, trace summary, and rule checks are all sufficient
-WARN  evidence exists but is incomplete or requires manual review
-FAIL  deterministic rule checks failed or required evidence is missing
-SKIP  dry-run or explicitly skipped live execution
+SKIP     no bundle planning or live execution was requested
+PLAN     dry-run bundle plan only; no files written
+READY    bundle evidence is present and sufficient for deterministic grading
+MISSING  required bundle evidence is absent or incomplete
+FAIL     bundle generation or deterministic bundle checks failed
 ```
 
 ## First implementation boundary
