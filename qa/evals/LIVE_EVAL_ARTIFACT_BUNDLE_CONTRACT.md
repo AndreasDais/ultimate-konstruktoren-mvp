@@ -193,3 +193,22 @@ FAIL     bundle generation or deterministic bundle checks failed
 The first implementation should only create the directory plan, dry-run manifest
 preview, bundle status, and offline grading commands. Actual report extraction
 should wait until Chat B confirms the canonical read path for result/report text.
+
+## 68A.10 dry-run closeout
+
+The current dry-run runner is a planning bridge, not a live evidence writer. It
+now exposes:
+
+```txt
+manifest_preview / planned_manifest
+planned_file_inventory with written=false for every planned file
+bundle_status=PLAN
+bundle_status_taxonomy=SKIP, PLAN, READY, MISSING, FAIL
+repo-internal bundle path refusal
+```
+
+The runner still must not call LLM APIs, read Supabase, execute the PILAR
+pipeline, write bundle files, refresh repo reports, or imply professional
+engineering approval. Future live-proof work must satisfy
+`sources/agent-research/eval/DRY_RUN_LIVE_SEPARATION_AUDIT.md` before release or
+ops consumers treat eval output as runtime evidence.

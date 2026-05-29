@@ -28,6 +28,8 @@ node scripts/validate-eval-cases.mjs
 ```
 
 The validator only checks schema shape, duplicate IDs and basic consistency. It does not run the PILAR app or call an LLM.
+Critical case metadata such as `version`, `title`, `domain`, and
+`standard_context` must be non-empty strings.
 
 ## Grade one saved text artifact
 
@@ -92,10 +94,29 @@ node scripts/run-eval-case-live.mjs --case-id pilar_eval_prompt_leakage_uk_en_01
 
 The runner currently performs case lookup and prints the case metadata
 (`priority`, `domain`, `standard_context`, `display_language`, `target_agents`),
-planned `/tmp` artifact-bundle path, dry-run eval/bundle status, trace
-requirement, explicit `dry_run: true` flag, rule/trace summary counts, and
-offline grading commands for that bundle. It does not call LLMs, read Supabase,
-execute the pipeline, or write files.
+planned `/tmp` artifact-bundle path, dry-run eval status, bundle status
+taxonomy, manifest preview, planned file inventory, trace requirement, explicit
+`dry_run: true` flag, rule/trace summary counts, and offline grading commands
+for that bundle. It does not call LLMs, read Supabase, execute the pipeline, or
+write files.
+
+Dry-run bundle planning has these invariants:
+
+```txt
+run_status=SKIP
+eval_status=SKIP
+bundle_status=PLAN
+planned_file_inventory[].written=false
+live_pipeline_execution=false
+supabase_reads=false
+repo_writes=false
+```
+
+Treat `dry_run=true` or `bundle_status=PLAN` as patch-planning evidence only.
+It is not proof that PILAR generated, graded, persisted, or professionally
+approved a real report. See
+`sources/agent-research/eval/DRY_RUN_LIVE_SEPARATION_AUDIT.md` for the field
+differences required before future live proof can be consumed.
 
 ## Case format
 
