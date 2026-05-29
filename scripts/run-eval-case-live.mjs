@@ -14,6 +14,12 @@ const BUNDLE_STATUS_TAXONOMY = Object.freeze({
   MISSING: "required bundle evidence is absent or incomplete",
   FAIL: "bundle generation or deterministic bundle checks failed",
 });
+const EVIDENCE_SOURCE_LABELS = Object.freeze({
+  fixture: "local fixture evidence; no live runtime read",
+  dry_run: "planning evidence only; no files written and no runtime read",
+  cached_report: "previously captured report evidence; freshness must be checked",
+  live_read: "read-only runtime evidence from an existing PILAR run",
+});
 const BUNDLE_FILES = [
   "manifest.json",
   "runrecord-summary.json",
@@ -222,6 +228,8 @@ function buildDryRunPlan(evalCase, args) {
     standard_context: evalCase.standard_context ?? "unknown",
     display_language: evalCase.display_language ?? "unknown",
     target_agents: Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [],
+    evidence_source: "dry_run",
+    evidence_source_labels: EVIDENCE_SOURCE_LABELS,
     requested_run_id: requestedRunId,
     run_id: null,
     run_status: "SKIP",
@@ -274,6 +282,8 @@ function formatTextPlan(plan) {
     `standard_context: ${plan.standard_context}`,
     `display_language: ${plan.display_language}`,
     `target_agents: ${plan.target_agents.join(", ")}`,
+    `evidence_source: ${plan.evidence_source}`,
+    `evidence_source_labels: ${Object.keys(plan.evidence_source_labels).join(", ")}`,
     `dry_run: ${plan.dry_run}`,
     `requested_run_id: ${plan.requested_run_id}`,
     `run_id: ${plan.run_id}`,
