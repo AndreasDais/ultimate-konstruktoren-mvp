@@ -14,6 +14,10 @@ function asArray(value) {
   return Array.isArray(value) ? value : null;
 }
 
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim() !== "";
+}
+
 if (!fs.existsSync(absolutePath)) {
   fail("file not found");
   process.exit();
@@ -75,6 +79,12 @@ for (const [index, line] of lines.entries()) {
     fail(`line ${lineNumber}: duplicate case_id '${item.case_id}'`);
   } else {
     seen.add(item.case_id);
+  }
+
+  for (const field of ["version", "title", "domain", "standard_context"]) {
+    if (!isNonEmptyString(item[field])) {
+      fail(`line ${lineNumber}: ${field} must be a non-empty string`);
+    }
   }
 
   if (!priorities.has(item.priority)) {
