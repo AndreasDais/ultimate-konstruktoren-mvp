@@ -13,6 +13,7 @@
     "test:golden": "tsx qa/test-agent.ts",
     "qa:golden": "tsx qa/test-agent.ts",
     "qa:smoke": "tsx qa/test-agent.ts --case A1 --runs 1",
+    "qa:e2e": "node qa/e2e/synthetic-user.mjs",
     "eval:readiness": "node scripts/run-eval-suite.mjs",
     "agent:hub": "node scripts/pilar-agent-ecosystem-hub.mjs",
     "agent:status": "node scripts/pilar-agent-ecosystem-hub.mjs status",

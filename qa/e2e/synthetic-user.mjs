@@ -8,8 +8,9 @@
 //
 // Lane: qa/e2e (Synthetic User / E2E). Touches NO app code, agent prompts,
 // Supabase schema, report rendering, PDF/Word code, or i18n. This is the
-// sanctioned "future automation target" from checklist §7 (the manual
-// checklist has already been exercised for both flows).
+// sanctioned "Future automation target" from the checklist (the manual
+// checklist has already been exercised for both flows). Covers Flow A & B;
+// the checklist's Flow C/D are not automated here yet.
 //
 // Usage:
 //   node qa/e2e/synthetic-user.mjs --flow B
@@ -70,7 +71,7 @@ const RE_INTERPRET = /Tolk oppgave|Tolk oppgåva|Tolk på nytt|Interpret task|In
 const RE_START = /Start beregning|Start berekning|Start calculation/i;
 const RE_STREAMING = /STREAMER|STREAMING|Tolker\.\.\.|Interpreting\.\.\./i;
 
-// ---- flow definitions (from checklist §4 / §5) ---------------------------
+// ---- flow definitions (from checklist Flow A / Flow B sections) ----------
 // mustShow:    array of OR-groups; a group passes if ANY alternative is present
 //              (case-insensitive substring — lenient, since we *want* to find these).
 // mustNotShow: forbidden tokens matched on Unicode *letter* boundaries, so that
@@ -161,6 +162,7 @@ async function runFlow(flow) {
     runId: null, url: null, missing: [], forbidden: [], hasPdf: false,
     hasWord: false, textLen: 0, scanLen: 0, screenshot: null, controls: [],
     displayLanguage: null, expectLanguage: flow.expectLanguage,
+    stalled: false, note: null,
   };
   const api = [];
   try {
@@ -369,7 +371,35 @@ async function runFlow(flow) {
         result.screenshot = path.join(REPORTS, `flow-${flow.label}-${idTag}.png`);
         await page.screenshot({ path: result.screenshot, fullPage: true });
       } else {
-        api.push('NOTE: report never became ready within timeout');
+        // Distinguish a server-side pipeline STALL from a slow render: query the
+        // run. run_status still 'running' with no controller decision = transient
+        // pipeline/infra stall (e.g. agent-c/agent-d never finished — the known
+        // Cloudflare/Anthropic degradation), NOT a runner or render bug. Re-run.
+        if (result.runId) {
+          try {
+            const resp = await fetch(`${BASE}/api/runs/${result.runId}`);
+            if (resp.ok) {
+              const j = await resp.json();
+              result.displayLanguage = j?.run?.display_language ?? null;
+              const rs = j?.run?.run_status ?? 'unknown';
+              const decided = !!j?.controllerDecision?.decision_status;
+              const hasReport = !!j?.report;
+              if (rs !== 'completed' || !decided) {
+                // agent-c/agent-d never finished → run stuck mid-pipeline
+                result.stalled = true;
+                result.note = `run did not complete (run_status='${rs}', decision=${decided ? 'yes' : 'none'}) — transient pipeline stall (agent-c/agent-d); re-run`;
+              } else if (!hasReport) {
+                // pipeline finished + approved but the reporter produced nothing
+                result.stalled = true;
+                result.note = `run completed (decision='${j?.controllerDecision?.decision_status}') but NO report was generated — transient reporter (agent-e) failure; re-run`;
+              } else {
+                // a report exists server-side but the page never rendered it
+                result.note = `report exists server-side but the page did not render within timeout — slow render / UI issue; re-run or raise --timeout`;
+              }
+            }
+          } catch { /* endpoint unavailable */ }
+        }
+        api.push(`NOTE: report never became ready within timeout${result.note ? ' — ' + result.note : ''}`);
       }
     }
 
@@ -402,6 +432,7 @@ for (const flow of flowsToRun) {
     console.log(`  forbidden=${JSON.stringify(r.forbidden)}`);
     console.log(`  hasPdf=${r.hasPdf} hasWord=${r.hasWord} textLen=${r.textLen}`);
     console.log(`  screenshot=${r.screenshot || '-'}`);
+    if (r.note) console.log(`  note=${r.note}`);
   } catch (e) {
     console.error(`Flow ${flow.label} crashed: ${e && e.message ? e.message : e}`);
     results.push({ label: flow.label, verdict: 'FAIL', error: String(e && e.message ? e.message : e) });
