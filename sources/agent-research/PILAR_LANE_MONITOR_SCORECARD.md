@@ -13,9 +13,9 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main, clean after monitor/.gstack commits
-Runtime worktree:    codex/lane-runtime, clean
-Ops worktree:        codex/lane-ops, clean
+Integrator checkout: main, dirty after 68A.5; Eval 68A.6 appears in progress
+Runtime worktree:    codex/lane-runtime, dirty after 68B.4; likely 68B.5 in progress
+Ops worktree:        codex/lane-ops, dirty after 68C.6; likely 68C.7 in progress
 Eval lane:           still on main unless a dedicated worktree is created
 ```
 
@@ -23,18 +23,19 @@ Eval lane:           still on main unless a dedicated worktree is created
 
 | Lane | Latest known sprint | Latest known commit | Monitor verdict | Next allowed sprint |
 |---|---:|---|---|---:|
-| Chat A / Eval | 68A.4 | `ce72096 EVAL: expose planned manifest in json` | GREEN if gates passed in lane summary | 68A.5 |
-| Chat B / Runtime | 68B.3 | `6553fbe test: preserve eval case id read path` | GREEN if gates passed in lane summary | 68B.4 |
-| Chat C / Ops | 68C.5 | `96bbeaa OPS: clarify release risky status wording` | GREEN if gates passed in lane summary | 68C.6 |
-| Monitor | monitor setup | `5ac687e DOCS: ignore local gstack artifacts` | GREEN | review pasted lane summaries |
+| Chat A / Eval | 68A.5 committed; 68A.6 appears in progress | `56e269b EVAL: reject repo-internal bundle paths` | YELLOW until dirty eval runner change is committed or explained | finish 68A.6 |
+| Chat B / Runtime | 68B.4 committed; 68B.5 appears in progress | `4c10f50 test: preserve terminal run ids` | YELLOW until dirty test is committed or explained | finish 68B.5 |
+| Chat C / Ops | 68C.6 committed; 68C.7 appears in progress | `0b289d9 OPS: document sandbox EPERM release gate note` | YELLOW until dirty docs file is committed or explained | finish 68C.7 |
+| Monitor | scorecard active | `e0149ca DOCS: add lane monitor scorecard` | GREEN | review pasted lane summaries |
 
 ## 3. Immediate Next Prompts
 
 ### Chat A
 
 ```txt
-Continue with 68A.5:
-Bundle path safety check: ensure planned bundle path is outside repo writes.
+Finish 68A.6:
+Bundle file inventory contract: name every planned evidence file without
+creating it.
 
 Stay inside Eval lane files. Keep dry-run and live evidence separate. Report
 files changed, gates run, commit, dirty status, and next proposed sprint.
@@ -43,8 +44,8 @@ files changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat B
 
 ```txt
-Continue with 68B.4:
-Trace run id continuity: cover run_id consistency across all terminal agent steps.
+Finish 68B.5:
+Step id uniqueness: test no duplicate terminal step ids in a run trace.
 
 Stay inside Runtime lane files. Do not change prompts or schema. Report files
 changed, gates run, commit, dirty status, and next proposed sprint.
@@ -53,15 +54,35 @@ changed, gates run, commit, dirty status, and next proposed sprint.
 ### Chat C
 
 ```txt
-Continue with 68C.6:
-Sandbox EPERM note: document local spawnSync EPERM as environment friction when
-rerun passes.
+Finish 68C.7:
+Generated artifact no-refresh rule: add explicit no-refresh note to release docs.
 
 Stay inside Ops lane files. Keep gates non-writing. Report files changed, gates
 run, commit, dirty status, and next proposed sprint.
 ```
 
-## 4. Monitor Intake Template
+## 4. Dirty Lane Watch
+
+These are not monitor-owned changes. Do not stage or edit them from this lane.
+
+```txt
+Eval dirty file:
+- C:/Users/rayma/Code/ultimate-konstruktoren-mvp/scripts/run-eval-case-live.mjs
+- Likely current sprint: 68A.6
+- Monitor action: wait for Chat A summary/commit before marking GREEN.
+
+Runtime dirty file:
+- C:/Users/rayma/Code/pilar-lane-runtime/lib/step-messages/record-message.test.ts
+- Likely current sprint: 68B.5
+- Monitor action: wait for Chat B summary/commit before marking GREEN.
+
+Ops dirty file:
+- C:/Users/rayma/Code/pilar-lane-ops/sources/release-manager/reports/README.md
+- Likely current sprint: 68C.7
+- Monitor action: wait for Chat C summary/commit before marking GREEN.
+```
+
+## 5. Monitor Intake Template
 
 Ask each lane to paste this after every sprint:
 
@@ -79,7 +100,7 @@ Next proposed sprint:
 Dirty status:
 ```
 
-## 5. Monitor Decision Rules
+## 6. Monitor Decision Rules
 
 ```txt
 GREEN  - exact next sprint, lane-owned files, gates reported, no safety drift.
@@ -88,7 +109,7 @@ RED    - boundary/safety violation, cross-lane edit, hidden evidence, or dirty s
 DONE   - sprint 50 completed with closeout; lane must stop.
 ```
 
-## 6. World-Class Progress Meter
+## 7. World-Class Progress Meter
 
 This is a qualitative monitor read, not a release gate:
 
@@ -109,7 +130,7 @@ Controlled agent ecosystem foundation.
 Not yet autonomous or fully live-evidence-driven.
 ```
 
-## 7. Red Flags To Watch Next
+## 8. Red Flags To Watch Next
 
 ```txt
 1. Eval work continuing on main too long without a dedicated worktree.
@@ -120,7 +141,7 @@ Not yet autonomous or fully live-evidence-driven.
 6. Any generated artifact refresh that was not explicitly scoped.
 ```
 
-## 8. Next Integrator Recommendation
+## 9. Next Integrator Recommendation
 
 Do not add more worker chats yet. Keep:
 
@@ -134,9 +155,9 @@ Monitor - this control loop
 Consider a future Chat D / Synthetic User only after:
 
 ```txt
-Chat A passes 68A.5
-Chat B passes 68B.4
-Chat C passes 68C.6
+Chat A passes 68A.6
+Chat B finishes and commits 68B.5
+Chat C finishes and commits 68C.7
 all worktrees are clean
 the monitor receives complete sprint summaries
 ```
