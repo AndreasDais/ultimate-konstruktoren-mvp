@@ -5,17 +5,17 @@ import "./heim.css";
 
 export const metadata: Metadata = {
   title: "Pilar — AI-konstruksjonsassistent",
-  description: "AI-basert konstruksjonsassistent. Skriv eit konstruksjonsproblem, faa ein kontrollert berekning.",
+  description: "AI-basert konstruksjonsassistent. Skriv et konstruksjonsproblem, faa en kontrollert beregning.",
 };
 
-type Lang = "nn" | "en";
+type Lang = "nb" | "en";
 
 export default async function HeimPage() {
   const c = await cookies();
   const uiMode = c.get("pilar-ui-mode")?.value;
 
-  // To variantar: nynorsk (norsk-default) eller engelsk (intl).
-  const lang: Lang = uiMode === "intl" ? "en" : "nn";
+  // To variantar: bokmaal (norsk-default) eller engelsk (intl).
+  const lang: Lang = uiMode === "intl" ? "en" : "nb";
   // Modal viser berre naar brukaren ikkje har valt region enno.
   const hasRegionChoice = uiMode === "intl" || uiMode === "no";
 

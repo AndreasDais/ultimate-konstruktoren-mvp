@@ -3,15 +3,15 @@
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 
-type Lang = "nn" | "en";
+type Lang = "nb" | "en";
 
 const TAGLINE: Record<Lang, string> = {
-  nn: "AI-konstruksjonsassistent",
+  nb: "AI-konstruksjonsassistent",
   en: "AI Structural Assistant",
 };
 
 const LOGIN: Record<Lang, string> = {
-  nn: "Logg inn",
+  nb: "Logg inn",
   en: "Log in",
 };
 

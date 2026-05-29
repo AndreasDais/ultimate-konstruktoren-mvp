@@ -5,7 +5,7 @@ import Link from "next/link";
 import MarketingHeader from "@/app/components/MarketingHeader";
 import { RegionModal } from "./RegionModal";
 
-type Lang = "nn" | "en";
+type Lang = "nb" | "en";
 
 /* Små matte-hjelparar (språknøytrale symbol) ------------------ */
 function MathSym({ v, sub }: { v: string; sub?: string }) {
@@ -61,57 +61,57 @@ const COPY: Record<Lang, {
   terms: string;
   termsHref: string;
 }> = {
-  nn: {
+  nb: {
     eyebrow: "AI-konstruksjonsassistent",
-    h1: "Skriv eit konstruksjonsproblem. Få ein kontrollert berekning.",
+    h1: "Skriv et konstruksjonsproblem. Få en kontrollert beregning.",
     leadPre:
-      "To uavhengige AI-konstruktørar reknar same problem med ulik metode. Ein tredje agent stadfestar at dei er einige før resultatet er presentert. Du får eit notat klart for fagleg kontroll — ",
-    leadEm: "ikkje ei svart boks.",
-    startCta: "Start ein berekning →",
-    demoCta: "Sjå demo",
-    fineprint: "Gratis for studentar · ingen kortinformasjon",
-    demoBar: "Berekning · direkte",
+      "To uavhengige AI-konstruktører regner samme problem med ulik metode. En tredje agent bekrefter at de er enige før resultatet presenteres. Du får et notat klart for faglig kontroll — ",
+    leadEm: "ikke en svart boks.",
+    startCta: "Start en beregning →",
+    demoCta: "Se demo",
+    fineprint: "Gratis for studenter · ingen kortinformasjon",
+    demoBar: "Beregning · direkte",
     you: "Du",
-    demoInput: "Fritt opplagd stålbjelke, L = 5,0 m, q = 8,0 kN/m",
+    demoInput: "Fritt opplagt stålbjelke, L = 5,0 m, q = 8,0 kN/m",
     result: "25,0",
-    verdict: "Konstruktør A og B einige",
+    verdict: "Konstruktør A og B enige",
     pipeEyebrow: "Prosessen",
-    pipeH2: "Eitt problem inn. To løysingar, samanlikna, før du ser noko.",
+    pipeH2: "Ett problem inn. To løsninger, sammenlignet, før du ser noe.",
     pipeIntro:
-      "Kvar berekning går gjennom fem agentar. Arbeidet deler seg i to slik at svaret blir kontrollert mot seg sjølv — så avgjer ein kontrollør om det er trygt å vise.",
-    s1Title: "Tolkar les oppgåva",
+      "Hver beregning går gjennom fem agenter. Arbeidet deler seg i to slik at svaret blir kontrollert mot seg selv — så avgjør en kontrollør om det er trygt å vise.",
+    s1Title: "Tolkeren leser oppgaven",
     s1Desc:
-      "Forstår input, identifiserer fagområde og kva verdiar som manglar før eitt einaste tal blir rekna.",
-    s1Tags: ["Les input", "Identifiserer fagområde", "Flaggar manglar"],
-    laneChip: "Ser ikkje kvarandre",
+      "Forstår input, identifiserer fagområde og hvilke verdier som mangler før et eneste tall beregnes.",
+    s1Tags: ["Leser input", "Identifiserer fagområde", "Flagger mangler"],
+    laneChip: "Ser ikke hverandre",
     engAName: "Konstruktør A",
     engBName: "Konstruktør B",
-    methodA: ["Lukka form ·", "førsteprinsipp"],
+    methodA: ["Lukket form ·", "førsteprinsipp"],
     methodB: ["Numerisk ·", "uavhengig metode"],
     engAStep1: "Faktorert lastverdi",
     engAStep2: "Nødvendig moment",
-    engAStep3: "Nødvendig skjer",
+    engAStep3: "Nødvendig skjær",
     engBSteps: [
       "Faktorert last via lastkombinasjonssett",
       "Likevektskontroll for moment",
-      "Diskretisert skjer og nedbøying",
+      "Diskretisert skjær og nedbøyning",
     ],
-    s3Title: "Samanliknaren stadfestar semje",
+    s3Title: "Sammenligneren bekrefter enighet",
     s3Desc:
-      "Kontrollerer at dei to svara stemmer overeins — storleik for storleik — før noko visast. Eit avvik stoppar køyringa.",
+      "Kontrollerer at de to svarene stemmer overens — størrelse for størrelse — før noe vises. Et avvik stopper kjøringen.",
     cmpA: "25,0 = 25,0",
     cmpB: "20,0 = 20,0",
     match: "✓ samsvar",
     s4Title: "Kontrolløren vurderer",
     s4Desc:
-      "Avgjer om det er trygt å vise resultatet, og flaggar forbehald ein kontrollerande ingeniør bør kjenne til.",
-    s4Tags: ["Trygt å vise?", "Flaggar forbehald", "Set konfidens"],
-    s5Title: "Eit notat, klart for kontroll",
+      "Avgjør om det er trygt å vise resultatet, og flagger forbehold en kontrollerende ingeniør bør kjenne til.",
+    s4Tags: ["Trygt å vise?", "Flagger forbehold", "Setter konfidens"],
+    s5Title: "Et notat, klart for kontroll",
     s5Desc:
-      "Eit berekningsnotat du kan eksportere — kvar steg, føresetnad og forbehald lagt fram for fagleg kontroll og signatur.",
-    reportStrong: "Berekningsnotat",
-    reportRest: " · PDF · Word · LaTeX — klart for fagleg kontroll",
-    footerNote: "AI-generert · eksperimentell · krev fagleg kontroll",
+      "Et beregningsnotat du kan eksportere — hvert steg, forutsetning og forbehold lagt frem for faglig kontroll og signatur.",
+    reportStrong: "Beregningsnotat",
+    reportRest: " · PDF · Word · LaTeX — klart for faglig kontroll",
+    footerNote: "AI-generert · eksperimentell · krever faglig kontroll",
     terms: "Vilkår",
     termsHref: "/vilkar",
   },

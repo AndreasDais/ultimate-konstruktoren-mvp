@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-type Lang = "nn" | "en";
+type Lang = "nb" | "en";
 
 const COPY: Record<Lang, {
   title: string;
@@ -11,11 +11,11 @@ const COPY: Record<Lang, {
   norway: string;
   other: string;
 }> = {
-  nn: {
-    title: "Kor jobbar du?",
-    body: "Vi tilpassar språk og standardar. Du kan endre dette når som helst.",
-    norway: "Noreg",
-    other: "Anna område",
+  nb: {
+    title: "Hvor jobber du?",
+    body: "Vi tilpasser språk og standarder. Du kan endre dette når som helst.",
+    norway: "Norge",
+    other: "Annet område",
   },
   en: {
     title: "Where do you work?",
