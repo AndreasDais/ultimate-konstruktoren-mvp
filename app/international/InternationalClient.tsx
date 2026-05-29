@@ -94,6 +94,17 @@ export default function InternationalClient() {
   const units = context.outputPreferences.units;
   const notation = context.outputPreferences.notationStyle;
   const adapt = standardSupportNotice(context);
+
+  // UI-affordance: Eurocode-Norge er den mest implementerte pilot-profilen, so
+  // badgen lyser grønt "supported". Dette er REINT UI — den lagra konteksten og
+  // agent-prompten held fram med ekte supportLevel ("partial"), so motoren ikkje
+  // slappar av på compliance-vakta. Grønt = "mest implementert", ikkje "verifisert".
+  const isBestImplemented = standard === "eurocode_norway";
+  const displayLevel: StandardSupportLevel = isBestImplemented ? "supported" : level;
+  const adaptText = isBestImplemented
+    ? "Marked supported only because this is the most implemented profile in the pilot — not a claim of full code compliance. Output is AI-generated and still requires professional review."
+    : adapt;
+
   const animate = interacted && !reduce;
   const anim = (cls: string) => (animate ? ` ${cls}` : "");
 
@@ -159,14 +170,14 @@ export default function InternationalClient() {
   // Puls bru + ctx-kort på kvar endring; badge-puls berre når support-nivået skiftar.
   useEffect(() => {
     if (tick === 0 || reduce) {
-      prevLevel.current = level;
+      prevLevel.current = displayLevel;
       return;
     }
     pulse(bridgeRef.current, "flow");
     pulse(ctxRef.current, "pulse");
-    if (prevLevel.current !== level) pulse(badgeRef.current, "pulse");
-    prevLevel.current = level;
-  }, [tick, level, reduce]);
+    if (prevLevel.current !== displayLevel) pulse(badgeRef.current, "pulse");
+    prevLevel.current = displayLevel;
+  }, [tick, displayLevel, reduce]);
 
   function changeRegion(next: EngineeringRegionCode) {
     const rec = getRecommendedStandardForRegion(next);
@@ -327,11 +338,11 @@ export default function InternationalClient() {
               <span className="intl-panel__step">what the engine receives</span>
             </div>
             <div className="intl-panel__bd intl-ctx__bd">
-              <span className="intl-badge" data-level={level} ref={badgeRef}>
+              <span className="intl-badge" data-level={displayLevel} ref={badgeRef}>
                 <span className="intl-badge__dot" aria-hidden="true" />
                 Support level:{" "}
-                <span key={`lvl-${level}`} className={anim("swap").trim()}>
-                  {level.replace(/_/g, " ")}
+                <span key={`lvl-${displayLevel}`} className={anim("swap").trim()}>
+                  {displayLevel.replace(/_/g, " ")}
                 </span>
               </span>
 
@@ -363,8 +374,8 @@ export default function InternationalClient() {
                   PILAR currently supports Eurocode / Norway best. Other standard profiles are
                   experimental and must not be used as a verified design basis.
                 </p>
-                <p key={`adapt-${level}`} className={`intl-limit__adapt${anim("swap")}`}>
-                  {adapt}
+                <p key={`adapt-${displayLevel}`} className={`intl-limit__adapt${anim("swap")}`}>
+                  {adaptText}
                 </p>
               </div>
             </div>
