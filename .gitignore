@@ -46,3 +46,4 @@ last-run.log
 
 .patch-backup/
 pilar-current.zip
+.gstack/
