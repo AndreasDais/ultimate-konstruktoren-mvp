@@ -1,0 +1,10 @@
+POST 200 /api/init-run {"run_id":"e7e5a3ef-76ef-4b11-aba3-71f720d2bef2"}
+POST 200 /api/agent-a 
+POST 200 /api/agent-b 
+POST 200 /api/agent-c {"result":{"match_status":"match","numeric_differences":[{"field":"gamma_D_ASCE7","agent_a_value":"1,2","agent_b_value":"1,2","percent_diff":0,"severity":"low","likely_cause":"Konstruktør A og Konstruktør B bruker identisk lastfaktor for eg
+POST 200 /api/agent-d {"result":{"decision_status":"approved_with_warnings","risk_level":"medium","reason":"lastverknad_godkjent_kapasitet_mangler_aisc360","user_message":"Lastberegningen (wu, Mu, Vu) er kontrollert og godkjent: begge konstruktørene er i fullste
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 /api/agent-e 
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {"id":"05339df098314bc38aba8e9f5d1b2a87"}

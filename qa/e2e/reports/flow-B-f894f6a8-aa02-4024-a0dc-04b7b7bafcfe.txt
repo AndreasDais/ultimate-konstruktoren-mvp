@@ -1,0 +1,322 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+← Tilbake
+INNHOLD
+Sammendrag
+Beregning
+Vurdering
+Kontroll
+METADATA
+ID
+PILAR-F894F6A8
+DATO
+29. mai 2026
+VERSJON
+Rapportør v0.3
+BEREGNINGSNOTAT
+·
+PILAR-F894F6A8
+29. MAI 2026
+Kapasitetskontroll av stålbjelke
+
+L = 6,0 m · qEd = 12,0 kN/m
+
+DOKUMENT-ID
+PILAR-F894F6A8
+DATO
+29. mai 2026
+STATUS
+FORELØPIG GODKJENT
+VERSJON
+Rapportør v0.3
+NETTVERSJON + PIPELINE
+Skann for nettversjon
+
+Åpner rapporten med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.
+
+RAPPORTLENKE
+http://localhost:3000/rapport/f894f6a8-aa02-4024-a0dc-04b7b7bafcfe
+NØKKELRESULTATER
+MEd
+54,0
+kNm
+VEd
+36,0
+kN
+qEd
+12,0
+kN/m
+L
+6,0
+m
+100
+/100
+HØY
+
+Beregningen er foreløpig godkjent. Resultatet skal kontrolleres av ansvarlig fagperson før bruk.
+
+VIKTIG MERKNAD
+·
+AI-GENERERT DOKUMENT
+
+Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.
+
+01
+Sammendrag
+
+Berekninga gjeld lastvirkningsanalyse av en fritt opplagd bjelke med spennvidde L = 6,0 m og dimensjonerende jevnt fordelt last qEd = 12,0 kN/m. Konstruktør A og Konstruktør B er fullstendig enige: maksimalt bøyemoment er MEd = 54,0 kNm i midtspennet, og maksimal skjærkraft er VEd = 36,0 kN ved opplagrene. Kontrollør har godkjent berekninga som foreløpig grunnlag, og resultatet skal kontrolleres av ansvarlig fagperson før videre bruk.
+
+FORESPØRSEL
+Eg har ein fritt opplagd stålbjelke med spennvidde L = 6,0 m og jamt fordelt dimensjonerande last qEd = 12 kN/m.
+
+Rekn ut:
+1. Maksimalt bøyemoment.
+2. Maksimal skjærkraft ved opplag.
+3. Kort forklaring av kvar moment og skjærkraft er størst.
+
+Svar på norsk/nynorsk.
+Bruk kN, m og kNm.
+Ikkje bruk AISC, ASCE, kip, ft eller amerikanske lastkombinasjonar.
+Dette er berre ein enkel statikk-kontroll, ikkje full kapasitetskontroll etter Eurokode.
+02
+Beregning
+ORDLISTE
+MEd
+dimensjonerande bøyemoment (kNm)
+VEd
+dimensjonerande skjærkraft (kN)
+qEd
+dimensjonerande fordelt last (kN/m)
+L
+spennvidde (m)
+NA
+nasjonalt tillegg (Norge)
+STR
+lasttilstand: konstruksjons-styrke
+02.1 — FORUTSETNINGER
+.01
+qEd = 12,0 kN/m er allerede en dimensjonerende last — ingen ytterligere lastfaktorering utføres (Tolkarens antakelse)
+.02
+Lasten er jevnt fordelt over hele spennet L = 6,0 m
+.03
+Fritt opplagd bjelke med to enkle opplegg
+.04
+Positivt moment definert som sagtrekk (strekk i underkant)
+.05
+Skjærkraft positiv oppover på venstre snittflate (norsk konvensjon)
+.06
+Egenvekt av bjelken er ikke oppgitt og inngår ikke i qEd — se limitations
+02.2 — RESULTAT
+DIMENSJONERENDE
+MEd	54,0 kNm
+VEd	36,0 kN
+qEd	12,0 kN/m
+INPUT OG GEOMETRI
+L	6,0 m
+02.3 — STEGVIS UTREGNING
+STEG 01
+Maksimalt bøyemoment i midtspenn
+M
+Ed
+	​
+
+	​
+
+=
+8
+q
+Ed
+	​
+
+⋅L
+2
+	​
+
+=
+8
+12,0⋅6,0
+2
+	​
+
+=
+8
+432,0
+	​
+
+=54,0 kNm
+	​
+
+Vis prosa-utregning
+STEG 02
+Maksimal skjærkraft ved opplag
+V
+Ed
+	​
+
+	​
+
+=
+2
+q
+Ed
+	​
+
+⋅L
+	​
+
+=
+2
+12,0⋅6,0
+	​
+
+=
+2
+72,0
+	​
+
+=36,0 kN
+	​
+
+Vis prosa-utregning
+KONTROLL
+Kontroll: likevekt og dimensjonsanalyse
+F
+tot
+	​
+
+	​
+
+=q
+Ed
+	​
+
+⋅L
+=12,0⋅6,0
+=72,0 kN
+	​
+
+2⋅V
+Ed
+	​
+
+	​
+
+=2⋅36,0
+=72,0 kN✓
+	​
+
+M
+Ed,kontroll
+	​
+
+	​
+
+=
+8
+F
+tot
+	​
+
+⋅L
+	​
+
+=
+8
+72,0⋅6,0
+	​
+
+=54,0 kNm✓
+	​
+
+Vis prosa-utregning
+03
+Vurdering
+03.1 — FAGLIG VURDERING
+
+Momentet er størst i midtspennet fordi den symmetriske lasten gir opplagsreaksjoner av lik størrelse, og den akkumulerte lastvirkninga er størst nettopp der skjærkraften skifter fortegn — ved x = L/2. Skjærkraften er på sin side størst umiddelbart innenfor opplagrene, der hele halvlastens bidrag virker i ett snitt, og avtar lineært mot null i midtspennet. Begge konstruktørene har benyttet lukkede formler fra elementær likevektsmekanikk, uten NA-verdier eller partialfaktorer, noe som er faglig korrekt ettersom qEd er mottatt som allerede dimensjonerende last. Konstruktør B har i tillegg verifisert MEd via fritt legeme-likevekt på halvt bjelkelegeme — en reelt uavhengig sjekk som styrker tilliten til resultatet. Begge løsninger har high confidence, og Samanliknar finner 0 % avvik på samtlige rapporterte størrelser. Det er viktig å merke seg at egenvekt av bjelkeprofil ikke er inkludert i qEd, og at beregningen ikke omfatter kapasitetskontroll, nedbøying eller vippeknekking. Dersom qEd i stedet representerer en karakteristisk last, må lastfaktorering utføres etter EC0 før disse verdiene brukes i videre kapasitetskontroll.
+
+03.2 — HVA ER IKKE BEREGNET
+IKKE DEKKET AV DENNE RAPPORTEN
+Egenvekt av bjelkeprofil er ikke inkludert i qEd	dersom egenvekt er relevant, må dimensjonerende last justeres
+Ingen kapasitetskontroll (MRd, VRd) er utført	dette er en lastvirkning-beregning
+Eventuelle punktlaster, skråstilte laster eller variabel fordeling er ikke vurdert	kun jevnt fordelt last over hele spennet
+Deformasjon (nedbøying)	krever profildata
+03.3 — ADVARSLER
+⚠
+ADVARSEL
+
+qEd er tolket som allerede dimensjonerende last uten ytterligere lastfaktorering. Dersom qEd i stedet representerer en karakteristisk last, må STR-kombinasjon etter EC0 tabell NA.A1.2(B) (6.10a/6.10b) anvendes før MEd og VEd beregnes.
+
+04
+Kontroll
+04.1 — KONSTRUKTØRKONTROLL
+
+Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B). Begge kom frem til numerisk identiske verdier, vist i tabellen under.
+
+STØRRELSE	KONSTRUKTØR A	KONSTRUKTØR B	SAMSVAR
+MEd	54,0 kNm	54,0 kNm	✓
+VEd	36,0 kN	36,0 kN	✓
+qEd	12,0 kN/m	12,0 kN/m	✓
+L	6,0 m	6,0 m	✓
+04.2 — KONTROLLØRENS AVGJØRELSE
+AVGJØRELSE
+FORELØPIG GODKJENT
+
+Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.
+
+04.3 — KONKLUSJON
+
+Kontrollør har godkjent berekninga som foreløpig grunnlag med risikonivå lav. Resultatet er gyldig som lastvirkningsberegning under de oppgitte forutsetningene, og skal kontrolleres av ansvarlig fagperson før bruk i prosjektering eller kapasitetskontroll.
+
+FORELØPIG
+Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.
+KONTROLLERT AV
+Navn · stilling · foretak
+SIGNATUR
+Manuell signering
+DATO
+DD.MM.ÅÅÅÅ
+Pilar
+PILAR-F894F6A8
+·
+Generert 29. mai 2026
+·
+Rapportør v0.3
+http://localhost:3000/rapport/f894f6a8-aa02-4024-a0dc-04b7b7bafcfe
+SKANN FOR NETTVERSJON
+HANDLINGER
+Last ned PDF
+Last ned Word
+Vis kun beregninger
+Lag ny beregning fra denne →
+Se Mission Control →
+Meld feil i rapporten
+Gi tilbakemelding på piloten
+KONTROLLSTATUS
+Input-tolkning
+i
+KLAR
+Konstruktør A
+i
+HIGH
+Konstruktør B
+i
+HIGH
+Sammenligning
+i
+ENIGE
+Kontrollør
+i
+GODKJENT
+Fagperson
+i
+IKKE KONTROLLERT
+≡
+Ordliste

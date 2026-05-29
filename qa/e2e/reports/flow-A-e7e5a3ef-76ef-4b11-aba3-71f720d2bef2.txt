@@ -1,0 +1,359 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+← Tilbake
+INNHOLD
+Sammendrag
+Beregning
+Vurdering
+Kontroll
+METADATA
+ID
+PILAR-E7E5A3EF
+DATO
+29. mai 2026
+VERSJON
+Rapportør v0.3
+BEREGNINGSNOTAT
+·
+PILAR-E7E5A3EF
+29. MAI 2026
+Teknisk beregning
+
+AI-generert beregningsnotat
+
+DOKUMENT-ID
+PILAR-E7E5A3EF
+DATO
+29. mai 2026
+STATUS
+GODKJENT MED ADVARSLER
+VERSJON
+Rapportør v0.3
+NETTVERSJON + PIPELINE
+Skann for nettversjon
+
+Åpner rapporten med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.
+
+RAPPORTLENKE
+http://localhost:3000/rapport/e7e5a3ef-76ef-4b11-aba3-71f720d2bef2
+NØKKELRESULTATER
+D
+0,45
+kip/ft
+Llast
+0,80
+kip/ft
+Lspenn
+20,00
+ft
+76
+/100
+GOD
+
+Beregningen er foreløpig godkjent med advarsler. Forbeholdene må avklares før bruk i prosjektering.
+
+VIKTIG MERKNAD
+·
+AI-GENERERT DOKUMENT
+
+Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.
+
+01
+Sammendrag
+
+Berekninga gjeld lastverknadsanalyse av ein fritt opplagd stålbjelke (W12x26, ASTM A992, spenn L = 20 ft) under gravitasjonslaster etter ASCE 7 LRFD-metodikk. Konstruktør A og Konstruktør B er i fullstendig numerisk overeinsstemming: faktorert jamnt fordelt last wu, dimensjonerande bøyemoment Mu og dimensjonerande skjærkraft Vu er identiske hos begge. Kontrollør har godkjent lastverknadsberekningane med åtvaringar — årsaka er at kapasitetskontrollen (φbMn med LTB-reduksjon for Lb = 20 ft, og φvVn) ikkje er utført, og bjelken kan difor ikkje godkjennast strukturelt utan ekstern kapasitetskontroll av ein lisensiert ingeniør med tilgang til AISC 360 og W12x26-seksjonsdata.
+
+FORESPØRSEL
+I am testing PILAR with a United States structural engineering context.
+
+Please evaluate a simply supported steel beam using an AISC/ASCE-style workflow, but clearly state if full code verification is not supported yet.
+
+Beam:
+- Span: L = 20 ft
+- Section: W12x26
+- Steel grade: ASTM A992, Fy = 50 ksi
+- Supports: simply supported
+- Lateral bracing: only at the supports, unbraced length Lb = 20 ft
+- Dead load: D = 0.45 kip/ft
+- Live load: L = 0.80 kip/ft
+
+Requested checks:
+1. Determine the LRFD factored uniform load using a typical ASCE 7 gravity load combination.
+2. Calculate the maximum factored bending moment.
+3. Calculate the maximum factored shear.
+4. Determine whether lateral-torsional buckling is likely to be a critical issue.
+5. If AISC section properties or code-specific equations are missing, do not invent them.
+6. Produce a clear calculation note and a calculation-only summary suitable for a student report.
+
+Important requirements:
+- Answer in English.
+- Use US customary units.
+- Do not use Eurocode notation or Eurocode partial factors.
+- Do not use γG, γQ, MEd, VEd, NS-EN, Eurocode 3, or Norwegian National Annex logic.
+- Do not claim final AISC code compliance unless the required AISC checks and section properties are available.
+- Clearly mark the result as preliminary and requiring verification by a licensed structural engineer.
+02
+Beregning
+ORDLISTE
+D
+permanent (dødvekt) last (kip/ft)
+wu
+nedbøying (mm)
+Llast
+spennvidde (m)
+NA
+nasjonalt tillegg (Norge)
+02.1 — FORUTSETNINGER
+.01
+ASCE 7-16 LRFD-kombinasjon 2: wu = 1,2D + 1,6L er styrande lastverknad (fastsett av Tolkar).
+.02
+Lasten er jevnt fordelt over hele spennet L = 20 ft.
+.03
+Fritt opplagd bjelke — maksimalt moment i midtspennet, maksimalt skjær ved opplegg.
+.04
+Positiv momentkonvensjon: nedoverrettet bøying (saging) er positivt.
+.05
+Positiv skjærkonvensjon: oppadrettet reaksjon på venstre snittflate er positiv.
+.06
+NA-GRUNNLAG-blokken (EC0/EC2/EC3) gjelder ikke for dette beregningssteget — lastfaktorene 1,2 og 1,6 hentes fra ASCE 7, ikke fra norsk NA. Ingen NA-grunnlag-verdier er benyttet i beregningen.
+.07
+Enhetssystem: kip, ft, kip·ft gjennomgående i dette beregningssteget.
+.08
+Lastangrep i tyngdepunktet til tverrsnittet (ingen eksentrisk torsjon).
+02.2 — RESULTAT
+INPUT OG GEOMETRI
+D	0,45 kip/ft
+Llast	0,80 kip/ft
+Lspenn	20,00 ft
+γDASCE7	1,2
+γLASCE7	1,6
+ANNA
+Mu	91,00 kip·ft
+Vu	18,20 kips
+wu	1,820 kip/ft
+02.3 — STEGVIS UTREGNING
+STEG 01
+Faktorert jevnt fordelt last wu (LRFD)
+w
+u
+	​
+
+	​
+
+=1,2⋅D+1,6⋅L
+=1,2⋅0,45+1,6⋅0,80
+=0,5400+1,2800
+=1,820 kip/ft
+	​
+
+Vis prosa-utregning
+STEG 02
+Maksimalt faktorert bøyemoment Mu
+M
+u
+	​
+
+	​
+
+=
+8
+w
+u
+	​
+
+⋅L
+2
+	​
+
+=
+8
+1,820⋅(20,00)
+2
+	​
+
+=
+8
+1,820⋅400,0
+	​
+
+=
+8
+728,0
+	​
+
+=91,00 kip⋅ft
+	​
+
+Vis prosa-utregning
+STEG 03
+Maksimalt faktorert skjærkraft Vu
+V
+u
+	​
+
+	​
+
+=
+2
+w
+u
+	​
+
+⋅L
+	​
+
+=
+2
+1,820⋅20,00
+	​
+
+=
+2
+36,40
+	​
+
+=18,20 kips
+	​
+
+Vis prosa-utregning
+KONTROLL
+Kontroll av likevekt: moment–skjær-relasjon
+M
+u
+	​
+
+	​
+
+=V
+u
+	​
+
+⋅
+4
+L
+	​
+
+=18,20⋅
+4
+20,00
+	​
+
+=
+4
+364,0
+	​
+
+=91,00 kip⋅ft✓
+	​
+
+Vis prosa-utregning
+03
+Vurdering
+03.1 — FAGLIG VURDERING
+
+Lastverknadsberekningane er gjennomført etter ASCE 7-16 LRFD-kombinasjon 1,2D + 1,6L, som er styrande for gravitasjonslasttilfelle med dominerande nyttelast — ingen EC0/EC3-faktorar er nytta, noko Kontrollør eksplisitt har kontrollert og funne korrekt. Konstruktør B har i tillegg verifisert Mu via fri-kropp-diagram, og proporsjonssjekken Mu/Vu = L/4 er bekrefta av begge — dette gir sterk intern konsistens i lastverknadsresultata. Den fagleg sentrale avgrensinga er at Pilar ikkje har implementert AISC 360-kapasitetsformlar eller seksjonsdata (Sx, Zx, rts, ho, J, Cw) for W12x26, slik at verken φbMn eller φvVn kan bereknast. Lateral-torsjonsknekking (LTB) er særleg relevant her: med ubraktisert lengd Lb = 20 ft lik heile spennet er det fagleg grunn til å vurdere om bjelken fell i elasto-plastisk eller elastisk LTB-område etter AISC 360 §F2, men dette kan ikkje avklarast utan Lp- og Lr-grensene for W12x26. Momentgradientfaktoren Cb er ikkje fastsett i denne berekninga; Tolkar har påpeika at Cb = 1,0 er konservativt, og at faktisk Cb for jamn last over fritt opplagd bjelke ligg noko høgare — dette kan påverke kapasiteten i gunstig retning, men er ikkje kvantifisert. Resultata representerer utelukkande lastsida; nokon utnyttingsgrad kan ikkje leverast frå denne berekninga.
+
+03.2 — HVA ER IKKE BEREGNET
+IKKE DEKKET AV DENNE RAPPORTEN
+φbMn (bøyekapasitet med LTB-reduksjon for W12x26) kan ikke beregnes	AISC 360 seksjonsdata (Sx, Zx, rts, ho, J, Cw) og kapasitetsformler er ikke implementert i Pilar.
+φvVn (skjærkapasitet etter AISC 360 §G2) kan ikke beregnes av samme årsak.	—
+Utnyttingsgrad Mu / φbMn og Vu / φvVn	avhenger av kapasitetsverdiene over.
+Cb (momentgradientfaktor for LTB) er satt til 1,0 (konservativt) av Tolkar. Faktisk Cb for jevn last over fritt opplagd bjelke er 1,14, noe som ville økt kapasiteten	men dette vurderes ikke her.
+Beregningen gjelder kun gravitasjonslaster. Vindlast, snølast og kombinasjoner med disse er ikke vurdert.	—
+Dynamiske effekter og svingningsgrenser (defleksjonskrav) er ikke vurdert.	—
+03.3 — ADVARSLER
+⚠
+ADVARSEL
+
+Pilar er normalt basert på EC3/EC2/NS-EN metodikk. Dette beregningssteget følger ASCE 7 LRFD og AISC 360 — NA-GRUNNLAG-verdiene (EC0-lastfaktorer, EC3-materialfaktorer) er ikke gyldige her og er ikke brukt.
+
+⚠
+ADVARSEL
+
+Kapasitetskontroll (φbMn, φvVn) kan ikke utføres av Pilar for AISC 360-profiler. Resultatet gir kun dimensjonerende lastvirkning — utnyttingsgrad mangler og bjelken kan ikke godkjennes uten ekstern kapasitetskontroll.
+
+⚠
+ADVARSEL
+
+W12x26 er et ASTM A992 / AISC-profil; profildata finnes ikke i Pilar sin profilbase.
+
+04
+Kontroll
+04.1 — KONSTRUKTØRKONTROLL
+
+Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B). Tabellen under viser sammenligningen rad-for-rad. Avvik er markert.
+
+STØRRELSE	KONSTRUKTØR A	KONSTRUKTØR B	SAMSVAR
+Mu	91,00 kip·ft	91,00 kip·ft	✓
+Vu	18,20 kips	18,20 kips	✓
+wu	1,820 kip/ft	1,820 kip/ft	✓
+γDASCE7	1,2	1,2	✓
+γLASCE7	1,6	1,6	✓
+D	0,45 kip/ft	-	–
+Llast	0,80 kip/ft	-	–
+Lspenn	20,00 ft	-	–
+
+Viser de 8 viktigste av 11 sammenlignede verdiene.
+
+04.2 — KONTROLLØRENS AVGJØRELSE
+AVGJØRELSE
+GODKJENT MED ADVARSLER
+
+Beregningen er foreløpig godkjent med advarsler. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering.
+
+04.3 — KONKLUSJON
+
+Lastverknadsberekningane (wu, Mu, Vu) er godkjente med åtvaringar som førebels grunnlag og skal ikkje brukast til prosjektering utan at ein lisensiert ingeniør med tilgang til AISC 360 og AISC Steel Construction Manual gjennomfører kapasitetskontroll — inkludert φbMn med LTB-reduksjon for Lb = 20 ft og φvVn for W12x26. Defleksjonskontroll (bruksgrensestaten) og kontroll av kompakt tverrsnitt per AISC 360 er heller ikkje gjennomført og inngår i same eksternkontroll. Resultatet er førebels og krev verifikasjon av fagperson før det kan leggjast til grunn for konstruksjonsgodkjenning.
+
+FORELØPIG
+Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.
+KONTROLLERT AV
+Navn · stilling · foretak
+SIGNATUR
+Manuell signering
+DATO
+DD.MM.ÅÅÅÅ
+Pilar
+PILAR-E7E5A3EF
+·
+Generert 29. mai 2026
+·
+Rapportør v0.3
+http://localhost:3000/rapport/e7e5a3ef-76ef-4b11-aba3-71f720d2bef2
+SKANN FOR NETTVERSJON
+HANDLINGER
+Last ned PDF
+Last ned Word
+Vis kun beregninger
+Lag ny beregning fra denne →
+Se Mission Control →
+Meld feil i rapporten
+Gi tilbakemelding på piloten
+KONTROLLSTATUS
+Input-tolkning
+i
+DELVIS KLAR
+Konstruktør A
+i
+HIGH
+Konstruktør B
+i
+HIGH
+Sammenligning
+i
+ENIGE
+Kontrollør
+i
+MED ADVARSEL
+Fagperson
+i
+IKKE KONTROLLERT
+≡
+Ordliste

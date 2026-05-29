@@ -1,0 +1,51 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+1
+Workbench
+→
+2
+Mission Control
+→
+3
+Rapport
+NY BEREGNING
+Beskriv oppgaven
+
+Skriv inn forespørselen. Pilar leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.
+
+Workbench er steg 1 av 3. Skriv inn hva du vil beregne — Pilar leser og viser deg hva den forstod, så du kan rette opp før beregningen starter.
+×
+Skriv inn en konstruksjonsoppgave
++ Last opp støttefil
+PDF, PNG, DOCX — Pilar ser oppgaven og vedlegget saman.
+▸ Se 3 eksempel
+AI-generert · krever faglig kontroll
+Tolk på nytt →
+STATUS
+I
+KLAR
+Stål · alle 2 kontroller går
+Hva kan beregnes nå
+●
+MEd (maksimalt bøyemoment i midtspenn)
+●
+VEd (maksimal skjærkraft ved opplag)
+Tolkning
+TOLKER
+
+Forespørselen gjelder en enkel statikkontroll av en fritt opplagd bjelke med kjent spennvidde og dimensjonerende last. Tolka
+
+▶
+Vis full tolkning og tolkede verdier (4)
+
+Stemmer tolkningen? Da kan du starte beregningen.
+
+Avbryt
+Start beregning →

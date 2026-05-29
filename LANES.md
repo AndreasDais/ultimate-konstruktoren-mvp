@@ -1,7 +1,7 @@
 # LANES.md — who owns which files
 
 **Status:** Active ownership map (current snapshot)
-**Updated:** 2026-05-28
+**Updated:** 2026-05-29
 **Authoritative for:** which paths each parallel agent may edit *right now*.
 **Defers to:** `sources/agent-research/THREE_CHAT_PARALLEL_WORKFLOW.md` for lane
 missions, sprint sequences and the merge/integration protocol.
@@ -21,6 +21,7 @@ missions, sprint sequences and the merge/integration protocol.
 | Ops | `codex/lane-ops` | `Code/pilar-lane-ops` | Codex | active |
 | Eval | `codex/lane-evals` *(not created)* | — | parallel Claude session | **runs on `main`, no worktree** |
 | UI / Landing | `main` (or own branch) | `Code/ultimate-konstruktoren-mvp` | Claude (this track) | active — landing page |
+| Synthetic User / E2E | `main` | `Code/ultimate-konstruktoren-mvp` | Claude | active — `qa/e2e` runner |
 
 The integrator merges finished lane branches into `main` one at a time
 (`git checkout main && git merge codex/lane-<name>`).
@@ -67,6 +68,20 @@ scripts/validate-eval-cases.mjs
 scripts/run-eval-case-live.mjs        # currently UNTRACKED on main
 sources/agent-research/eval/**
 ```
+
+### Synthetic User / E2E lane — Claude (no worktree; on `main`)
+
+Browser-driven end-to-end flows that test PILAR the way a real user does
+(input → interpret → run → report), asserting must-show / must-not-show strings
+from the checklist. Read-only against the app — never edits app code, prompts,
+schema, report/PDF/Word code, or i18n; findings are filed for the owning lane.
+
+```txt
+qa/e2e/**                              # runner, prompts, checklist, evidence bundles
+```
+
+Distinct from the Eval lane: `qa/e2e/` (synthetic-user browser flows) vs
+`qa/evals/` (offline eval cases). Do not touch `qa/evals/` from this lane.
 
 ### UI / Landing lane — Claude (this track)
 
@@ -138,8 +153,8 @@ git status --short                 # confirm nothing else is staged
 npx tsc --noEmit --pretty false    # exit 0 before commit
 ```
 
-Commit message prefix per lane (ASCII titles, no aeoaa):
-`RUNTIME:` / `OPS:` / `EVAL:` / `UI:` / `DOCS:`.
+Commit message prefix per lane (ASCII titles, no æøå):
+`RUNTIME:` / `OPS:` / `EVAL:` / `QA:` / `UI:` / `DOCS:`.
 
 ---
 

@@ -1,0 +1,67 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+1
+Workbench
+→
+2
+Mission Control
+→
+3
+Rapport
+NY BEREGNING
+Beskriv oppgaven
+
+Skriv inn forespørselen. Pilar leser og viser tolkningen her — du kan redigere og tolke på nytt før du starter beregningen.
+
+Workbench er steg 1 av 3. Skriv inn hva du vil beregne — Pilar leser og viser deg hva den forstod, så du kan rette opp før beregningen starter.
+×
+Skriv inn en konstruksjonsoppgave
++ Last opp støttefil
+PDF, PNG, DOCX — Pilar ser oppgaven og vedlegget saman.
+▸ Se 3 eksempel
+
+Pilar trenger 2 felt til — klikk for å sette inn
+
++ AISC 360 seksjonsdata for W12x26
++ AISC 360 kapasitetsformlar
+AI-generert · krever faglig kontroll
+Tolk på nytt →
+STATUS
+I
+DELVIS KLAR
+Stål · 2 element mangler input
+Hva kan beregnes nå
+●
+wu (LRFD-faktorert jamn last) = 1,2 × 0,45 + 1,6 × 0,80
+●
+Mu (maksimalt faktorert bøyemoment) = wu × L² / 8
+●
+Vu (maksimalt faktorert skjærkraft) = wu × L / 2
+○
+φbMn (nominell bøyekapasitet med LTB-reduksjon) — krev AISC 360 seksjonsdata og kapasitetsformlar som ikkje er implementert
+KREVER MER INPUT
+○
+φvVn (skjærkapasitet) — krev AISC 360 §G2 og seksjonsdata
+KREVER MER INPUT
+○
+Utnyttingsgrad Mu / φbMn — krev φbMn
+KREVER MER INPUT
+Tolkning
+TOLKER
+
+Forespørselen er fagleg gyldig og klart formulert, men nyttar AISC/ASCE 7-metodikk som Pilar sine berekningsagen
+
+▶
+Vis full tolkning og tolkede verdier (9)
+
+Stemmer tolkningen? Da kan du starte beregningen.
+
+Avbryt
+Start beregning · 2 antakelser brukt

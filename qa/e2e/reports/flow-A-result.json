@@ -1,0 +1,52 @@
+{
+  "label": "A",
+  "name": "English/AISC diagnostic",
+  "verdict": "FAIL",
+  "reportReady": true,
+  "runId": "e7e5a3ef-76ef-4b11-aba3-71f720d2bef2",
+  "url": "http://localhost:3000/rapport/e7e5a3ef-76ef-4b11-aba3-71f720d2bef2",
+  "missing": [
+    "Engineer A",
+    "Engineer B",
+    "Comparator",
+    "Controller",
+    "Preliminarily approved / preliminary",
+    "Calculation note",
+    "Assumptions",
+    "Warnings"
+  ],
+  "forbidden": [
+    "Konstruktør",
+    "Kontrollør",
+    "FØREBELS",
+    "FORELØPIG",
+    "GOD",
+    "NS-EN"
+  ],
+  "hasPdf": true,
+  "hasWord": true,
+  "textLen": 9316,
+  "scanLen": 7993,
+  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-A-e7e5a3ef-76ef-4b11-aba3-71f720d2bef2.png",
+  "controls": [
+    "PilarAI-KONSTRUKSJONSASSISTENT",
+    "Tema▾",
+    "nb",
+    "nn",
+    "Logg inn",
+    "← Tilbake",
+    "Sammendrag",
+    "Beregning",
+    "Vurdering",
+    "Kontroll",
+    "76/100God",
+    "Last ned PDF",
+    "Last ned Word",
+    "Vis kun beregninger",
+    "Lag ny beregning fra denne →",
+    "Se Mission Control →",
+    "Meld feil i rapporten",
+    "Gi tilbakemelding på piloten",
+    "≡Ordliste"
+  ]
+}
