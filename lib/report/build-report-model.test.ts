@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { buildReportModel, buildComparisonRowsFromResults, type UpstreamReportData } from "./build-report-model";
 import { validateReportModel } from "./validate-report-model";
+
+function readSource(path: string): string {
+  return readFileSync(join(process.cwd(), path), "utf8");
+}
+
+const LIVE_EVAL_INPUT_PROMPT_VERSION_GAP = {
+  readSurface: "app/api/runs/[id]/route.ts",
+  canonicalConsumer: "lib/report/build-report-model.ts",
+  missingRuntimeField: "inputReview.prompt_version",
+  reason: "live eval read mode needs the input-agent prompt version alongside downstream agent prompt versions",
+} as const;
 
 const sample: UpstreamReportData = {
   report: {
@@ -77,6 +90,32 @@ describe("buildReportModel", () => {
 
     const validation = validateReportModel(model);
     expect(validation.ok).toBe(true);
+  });
+
+  it("identifies inputReview prompt_version as missing mapped runtime evidence", () => {
+    const runRead = readSource("app/api/runs/[id]/route.ts");
+    const reportModel = readSource("lib/report/build-report-model.ts");
+    const tolkingMapping = runRead.slice(
+      runRead.indexOf("const tolking = inputReview"),
+      runRead.indexOf("// agent_outputs", runRead.indexOf("const tolking = inputReview")),
+    );
+    const agentOutputQuery = runRead.slice(
+      runRead.indexOf('.from("agent_outputs")'),
+      runRead.indexOf('.eq("run_id", id)', runRead.indexOf('.from("agent_outputs")')),
+    );
+
+    expect(LIVE_EVAL_INPUT_PROMPT_VERSION_GAP).toEqual({
+      readSurface: "app/api/runs/[id]/route.ts",
+      canonicalConsumer: "lib/report/build-report-model.ts",
+      missingRuntimeField: "inputReview.prompt_version",
+      reason: "live eval read mode needs the input-agent prompt version alongside downstream agent prompt versions",
+    });
+
+    expect(reportModel).toContain("inputReview: {");
+    expect(reportModel).toContain("prompt_version: string;");
+    expect(agentOutputQuery).toContain("prompt_version");
+    expect(tolkingMapping).toContain("inputReview.input_status");
+    expect(tolkingMapping).not.toContain("prompt_version");
   });
 });
 
