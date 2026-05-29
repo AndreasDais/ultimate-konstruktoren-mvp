@@ -453,6 +453,9 @@ Decision:
 
 Each run should write a small evidence bundle under `qa/e2e/reports/`:
 
+Use `qa/e2e/reports/EVIDENCE_REPORT_TEMPLATE.md` for dry-run, cached, fixture,
+or live evidence reports before promoting a run into a gate.
+
 ```txt
 RUN_REPORT.md                 summary, verdict, mode, commit, target
 flow-<id>-result.json          structured pass/fail data

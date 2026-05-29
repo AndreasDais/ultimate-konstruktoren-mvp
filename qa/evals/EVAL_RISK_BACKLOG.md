@@ -56,6 +56,25 @@ unsafe conclusion, and final-approval wording. Until live-read evidence exists,
 dry-run output remains `PLAN` evidence only; it must not be treated as proof
 that runtime, report, Word, or PDF surfaces preserved blocked fields.
 
+## Report-parity eval cluster
+
+This cluster catches regressions where web report, full report, Word-oriented
+text, and PDF/print text drift away from the same canonical report data.
+
+| Layer | Existing anchor | Needed next coverage |
+|---|---|---|
+| Canonical report text | `pilar_eval_report_rendering_sanity_008` | Keep headline values, assumptions, warnings, and disclaimer text tied to one canonical report source. |
+| Export parity | Candidate `pilar_eval_report_export_headline_parity_016` | Compare web/full report text with Word-oriented and PDF/print text once artifact bundle files exist. |
+| Blocked parity | Candidate `pilar_eval_blocked_fields_report_output_nn_013` | Require blocked markers and omitted blocked values to match across all user-facing report surfaces. |
+| Process boundary | `pilar_eval_old_db_output_not_proof_009` | Treat old stored reports as historical artifacts, not proof that new report/export behavior is fixed. |
+
+Parity cases should compare comparable text/model excerpts, not screenshots or
+UI scraping. Until future bundles include `web-report-text.txt`,
+`word-export-text.txt`, `pdf-print-text.txt`, or a stable
+`artifact-parity-summary.json`, this cluster remains planning coverage. A
+single dry-run or offline text artifact can prove the grader boundary, but it
+cannot prove web, Word, and PDF parity by itself.
+
 ## P0 candidates
 
 ### Blocked fields must not leak
