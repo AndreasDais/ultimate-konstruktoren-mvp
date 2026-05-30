@@ -20,6 +20,7 @@ const EVIDENCE_SOURCE_LABELS = Object.freeze({
   cached_report: "previously captured report evidence; freshness must be checked",
   live_read: "read-only runtime evidence from an existing PILAR run",
 });
+const EVIDENCE_SOURCE_MODES = Object.freeze(Object.keys(EVIDENCE_SOURCE_LABELS));
 const BUNDLE_FILES = [
   "manifest.json",
   "runrecord-summary.json",
@@ -36,6 +37,7 @@ function parseArgs(argv) {
     runId: "",
     scratchDir: DEFAULT_SCRATCH_DIR,
     dryRun: true,
+    mode: "dry_run",
     requireTrace: false,
     json: false,
     help: false,
@@ -56,6 +58,18 @@ function parseArgs(argv) {
 
     if (token === "--dry-run") {
       args.dryRun = true;
+      args.mode = "dry_run";
+      continue;
+    }
+
+    if (token === "--mode") {
+      args.mode = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--mode=")) {
+      args.mode = token.slice("--mode=".length);
       continue;
     }
 
@@ -130,17 +144,29 @@ function validateRunIdInput(runId) {
   }
 }
 
+function validateEvidenceModeInput(args) {
+  if (!EVIDENCE_SOURCE_MODES.includes(args.mode)) {
+    throw new Error(`--mode must be one of: ${EVIDENCE_SOURCE_MODES.join(", ")}`);
+  }
+
+  if (args.mode === "live_read" && !args.runId) {
+    throw new Error("--mode live_read requires --run-id <id> because live-read must target one existing run");
+  }
+}
+
 function printHelp() {
   console.log(`PILAR live eval single-case runner
 
 Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --dry-run
+  node scripts/run-eval-case-live.mjs --case-id <id> --mode live_read --run-id <id> --json
   node scripts/run-eval-case-live.mjs --case-id <id> --scratch-dir /tmp/pilar-live-eval
   node scripts/run-eval-case-live.mjs --case-id <id> --run-id <id> --json
   node scripts/run-eval-case-live.mjs --case-id <id> --json
 
 Options:
   --cases <path>        Eval case JSONL path. Defaults to qa/evals/pilar-core-evals.jsonl.
+  --mode <mode>         Evidence request mode: dry_run, fixture, cached_report, or live_read.
   --run-id <id>         Future live-read run id input. Validated, but not read yet.
   --scratch-dir <path>  Planned artifact bundle root. Defaults to /tmp/pilar-live-eval.
   --require-trace       Plan trace evidence as required for future live execution.
@@ -149,6 +175,7 @@ Options:
 Scope:
   Dry-run only. Prints planned /tmp bundle paths and offline grading commands.
   No LLM calls, no Supabase reads, no pipeline execution, no writes.
+  live_read mode is a read-only request contract only; missing evidence is WARN/FAIL, never PASS.
 `);
 }
 
@@ -203,6 +230,28 @@ function buildPlannedFileInventory() {
   }));
 }
 
+function buildEvidenceRequestContract(args) {
+  const liveReadRequested = args.mode === "live_read";
+  return {
+    mode: args.mode,
+    labels: EVIDENCE_SOURCE_LABELS,
+    read_only_by_design: true,
+    live_read_enabled: false,
+    requires_existing_run_id: liveReadRequested,
+    requested_run_id: args.runId || null,
+    missing_evidence_policy: {
+      missing_required_report: "FAIL",
+      missing_required_trace: args.requireTrace ? "FAIL" : "WARN",
+      stale_cached_report: "WARN",
+      infer_pass_from_absence: false,
+    },
+    professional_approval: false,
+    refusal_reason: liveReadRequested
+      ? "live-read runtime/report reads are not implemented in this dry interface"
+      : null,
+  };
+}
+
 function buildDryRunPlan(evalCase, args) {
   const bundlePath = joinBundlePath(args.scratchDir, evalCase.case_id, DRY_RUN_ID);
   assertOutsideRepo(bundlePath);
@@ -229,7 +278,9 @@ function buildDryRunPlan(evalCase, args) {
     display_language: evalCase.display_language ?? "unknown",
     target_agents: Array.isArray(evalCase.target_agents) ? evalCase.target_agents : [],
     evidence_source: "dry_run",
+    requested_evidence_source: args.mode,
     evidence_source_labels: EVIDENCE_SOURCE_LABELS,
+    evidence_request_contract: buildEvidenceRequestContract(args),
     requested_run_id: requestedRunId,
     run_id: null,
     run_status: "SKIP",
@@ -266,7 +317,9 @@ function buildDryRunPlan(evalCase, args) {
     planned_action: {
       live_pipeline_execution: false,
       supabase_reads: false,
+      llm_calls: false,
       repo_writes: false,
+      read_only_runtime_report_request: args.mode === "live_read",
       require_trace: args.requireTrace,
     },
     planned_commands: buildPlannedCommands(bundlePath),
@@ -283,7 +336,9 @@ function formatTextPlan(plan) {
     `display_language: ${plan.display_language}`,
     `target_agents: ${plan.target_agents.join(", ")}`,
     `evidence_source: ${plan.evidence_source}`,
+    `requested_evidence_source: ${plan.requested_evidence_source}`,
     `evidence_source_labels: ${Object.keys(plan.evidence_source_labels).join(", ")}`,
+    `missing_evidence_policy: report=${plan.evidence_request_contract.missing_evidence_policy.missing_required_report}, trace=${plan.evidence_request_contract.missing_evidence_policy.missing_required_trace}, infer_pass_from_absence=${plan.evidence_request_contract.missing_evidence_policy.infer_pass_from_absence}`,
     `dry_run: ${plan.dry_run}`,
     `requested_run_id: ${plan.requested_run_id}`,
     `run_id: ${plan.run_id}`,
@@ -302,10 +357,13 @@ function formatTextPlan(plan) {
     `rule_summary: checked=${plan.rule_summary.checked}, failed=${plan.rule_summary.failed}, skipped=${plan.rule_summary.skipped.length}`,
     `trace_summary: checked=${plan.trace_summary.checked}, failed=${plan.trace_summary.failed}, warnings=${plan.trace_summary.warnings.length}`,
     `run_id_contract: accepted=${plan.run_id_contract.accepted}, live_read_enabled=${plan.run_id_contract.live_read_enabled}`,
+    `read_only_runtime_report_request: ${plan.planned_action.read_only_runtime_report_request}`,
+    `professional_approval: ${plan.evidence_request_contract.professional_approval}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
     `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
     "live_pipeline_execution: false",
     "supabase_reads: false",
+    "llm_calls: false",
     "repo_writes: false",
     `require_trace: ${plan.planned_action.require_trace}`,
   ].join("\n");
@@ -332,6 +390,7 @@ function main() {
 
   try {
     validateRunIdInput(args.runId);
+    validateEvidenceModeInput(args);
   } catch (error) {
     console.error(`FAILED live eval runner: ${error.message}`);
     process.exit(2);
