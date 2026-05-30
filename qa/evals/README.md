@@ -141,6 +141,7 @@ evidence_request_contract.freshness_checked=false
 freshness_checked_at=null
 freshness_source=null
 freshness_reason=null
+freshness_required_for_release=false
 planned_action.supabase_reads=false
 planned_action.llm_calls=false
 planned_action.repo_writes=false
@@ -172,6 +173,11 @@ The dry interface also keeps `freshness_checked_at=null`,
 future live-read output able to separate "freshness has not been assessed" from
 "freshness was assessed and the evidence is current or stale", and later explain
 why evidence was labelled `unknown`, `stale`, or `current`.
+
+`freshness_required_for_release=false` makes the dry interface explicit: this
+planned evidence cannot be used as release proof. A later live-read sprint must
+set freshness requirements and evaluate them against real read-only evidence
+before release gates may consume freshness as proof.
 
 ## Case format
 
