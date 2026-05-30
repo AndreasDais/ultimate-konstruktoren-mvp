@@ -40,6 +40,7 @@ function parseArgs(argv) {
     mode: "dry_run",
     requireTrace: false,
     json: false,
+    checkLiveReadContract: false,
     help: false,
   };
 
@@ -53,6 +54,11 @@ function parseArgs(argv) {
 
     if (token === "--json") {
       args.json = true;
+      continue;
+    }
+
+    if (token === "--check-live-read-contract") {
+      args.checkLiveReadContract = true;
       continue;
     }
 
@@ -163,6 +169,7 @@ Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --scratch-dir /tmp/pilar-live-eval
   node scripts/run-eval-case-live.mjs --case-id <id> --run-id <id> --json
   node scripts/run-eval-case-live.mjs --case-id <id> --json
+  node scripts/run-eval-case-live.mjs --check-live-read-contract
 
 Options:
   --cases <path>        Eval case JSONL path. Defaults to qa/evals/pilar-core-evals.jsonl.
@@ -289,6 +296,7 @@ function buildDryRunPlan(evalCase, args) {
     bundle_status_taxonomy: BUNDLE_STATUS_TAXONOMY,
     dry_run: true,
     manual_review_required: manualReviewRequired,
+    professional_approval: false,
     artifact_bundle: {
       path: bundlePath,
       files: BUNDLE_FILES,
@@ -354,11 +362,11 @@ function formatTextPlan(plan) {
     `manifest_cases_path: ${plan.manifest_preview.source.cases_path}`,
     `manifest_runner: ${plan.manifest_preview.source.runner}`,
     `manual_review_required: ${plan.manual_review_required}`,
+    `professional_approval: ${plan.professional_approval}`,
     `rule_summary: checked=${plan.rule_summary.checked}, failed=${plan.rule_summary.failed}, skipped=${plan.rule_summary.skipped.length}`,
     `trace_summary: checked=${plan.trace_summary.checked}, failed=${plan.trace_summary.failed}, warnings=${plan.trace_summary.warnings.length}`,
     `run_id_contract: accepted=${plan.run_id_contract.accepted}, live_read_enabled=${plan.run_id_contract.live_read_enabled}`,
     `read_only_runtime_report_request: ${plan.planned_action.read_only_runtime_report_request}`,
-    `professional_approval: ${plan.evidence_request_contract.professional_approval}`,
     `grade_command: ${plan.planned_commands.grade_bundle}`,
     `grade_json_command: ${plan.planned_commands.grade_bundle_json}`,
     "live_pipeline_execution: false",
@@ -367,6 +375,71 @@ function formatTextPlan(plan) {
     "repo_writes: false",
     `require_trace: ${plan.planned_action.require_trace}`,
   ].join("\n");
+}
+
+function assertContract(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+function buildContractCheckArgs(overrides = {}) {
+  return {
+    casesPath: DEFAULT_CASES,
+    caseId: "pilar_eval_prompt_leakage_uk_en_012",
+    runId: "eval-contract-check-68A32",
+    scratchDir: DEFAULT_SCRATCH_DIR,
+    dryRun: true,
+    mode: "live_read",
+    requireTrace: false,
+    json: true,
+    checkLiveReadContract: false,
+    help: false,
+    ...overrides,
+  };
+}
+
+function runLiveReadContractCheck() {
+  let refusedWithoutRunId = false;
+  try {
+    validateEvidenceModeInput(buildContractCheckArgs({ runId: "" }));
+  } catch (error) {
+    refusedWithoutRunId = error.message.includes("--run-id");
+  }
+  assertContract(refusedWithoutRunId, "--mode live_read must refuse when --run-id is missing");
+
+  const cases = readJsonl(DEFAULT_CASES);
+  const evalCase = cases.find((candidate) => candidate.case_id === "pilar_eval_prompt_leakage_uk_en_012");
+  assertContract(Boolean(evalCase), "contract check case is missing from qa/evals/pilar-core-evals.jsonl");
+
+  const plan = buildDryRunPlan(evalCase, buildContractCheckArgs());
+  assertContract(plan.evidence_source === "dry_run", "live_read plan must remain dry_run evidence");
+  assertContract(plan.requested_evidence_source === "live_read", "live_read request mode must be visible");
+  assertContract(plan.evidence_request_contract.live_read_enabled === false, "live_read must not be enabled yet");
+  assertContract(plan.planned_action.supabase_reads === false, "live_read dry interface must not read Supabase");
+  assertContract(plan.planned_action.llm_calls === false, "live_read dry interface must not call LLMs");
+  assertContract(plan.planned_action.repo_writes === false, "live_read dry interface must not write repo artifacts");
+  assertContract(plan.professional_approval === false, "live_read evidence must not imply professional approval");
+  assertContract(
+    plan.evidence_request_contract.missing_evidence_policy.missing_required_report === "FAIL",
+    "missing required report evidence must be FAIL"
+  );
+  assertContract(
+    plan.evidence_request_contract.missing_evidence_policy.missing_required_trace === "WARN",
+    "missing trace evidence must be WARN by default"
+  );
+  assertContract(
+    plan.evidence_request_contract.missing_evidence_policy.infer_pass_from_absence === false,
+    "missing evidence must not infer PASS"
+  );
+
+  const traceRequiredPlan = buildDryRunPlan(evalCase, buildContractCheckArgs({ requireTrace: true }));
+  assertContract(
+    traceRequiredPlan.evidence_request_contract.missing_evidence_policy.missing_required_trace === "FAIL",
+    "missing trace evidence must be FAIL when --require-trace is set"
+  );
+
+  console.log("OK live_read contract: refusal and dry plan-shape locked");
 }
 
 function main() {
@@ -380,6 +453,16 @@ function main() {
 
   if (args.help) {
     printHelp();
+    return;
+  }
+
+  if (args.checkLiveReadContract) {
+    try {
+      runLiveReadContractCheck();
+    } catch (error) {
+      console.error(`FAILED live_read contract: ${error.message}`);
+      process.exit(1);
+    }
     return;
   }
 
