@@ -118,6 +118,37 @@ approved a real report. See
 `sources/agent-research/eval/DRY_RUN_LIVE_SEPARATION_AUDIT.md` for the field
 differences required before future live proof can be consumed.
 
+## Live-read contract preflight
+
+Before changing the live-read dry interface, run the Eval-lane preflight:
+
+```bash
+node scripts/run-eval-case-live.mjs --check-live-read-contract
+```
+
+This is a non-writing check. It is intentionally not part of `agent:all`, and
+it must not be added to `package.json` until a later coordination sprint says
+so. The preflight only locks the current refusal and plan-shape contract:
+
+```txt
+--mode live_read without --run-id refuses
+evidence_source=dry_run
+requested_evidence_source=live_read
+evidence_request_contract.live_read_enabled=false
+planned_action.supabase_reads=false
+planned_action.llm_calls=false
+planned_action.repo_writes=false
+professional_approval=false
+missing_required_report=FAIL
+missing_required_trace=WARN by default
+missing_required_trace=FAIL with --require-trace
+```
+
+Passing this preflight does not read Supabase, call an LLM, execute the PILAR
+pipeline, write artifact files, or prove professional engineering approval. It
+only proves that the current CLI still refuses unsupported live-read proof and
+keeps live-read requests in dry-run planning mode.
+
 ## Case format
 
 Each line in `pilar-core-evals.jsonl` is one JSON object.
