@@ -28,6 +28,7 @@ import { PageStripe } from "./_components/PageStripe";
 import { ChapterHeading } from "./_components/ChapterHeading";
 import { ForebelStripe } from "./_components/ForebelStripe";
 import { FormulaStack } from "./_components/FormulaStack";
+import { StepExplain } from "./_components/StepExplain";
 import { OrdlisteFlyt } from "./_components/OrdlisteFlyt";
 import {
   getDimensjonerandeKeys,
@@ -1635,6 +1636,13 @@ export default function RapportPage() {
                                       {step.prose}
                                     </pre>
                                   </details>
+                                  <StepExplain
+                                    runId={runId}
+                                    stepKey={`step-${i}`}
+                                    stepLabel={step.title}
+                                    stepContext={step.prose}
+                                    displayLanguage={reportDisplayLanguage}
+                                  />
                                 </>
                               ) : (
                                 <pre className="rapport-step-row__text">
