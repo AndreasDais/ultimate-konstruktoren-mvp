@@ -13,6 +13,17 @@ function issue(
   return { severity, code, path, message };
 }
 
+function hasProfessionalReviewDisclaimer(model: ReportModel): boolean {
+  const text = model.disclaimer.trim();
+  const displayLanguage = model.meta.displayLanguage ?? model.meta.locale;
+
+  if (displayLanguage === "en") {
+    return /\b(qualified professional|professional review|responsible engineer|must be verified before use)\b/i.test(text);
+  }
+
+  return /\b(fagperson|ansvarlig prosjekterende|ansvarleg prosjekterande|kontrolleres|kontrollerast)\b/i.test(text);
+}
+
 export function validateReportModel(model: ReportModel): ReportValidationResult {
   const issues: ReportValidationIssue[] = [];
 
@@ -48,6 +59,8 @@ export function validateReportModel(model: ReportModel): ReportValidationResult 
   }
   if (isBlank(model.disclaimer)) {
     issues.push(issue("error", "missing_disclaimer", "disclaimer", "Rapporten manglar AI-/fagpersonforbehold."));
+  } else if (!hasProfessionalReviewDisclaimer(model)) {
+    issues.push(issue("error", "missing_professional_review_disclaimer", "disclaimer", "Rapporten manglar tydeleg fagpersonforbehold."));
   }
 
   const errors = issues.filter((i) => i.severity === "error");
