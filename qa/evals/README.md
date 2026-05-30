@@ -142,6 +142,7 @@ freshness_checked_at=null
 freshness_source=null
 freshness_reason=null
 freshness_required_for_release=false
+release_proof_status=not_available
 planned_action.supabase_reads=false
 planned_action.llm_calls=false
 planned_action.repo_writes=false
@@ -178,6 +179,10 @@ why evidence was labelled `unknown`, `stale`, or `current`.
 planned evidence cannot be used as release proof. A later live-read sprint must
 set freshness requirements and evaluate them against real read-only evidence
 before release gates may consume freshness as proof.
+
+`release_proof_status=not_available` is the machine-readable release guard for
+the dry interface. It must remain `not_available` until Eval consumes real
+read-only evidence that satisfies a later release-proof contract.
 
 ## Case format
 
