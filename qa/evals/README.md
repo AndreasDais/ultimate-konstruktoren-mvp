@@ -143,6 +143,7 @@ freshness_source=null
 freshness_reason=null
 freshness_required_for_release=false
 release_proof_status=not_available
+release_proof_reason=dry_interface_only
 planned_action.supabase_reads=false
 planned_action.llm_calls=false
 planned_action.repo_writes=false
@@ -183,6 +184,8 @@ before release gates may consume freshness as proof.
 `release_proof_status=not_available` is the machine-readable release guard for
 the dry interface. It must remain `not_available` until Eval consumes real
 read-only evidence that satisfies a later release-proof contract.
+`release_proof_reason=dry_interface_only` is the matching machine-readable
+reason.
 
 ## Case format
 
