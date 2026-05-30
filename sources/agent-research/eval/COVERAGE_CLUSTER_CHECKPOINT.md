@@ -1,0 +1,59 @@
+# Eval Coverage Cluster Checkpoint
+
+**Status:** 68A.30 checkpoint  
+**Lane:** Chat A / Eval  
+**Runtime impact:** None  
+
+This checkpoint summarizes the current Eval coverage clusters before adding
+more cases or live-read adapters. It is planning evidence only. It does not
+call LLMs, read Supabase, run `/api/explain`, refresh generated reports, or
+prove professional engineering approval.
+
+## Current clusters
+
+| Cluster | Eval-owned anchor | Current evidence state | Still missing before live proof |
+|---|---|---|---|
+| Approval language | `qa/evals/EVAL_RISK_BACKLOG.md` | Backlog cluster exists for final-approval wording regressions. | Dedicated cases across report/export surfaces and live evidence that disclaimers are present without final approval. |
+| Blocked fields | `qa/evals/EVAL_RISK_BACKLOG.md`, `BLOCKED_FIELD_EVIDENCE_EXPECTATION.md` | Backlog cluster and evidence contract exist. | Live-read evidence with machine-readable `blocked_fields` and canonical report text proving blocked values stayed blocked. |
+| Report parity | `qa/evals/EVAL_RISK_BACKLOG.md` | Backlog cluster exists for web/full report, Word-oriented text, and PDF/print text parity. | Artifact bundle files such as `web-report-text.txt`, `word-export-text.txt`, `pdf-print-text.txt`, or `artifact-parity-summary.json`. |
+| Agent errors | `qa/evals/EVAL_RISK_BACKLOG.md`, `ERROR_CATEGORY_EXPECTATION.md` | Backlog cluster exists as of `eef30e4` for safe bounded error categories and redacted diagnostics. | Failed-agent fixture or live-read evidence proving `error_category`, public summary, retryability, and raw-error redaction. |
+
+## Runtime and Ops evidence now visible to Eval
+
+Recent Runtime work gives Eval better integration targets:
+
+- `8d04837` added a safe explain route.
+- `af53f3b` covered the explain route trust boundary.
+- `58e8f54` added report parity source bundle evidence.
+
+Recent Ops work gives Eval release-consumer context:
+
+- `875e93b` documents release evidence semantics.
+- `10088f5` documents follow-up release semantics.
+
+Eval should treat this as integration context, not as live Eval proof. The
+Eval lane still needs its own fixture, cached-report, or live-read evidence
+before claiming a case passed.
+
+## Evidence-source boundary
+
+Eval outputs must keep these evidence sources distinct:
+
+| Evidence source | Meaning | May prove |
+|---|---|---|
+| `dry_run` | Runner planning output only; no files written and no runtime read. | CLI safety, planned bundle shape, refusal semantics. |
+| `fixture` | Local static fixture evidence. | Deterministic grading behavior against known text or metadata. |
+| `cached_report` | Previously captured report evidence with unknown or explicit freshness. | Historical artifact behavior only; not proof of new runtime changes. |
+| `live_read` | Read-only evidence from an existing PILAR run once Runtime exposes a safe path. | Runtime/report trace behavior for that specific run, if scoped and redacted. |
+
+No evidence source is professional engineering approval. Manual review remains
+required whenever the eval case or report risk requires it.
+
+## Next checkpoint target
+
+Before moving from planning clusters to live proof, Eval should either:
+
+1. add deterministic eval cases for one cluster, or
+2. add fixture-only adapter tests that prove missing/error/blocked evidence is
+   classified safely without Supabase, LLM calls, repo artifact writes, or
+   live pipeline execution.

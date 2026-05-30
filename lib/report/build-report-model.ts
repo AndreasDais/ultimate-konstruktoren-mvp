@@ -328,9 +328,16 @@ export function buildComparisonRowsFromResults(
 }
 
 function buildComparisonRows(data: UpstreamReportData, displayLanguage: PilarDisplayLanguage): ComparisonRow[] {
+  const resultsA = isBlockedOutput(data, "results_a")
+    ? {}
+    : data.agentA.structured_output.results ?? {};
+  const resultsB = isBlockedOutput(data, "results_b")
+    ? {}
+    : data.agentB.structured_output.results ?? {};
+
   return buildComparisonRowsFromResults(
-    data.agentA.structured_output.results ?? {},
-    data.agentB.structured_output.results ?? {},
+    resultsA,
+    resultsB,
     displayLanguage,
   );
 }
@@ -566,7 +573,9 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     },
     calculation: {
       resultRows,
-      steps: (primary.structured_output.calculation_steps ?? []).map(normalizeCalculationStep).map((step) => ({ ...step, title: localizeGeneratedEngineeringText(step.title, displayLanguage), prose: localizeGeneratedEngineeringText(step.prose, displayLanguage) })),
+      steps: isBlockedOutput(data, "calculation_steps_a")
+        ? []
+        : (primary.structured_output.calculation_steps ?? []).map(normalizeCalculationStep).map((step) => ({ ...step, title: localizeGeneratedEngineeringText(step.title, displayLanguage), prose: localizeGeneratedEngineeringText(step.prose, displayLanguage) })),
     },
     assessment: {
       professionalAssessment: polishForDisplay(localizeGeneratedEngineeringText(reportText(cleanReportText(data.report.technical_assessment), displayLanguage), displayLanguage), displayLanguage),

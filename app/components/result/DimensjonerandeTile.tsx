@@ -26,34 +26,125 @@ import {
 } from "@/lib/result/tile-heuristics";
 import { CountUp } from "./CountUp";
 
+// Klient-side session-cache for lazy /api/explain-forklaringar (udekte nøklar),
+// keya på runId:key så same nøkkel ikkje hentar to gonger i same økt.
+const explainClientCache = new Map<string, string>();
+
+// Lazy-forklaring UI-tekst (loading + nettverksfeil). Sjølve forklaringa og
+// degrade-meldinga ved route-feil kjem lokalisert frå /api/explain-responsen.
+const EXPLAIN_UI_TEXT: Record<
+  PilarDisplayLanguage,
+  { loading: string; failed: string; unavailable: string }
+> = {
+  nb: {
+    loading: "Forklarer …",
+    failed: "Kunne ikke hente forklaring akkurat nå. La en fagperson vurdere verdien.",
+    unavailable: "Forklaring er ikke tilgjengelig her.",
+  },
+  nn: {
+    loading: "Forklarer …",
+    failed: "Klarte ikkje hente forklaring akkurat no. La ein fagperson vurdere verdien.",
+    unavailable: "Forklaring er ikkje tilgjengeleg her.",
+  },
+  en: {
+    loading: "Explaining …",
+    failed: "Could not load an explanation right now. Have a qualified professional review the value.",
+    unavailable: "No explanation available here.",
+  },
+};
+
 export function DimensjonerandeTile({
   k,
   value,
   isStyrande,
   span,
   displayLanguage,
+  runId,
 }: {
   k: string;
   value: string;
   isStyrande: boolean;
   span: number;
   displayLanguage: PilarDisplayLanguage;
+  runId?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [fetched, setFetched] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const { number, unit } = splitNumberUnit(value);
   const description = tileDescription(k, displayLanguage);
-  const isClickable = !!description;
+
+  // Katalog-dekt nøkkel → instant forklaring utan fetch (treng ikkje runId).
+  // Udekt nøkkel → lazy /api/explain på klikk, men BERRE når ekte runId finst,
+  // så server-cache (run_id:key) ikkje gir stale forklaring på tvers av
+  // berekningar. Utan runId: mild degrade, ingen fetch.
+  const covered = !!description;
+  const canFetch = !covered && !!runId;
+
+  async function loadExplanation() {
+    if (!runId) return;
+    const cacheKey = `${runId}:${k}`;
+    const hit = explainClientCache.get(cacheKey);
+    if (hit !== undefined) {
+      setFetched(hit);
+      return;
+    }
+    if (fetched !== null || loading) return;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ run_id: runId, key: k, value, displayLanguage }),
+      });
+      const data = (await res.json()) as { explanation?: unknown };
+      const explanation =
+        typeof data.explanation === "string" ? data.explanation.trim() : "";
+      if (explanation) {
+        explainClientCache.set(cacheKey, explanation);
+        setFetched(explanation);
+      } else {
+        setFailed(true);
+      }
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleClick() {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && canFetch) {
+      void loadExplanation();
+    }
+  }
+
+  // Utvida-tekst: katalog → description (instant, treng ikkje runId).
+  // Udekt utan runId → "utilgjengeleg" (ingen fetch). Udekt med runId →
+  // loading/fetched/failed.
+  const expandedBody = covered
+    ? description
+    : !runId
+      ? EXPLAIN_UI_TEXT[displayLanguage].unavailable
+      : loading
+        ? EXPLAIN_UI_TEXT[displayLanguage].loading
+        : fetched !== null
+          ? fetched
+          : failed
+            ? EXPLAIN_UI_TEXT[displayLanguage].failed
+            : EXPLAIN_UI_TEXT[displayLanguage].loading;
 
   return (
     <button
       type="button"
-      onClick={isClickable ? () => setExpanded(!expanded) : undefined}
-      aria-expanded={isClickable ? expanded : undefined}
-      className={
-        isClickable
-          ? `pilar-tile-clickable${isStyrande ? " pilar-tile-dark" : ""}`
-          : undefined
-      }
+      onClick={handleClick}
+      aria-expanded={expanded}
+      aria-busy={loading || undefined}
+      className={`pilar-tile-clickable${isStyrande ? " pilar-tile-dark" : ""}`}
       style={{
         // Reset browser button-defaults
         appearance: "none",
@@ -70,7 +161,7 @@ export function DimensjonerandeTile({
         display: "flex",
         flexDirection: "column",
         gap: 8,
-        cursor: isClickable ? "pointer" : "default",
+        cursor: "pointer",
         // transition er flytta til .pilar-tile-clickable-klassen så hover
         // sin transform/box-shadow får same easing-kurve som padding-overgangen
       }}
@@ -127,7 +218,7 @@ export function DimensjonerandeTile({
           </span>
         )}
       </div>
-      {expanded && description && (
+      {expanded && (
         <p
           style={{
             margin: "4px 0 0",
@@ -139,7 +230,7 @@ export function DimensjonerandeTile({
             fontFamily: "inherit",
           }}
         >
-          {description}
+          {expandedBody}
         </p>
       )}
     </button>
@@ -167,11 +258,13 @@ export function DimensjonerandeTiles({
   calculationType,
   displayLanguage,
   resultRoles,
+  runId,
 }: {
   results: Record<string, string>;
   calculationType: string | null;
   displayLanguage: PilarDisplayLanguage;
   resultRoles?: Record<string, string> | null;
+  runId?: string | null;
 }) {
   const keys = getDimensjonerandeKeys(results, calculationType, resultRoles);
   if (keys.length === 0) return null;
@@ -214,6 +307,7 @@ export function DimensjonerandeTiles({
           isStyrande={i === 0}
           span={spanForIndex(i, keys.length)}
           displayLanguage={displayLanguage}
+          runId={runId}
         />
       ))}
     </div>

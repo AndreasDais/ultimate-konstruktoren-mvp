@@ -75,6 +75,27 @@ UI scraping. Until future bundles include `web-report-text.txt`,
 single dry-run or offline text artifact can prove the grader boundary, but it
 cannot prove web, Word, and PDF parity by itself.
 
+## Agent-error eval cluster
+
+This cluster catches regressions where agent/runtime failures are exposed as
+raw provider text, stack traces, secrets, or vague success instead of bounded,
+safe error evidence.
+
+| Layer | Existing anchor | Needed next coverage |
+|---|---|---|
+| Error category contract | `sources/agent-research/eval/ERROR_CATEGORY_EXPECTATION.md` | Convert one failed-agent fixture or bundle into a case that expects bounded `error_category` values such as `quota`, `auth`, `transient`, `validation`, `unsupported_context`, `blocked`, `model_output`, `internal`, or `unknown`. |
+| Trace redaction | `sources/agent-research/eval/TRACE_ASSERTION_INVENTORY.md` | Assert that raw provider payloads, prompts, stack traces, service-role data, and secrets are absent from trace evidence. |
+| Explain/report evidence | Runtime commits `8d04837` and `af53f3b` | Treat `/api/explain` output as safe diagnostic evidence only, not final professional approval or live report proof. |
+| Ops handoff | Ops commits `875e93b` and `10088f5` | Keep release semantics aligned: missing/stale/error evidence should block or warn without exposing raw provider detail. |
+
+Agent-error cases should use positive markers for a safe public summary and a
+bounded category, and `must_not_include` for raw provider names when they appear
+as payloads, local file paths, stack frames, service keys, access tokens,
+hidden prompts, or final-approval language. Dry-run output remains planning
+evidence only. A dry-run may prove that the eval runner refuses live proof
+safely, but it cannot prove that a real agent error was categorized or redacted
+until future live-read evidence is available.
+
 ## P0 candidates
 
 ### Blocked fields must not leak
