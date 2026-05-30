@@ -258,6 +258,7 @@ function buildEvidenceRequestContract(args) {
     freshness_source: null,
     freshness_reason: null,
     freshness_required_for_release: false,
+    release_proof_status: "not_available",
     missing_evidence_policy: {
       missing_required_report: "FAIL",
       missing_required_trace: args.requireTrace ? "FAIL" : "WARN",
@@ -305,6 +306,7 @@ function buildDryRunPlan(evalCase, args) {
     freshness_source: null,
     freshness_reason: null,
     freshness_required_for_release: false,
+    release_proof_status: "not_available",
     evidence_request_contract: buildEvidenceRequestContract(args),
     requested_run_id: requestedRunId,
     run_id: null,
@@ -370,6 +372,7 @@ function formatTextPlan(plan) {
     `freshness_source: ${plan.freshness_source}`,
     `freshness_reason: ${plan.freshness_reason}`,
     `freshness_required_for_release: ${plan.freshness_required_for_release}`,
+    `release_proof_status: ${plan.release_proof_status}`,
     `missing_evidence_policy: report=${plan.evidence_request_contract.missing_evidence_policy.missing_required_report}, trace=${plan.evidence_request_contract.missing_evidence_policy.missing_required_trace}, infer_pass_from_absence=${plan.evidence_request_contract.missing_evidence_policy.infer_pass_from_absence}`,
     `dry_run: ${plan.dry_run}`,
     `requested_run_id: ${plan.requested_run_id}`,
@@ -456,6 +459,10 @@ function runLiveReadContractCheck() {
     "dry interface must not require freshness for release proof"
   );
   assertContract(
+    plan.release_proof_status === "not_available",
+    "dry interface must mark release proof as not_available"
+  );
+  assertContract(
     plan.evidence_request_contract.freshness_checked_at === null,
     "contract must not set freshness_checked_at in dry mode"
   );
@@ -470,6 +477,10 @@ function runLiveReadContractCheck() {
   assertContract(
     plan.evidence_request_contract.freshness_required_for_release === false,
     "contract must not treat dry freshness as release proof"
+  );
+  assertContract(
+    plan.evidence_request_contract.release_proof_status === "not_available",
+    "contract must mark release proof as not_available in dry mode"
   );
   assertContract(plan.evidence_request_contract.live_read_enabled === false, "live_read must not be enabled yet");
   assertContract(plan.planned_action.supabase_reads === false, "live_read dry interface must not read Supabase");
