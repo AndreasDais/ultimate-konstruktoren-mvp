@@ -49,6 +49,32 @@ Eval outputs must keep these evidence sources distinct:
 No evidence source is professional engineering approval. Manual review remains
 required whenever the eval case or report risk requires it.
 
+## Live-read dry-interface closeout
+
+Sprints 68A.31-68A.39 closed the dry-interface metadata cluster for future
+`live_read` evidence. This is plan-shape evidence only, not live-read proof.
+
+Delivered:
+
+| Sprint | Delivered Eval-owned contract |
+|---|---|
+| 68A.31-68A.33 | `--mode live_read` dry interface, required `--run-id`, and `--check-live-read-contract` preflight. |
+| 68A.34 | Planned freshness labels: `current`, `stale`, and `unknown`. |
+| 68A.35 | `freshness_checked_at=null` and `freshness_source=null` placeholders. |
+| 68A.36 | `freshness_reason=null` placeholder. |
+| 68A.37 | `freshness_required_for_release=false` release-proof guard. |
+| 68A.38 | `release_proof_status="not_available"` placeholder. |
+| 68A.39 | `release_proof_reason="dry_interface_only"` placeholder. |
+
+The dry interface still does not read Supabase, call LLMs, execute the PILAR
+pipeline, or write repo/artifact bundles. It keeps
+`professional_approval=false`, and its output cannot be used as release proof.
+
+Stop adding placeholder fields unless a concrete consumer needs one. The next
+real step should be designing a safe read-only `live_read` adapter: ownership
+checks, redacted runtime/report evidence shape, missing-evidence classification,
+and explicit freshness assessment against an existing run.
+
 ## Next checkpoint target
 
 Before moving from planning clusters to live proof, Eval should either:
