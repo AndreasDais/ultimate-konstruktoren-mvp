@@ -138,6 +138,8 @@ evidence_freshness=unknown
 evidence_freshness_labels=current, stale, unknown
 evidence_request_contract.live_read_enabled=false
 evidence_request_contract.freshness_checked=false
+freshness_checked_at=null
+freshness_source=null
 planned_action.supabase_reads=false
 planned_action.llm_calls=false
 planned_action.repo_writes=false
@@ -163,6 +165,11 @@ unknown = freshness has not been assessed yet
 The dry interface must keep freshness as `unknown` until a later sprint adds a
 real read-only evidence path and explicit freshness assessment. `unknown` is
 not release proof.
+
+The dry interface also keeps `freshness_checked_at=null` and
+`freshness_source=null`. These placeholders make future live-read output able to
+separate "freshness has not been assessed" from "freshness was assessed and the
+evidence is current or stale".
 
 ## Case format
 
