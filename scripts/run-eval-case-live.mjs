@@ -259,6 +259,7 @@ function buildEvidenceRequestContract(args) {
     freshness_reason: null,
     freshness_required_for_release: false,
     release_proof_status: "not_available",
+    release_proof_reason: "dry_interface_only",
     missing_evidence_policy: {
       missing_required_report: "FAIL",
       missing_required_trace: args.requireTrace ? "FAIL" : "WARN",
@@ -307,6 +308,7 @@ function buildDryRunPlan(evalCase, args) {
     freshness_reason: null,
     freshness_required_for_release: false,
     release_proof_status: "not_available",
+    release_proof_reason: "dry_interface_only",
     evidence_request_contract: buildEvidenceRequestContract(args),
     requested_run_id: requestedRunId,
     run_id: null,
@@ -373,6 +375,7 @@ function formatTextPlan(plan) {
     `freshness_reason: ${plan.freshness_reason}`,
     `freshness_required_for_release: ${plan.freshness_required_for_release}`,
     `release_proof_status: ${plan.release_proof_status}`,
+    `release_proof_reason: ${plan.release_proof_reason}`,
     `missing_evidence_policy: report=${plan.evidence_request_contract.missing_evidence_policy.missing_required_report}, trace=${plan.evidence_request_contract.missing_evidence_policy.missing_required_trace}, infer_pass_from_absence=${plan.evidence_request_contract.missing_evidence_policy.infer_pass_from_absence}`,
     `dry_run: ${plan.dry_run}`,
     `requested_run_id: ${plan.requested_run_id}`,
@@ -463,6 +466,10 @@ function runLiveReadContractCheck() {
     "dry interface must mark release proof as not_available"
   );
   assertContract(
+    plan.release_proof_reason === "dry_interface_only",
+    "dry interface must explain release proof as dry_interface_only"
+  );
+  assertContract(
     plan.evidence_request_contract.freshness_checked_at === null,
     "contract must not set freshness_checked_at in dry mode"
   );
@@ -481,6 +488,10 @@ function runLiveReadContractCheck() {
   assertContract(
     plan.evidence_request_contract.release_proof_status === "not_available",
     "contract must mark release proof as not_available in dry mode"
+  );
+  assertContract(
+    plan.evidence_request_contract.release_proof_reason === "dry_interface_only",
+    "contract must explain release proof as dry_interface_only in dry mode"
   );
   assertContract(plan.evidence_request_contract.live_read_enabled === false, "live_read must not be enabled yet");
   assertContract(plan.planned_action.supabase_reads === false, "live_read dry interface must not read Supabase");
