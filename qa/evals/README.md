@@ -134,7 +134,10 @@ so. The preflight only locks the current refusal and plan-shape contract:
 --mode live_read without --run-id refuses
 evidence_source=dry_run
 requested_evidence_source=live_read
+evidence_freshness=unknown
+evidence_freshness_labels=current, stale, unknown
 evidence_request_contract.live_read_enabled=false
+evidence_request_contract.freshness_checked=false
 planned_action.supabase_reads=false
 planned_action.llm_calls=false
 planned_action.repo_writes=false
@@ -148,6 +151,18 @@ Passing this preflight does not read Supabase, call an LLM, execute the PILAR
 pipeline, write artifact files, or prove professional engineering approval. It
 only proves that the current CLI still refuses unsupported live-read proof and
 keeps live-read requests in dry-run planning mode.
+
+Freshness labels are planned contract labels only:
+
+```txt
+current = evidence was explicitly assessed as fresh enough for the requested proof
+stale = evidence exists, but freshness is too old or unknown for release proof
+unknown = freshness has not been assessed yet
+```
+
+The dry interface must keep freshness as `unknown` until a later sprint adds a
+real read-only evidence path and explicit freshness assessment. `unknown` is
+not release proof.
 
 ## Case format
 
