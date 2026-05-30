@@ -21,6 +21,11 @@ const EVIDENCE_SOURCE_LABELS = Object.freeze({
   live_read: "read-only runtime evidence from an existing PILAR run",
 });
 const EVIDENCE_SOURCE_MODES = Object.freeze(Object.keys(EVIDENCE_SOURCE_LABELS));
+const EVIDENCE_FRESHNESS_LABELS = Object.freeze({
+  current: "evidence was explicitly assessed as fresh enough for the requested proof",
+  stale: "evidence exists, but freshness is too old or unknown for release proof",
+  unknown: "freshness has not been assessed yet",
+});
 const BUNDLE_FILES = [
   "manifest.json",
   "runrecord-summary.json",
@@ -246,6 +251,9 @@ function buildEvidenceRequestContract(args) {
     live_read_enabled: false,
     requires_existing_run_id: liveReadRequested,
     requested_run_id: args.runId || null,
+    evidence_freshness: "unknown",
+    freshness_labels: EVIDENCE_FRESHNESS_LABELS,
+    freshness_checked: false,
     missing_evidence_policy: {
       missing_required_report: "FAIL",
       missing_required_trace: args.requireTrace ? "FAIL" : "WARN",
@@ -287,6 +295,8 @@ function buildDryRunPlan(evalCase, args) {
     evidence_source: "dry_run",
     requested_evidence_source: args.mode,
     evidence_source_labels: EVIDENCE_SOURCE_LABELS,
+    evidence_freshness: "unknown",
+    evidence_freshness_labels: EVIDENCE_FRESHNESS_LABELS,
     evidence_request_contract: buildEvidenceRequestContract(args),
     requested_run_id: requestedRunId,
     run_id: null,
@@ -346,6 +356,8 @@ function formatTextPlan(plan) {
     `evidence_source: ${plan.evidence_source}`,
     `requested_evidence_source: ${plan.requested_evidence_source}`,
     `evidence_source_labels: ${Object.keys(plan.evidence_source_labels).join(", ")}`,
+    `evidence_freshness: ${plan.evidence_freshness}`,
+    `evidence_freshness_labels: ${Object.keys(plan.evidence_freshness_labels).join(", ")}`,
     `missing_evidence_policy: report=${plan.evidence_request_contract.missing_evidence_policy.missing_required_report}, trace=${plan.evidence_request_contract.missing_evidence_policy.missing_required_trace}, infer_pass_from_absence=${plan.evidence_request_contract.missing_evidence_policy.infer_pass_from_absence}`,
     `dry_run: ${plan.dry_run}`,
     `requested_run_id: ${plan.requested_run_id}`,
@@ -415,6 +427,15 @@ function runLiveReadContractCheck() {
   const plan = buildDryRunPlan(evalCase, buildContractCheckArgs());
   assertContract(plan.evidence_source === "dry_run", "live_read plan must remain dry_run evidence");
   assertContract(plan.requested_evidence_source === "live_read", "live_read request mode must be visible");
+  assertContract(plan.evidence_freshness === "unknown", "freshness must remain unknown until assessed");
+  assertContract(
+    Object.keys(plan.evidence_freshness_labels).join(",") === "current,stale,unknown",
+    "freshness labels must remain stable"
+  );
+  assertContract(
+    plan.evidence_request_contract.freshness_checked === false,
+    "freshness must not be marked checked by the dry interface"
+  );
   assertContract(plan.evidence_request_contract.live_read_enabled === false, "live_read must not be enabled yet");
   assertContract(plan.planned_action.supabase_reads === false, "live_read dry interface must not read Supabase");
   assertContract(plan.planned_action.llm_calls === false, "live_read dry interface must not call LLMs");
