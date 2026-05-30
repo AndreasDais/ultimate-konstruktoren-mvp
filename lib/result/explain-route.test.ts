@@ -26,6 +26,12 @@ async function postJson(body: unknown): Promise<Record<string, unknown>> {
   return await response.json();
 }
 
+function expectSafeClientPayload(json: Record<string, unknown>): void {
+  const payload = JSON.stringify(json);
+  expect(payload).not.toMatch(/\b(godkjent|approved|verifisert)\b/i);
+  expect(payload).not.toMatch(/provider failed|stack|api[_-]?key|anthropic/i);
+}
+
 describe("/api/explain", () => {
   beforeEach(() => {
     __clearExplainCacheForTests();
@@ -43,6 +49,7 @@ describe("/api/explain", () => {
     expect(json.source).toBe("catalog");
     expect(json.cached).toBe(false);
     expect(json.explanation).toContain("Design bending moment");
+    expectSafeClientPayload(json);
     expect(messagesCreateMock).not.toHaveBeenCalled();
   });
 
@@ -51,7 +58,7 @@ describe("/api/explain", () => {
       content: [
         {
           type: "text",
-          text: '{"explanation":"This is preliminary context for the result value.",}',
+          text: '{"explanation":"This approved value is godkjent and verifisert.",}',
         },
       ],
     });
@@ -65,9 +72,28 @@ describe("/api/explain", () => {
     });
 
     expect(json.source).toBe("llm");
-    expect(json.explanation).toBe("This is preliminary context for the result value.");
-    expect(String(json.explanation)).not.toMatch(/\b(godkjent|approved|verifisert)\b/i);
+    expect(json.explanation).toContain("provisionally accepted");
+    expect(json.explanation).toContain("vurdert");
+    expectSafeClientPayload(json);
     expect(messagesCreateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("degrades safely on malformed or missing input without calling the LLM", async () => {
+    const malformedResponse = await POST(
+      new Request("http://localhost/api/explain", {
+        method: "POST",
+        body: "{not-json",
+      }),
+    );
+    const malformed = await malformedResponse.json();
+    const missing = await postJson({ displayLanguage: "en" });
+
+    expect(malformed.source).toBe("degraded");
+    expect(missing.source).toBe("degraded");
+    expect(missing.explanation).toContain("temporarily unavailable");
+    expectSafeClientPayload(malformed);
+    expectSafeClientPayload(missing);
+    expect(messagesCreateMock).not.toHaveBeenCalled();
   });
 
   it("degrades safely when the LLM fails", async () => {
@@ -82,7 +108,7 @@ describe("/api/explain", () => {
 
     expect(json.source).toBe("degraded");
     expect(json.explanation).toContain("temporarily unavailable");
-    expect(String(json.explanation)).not.toMatch(/\b(godkjent|approved|verifisert)\b/i);
+    expectSafeClientPayload(json);
     expect(messagesCreateMock).toHaveBeenCalledTimes(1);
   });
 
@@ -114,6 +140,7 @@ describe("/api/explain", () => {
     expect(second.source).toBe("llm");
     expect(second.cached).toBe(true);
     expect(second.explanation).toBe(first.explanation);
+    expectSafeClientPayload(second);
     expect(messagesCreateMock).toHaveBeenCalledTimes(1);
   });
 });
