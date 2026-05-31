@@ -242,6 +242,149 @@ function buildPlannedFileInventory() {
   }));
 }
 
+function isPlainRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function cleanText(value) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function uniqueValues(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function stopConditionStatus(condition, args) {
+  if (condition === "missing_run_id" || condition === "malformed_run_id" || condition === "run_not_found") {
+    return "MISSING";
+  }
+  if (
+    condition === "eval_case_mismatch" ||
+    condition === "report_row_missing" ||
+    condition === "report_claimed_but_empty" ||
+    condition === "unsafe_trace_payload" ||
+    condition === "professional_approval_implication"
+  ) {
+    return "FAIL";
+  }
+  if (condition === "completed_run_missing_terminal_trace") {
+    return args.requireTrace ? "FAIL" : "WARN";
+  }
+  if (condition === "failed_step_missing_error_category") {
+    return args.requireTrace ? "FAIL" : "WARN";
+  }
+  return "WARN";
+}
+
+function highestDiagnosticStatus({ failures, missing, warnings }) {
+  if (failures.length > 0) return "FAIL";
+  if (missing.length > 0) return "MISSING";
+  if (warnings.length > 0) return "WARN";
+  return "READY";
+}
+
+function bundleStatusFromDiagnosticStatus(status) {
+  if (status === "FAIL") return "FAIL";
+  if (status === "MISSING") return "MISSING";
+  return "READY";
+}
+
+function mapDiagnosticLiveReadEvidenceToEvalOutput(runtimeEvidence, args = {}) {
+  const requireTrace = Boolean(args.requireTrace);
+  const evidence = isPlainRecord(runtimeEvidence) ? runtimeEvidence : {};
+  const stopConditions = Array.isArray(evidence.stop_conditions)
+    ? uniqueValues(evidence.stop_conditions.map((condition) => cleanText(condition)))
+    : [];
+  const runSummary = isPlainRecord(evidence.run_summary) ? evidence.run_summary : {};
+  const reportEvidence = isPlainRecord(evidence.report_evidence) ? evidence.report_evidence : null;
+  const runtimeTraceSummary = isPlainRecord(evidence.trace_summary) ? evidence.trace_summary : null;
+  const traceSteps = Array.isArray(runtimeTraceSummary?.steps) ? runtimeTraceSummary.steps : [];
+  const failures = [];
+  const missing = [];
+  const warnings = [];
+
+  if (!isPlainRecord(runtimeEvidence)) {
+    missing.push("runtime_evidence_missing");
+  }
+
+  for (const condition of stopConditions) {
+    const status = stopConditionStatus(condition, { requireTrace });
+    if (status === "FAIL") failures.push(condition);
+    else if (status === "MISSING") missing.push(condition);
+    else warnings.push(condition);
+  }
+
+  if (!cleanText(runSummary.requested_run_id) && !cleanText(runSummary.run_id)) {
+    missing.push("missing_run_id");
+  }
+
+  if (!reportEvidence) {
+    missing.push("report_evidence_missing");
+  } else if (reportEvidence.has_report === true && !cleanText(reportEvidence.report_text)) {
+    failures.push("report_claimed_but_empty");
+  }
+
+  if (!runtimeTraceSummary || traceSteps.length === 0) {
+    const traceStatus = requireTrace ? "FAIL" : "WARN";
+    if (traceStatus === "FAIL") failures.push("trace_summary_missing");
+    else warnings.push("trace_summary_missing");
+  }
+
+  const diagnosticStatus = highestDiagnosticStatus({
+    failures,
+    missing,
+    warnings,
+  });
+
+  return {
+    evidence_source: "live_read",
+    requested_evidence_source: "live_read",
+    diagnostic_only: true,
+    diagnostic_status: diagnosticStatus,
+    bundle_status: bundleStatusFromDiagnosticStatus(diagnosticStatus),
+    bundle_status_taxonomy: BUNDLE_STATUS_TAXONOMY,
+    dry_run: false,
+    professional_approval: false,
+    release_proof_status: "not_available",
+    release_proof_reason: "diagnostic_live_read_only",
+    runtime_release_proof_status: cleanText(evidence.release_proof_status),
+    runtime_release_proof_reason: cleanText(evidence.release_proof_reason),
+    freshness_required_for_release: false,
+    requested_run_id: cleanText(runSummary.requested_run_id) ?? cleanText(args.runId),
+    run_id: cleanText(runSummary.run_id),
+    run_status: cleanText(runSummary.run_status),
+    eval_case_id: cleanText(runSummary.eval_case_id),
+    runtime_stop_conditions: stopConditions,
+    diagnostic_summary: {
+      failures: uniqueValues(failures),
+      missing: uniqueValues(missing),
+      warnings: uniqueValues(warnings),
+      infer_pass_from_absence: false,
+    },
+    report_evidence_summary: {
+      has_report: reportEvidence?.has_report === true,
+      report_id: cleanText(reportEvidence?.report_id),
+      report_locale: cleanText(reportEvidence?.report_locale),
+      report_text_present: Boolean(cleanText(reportEvidence?.report_text)),
+      disclaimer_present: reportEvidence?.disclaimer_present === true,
+      blocked_fields_count: Array.isArray(reportEvidence?.blocked_fields) ? reportEvidence.blocked_fields.length : 0,
+    },
+    trace_summary: {
+      checked: traceSteps.length,
+      failed: uniqueValues(failures.filter((failure) => failure.includes("trace") || failure.includes("step"))).length,
+      warnings: uniqueValues(warnings.filter((warning) => warning.includes("trace") || warning.includes("step"))),
+    },
+    planned_action: {
+      live_pipeline_execution: false,
+      supabase_reads: false,
+      llm_calls: false,
+      repo_writes: false,
+      read_only_runtime_report_request: true,
+      require_trace: requireTrace,
+    },
+  };
+}
+
 function buildEvidenceRequestContract(args) {
   const liveReadRequested = args.mode === "live_read";
   return {
@@ -429,6 +572,149 @@ function buildContractCheckArgs(overrides = {}) {
   };
 }
 
+function diagnosticRuntimeEvidenceFixture(overrides = {}) {
+  return {
+    evidence_source: "live_read",
+    live_read_enabled: true,
+    professional_approval: false,
+    run_summary: {
+      requested_run_id: "eval-contract-check-68A41",
+      run_id: "eval-contract-check-68A41",
+      eval_case_id: "pilar_eval_prompt_leakage_uk_en_012",
+      run_status: "completed",
+    },
+    report_evidence: {
+      has_report: true,
+      report_id: "report-68A41",
+      report_locale: "en",
+      report_text: "Calculation note. Must be reviewed by a qualified professional before use.",
+      disclaimer_present: true,
+      blocked_fields: [],
+    },
+    trace_summary: {
+      steps: [
+        {
+          step_id: "step-1",
+          step_name: "rapportor",
+          status: "completed",
+          error_category: null,
+          redaction_ok: true,
+        },
+      ],
+      terminal_step_count: 1,
+      unsafe_trace_payload: false,
+    },
+    release_proof_status: "FAIL",
+    release_proof_reason: "diagnostic_live_read_only",
+    stop_conditions: [],
+    ...overrides,
+  };
+}
+
+function runDiagnosticMapperContractCheck() {
+  const baseArgs = buildContractCheckArgs();
+  const ready = mapDiagnosticLiveReadEvidenceToEvalOutput(diagnosticRuntimeEvidenceFixture(), baseArgs);
+  assertContract(ready.evidence_source === "live_read", "diagnostic mapper must preserve live_read evidence_source");
+  assertContract(
+    ready.requested_evidence_source === "live_read",
+    "diagnostic mapper must preserve requested live_read source"
+  );
+  assertContract(ready.diagnostic_only === true, "diagnostic mapper output must be diagnostic_only");
+  assertContract(ready.professional_approval === false, "diagnostic mapper must not imply professional approval");
+  assertContract(
+    ready.planned_action.live_pipeline_execution === false,
+    "diagnostic mapper must not imply live pipeline execution"
+  );
+  assertContract(ready.planned_action.repo_writes === false, "diagnostic mapper must not write repo artifacts");
+  assertContract(
+    ready.planned_action.supabase_reads === false,
+    "diagnostic mapper contract check must not perform Supabase reads"
+  );
+  assertContract(
+    ready.release_proof_status === "not_available",
+    "diagnostic mapper must normalize release proof to not_available"
+  );
+  assertContract(
+    ready.release_proof_reason === "diagnostic_live_read_only",
+    "diagnostic mapper must normalize release proof reason"
+  );
+  assertContract(
+    ready.runtime_release_proof_status === "FAIL",
+    "diagnostic mapper should retain Runtime's internal release-proof denial separately"
+  );
+  assertContract(
+    ready.freshness_required_for_release === false,
+    "diagnostic mapper must not require freshness for release proof"
+  );
+
+  const missingRun = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["run_not_found"],
+      run_summary: { requested_run_id: "missing-run" },
+      report_evidence: null,
+      trace_summary: null,
+    }),
+    baseArgs
+  );
+  assertContract(missingRun.diagnostic_status === "MISSING", "run_not_found must map to MISSING");
+  assertContract(missingRun.bundle_status === "MISSING", "missing diagnostic evidence must not look READY");
+
+  const mismatch = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({ stop_conditions: ["eval_case_mismatch"] }),
+    baseArgs
+  );
+  assertContract(mismatch.diagnostic_status === "FAIL", "eval_case_mismatch must map to FAIL");
+
+  const traceWarn = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["completed_run_missing_terminal_trace"],
+      trace_summary: { steps: [] },
+    }),
+    baseArgs
+  );
+  assertContract(traceWarn.diagnostic_status === "WARN", "missing trace must WARN by default");
+  assertContract(traceWarn.bundle_status === "READY", "non-required trace warnings may leave bundle READY");
+
+  const traceFail = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["completed_run_missing_terminal_trace"],
+      trace_summary: { steps: [] },
+    }),
+    buildContractCheckArgs({ requireTrace: true })
+  );
+  assertContract(traceFail.diagnostic_status === "FAIL", "missing trace must FAIL when --require-trace is set");
+
+  const unsafe = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({ stop_conditions: ["unsafe_trace_payload"] }),
+    baseArgs
+  );
+  assertContract(unsafe.diagnostic_status === "FAIL", "unsafe trace payload must map to FAIL");
+
+  const approval = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({ stop_conditions: ["professional_approval_implication"] }),
+    baseArgs
+  );
+  assertContract(approval.diagnostic_status === "FAIL", "professional approval implication must map to FAIL");
+
+  const failedStep = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({ stop_conditions: ["failed_step_missing_error_category"] }),
+    baseArgs
+  );
+  assertContract(failedStep.diagnostic_status === "WARN", "missing failed-step error category must WARN by default");
+
+  const encoded = JSON.stringify([
+    ready,
+    missingRun,
+    mismatch,
+    traceWarn,
+    traceFail,
+    unsafe,
+    approval,
+    failedStep,
+  ]);
+  assertContract(!encoded.includes('"PASS"'), "diagnostic mapper must never infer PASS from absence");
+}
+
 function runLiveReadContractCheck() {
   let refusedWithoutRunId = false;
   try {
@@ -517,7 +803,9 @@ function runLiveReadContractCheck() {
     "missing trace evidence must be FAIL when --require-trace is set"
   );
 
-  console.log("OK live_read contract: refusal and dry plan-shape locked");
+  runDiagnosticMapperContractCheck();
+
+  console.log("OK live_read contract: refusal, dry plan-shape, and diagnostic mapper locked");
 }
 
 function main() {
