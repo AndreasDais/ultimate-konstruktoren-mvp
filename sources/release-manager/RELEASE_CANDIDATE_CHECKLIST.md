@@ -257,6 +257,83 @@ free-text error classification
 anything that can be read as professional approval
 ```
 
+## Supabase migration-history baseline plan
+
+Production schema effects and Supabase CLI migration history are separate
+release surfaces. A schema can be correct while the CLI history is still unsafe
+for future `db push` use.
+
+Current 68C.36 baseline facts:
+
+- `main` includes
+  `supabase/migrations/20260531000000_step_metrics_release_proof_metadata.sql`
+  through PR #26 (`8da5ac3`).
+- The production schema effects for `20260531000000` were applied manually
+  through Supabase SQL Editor after the production-only path was chosen.
+- Post-apply verification showed the five nullable `step_metrics` columns:
+  `status`, `completed_at`, `error_category`, `retryable`, and
+  `raw_error_redacted`.
+- `raw_error_redacted` has no default `true`.
+- `status` and `error_category` constraints exist with bounded values.
+- Column comments exist for all five new fields.
+- Existing row compatibility was verified: 957 `step_metrics` rows, with zero
+  non-null values in each new field.
+- `provider_message_id` remains omitted.
+- Post-DB-apply HTTP canary was GREEN for `/`, `/heim`, `/international`, and
+  `/vilkar`.
+- `diagnostic_only` remains true and no release-proof mode was enabled.
+
+The Supabase CLI migration ledger is not yet trusted:
+
+- `supabase migration list --linked` showed local migration versions without a
+  matching remote history column for this repo.
+- The production SQL Editor audit attempt for
+  `supabase_migrations.schema_migrations` did not expose an available relation.
+- Treat this as an unbaselined migration-history problem, not as approval to
+  replay local migrations.
+
+Until a baseline repair plan is approved, these are NO-GO:
+
+- `supabase db push`
+- `supabase db push --dry-run`
+- `supabase migration repair`
+- applying additional production SQL changes
+- enabling release-proof mode because the nullable columns now exist
+
+Before any migration repair, Ops must run a read-only schema audit and classify
+each local migration as one of:
+
+- already present exactly
+- absent
+- partially present
+- present but drifted
+- intentionally superseded by later manual schema work
+
+Only migrations proven already present exactly may be repaired with
+`migration repair --status applied`. Do not mark partially present, drifted, or
+unreviewed migrations as applied. A repair command changes the CLI ledger; it
+does not make the database schema safer by itself.
+
+Minimum evidence required before a repair PR or handoff:
+
+- current `main` commit and production project ref
+- read-only table/column/constraint/policy/comment audit output
+- per-migration classification with reviewer notes
+- explicit list of migrations proposed for repair
+- explicit list of migrations still pending or drifted
+- backup/PITR confirmation for production before any mutating command
+- rollback plan for any future schema mutation
+
+The safe target state before future `db push` use is:
+
+- remote migration history matches the schema effects that are already present
+- only the intended next migration is pending
+- `db push --dry-run` shows exactly that intended next migration
+- no raw provider payload, prompt text, secret, PII, or `provider_message_id`
+  storage appears in the schema change
+- `diagnostic_only` remains true unless Runtime, Eval, Ops, and Integrator all
+  approve a separate release-proof enablement plan
+
 ## Conditional gates
 
 Add these only when the changed surface requires them:
