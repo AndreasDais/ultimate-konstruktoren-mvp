@@ -75,6 +75,40 @@ real step should be designing a safe read-only `live_read` adapter: ownership
 checks, redacted runtime/report evidence shape, missing-evidence classification,
 and explicit freshness assessment against an existing run.
 
+## Diagnostic live-read consumption closeout
+
+Sprints 68A.40-68A.42 moved Eval one step beyond dry-interface metadata. Eval
+can now map diagnostic Runtime evidence safely, while still refusing to treat
+that evidence as release proof.
+
+Delivered:
+
+| Sprint | Delivered Eval-owned contract |
+|---|---|
+| 68A.40 | Documented the Runtime diagnostic handoff plan and the release-proof boundary. |
+| 68A.41 | Added a pure diagnostic mapper in `scripts/run-eval-case-live.mjs`. |
+| 68A.42 | Locked the mapper contract with inline diagnostic fixtures in `--check-live-read-contract`. |
+
+The diagnostic mapper remains `diagnostic_only`. It does not read Supabase,
+import Runtime TypeScript, execute the live pipeline, write repo or artifact
+files, or claim professional engineering approval. It keeps
+`professional_approval=false`, normalizes release proof to
+`release_proof_status="not_available"` with
+`release_proof_reason="diagnostic_live_read_only"`, and never converts missing
+evidence into `PASS`.
+
+Stop here for the diagnostic metadata/mapper cluster. Do not add more
+placeholder fields unless a concrete consumer needs them. The next technical
+Eval sprint can be a non-writing CLI fixture input, such as
+`--diagnostic-fixture <path> --json`, so Big Brain can inspect mapped evidence
+without Supabase or Runtime imports. Real live Supabase reads still require
+explicit Big Brain approval, a stable callable boundary, an auth/ownership
+story, and redaction contract tests.
+
+An alternative next move is to shift lane focus to a Runtime/Ops gap plan for
+`error_category`, `retryable`, and `provider_message_id` readiness before Eval
+consumes more diagnostic evidence.
+
 ## Next checkpoint target
 
 Before moving from planning clusters to live proof, Eval should either:
