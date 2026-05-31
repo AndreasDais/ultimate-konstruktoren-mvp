@@ -20,6 +20,32 @@ export type StepUsage = {
   cacheCreationTokens: number | null;
 };
 
+const SAFE_STEP_STATUSES = [
+  "completed",
+  "failed",
+  "blocked",
+  "skipped",
+  "not_applicable",
+] as const;
+
+const SAFE_ERROR_CATEGORIES = [
+  "none",
+  "quota",
+  "auth",
+  "transient",
+  "bad_request",
+  "model_output",
+  "validation",
+  "unsupported_context",
+  "blocked",
+  "internal",
+  "unknown",
+  "not_applicable",
+] as const;
+
+export type StepMetricStatus = (typeof SAFE_STEP_STATUSES)[number];
+export type StepMetricErrorCategory = (typeof SAFE_ERROR_CATEGORIES)[number];
+
 /**
  * Minimal form av SDK-message-objektet — only felta vi treng. SDK-typen
  * er breiare; dette held kontrakta smal og testbar.
@@ -41,6 +67,20 @@ function intOrNull(value: unknown): number | null {
     return null;
   }
   return Math.round(value);
+}
+
+function safeStepStatus(value: unknown): StepMetricStatus | null {
+  return typeof value === "string" &&
+    (SAFE_STEP_STATUSES as readonly string[]).includes(value)
+    ? (value as StepMetricStatus)
+    : null;
+}
+
+function safeErrorCategory(value: unknown): StepMetricErrorCategory | null {
+  return typeof value === "string" &&
+    (SAFE_ERROR_CATEGORIES as readonly string[]).includes(value)
+    ? (value as StepMetricErrorCategory)
+    : null;
 }
 
 /**
@@ -70,6 +110,16 @@ export type RecordStepMetricInput = {
   latencyMs: number;
   /** false = steget vart truncert / problematisk. */
   ok: boolean;
+  /** Safe top-level release-readiness status. Nullable during rollout. */
+  status?: StepMetricStatus | null;
+  /** Safe terminal timestamp for release-readiness evidence. */
+  completedAt?: string | null;
+  /** Bounded, redacted category; never raw provider text. */
+  errorCategory?: StepMetricErrorCategory | null;
+  /** Safe retryability hint for failed/blocked steps. */
+  retryable?: boolean | null;
+  /** Explicit redaction proof; no implicit default true. */
+  rawErrorRedacted?: boolean | null;
 };
 
 /**
@@ -105,6 +155,14 @@ export async function recordStepMetric(
         : null,
       stop_reason: input.message?.stop_reason ?? null,
       ok: input.ok,
+      status: safeStepStatus(input.status),
+      completed_at: input.completedAt ?? null,
+      error_category: safeErrorCategory(input.errorCategory),
+      retryable: typeof input.retryable === "boolean" ? input.retryable : null,
+      raw_error_redacted:
+        typeof input.rawErrorRedacted === "boolean"
+          ? input.rawErrorRedacted
+          : null,
     });
     if (error) {
       console.error(

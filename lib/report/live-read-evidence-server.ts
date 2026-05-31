@@ -26,7 +26,7 @@ export const LIVE_READ_SAFE_SELECTS = {
   report:
     "id, run_id, document_id, executive_summary, technical_assessment, conclusion, prompt_version, created_at, tillit_score, tillit_breakdown",
   stepMetrics:
-    "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at",
+    "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at, status, completed_at, error_category, retryable, raw_error_redacted",
   stepMessages:
     "id, run_id, request_id, step_name, model, prompt_version, temperature, max_tokens, created_at",
 } as const;
@@ -131,8 +131,11 @@ export type LiveReadStepMetricRow = {
   stop_reason?: string | null;
   ok?: boolean | null;
   created_at?: string | null;
+  status?: string | null;
+  completed_at?: string | null;
   error_category?: string | null;
   retryable?: boolean | null;
+  raw_error_redacted?: boolean | null;
 };
 
 export type LiveReadStepMessageMetaRow = {
@@ -550,8 +553,8 @@ function traceRowsFrom(
     return {
       step_id: metric.id,
       step_name: metric.step_name,
-      status: statusFromMetric(metric),
-      completed_at: cleanString(metric.created_at),
+      status: cleanString(metric.status) ?? statusFromMetric(metric),
+      completed_at: cleanString(metric.completed_at),
       created_at: cleanString(metric.created_at),
       model: cleanString(metric.model) ?? cleanString(message?.model),
       prompt_version:
@@ -561,6 +564,10 @@ function traceRowsFrom(
       error_category: cleanString(metric.error_category),
       retryable:
         typeof metric.retryable === "boolean" ? metric.retryable : null,
+      raw_error_redacted:
+        typeof metric.raw_error_redacted === "boolean"
+          ? metric.raw_error_redacted
+          : null,
       redaction_ok: true,
       provider_message_id: null,
     };

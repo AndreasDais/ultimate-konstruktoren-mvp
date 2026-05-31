@@ -106,7 +106,11 @@ function rows(overrides: Record<string, unknown> = {}) {
         stop_reason: "end_turn",
         ok: true,
         created_at: "2026-05-31T08:01:00.000Z",
+        status: "completed",
+        completed_at: "2026-05-31T08:01:00.000Z",
+        error_category: "none",
         retryable: false,
+        raw_error_redacted: true,
       },
     ],
     stepMessages: [
@@ -377,7 +381,9 @@ describe("buildLiveReadEvidenceFromServerRead", () => {
       model: "claude-sonnet-4-5",
       prompt_version: "agent_e_v0.3",
       stop_reason: "end_turn",
+      error_category: "none",
       retryable: false,
+      raw_error_redacted: true,
       redaction_ok: true,
       provider_message_id: null,
     });
@@ -421,7 +427,7 @@ describe("createSupabaseLiveReadEvidenceReader", () => {
       ["step_messages", LIVE_READ_SAFE_SELECTS.stepMessages],
     ]);
     expect(LIVE_READ_SAFE_SELECTS.stepMetrics).toBe(
-      "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at",
+      "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at, status, completed_at, error_category, retryable, raw_error_redacted",
     );
   });
 
@@ -455,8 +461,9 @@ describe("createSupabaseLiveReadEvidenceReader", () => {
       expect(selected).not.toContain(forbidden);
       expect(payload).not.toContain(forbidden);
     }
-    expect(LIVE_READ_SAFE_SELECTS.stepMetrics).not.toContain("error_category");
-    expect(LIVE_READ_SAFE_SELECTS.stepMetrics).not.toContain("retryable");
+    expect(LIVE_READ_SAFE_SELECTS.stepMetrics).toContain("error_category");
+    expect(LIVE_READ_SAFE_SELECTS.stepMetrics).toContain("retryable");
+    expect(LIVE_READ_SAFE_SELECTS.stepMetrics).toContain("raw_error_redacted");
     expect(LIVE_READ_SAFE_SELECTS.stepMessages).not.toContain("raw_message");
   });
 
@@ -472,7 +479,7 @@ describe("createSupabaseLiveReadEvidenceReader", () => {
     expect(evidence.stop_conditions).toContain("run_not_found");
   });
 
-  it("does not require current-schema step_metrics to expose error category or retryability", async () => {
+  it("blocks release-readiness when nullable step_metrics metadata is absent", async () => {
     const { supabase } = supabaseFor(
       rows({
         stepMetrics: [
@@ -501,11 +508,13 @@ describe("createSupabaseLiveReadEvidenceReader", () => {
       step_id: "metric-current-schema",
       error_category: null,
       retryable: null,
+      raw_error_redacted: null,
       provider_message_id: null,
     });
-    expect(evidence.stop_conditions).not.toContain(
-      "failed_step_missing_error_category",
+    expect(evidence.stop_conditions).toContain(
+      "release_proof_trace_metadata_incomplete",
     );
+    expect(evidence.release_proof_status).toBe("FAIL");
   });
 
   it("maps controller blocked outputs and keeps provider_message_id null", async () => {
@@ -598,10 +607,12 @@ describe("buildDiagnosticLiveReadEvidenceForEval", () => {
       "non_terminal_run_for_release_proof",
     );
     expect(evidence.release_proof_status).toBe("FAIL");
-    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
+    expect(evidence.release_proof_reason).toBe(
+      "diagnostic_live_read_only:release_proof_writer_coverage_incomplete",
+    );
   });
 
-  it("keeps release proof unavailable even when diagnostic evidence has no stops", async () => {
+  it("keeps release proof unavailable while writer coverage is partial", async () => {
     const { reader } = readerFor();
 
     const evidence = await buildDiagnosticLiveReadEvidenceForEval({
@@ -611,9 +622,13 @@ describe("buildDiagnosticLiveReadEvidenceForEval", () => {
       reader,
     });
 
-    expect(evidence.stop_conditions).toEqual([]);
+    expect(evidence.stop_conditions).toContain(
+      "release_proof_writer_coverage_incomplete",
+    );
     expect(evidence.release_proof_status).toBe("FAIL");
-    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
+    expect(evidence.release_proof_reason).toBe(
+      "diagnostic_live_read_only:release_proof_writer_coverage_incomplete",
+    );
     expect(evidence.professional_approval).toBe(false);
   });
 
@@ -628,9 +643,12 @@ describe("buildDiagnosticLiveReadEvidenceForEval", () => {
     });
 
     expect(evidence.stop_conditions).toContain("eval_case_mismatch");
+    expect(evidence.stop_conditions).toContain(
+      "release_proof_writer_coverage_incomplete",
+    );
     expect(evidence.release_proof_status).toBe("FAIL");
     expect(evidence.release_proof_reason).toBe(
-      "diagnostic_live_read_only:eval_case_mismatch",
+      "diagnostic_live_read_only:eval_case_mismatch,release_proof_writer_coverage_incomplete",
     );
   });
 
@@ -655,6 +673,8 @@ describe("buildDiagnosticLiveReadEvidenceForEval", () => {
     expect(selected).not.toContain("raw_prompt");
     expect(selected).not.toContain("system_prompt");
     expect(selected).not.toContain("user_prompt");
-    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
+    expect(evidence.release_proof_reason).toBe(
+      "diagnostic_live_read_only:release_proof_writer_coverage_incomplete",
+    );
   });
 });
