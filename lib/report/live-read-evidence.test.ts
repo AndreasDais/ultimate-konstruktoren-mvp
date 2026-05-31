@@ -162,6 +162,29 @@ describe("buildLiveReadEvidence", () => {
     expect(evidence.release_proof_status).toBe("FAIL");
   });
 
+  it("preserves adapter stop conditions in the public contract", () => {
+    const evidence = buildLiveReadEvidence(
+      baseInput({
+        adapterStopConditions: [
+          "run_not_found",
+          "eval_case_mismatch",
+          "non_terminal_run_for_release_proof",
+          "report_row_missing",
+        ],
+      }),
+    );
+
+    expect(evidence.stop_conditions).toEqual(
+      expect.arrayContaining([
+        "run_not_found",
+        "eval_case_mismatch",
+        "non_terminal_run_for_release_proof",
+        "report_row_missing",
+      ]),
+    );
+    expect(evidence.release_proof_status).toBe("FAIL");
+  });
+
   it("stops when a claimed report has empty report text", () => {
     const emptyReport = reportModel({
       keyResults: [],

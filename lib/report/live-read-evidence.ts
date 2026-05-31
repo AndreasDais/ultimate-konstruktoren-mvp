@@ -40,6 +40,10 @@ const PROFESSIONAL_APPROVAL_RE =
 export type SafeErrorCategory = (typeof SAFE_ERROR_CATEGORIES)[number];
 
 export type LiveReadStopCondition =
+  | "run_not_found"
+  | "eval_case_mismatch"
+  | "non_terminal_run_for_release_proof"
+  | "report_row_missing"
   | "missing_run_id"
   | "malformed_run_id"
   | "ownership_not_verified"
@@ -91,6 +95,7 @@ export type BuildLiveReadEvidenceInput = {
   traceRows?: LiveReadTraceRowInput[] | null;
   blockedFields?: string[] | null;
   blockedOutputIndicated?: boolean;
+  adapterStopConditions?: LiveReadStopCondition[];
   generatedAt?: string;
 };
 
@@ -286,7 +291,9 @@ export function buildLiveReadEvidence(
   const safeSteps = traceRows.map(safeTraceStep);
   const blockedFields = input.blockedFields ?? [];
   const reportText = reportTextFrom(input.reportModel);
-  const stopConditions: LiveReadStopCondition[] = [];
+  const stopConditions: LiveReadStopCondition[] = [
+    ...(input.adapterStopConditions ?? []),
+  ];
 
   if (!effectiveRunId) {
     stopConditions.push("missing_run_id");
