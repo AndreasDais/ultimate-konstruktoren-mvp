@@ -1,4 +1,5 @@
 import type { ReportModel } from "./report-model";
+import { isTerminalRunStatus } from "@/lib/result/run-status-terminal-state";
 
 export const LIVE_READ_EVIDENCE_SOURCE = "live_read" as const;
 
@@ -6,12 +7,26 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const SAFE_ERROR_CATEGORIES = [
+  "none",
   "quota",
   "auth",
   "transient",
   "bad_request",
   "model_output",
+  "validation",
+  "unsupported_context",
+  "blocked",
+  "internal",
   "unknown",
+  "not_applicable",
+] as const;
+
+const SAFE_TERMINAL_STATUSES = [
+  "completed",
+  "failed",
+  "blocked",
+  "skipped",
+  "not_applicable",
 ] as const;
 
 const UNSAFE_TRACE_KEYS = new Set([
@@ -51,6 +66,8 @@ export type LiveReadStopCondition =
   | "blocked_fields_missing"
   | "completed_run_missing_terminal_trace"
   | "failed_step_missing_error_category"
+  | "release_proof_trace_metadata_incomplete"
+  | "release_proof_writer_coverage_incomplete"
   | "unsafe_trace_payload"
   | "professional_approval_implication";
 
@@ -82,6 +99,7 @@ export type LiveReadTraceRowInput = {
   stop_reason?: string | null;
   error_category?: string | null;
   retryable?: boolean | null;
+  raw_error_redacted?: boolean | null;
   redaction_ok?: boolean | null;
   provider_message_id?: string | null;
   [key: string]: unknown;
@@ -95,6 +113,7 @@ export type BuildLiveReadEvidenceInput = {
   traceRows?: LiveReadTraceRowInput[] | null;
   blockedFields?: string[] | null;
   blockedOutputIndicated?: boolean;
+  fullWriterCoverage?: boolean;
   adapterStopConditions?: LiveReadStopCondition[];
   generatedAt?: string;
 };
@@ -138,6 +157,7 @@ export type LiveReadEvidence = {
       stop_reason: string | null;
       error_category: SafeErrorCategory | null;
       retryable: boolean | null;
+      raw_error_redacted: boolean | null;
       redaction_ok: boolean;
       provider_message_id: string | null;
     }>;
@@ -213,6 +233,13 @@ function isSafeErrorCategory(value: unknown): value is SafeErrorCategory {
   );
 }
 
+function isSafeTerminalStatus(value: unknown): boolean {
+  return (
+    typeof value === "string" &&
+    (SAFE_TERMINAL_STATUSES as readonly string[]).includes(value)
+  );
+}
+
 function isTerminalStep(row: LiveReadTraceRowInput): boolean {
   const status = cleanString(row.status)?.toLowerCase();
   if (["completed", "failed", "blocked", "skipped"].includes(status ?? "")) {
@@ -242,6 +269,8 @@ function safeTraceStep(row: LiveReadTraceRowInput) {
   const errorCategory = isSafeErrorCategory(row.error_category)
     ? row.error_category
     : null;
+  const rawErrorRedacted =
+    typeof row.raw_error_redacted === "boolean" ? row.raw_error_redacted : null;
   return {
     step_id: cleanString(row.step_id) ?? cleanString(row.id),
     step_name: row.step_name,
@@ -255,7 +284,11 @@ function safeTraceStep(row: LiveReadTraceRowInput) {
     error_category: errorCategory,
     retryable:
       typeof row.retryable === "boolean" ? row.retryable : retryableFrom(errorCategory),
-    redaction_ok: row.redaction_ok !== false && !containsUnsafePayload(row),
+    raw_error_redacted: rawErrorRedacted,
+    redaction_ok:
+      row.redaction_ok !== false &&
+      rawErrorRedacted !== false &&
+      !containsUnsafePayload(row),
     provider_message_id: cleanString(row.provider_message_id),
   };
 }
@@ -278,6 +311,18 @@ function hasReportClaimed(model: ReportModel | null | undefined): boolean {
 
 function isCompletedRun(status: string | null): boolean {
   return status?.toLowerCase() === "completed";
+}
+
+function hasCompleteReleaseReadinessTraceMetadata(
+  row: LiveReadTraceRowInput,
+): boolean {
+  return (
+    isSafeTerminalStatus(cleanString(row.status)) &&
+    cleanString(row.completed_at) !== null &&
+    isSafeErrorCategory(row.error_category) &&
+    typeof row.retryable === "boolean" &&
+    row.raw_error_redacted === true
+  );
 }
 
 export function buildLiveReadEvidence(
@@ -303,6 +348,9 @@ export function buildLiveReadEvidence(
   if (!input.ownershipVerified) {
     stopConditions.push("ownership_not_verified");
   }
+  if (input.run && input.fullWriterCoverage !== true) {
+    stopConditions.push("release_proof_writer_coverage_incomplete");
+  }
   if (hasReportClaimed(input.reportModel) && reportText.trim().length === 0) {
     stopConditions.push("report_claimed_but_empty");
   }
@@ -323,6 +371,15 @@ export function buildLiveReadEvidence(
     )
   ) {
     stopConditions.push("failed_step_missing_error_category");
+  }
+  if (
+    isTerminalRunStatus(runStatus) &&
+    traceRows.some(
+      (row) =>
+        isTerminalStep(row) && !hasCompleteReleaseReadinessTraceMetadata(row),
+    )
+  ) {
+    stopConditions.push("release_proof_trace_metadata_incomplete");
   }
   if (traceRows.some(containsUnsafePayload)) {
     stopConditions.push("unsafe_trace_payload");

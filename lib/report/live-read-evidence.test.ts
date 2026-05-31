@@ -125,13 +125,16 @@ function baseInput(
         model: "claude-sonnet-4-5",
         prompt_version: "agent_e_v0.3",
         stop_reason: "end_turn",
+        error_category: "none",
         provider_message_id: "msg_safe_123",
         retryable: false,
+        raw_error_redacted: true,
         redaction_ok: true,
       },
     ],
     blockedFields: [],
     blockedOutputIndicated: false,
+    fullWriterCoverage: true,
     generatedAt: "2026-05-31T08:02:00.000Z",
     ...overrides,
   };
@@ -151,6 +154,7 @@ describe("buildLiveReadEvidence", () => {
     expect(evidence.report_evidence.report_text).toContain("MEd");
     expect(evidence.report_evidence.disclaimer_present).toBe(true);
     expect(evidence.trace_summary.terminal_step_count).toBe(1);
+    expect(evidence.trace_summary.steps[0]?.raw_error_redacted).toBe(true);
   });
 
   it("stops when ownership is not verified", () => {
@@ -252,6 +256,72 @@ describe("buildLiveReadEvidence", () => {
     expect(evidence.stop_conditions).toContain(
       "failed_step_missing_error_category",
     );
+  });
+
+  it("stops when terminal trace metadata is not release-readiness complete", () => {
+    const evidence = buildLiveReadEvidence(
+      baseInput({
+        traceRows: [
+          {
+            step_id: "trace-incomplete",
+            step_name: "rapportor",
+            status: "completed",
+            completed_at: "2026-05-31T08:00:45.000Z",
+            model: "claude-sonnet-4-5",
+            prompt_version: "agent_e_v0.3",
+            error_category: "none",
+            retryable: false,
+          },
+        ],
+      }),
+    );
+
+    expect(evidence.stop_conditions).toContain(
+      "release_proof_trace_metadata_incomplete",
+    );
+    expect(evidence.release_proof_status).toBe("FAIL");
+    expect(evidence.trace_summary.steps[0]?.raw_error_redacted).toBeNull();
+  });
+
+  it("stops release-proof readiness when full writer coverage is not verified", () => {
+    const evidence = buildLiveReadEvidence(
+      baseInput({
+        fullWriterCoverage: false,
+        run: {
+          ...baseInput().run!,
+          target_agents: ["samanliknar", "kontrollor"],
+        },
+        traceRows: [
+          {
+            step_id: "trace-c",
+            step_name: "samanliknar",
+            status: "completed",
+            completed_at: "2026-05-31T08:00:45.000Z",
+            model: "claude-sonnet-4-5",
+            prompt_version: "agent_c_v0.3",
+            error_category: "none",
+            retryable: false,
+            raw_error_redacted: true,
+          },
+          {
+            step_id: "trace-d",
+            step_name: "kontrollor",
+            status: "completed",
+            completed_at: "2026-05-31T08:00:55.000Z",
+            model: "claude-sonnet-4-5",
+            prompt_version: "agent_d_v0.3",
+            error_category: "none",
+            retryable: false,
+            raw_error_redacted: true,
+          },
+        ],
+      }),
+    );
+
+    expect(evidence.stop_conditions).toContain(
+      "release_proof_writer_coverage_incomplete",
+    );
+    expect(evidence.release_proof_status).toBe("FAIL");
   });
 
   it("stops when trace rows contain raw prompt or provider payload fields", () => {
