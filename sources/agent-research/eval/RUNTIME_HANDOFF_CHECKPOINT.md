@@ -27,6 +27,49 @@ repo_writes=false
 Dry-run output is useful for planning and release discussion. It is not proof
 that a PILAR runtime run, report surface, or agent trace passed an eval.
 
+## 68A.40 diagnostic handoff checkpoint
+
+Runtime diagnostic handoff is now integrated on `main` through PR #18:
+
+```txt
+785f0b4 Runtime helper
+5a3abca server adapter
+3b28c06 diagnostic Supabase reader
+a3c483f diagnostic Eval handoff
+2ad56a6 PR #18 merge
+```
+
+This makes the Runtime handoff available for diagnostic planning. It does not
+make `live_read` release proof. Runtime may internally return
+`release_proof_status="FAIL"` to deny release proof; Eval should normalize
+diagnostic consumption into its own output shape instead of treating Runtime's
+internal guard as a release result:
+
+```txt
+diagnostic_only=true
+release_proof_status="not_available"
+release_proof_reason="diagnostic_live_read_only"
+professional_approval=false
+live_pipeline_execution=false
+repo_writes=false
+freshness_required_for_release=false
+```
+
+Missing diagnostic evidence must stay visible. It may map to `PLAN`,
+`MISSING`, `WARN`, or `FAIL`, depending on whether evidence was planned,
+absent, incomplete, or contradictory. Missing evidence must never become
+`PASS`.
+
+The next technical Eval sprint should be a pure mapper in
+`scripts/run-eval-case-live.mjs` that consumes a diagnostic Runtime
+evidence-shape and converts it into Eval bundle/status fields. That mapper
+should not import Runtime TypeScript, read Supabase, call LLMs, execute the
+pipeline, or write artifacts.
+
+Opening a real live Supabase-read path still requires explicit Big Brain
+approval, a stable callable boundary, an auth/ownership story, and redaction
+contract tests.
+
 ## Must-have Runtime handoff
 
 Before Eval can implement `live_read`, Runtime must provide a user-scoped,
@@ -118,13 +161,14 @@ Once Chat B confirms those points, Chat A can plan the first no-write
 
 ## Checkpoint verdict
 
-Current verdict: `NOT_READY_FOR_LIVE_READ`.
+Current verdict: `DIAGNOSTIC_HANDOFF_AVAILABLE_RELEASE_PROOF_NOT_READY`.
 
 Reason:
 
 ```txt
 Eval has planning contracts for run/report evidence, trace assertions, target
 agents, prompt/model metadata, safe error categories, and blocked-field
-evidence. Runtime still needs to expose or confirm a safe user-scoped read path
-for those fields before Eval can consume live evidence.
+evidence. Runtime now exposes a diagnostic handoff that Eval can plan to
+consume, but Eval must still keep diagnostic output separate from release proof
+and must not open real live Supabase reads without later approval.
 ```
