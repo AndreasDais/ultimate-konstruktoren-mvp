@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 const {
   LIVE_READ_SAFE_SELECTS,
+  buildDiagnosticLiveReadEvidenceForEval,
   buildLiveReadEvidenceFromServerRead,
   createSupabaseLiveReadEvidenceReader,
 } = await import("./live-read-evidence-server");
@@ -528,5 +529,132 @@ describe("createSupabaseLiveReadEvidenceReader", () => {
       "calculation_steps_a",
     ]);
     expect(evidence.trace_summary.steps[0]?.provider_message_id).toBeNull();
+  });
+});
+
+describe("buildDiagnosticLiveReadEvidenceForEval", () => {
+  it("requires eval_service auth", async () => {
+    const { reader } = readerFor();
+
+    await expect(
+      buildDiagnosticLiveReadEvidenceForEval({
+        runId: RUN_ID,
+        auth: { kind: "user", userId: "user-1" },
+        reader,
+      } as never),
+    ).rejects.toThrow("eval_service auth");
+  });
+
+  it("requires a non-empty eval_service reason", async () => {
+    const { reader } = readerFor();
+
+    await expect(
+      buildDiagnosticLiveReadEvidenceForEval({
+        runId: RUN_ID,
+        auth: { kind: "eval_service", reason: " " },
+        reader,
+      }),
+    ).rejects.toThrow("non-empty reason");
+  });
+
+  it("uses an injected reader without requiring live Supabase", async () => {
+    const { reader, calls } = readerFor();
+
+    const evidence = await buildDiagnosticLiveReadEvidenceForEval({
+      runId: RUN_ID,
+      expectedEvalCaseId: "case-live-read",
+      auth: { kind: "eval_service", reason: "local eval diagnostic handoff" },
+      generatedAt: "2026-05-31T08:02:00.000Z",
+      reader,
+    });
+
+    expect(calls.map((call) => call.name)).toEqual([
+      "readRun",
+      "readInputReview",
+      "readAgentOutputs",
+      "readComparison",
+      "readControllerDecision",
+      "readReport",
+      "readStepMetrics",
+      "readStepMessages",
+    ]);
+    expect(evidence.professional_approval).toBe(false);
+  });
+
+  it("forces diagnostic policy even if an unsafe caller supplies release_proof", async () => {
+    const { reader } = readerFor(
+      rows({ run: { ...rows().run, run_status: "running", completed_at: null } }),
+    );
+
+    const evidence = await buildDiagnosticLiveReadEvidenceForEval({
+      runId: RUN_ID,
+      expectedEvalCaseId: "case-live-read",
+      policy: "release_proof",
+      auth: { kind: "eval_service", reason: "local eval diagnostic handoff" },
+      reader,
+    } as never);
+
+    expect(evidence.stop_conditions).not.toContain(
+      "non_terminal_run_for_release_proof",
+    );
+    expect(evidence.release_proof_status).toBe("FAIL");
+    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
+  });
+
+  it("keeps release proof unavailable even when diagnostic evidence has no stops", async () => {
+    const { reader } = readerFor();
+
+    const evidence = await buildDiagnosticLiveReadEvidenceForEval({
+      runId: RUN_ID,
+      expectedEvalCaseId: "case-live-read",
+      auth: { kind: "eval_service", reason: "local eval diagnostic handoff" },
+      reader,
+    });
+
+    expect(evidence.stop_conditions).toEqual([]);
+    expect(evidence.release_proof_status).toBe("FAIL");
+    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
+    expect(evidence.professional_approval).toBe(false);
+  });
+
+  it("passes adapter and helper stop conditions through", async () => {
+    const { reader } = readerFor();
+
+    const evidence = await buildDiagnosticLiveReadEvidenceForEval({
+      runId: RUN_ID,
+      expectedEvalCaseId: "case-other",
+      auth: { kind: "eval_service", reason: "local eval diagnostic handoff" },
+      reader,
+    });
+
+    expect(evidence.stop_conditions).toContain("eval_case_mismatch");
+    expect(evidence.release_proof_status).toBe("FAIL");
+    expect(evidence.release_proof_reason).toBe(
+      "diagnostic_live_read_only:eval_case_mismatch",
+    );
+  });
+
+  it("can use an injected Supabase client while preserving safe selects", async () => {
+    const { supabase, calls } = supabaseFor();
+
+    const evidence = await buildDiagnosticLiveReadEvidenceForEval({
+      runId: RUN_ID,
+      expectedEvalCaseId: "case-live-read",
+      auth: { kind: "eval_service", reason: "local eval diagnostic handoff" },
+      supabase,
+    });
+    const selected = calls
+      .filter((call) => call.method === "select")
+      .map((call) => call.select)
+      .join("\n");
+
+    expect(selected).toContain(LIVE_READ_SAFE_SELECTS.stepMessages);
+    expect(selected).not.toContain("raw_message");
+    expect(selected).not.toContain("input_payload");
+    expect(selected).not.toContain("raw_text");
+    expect(selected).not.toContain("raw_prompt");
+    expect(selected).not.toContain("system_prompt");
+    expect(selected).not.toContain("user_prompt");
+    expect(evidence.release_proof_reason).toBe("diagnostic_live_read_only");
   });
 });

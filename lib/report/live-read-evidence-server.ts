@@ -49,6 +49,22 @@ export type LiveReadEvidenceServerInput = {
   generatedAt?: string;
 };
 
+export type DiagnosticLiveReadEvidenceForEvalAuth = Extract<
+  LiveReadEvidenceAuth,
+  { kind: "eval_service" }
+>;
+
+export type DiagnosticLiveReadEvidenceForEvalInput = {
+  runId: string;
+  expectedEvalCaseId?: string | null;
+  auth: DiagnosticLiveReadEvidenceForEvalAuth;
+  generatedAt?: string;
+  locale?: Locale;
+  reportUrl?: string;
+  reader?: LiveReadEvidenceReader;
+  supabase?: SupabaseClient;
+};
+
 export type LiveReadRunRow = {
   id: string;
   request_id: string | null;
@@ -270,6 +286,55 @@ export function createSupabaseLiveReadEvidenceReader(
       );
     },
   };
+}
+
+function diagnosticOnlyEvidence(evidence: LiveReadEvidence): LiveReadEvidence {
+  return {
+    ...evidence,
+    professional_approval: false,
+    release_proof_status: "FAIL",
+    release_proof_reason:
+      evidence.stop_conditions.length > 0
+        ? `diagnostic_live_read_only:${evidence.stop_conditions.join(",")}`
+        : "diagnostic_live_read_only",
+  };
+}
+
+export async function buildDiagnosticLiveReadEvidenceForEval(
+  input: DiagnosticLiveReadEvidenceForEvalInput,
+): Promise<LiveReadEvidence> {
+  const reason = cleanString(input.auth?.reason);
+  if (input.auth?.kind !== "eval_service" || !reason) {
+    throw new Error(
+      "live_read eval handoff requires eval_service auth with a non-empty reason",
+    );
+  }
+
+  const reader =
+    input.reader ??
+    (input.supabase
+      ? createSupabaseLiveReadEvidenceReader(input.supabase)
+      : null);
+  if (!reader) {
+    throw new Error(
+      "live_read eval handoff requires an injected reader or Supabase client",
+    );
+  }
+
+  const evidence = await buildLiveReadEvidenceFromServerRead(
+    {
+      runId: input.runId,
+      expectedEvalCaseId: input.expectedEvalCaseId ?? null,
+      policy: "diagnostic",
+      auth: { kind: "eval_service", reason },
+      locale: input.locale,
+      reportUrl: input.reportUrl,
+      generatedAt: input.generatedAt,
+    },
+    reader,
+  );
+
+  return diagnosticOnlyEvidence(evidence);
 }
 
 function cleanString(value: unknown): string | null {
