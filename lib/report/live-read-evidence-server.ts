@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import type { Locale } from "@/lib/locale";
 import type { TillitBreakdown } from "@/lib/tillit-score";
@@ -25,7 +26,7 @@ export const LIVE_READ_SAFE_SELECTS = {
   report:
     "id, run_id, document_id, executive_summary, technical_assessment, conclusion, prompt_version, created_at, tillit_score, tillit_breakdown",
   stepMetrics:
-    "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at, error_category, retryable",
+    "id, run_id, request_id, step_name, model, prompt_version, stop_reason, ok, created_at",
   stepMessages:
     "id, run_id, request_id, step_name, model, prompt_version, temperature, max_tokens, created_at",
 } as const;
@@ -164,6 +165,112 @@ export type LiveReadEvidenceReader = {
     select: typeof LIVE_READ_SAFE_SELECTS.stepMessages;
   }): Promise<LiveReadStepMessageMetaRow[]>;
 };
+
+type SupabaseMaybeSingleResult<T> = {
+  data: T | null;
+  error: unknown;
+};
+
+type SupabaseManyResult<T> = {
+  data: T[] | null;
+  error: unknown;
+};
+
+function isReadError(error: unknown): boolean {
+  return error !== null && error !== undefined;
+}
+
+async function readMaybeSingle<T>(
+  query: PromiseLike<SupabaseMaybeSingleResult<T>>,
+): Promise<T | null> {
+  const { data, error } = await query;
+  if (isReadError(error)) return null;
+  return data ?? null;
+}
+
+async function readMany<T>(
+  query: PromiseLike<SupabaseManyResult<T>>,
+): Promise<T[]> {
+  const { data, error } = await query;
+  if (isReadError(error)) return [];
+  return data ?? [];
+}
+
+export function createSupabaseLiveReadEvidenceReader(
+  supabase: SupabaseClient,
+): LiveReadEvidenceReader {
+  return {
+    readRun({ runId, select }) {
+      return readMaybeSingle<LiveReadRunRow>(
+        supabase
+          .from("calculation_runs")
+          .select(select)
+          .eq("id", runId)
+          .maybeSingle(),
+      );
+    },
+    readInputReview({ requestId, select }) {
+      if (!requestId) return Promise.resolve(null);
+      return readMaybeSingle<LiveReadInputReviewRow>(
+        supabase
+          .from("input_reviews")
+          .select(select)
+          .eq("request_id", requestId)
+          .maybeSingle(),
+      );
+    },
+    readAgentOutputs({ runId, select }) {
+      return readMany<LiveReadAgentOutputRow>(
+        supabase.from("agent_outputs").select(select).eq("run_id", runId),
+      );
+    },
+    readComparison({ runId, select }) {
+      return readMaybeSingle<LiveReadComparisonRow>(
+        supabase
+          .from("comparisons")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readControllerDecision({ runId, select }) {
+      return readMaybeSingle<LiveReadControllerDecisionRow>(
+        supabase
+          .from("controller_decisions")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readReport({ runId, select }) {
+      return readMaybeSingle<LiveReadReportRow>(
+        supabase
+          .from("reports")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readStepMetrics({ runId, select }) {
+      return readMany<LiveReadStepMetricRow>(
+        supabase
+          .from("step_metrics")
+          .select(select)
+          .eq("run_id", runId)
+          .order("created_at", { ascending: true }),
+      );
+    },
+    readStepMessages({ runId, select }) {
+      return readMany<LiveReadStepMessageMetaRow>(
+        supabase
+          .from("step_messages")
+          .select(select)
+          .eq("run_id", runId)
+          .order("created_at", { ascending: true }),
+      );
+    },
+  };
+}
 
 function cleanString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0
