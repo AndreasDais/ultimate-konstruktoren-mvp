@@ -658,12 +658,82 @@ function runDiagnosticMapperContractCheck() {
   );
   assertContract(missingRun.diagnostic_status === "MISSING", "run_not_found must map to MISSING");
   assertContract(missingRun.bundle_status === "MISSING", "missing diagnostic evidence must not look READY");
+  assertContract(
+    missingRun.diagnostic_summary.missing.includes("run_not_found"),
+    "run_not_found must remain visible in diagnostic missing summary"
+  );
+
+  const missingRunId = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["missing_run_id"],
+      run_summary: {},
+    }),
+    baseArgs
+  );
+  assertContract(missingRunId.diagnostic_status === "MISSING", "missing_run_id must map to MISSING");
+  assertContract(
+    missingRunId.diagnostic_summary.missing.includes("missing_run_id"),
+    "missing_run_id must remain visible in diagnostic missing summary"
+  );
+
+  const malformedRunId = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["malformed_run_id"],
+      run_summary: { requested_run_id: "bad run id" },
+    }),
+    baseArgs
+  );
+  assertContract(malformedRunId.diagnostic_status === "MISSING", "malformed_run_id must map to MISSING");
+  assertContract(
+    malformedRunId.diagnostic_summary.missing.includes("malformed_run_id"),
+    "malformed_run_id must remain visible in diagnostic missing summary"
+  );
 
   const mismatch = mapDiagnosticLiveReadEvidenceToEvalOutput(
     diagnosticRuntimeEvidenceFixture({ stop_conditions: ["eval_case_mismatch"] }),
     baseArgs
   );
   assertContract(mismatch.diagnostic_status === "FAIL", "eval_case_mismatch must map to FAIL");
+  assertContract(mismatch.evidence_source === "live_read", "failed diagnostic fixture must keep evidence_source stable");
+  assertContract(
+    mismatch.requested_evidence_source === "live_read",
+    "failed diagnostic fixture must keep requested_evidence_source stable"
+  );
+
+  const missingReportRow = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      stop_conditions: ["report_row_missing"],
+      report_evidence: null,
+    }),
+    baseArgs
+  );
+  assertContract(missingReportRow.diagnostic_status === "FAIL", "report_row_missing must map to FAIL");
+  assertContract(
+    missingReportRow.diagnostic_summary.failures.includes("report_row_missing"),
+    "report_row_missing must remain visible in diagnostic failure summary"
+  );
+
+  const emptyClaimedReport = mapDiagnosticLiveReadEvidenceToEvalOutput(
+    diagnosticRuntimeEvidenceFixture({
+      report_evidence: {
+        has_report: true,
+        report_id: "empty-report-68A42",
+        report_locale: "en",
+        report_text: "",
+        disclaimer_present: false,
+        blocked_fields: [],
+      },
+    }),
+    baseArgs
+  );
+  assertContract(
+    emptyClaimedReport.diagnostic_status === "FAIL",
+    "report_claimed_but_empty must map to FAIL even without Runtime stop_conditions"
+  );
+  assertContract(
+    emptyClaimedReport.diagnostic_summary.failures.includes("report_claimed_but_empty"),
+    "report_claimed_but_empty must remain visible in diagnostic failure summary"
+  );
 
   const traceWarn = mapDiagnosticLiveReadEvidenceToEvalOutput(
     diagnosticRuntimeEvidenceFixture({
@@ -705,7 +775,11 @@ function runDiagnosticMapperContractCheck() {
   const encoded = JSON.stringify([
     ready,
     missingRun,
+    missingRunId,
+    malformedRunId,
     mismatch,
+    missingReportRow,
+    emptyClaimedReport,
     traceWarn,
     traceFail,
     unsafe,
