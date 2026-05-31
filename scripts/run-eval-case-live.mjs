@@ -34,6 +34,8 @@ const BUNDLE_FILES = [
   "step-metadata-summary.json",
   "grade-result.json",
 ];
+const CONTRACT_TEMP_ROOT =
+  process.env.PILAR_EVAL_TMP_DIR || (process.platform === "win32" ? "C:\\tmp" : "/tmp");
 
 function parseArgs(argv) {
   const args = {
@@ -44,6 +46,7 @@ function parseArgs(argv) {
     dryRun: true,
     mode: "dry_run",
     requireTrace: false,
+    diagnosticFixturePath: "",
     json: false,
     checkLiveReadContract: false,
     help: false,
@@ -86,6 +89,17 @@ function parseArgs(argv) {
 
     if (token === "--require-trace") {
       args.requireTrace = true;
+      continue;
+    }
+
+    if (token === "--diagnostic-fixture") {
+      args.diagnosticFixturePath = requireValue(argv, index, token);
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--diagnostic-fixture=")) {
+      args.diagnosticFixturePath = token.slice("--diagnostic-fixture=".length);
       continue;
     }
 
@@ -174,12 +188,15 @@ Usage:
   node scripts/run-eval-case-live.mjs --case-id <id> --scratch-dir /tmp/pilar-live-eval
   node scripts/run-eval-case-live.mjs --case-id <id> --run-id <id> --json
   node scripts/run-eval-case-live.mjs --case-id <id> --json
+  node scripts/run-eval-case-live.mjs --diagnostic-fixture <path> --json
   node scripts/run-eval-case-live.mjs --check-live-read-contract
 
 Options:
   --cases <path>        Eval case JSONL path. Defaults to qa/evals/pilar-core-evals.jsonl.
   --mode <mode>         Evidence request mode: dry_run, fixture, cached_report, or live_read.
   --run-id <id>         Future live-read run id input. Validated, but not read yet.
+  --diagnostic-fixture <path>
+                        Read one Runtime diagnostic evidence JSON fixture and map it to Eval JSON.
   --scratch-dir <path>  Planned artifact bundle root. Defaults to /tmp/pilar-live-eval.
   --require-trace       Plan trace evidence as required for future live execution.
   --json                Emit the dry-run plan as stable JSON.
@@ -187,7 +204,7 @@ Options:
 Scope:
   Dry-run only. Prints planned /tmp bundle paths and offline grading commands.
   No LLM calls, no Supabase reads, no pipeline execution, no writes.
-  live_read mode is a read-only request contract only; missing evidence is WARN/FAIL, never PASS.
+  diagnostic fixtures are read-only inputs; missing evidence is WARN/FAIL, never PASS.
 `);
 }
 
@@ -207,6 +224,29 @@ function readJsonl(filePath) {
         throw new Error(`${filePath}:${entry.lineNumber}: invalid JSON (${error.message})`);
       }
     });
+}
+
+function readDiagnosticFixtureJson(filePath) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stripBom(fs.readFileSync(filePath, "utf8")));
+  } catch (error) {
+    const failure = new Error(
+      error.code === "ENOENT"
+        ? "diagnostic_fixture_missing"
+        : `diagnostic_fixture_malformed_json: ${error.message}`
+    );
+    failure.reason = error.code === "ENOENT" ? "diagnostic_fixture_missing" : "diagnostic_fixture_malformed_json";
+    throw failure;
+  }
+
+  if (!isPlainRecord(parsed)) {
+    const failure = new Error("diagnostic_fixture_malformed_json: top-level JSON value must be an object");
+    failure.reason = "diagnostic_fixture_malformed_json";
+    throw failure;
+  }
+
+  return parsed;
 }
 
 function joinBundlePath(scratchDir, caseId, runId) {
@@ -345,6 +385,8 @@ function mapDiagnosticLiveReadEvidenceToEvalOutput(runtimeEvidence, args = {}) {
     bundle_status_taxonomy: BUNDLE_STATUS_TAXONOMY,
     dry_run: false,
     professional_approval: false,
+    live_pipeline_execution: false,
+    repo_writes: false,
     release_proof_status: "not_available",
     release_proof_reason: "diagnostic_live_read_only",
     runtime_release_proof_status: cleanText(evidence.release_proof_status),
@@ -383,6 +425,54 @@ function mapDiagnosticLiveReadEvidenceToEvalOutput(runtimeEvidence, args = {}) {
       require_trace: requireTrace,
     },
   };
+}
+
+function buildDiagnosticFixtureFailure(reason, fixturePath, args = {}) {
+  return {
+    evidence_source: "live_read",
+    requested_evidence_source: "live_read",
+    diagnostic_only: true,
+    diagnostic_status: "FAIL",
+    bundle_status: "FAIL",
+    bundle_status_taxonomy: BUNDLE_STATUS_TAXONOMY,
+    dry_run: false,
+    professional_approval: false,
+    live_pipeline_execution: false,
+    repo_writes: false,
+    release_proof_status: "not_available",
+    release_proof_reason: "diagnostic_live_read_only",
+    freshness_required_for_release: false,
+    fixture_path: fixturePath || null,
+    refusal_reason: reason,
+    diagnostic_summary: {
+      failures: [reason],
+      missing: [],
+      warnings: [],
+      infer_pass_from_absence: false,
+    },
+    planned_action: {
+      live_pipeline_execution: false,
+      supabase_reads: false,
+      llm_calls: false,
+      repo_writes: false,
+      read_only_runtime_report_request: true,
+      require_trace: Boolean(args.requireTrace),
+    },
+  };
+}
+
+function mapDiagnosticFixtureFileToEvalOutput(fixturePath, args = {}) {
+  try {
+    return {
+      output: mapDiagnosticLiveReadEvidenceToEvalOutput(readDiagnosticFixtureJson(fixturePath), args),
+      exitCode: 0,
+    };
+  } catch (error) {
+    return {
+      output: buildDiagnosticFixtureFailure(error.reason ?? "diagnostic_fixture_read_failed", fixturePath, args),
+      exitCode: 2,
+    };
+  }
 }
 
 function buildEvidenceRequestContract(args) {
@@ -625,7 +715,9 @@ function runDiagnosticMapperContractCheck() {
     ready.planned_action.live_pipeline_execution === false,
     "diagnostic mapper must not imply live pipeline execution"
   );
+  assertContract(ready.live_pipeline_execution === false, "diagnostic mapper must expose live_pipeline_execution=false");
   assertContract(ready.planned_action.repo_writes === false, "diagnostic mapper must not write repo artifacts");
+  assertContract(ready.repo_writes === false, "diagnostic mapper must expose repo_writes=false");
   assertContract(
     ready.planned_action.supabase_reads === false,
     "diagnostic mapper contract check must not perform Supabase reads"
@@ -772,6 +864,26 @@ function runDiagnosticMapperContractCheck() {
   );
   assertContract(failedStep.diagnostic_status === "WARN", "missing failed-step error category must WARN by default");
 
+  const malformedFixtureResult = mapDiagnosticFixtureFileToEvalOutput(DEFAULT_CASES, baseArgs);
+  assertContract(malformedFixtureResult.exitCode === 2, "malformed diagnostic fixture must refuse");
+  assertContract(malformedFixtureResult.output.diagnostic_status === "FAIL", "malformed diagnostic fixture must FAIL");
+  assertContract(
+    malformedFixtureResult.output.diagnostic_summary.failures.includes("diagnostic_fixture_malformed_json"),
+    "malformed diagnostic fixture failure must remain visible"
+  );
+
+  const missingFixturePath = path.join(
+    CONTRACT_TEMP_ROOT,
+    `pilar-missing-diagnostic-fixture-${Date.now()}-${Math.random().toString(36).slice(2)}.json`
+  );
+  const missingFixtureResult = mapDiagnosticFixtureFileToEvalOutput(missingFixturePath, baseArgs);
+  assertContract(missingFixtureResult.exitCode === 2, "missing diagnostic fixture must refuse");
+  assertContract(missingFixtureResult.output.diagnostic_status === "FAIL", "missing diagnostic fixture must FAIL");
+  assertContract(
+    missingFixtureResult.output.diagnostic_summary.failures.includes("diagnostic_fixture_missing"),
+    "missing diagnostic fixture failure must remain visible"
+  );
+
   const encoded = JSON.stringify([
     ready,
     missingRun,
@@ -785,6 +897,7 @@ function runDiagnosticMapperContractCheck() {
     unsafe,
     approval,
     failedStep,
+    missingFixtureResult.output,
   ]);
   assertContract(!encoded.includes('"PASS"'), "diagnostic mapper must never infer PASS from absence");
 }
@@ -902,6 +1015,22 @@ function main() {
     } catch (error) {
       console.error(`FAILED live_read contract: ${error.message}`);
       process.exit(1);
+    }
+    return;
+  }
+
+  if (args.diagnosticFixturePath) {
+    if (!args.json) {
+      console.error("FAILED live eval runner: --diagnostic-fixture requires --json");
+      process.exit(2);
+    }
+    const fixtureResult = mapDiagnosticFixtureFileToEvalOutput(args.diagnosticFixturePath, {
+      ...args,
+      mode: "live_read",
+    });
+    console.log(JSON.stringify(fixtureResult.output, null, 2));
+    if (fixtureResult.exitCode !== 0) {
+      process.exit(fixtureResult.exitCode);
     }
     return;
   }
