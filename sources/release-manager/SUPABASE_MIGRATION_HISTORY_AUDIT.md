@@ -237,3 +237,204 @@ history remains blank, unless Big Brain explicitly accepts that ledger shape.
 - `20260531000000` being manually applied does not enable release-proof mode.
 - `diagnostic_only` remains true.
 - `provider_message_id` remains omitted.
+
+## 68C.39 live read-only audit request
+
+Live SQL output was not collected from the Ops worktree in this sprint because
+the worktree had no `psql`, no local Supabase CLI binary, no linked project ref,
+and no DB URL / Supabase environment variable. The audit therefore remains a
+prepared SQL Editor request until Big Brain or the deploy owner pastes the
+queries below into a trusted read-only production SQL client.
+
+Target evidence for the read-only audit:
+
+- current main commit: `7f24e45`
+- production project ref: `uiogylrpclamffhgkjki`
+- table presence output
+- relevant column output
+- relevant constraint output
+- RLS/policy output
+- comment output
+- migration ledger availability or `history_relation_unavailable`
+
+Run these queries exactly as read-only audit queries:
+
+```sql
+select table_schema, table_name
+from information_schema.tables
+where table_schema = 'supabase_migrations'
+order by table_schema, table_name;
+```
+
+```sql
+select version, name, statements
+from supabase_migrations.schema_migrations
+order by version;
+```
+
+```sql
+select table_name
+from information_schema.tables
+where table_schema = 'public'
+  and table_name in (
+    'requests',
+    'admins',
+    'input_reviews',
+    'calculation_runs',
+    'agent_outputs',
+    'comparisons',
+    'controller_decisions',
+    'reports',
+    'error_reports',
+    'manual_reviews',
+    'daily_intelligence_reports',
+    'improvement_actions',
+    'agent_learning_feedback',
+    'daily_metrics_snapshots',
+    'pilot_feedback',
+    'engineering_context_events',
+    'step_messages',
+    'step_metrics',
+    'trace_events'
+  )
+order by table_name;
+```
+
+```sql
+select table_name, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name in (
+    'requests',
+    'admins',
+    'input_reviews',
+    'calculation_runs',
+    'agent_outputs',
+    'comparisons',
+    'controller_decisions',
+    'reports',
+    'error_reports',
+    'manual_reviews',
+    'daily_intelligence_reports',
+    'improvement_actions',
+    'agent_learning_feedback',
+    'daily_metrics_snapshots',
+    'pilot_feedback',
+    'engineering_context_events',
+    'step_messages',
+    'step_metrics'
+  )
+order by table_name, ordinal_position;
+```
+
+```sql
+select table_name, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'step_metrics'
+  and column_name in (
+    'status',
+    'completed_at',
+    'error_category',
+    'retryable',
+    'raw_error_redacted',
+    'provider_message_id'
+  )
+order by column_name;
+```
+
+```sql
+select
+  n.nspname as schema_name,
+  c.relname as table_name,
+  con.conname,
+  pg_get_constraintdef(con.oid) as definition
+from pg_constraint con
+join pg_class c on c.oid = con.conrelid
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relname in (
+    'improvement_actions',
+    'agent_learning_feedback',
+    'pilot_feedback',
+    'engineering_context_events',
+    'calculation_runs',
+    'error_reports',
+    'manual_reviews',
+    'step_messages',
+    'step_metrics'
+  )
+order by c.relname, con.conname;
+```
+
+```sql
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename in (
+    'requests',
+    'admins',
+    'input_reviews',
+    'calculation_runs',
+    'agent_outputs',
+    'comparisons',
+    'controller_decisions',
+    'reports',
+    'error_reports',
+    'manual_reviews',
+    'pilot_feedback',
+    'engineering_context_events',
+    'step_messages',
+    'step_metrics'
+  )
+order by tablename, policyname;
+```
+
+```sql
+select
+  c.relname as table_name,
+  a.attname as column_name,
+  col_description(a.attrelid, a.attnum) as comment
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+join pg_attribute a on a.attrelid = c.oid
+where n.nspname = 'public'
+  and c.relname = 'step_metrics'
+  and a.attname in (
+    'status',
+    'completed_at',
+    'error_category',
+    'retryable',
+    'raw_error_redacted'
+  )
+order by a.attname;
+```
+
+```sql
+select obj_description('public.step_metrics'::regclass) as step_metrics_comment;
+```
+
+```sql
+select
+  count(*) filter (where column_name = 'provider_message_id') as provider_message_id_columns,
+  count(*) filter (
+    where column_name = 'raw_error_redacted'
+      and column_default is not null
+  ) as raw_error_redacted_defaults
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'step_metrics'
+  and column_name in ('provider_message_id', 'raw_error_redacted');
+```
+
+Current 68C.39 classification remains unchanged:
+
+- no full per-migration classification is complete
+- `20260531000000` remains a provisional later repair candidate only inside a
+  full-baseline strategy
+- all earlier migrations remain `MUST NOT REPAIR YET`
+- no migration is approved for repair from this sprint
+
+Do not proceed if the SQL output shows `provider_message_id`, a
+`raw_error_redacted` default, release-proof mode, or anything that would make
+`diagnostic_only=false`.
