@@ -1,11 +1,30 @@
 import { describe, expect, it } from "vitest";
 
-import { screenEc3SteelBeamCapacity } from "./ec3-steel-beam-capacity";
+import {
+  extractEc3SteelBeamCapacityInput,
+  screenEc3SteelBeamCapacity,
+} from "./ec3-steel-beam-capacity";
 import type { Ec3SteelBeamProfile } from "./ec3-steel-beam-capacity";
 
 function expectComputable(result: ReturnType<typeof screenEc3SteelBeamCapacity>) {
   expect(result.computable).toBe(true);
   if (!result.computable) throw new Error("Expected computable result");
+  return result;
+}
+
+function expectExtractionComputable(
+  result: ReturnType<typeof extractEc3SteelBeamCapacityInput>,
+) {
+  expect(result.computable).toBe(true);
+  if (!result.computable) throw new Error("Expected computable extraction");
+  return result;
+}
+
+function expectExtractionGuard(
+  result: ReturnType<typeof extractEc3SteelBeamCapacityInput>,
+) {
+  expect(result.computable).toBe(false);
+  if (result.computable) throw new Error("Expected guarded extraction");
   return result;
 }
 
@@ -166,5 +185,174 @@ describe("screenEc3SteelBeamCapacity", () => {
     if (result.computable) throw new Error("Expected guarded result");
     expect(result.reason).toBe("invalid_input");
     expect(result.missing).toEqual(["qEdKnPerM"]);
+  });
+});
+
+describe("extractEc3SteelBeamCapacityInput", () => {
+  const baseText = [
+    "Bjelke IPE 300.",
+    "Stalkvalitet S355.",
+    "qEd = 18 kN/m.",
+    "L = 6 m.",
+  ].join(" ");
+
+  it("extracts a strict EC3 happy path for IPE 300, S355, qEd and L", () => {
+    const result = expectExtractionComputable(
+      extractEc3SteelBeamCapacityInput({
+        text: baseText,
+        standardFamily: "eurocode_norway",
+      }),
+    );
+
+    expect(result.profileName).toBe("IPE 300");
+    expect(result.grade).toBe("S355");
+    expect(result.qEdKnPerM).toBe(18);
+    expect(result.spanM).toBe(6);
+    expect(result.screeningInput).toMatchObject({
+      profileName: "IPE 300",
+      grade: "S355",
+      qEdKnPerM: 18,
+      spanM: 6,
+      standardFamily: "eurocode_norway",
+    });
+  });
+
+  it("guards when multiple supported profiles are present", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: `${baseText} Alternativt profil HEA 200.`,
+      }),
+    );
+
+    expect(result.reason).toBe("ambiguous_profile");
+    expect(result.missing).toEqual(["IPE 300", "HEA 200"]);
+  });
+
+  it("guards when no profile is present", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: "Stalkvalitet S355. qEd = 18 kN/m. L = 6 m.",
+      }),
+    );
+
+    expect(result.reason).toBe("missing_profile");
+    expect(result.missing).toEqual(["profileName"]);
+  });
+
+  it("guards unsupported AISC W-shapes instead of treating them as EC3 profiles", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: "W12x26, S355, qEd = 18 kN/m, L = 6 m.",
+      }),
+    );
+
+    expect(result.reason).toBe("unsupported_profile");
+    expect(result.missing).toEqual(["profileName"]);
+  });
+
+  it("guards unsupported steel grades such as S500", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: "IPE 300, S500, qEd = 18 kN/m, L = 6 m.",
+      }),
+    );
+
+    expect(result.reason).toBe("unsupported_grade");
+    expect(result.missing).toEqual(["S500"]);
+  });
+
+  it.each([
+    "q = 18 kN/m",
+    "gk = 12 kN/m",
+    "qk = 6 kN/m",
+    "dead load = 12 kN/m",
+    "live load = 6 kN/m",
+    "wu = 1.2 kip/ft",
+  ])("guards non-design or characteristic load signal %s", (loadText) => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: `IPE 300, S355, ${loadText}, L = 6 m.`,
+      }),
+    );
+
+    expect(result.reason).toBe("ambiguous_or_characteristic_load");
+    expect(result.missing).toEqual(["qEdKnPerM"]);
+  });
+
+  it.each([
+    "qEd = 18 kN/m",
+    "q_Ed = 18 kN/m",
+    "qd = 18 kN/m",
+    "q_d = 18 kN/m",
+    "dimensjonerande last = 18 kN/m",
+    "design load = 18 kN/m",
+  ])("accepts explicit design-load signal %s", (loadText) => {
+    const result = expectExtractionComputable(
+      extractEc3SteelBeamCapacityInput({
+        text: `IPE 300, S355, ${loadText}, L = 6 m.`,
+      }),
+    );
+
+    expect(result.qEdKnPerM).toBe(18);
+  });
+
+  it.each([
+    ["L = 6 m", 6],
+    ["span = 6 m", 6],
+    ["spennvidde = 6 m", 6],
+    ["L = 6000 mm", 6],
+  ])("accepts explicit span signal %s", (spanText, expectedSpan) => {
+    const result = expectExtractionComputable(
+      extractEc3SteelBeamCapacityInput({
+        text: `IPE 300, S355, qEd = 18 kN/m, ${spanText}.`,
+      }),
+    );
+
+    expect(result.spanM).toBe(expectedSpan);
+  });
+
+  it("guards when span is missing", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: "IPE 300, S355, qEd = 18 kN/m.",
+      }),
+    );
+
+    expect(result.reason).toBe("missing_span");
+    expect(result.missing).toEqual(["spanM"]);
+  });
+
+  it("guards unsupported standard families before EC3 screening", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: baseText,
+        standardFamily: "aisc_asce_aci",
+      }),
+    );
+
+    expect(result.reason).toBe("unsupported_standard");
+    expect(result.missing).toEqual(["standardFamily"]);
+  });
+
+  it("supports strict structured data without producing report rows", () => {
+    const result = expectExtractionComputable(
+      extractEc3SteelBeamCapacityInput({
+        structured: {
+          profileName: "IPE 300",
+          grade: "S355",
+          qEdKnPerM: 18,
+          spanM: 6,
+        },
+      }),
+    );
+
+    expect(result.screeningInput).toMatchObject({
+      profileName: "IPE 300",
+      grade: "S355",
+      qEdKnPerM: 18,
+      spanM: 6,
+    });
+    expect(result).not.toHaveProperty("reportRows");
+    expect(result).not.toHaveProperty("calculationRows");
   });
 });
