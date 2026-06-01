@@ -6,39 +6,7 @@ import { InfoPopover } from "@/app/components/InfoPopover";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { buildLocalizedLabelProxy, isInternationalEnglishContext, standardShortLabel } from "@/lib/international/display";
 import { buildComparatorTable } from "@/lib/compare/comparator-table";
-
-// Greske bokstavar (norsk byggfagleg konvensjon — alpha_cc → α_cc, rho_min → ρ_min)
-const GREEK_MAP: Record<string, string> = {
-  alpha: "α", beta: "β", gamma: "γ", delta: "δ",
-  epsilon: "ε", zeta: "ζ", eta: "η", theta: "θ",
-  iota: "ι", kappa: "κ", lambda: "λ", mu: "μ",
-  nu: "ν", xi: "ξ", omicron: "ο", pi: "π",
-  rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ",
-  phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
-};
-
-// Render math-notasjon for results-keys (#5):
-//  "alpha_cc"           → α_cc        (Greek + sub)
-//  "f_cd"               → f_cd        (Latin italic + sub)
-//  "Ed_ULS_kombinert"   → Ed_{ULS,kombinert}
-//  "psi_1_kategori_B"   → ψ_{1,kategori,B}
-//  "M_Ed"               → M_{Ed}
-function formatFieldKey(key: string): React.ReactNode {
-  const parts = key.split("_");
-  const firstRaw = parts[0];
-  const first = GREEK_MAP[firstRaw.toLowerCase()] ?? firstRaw;
-  if (parts.length === 1) {
-    return <em>{first}</em>;
-  }
-  // Resten blir subscript med komma som separator (mattefag-konvensjon)
-  const subscript = parts.slice(1).join(",");
-  return (
-    <>
-      <em>{first}</em>
-      <sub style={{ fontSize: "0.75em", marginLeft: 1 }}>{subscript}</sub>
-    </>
-  );
-}
+import { renderMathKey } from "@/lib/result/formula-extract";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 
@@ -851,7 +819,7 @@ function ComparatorPanel({
                 : "var(--tone-bad-fg, #C2410C)";
             return (
               <Fragment key={row.field}>
-                <span style={{ color: "var(--fg-2, #475569)", fontSize: 14 }}>{formatFieldKey(row.field)}</span>
+                <span style={{ color: "var(--fg-2, #475569)", fontSize: 14 }}>{renderMathKey(row.field)}</span>
                 <span className="uk-mono">{row.valueA}</span>
                 <span className="uk-mono">{row.valueB}</span>
                 <span
