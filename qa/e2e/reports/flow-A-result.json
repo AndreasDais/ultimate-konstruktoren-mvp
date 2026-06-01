@@ -3,15 +3,15 @@
   "name": "English/AISC diagnostic",
   "verdict": "PASS",
   "reportReady": true,
-  "runId": "a32286bb-25b4-4923-aa25-262e573e3fef",
-  "url": "http://localhost:3000/rapport/a32286bb-25b4-4923-aa25-262e573e3fef",
+  "runId": "e8773142-f57a-467a-9210-72348789fee5",
+  "url": "http://localhost:3000/rapport/e8773142-f57a-467a-9210-72348789fee5",
   "missing": [],
   "forbidden": [],
   "hasPdf": true,
   "hasWord": true,
-  "textLen": 11261,
-  "scanLen": 9824,
-  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-A-a32286bb-25b4-4923-aa25-262e573e3fef.png",
+  "textLen": 11520,
+  "scanLen": 10042,
+  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-A-e8773142-f57a-467a-9210-72348789fee5.png",
   "controls": [
     "PilarAI STRUCTURAL ASSISTANT",
     "Theme▾",
@@ -21,7 +21,8 @@
     "Calculation",
     "Assessment",
     "Review",
-    "67/100MEDIUM",
+    "76/100GOOD",
+    "Explain this step",
     "Download PDF",
     "Download Word",
     "Calculation sheet",
@@ -32,5 +33,7 @@
     "≡Glossary"
   ],
   "displayLanguage": "en",
-  "expectLanguage": "en"
+  "expectLanguage": "en",
+  "stalled": false,
+  "note": null
 }
