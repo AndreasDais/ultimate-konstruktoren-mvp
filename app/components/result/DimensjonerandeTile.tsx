@@ -34,22 +34,25 @@ const explainClientCache = new Map<string, string>();
 // degrade-meldinga ved route-feil kjem lokalisert frå /api/explain-responsen.
 const EXPLAIN_UI_TEXT: Record<
   PilarDisplayLanguage,
-  { loading: string; failed: string; unavailable: string }
+  { loading: string; failed: string; unavailable: string; aiNote: string }
 > = {
   nb: {
     loading: "Forklarer …",
     failed: "Kunne ikke hente forklaring akkurat nå. La en fagperson vurdere verdien.",
     unavailable: "Forklaring er ikke tilgjengelig her.",
+    aiNote: "AI-generert · krever faglig kontroll",
   },
   nn: {
     loading: "Forklarer …",
     failed: "Klarte ikkje hente forklaring akkurat no. La ein fagperson vurdere verdien.",
     unavailable: "Forklaring er ikkje tilgjengeleg her.",
+    aiNote: "AI-generert · krev fagleg kontroll",
   },
   en: {
     loading: "Explaining …",
     failed: "Could not load an explanation right now. Have a qualified professional review the value.",
     unavailable: "No explanation available here.",
+    aiNote: "AI-generated · requires professional review",
   },
 };
 
@@ -231,6 +234,19 @@ export function DimensjonerandeTile({
           }}
         >
           {expandedBody}
+        </p>
+      )}
+      {expanded && !covered && fetched !== null && (
+        <p
+          style={{
+            margin: "3px 0 0",
+            fontSize: 9.5,
+            letterSpacing: "0.04em",
+            color: isStyrande ? "var(--surface)" : "var(--fg-muted)",
+            opacity: isStyrande ? 0.6 : 1,
+          }}
+        >
+          {EXPLAIN_UI_TEXT[displayLanguage].aiNote}
         </p>
       )}
     </button>
