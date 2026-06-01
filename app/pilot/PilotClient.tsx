@@ -1,47 +1,72 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { PILOT_EXAMPLES } from "@/lib/pilot/examples";
-import type { PilotLocale } from "@/lib/pilot/types";
+import type { PilotExample, PilotLocale } from "@/lib/pilot/types";
 import {
   ENGINEERING_CONTEXT_STORAGE_KEY,
+  STANDARD_OPTIONS,
   type EngineeringStandardFamily,
 } from "@/lib/engineering-context";
 import type { HeaderUiMode } from "../components/Header";
 import "./pilot.css";
 
 type LangKey = "nb" | "nn" | "en";
+type Diff = "easy" | "medium" | "hard";
 
-const COPY: Record<LangKey, {
+type Copy = {
   eyebrow: string;
   title: string;
   lead: string;
   startOwn: string;
+  or: string;
   mine: string;
-  examplesLabel: string;
-  showInput: string;
-  noteTitle: string;
-  noteText: string;
+  galleryTitle: string;
+  legendLabel: string;
+  diff: Record<Diff, string>;
+  profileLabel: string;
+  show: string;
+  hide: string;
+  sheetLabel: string;
+  copy: string;
+  copied: string;
   emptyTitle: string;
   emptyBody: string;
-}> = {
+  honestyLabel: string;
+  honestyTitle: string;
+  honestyBody: string;
+  terms: string;
+};
+
+const COPY: Record<LangKey, Copy> = {
   nb: {
     eyebrow: "PILAR · Pilot",
     title: "Test PILAR med ferdige oppgaver",
     lead:
       "Målet med piloten er å se om PILAR kan hjelpe byggingeniørstudenter med å tolke, beregne, kontrollere og dokumentere konstruksjonsoppgaver raskere og ryddigare.",
     startOwn: "Start med egen oppgave",
+    or: "eller",
     mine: "Mine rapporter",
-    examplesLabel: "Pilotoppgaver",
-    showInput: "Vis eksempelinput",
-    noteTitle: "Viktig for pilot",
-    noteText:
-      "PILAR er et AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrolleres av kvalifisert fagperson før bruk i prosjektering.",
+    galleryTitle: "Ferdige oppgaver",
+    legendLabel: "Vanskegrad",
+    diff: { easy: "Lett", medium: "Middels", hard: "Vanskelig" },
+    profileLabel: "Standardprofil",
+    show: "Vis eksempelinput",
+    hide: "Skjul eksempelinput",
+    sheetLabel: "Eksempelinput · lim inn i PILAR",
+    copy: "Kopier",
+    copied: "Kopiert",
     emptyTitle: "Ingen eksempel for denne profilen enda",
     emptyBody:
       "Vi jobber med eksempeloppgaver for denne profilen. Du kan starte med en egen oppgave i mellomtiden.",
+    honestyLabel: "Pilotmerknad",
+    honestyTitle: "Viktig for pilot",
+    honestyBody:
+      "PILAR er et AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrolleres av kvalifisert fagperson før bruk i prosjektering.",
+    terms: "Vilkår for bruk →",
   },
   nn: {
     eyebrow: "PILAR · Pilot",
@@ -49,15 +74,25 @@ const COPY: Record<LangKey, {
     lead:
       "Målet med piloten er å sjå om PILAR kan hjelpe byggingeniørstudentar med å tolke, berekne, kontrollere og dokumentere konstruksjonsoppgåver raskare og ryddigare.",
     startOwn: "Start med eiga oppgåve",
+    or: "eller",
     mine: "Mine rapportar",
-    examplesLabel: "Pilotoppgåver",
-    showInput: "Vis eksempelinput",
-    noteTitle: "Viktig for pilot",
-    noteText:
-      "PILAR er eit AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrollerast av kvalifisert fagperson før bruk i prosjektering.",
+    galleryTitle: "Ferdige oppgåver",
+    legendLabel: "Vanskegrad",
+    diff: { easy: "Lett", medium: "Middels", hard: "Vanskeleg" },
+    profileLabel: "Standardprofil",
+    show: "Vis eksempelinput",
+    hide: "Skjul eksempelinput",
+    sheetLabel: "Eksempelinput · lim inn i PILAR",
+    copy: "Kopier",
+    copied: "Kopiert",
     emptyTitle: "Ingen eksempel for denne profilen enda",
     emptyBody:
       "Vi jobbar med eksempeloppgåver for denne profilen. Du kan starte med ei eiga oppgåve i mellomtida.",
+    honestyLabel: "Pilotmerknad",
+    honestyTitle: "Viktig for pilot",
+    honestyBody:
+      "PILAR er eit AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrollerast av kvalifisert fagperson før bruk i prosjektering.",
+    terms: "Vilkår for bruk →",
   },
   en: {
     eyebrow: "PILAR · Pilot",
@@ -65,113 +100,374 @@ const COPY: Record<LangKey, {
     lead:
       "The pilot's goal is to see whether PILAR can help structural engineering students interpret, calculate, check and document design tasks faster and more clearly.",
     startOwn: "Start with your own task",
+    or: "or",
     mine: "My reports",
-    examplesLabel: "Pilot tasks",
-    showInput: "Show example input",
-    noteTitle: "Important for the pilot",
-    noteText:
-      "PILAR is an AI-generated learning and documentation tool. Results must always be verified by a qualified engineer before use in real design work.",
+    galleryTitle: "Ready-made tasks",
+    legendLabel: "Difficulty",
+    diff: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    profileLabel: "Standard profile",
+    show: "Show example input",
+    hide: "Hide example input",
+    sheetLabel: "Example input · paste into PILAR",
+    copy: "Copy",
+    copied: "Copied",
     emptyTitle: "No example tasks for this profile yet",
     emptyBody:
       "We are still authoring example tasks for this engineering standard. You can start with your own task in the meantime.",
+    honestyLabel: "Pilot notice",
+    honestyTitle: "Important for the pilot",
+    honestyBody:
+      "PILAR is an AI-generated learning and documentation tool. Results must always be verified by a qualified engineer before use in real design work.",
+    terms: "Terms of use →",
   },
 };
 
-type Props = {
-  uiMode: HeaderUiMode;
-};
+// Per-eksempel fallback-kjede: aktivt språk → en → nb → nn.
+function pickText(
+  field: Partial<Record<PilotLocale, string>> | undefined,
+  lang: LangKey,
+): string {
+  if (!field) return "";
+  return field[lang] ?? field.en ?? field.nb ?? field.nn ?? "";
+}
 
-export default function PilotClient({ uiMode }: Props) {
-  const { locale } = useLocale();
-  const langKey: LangKey = uiMode === "intl" ? "en" : locale;
-  const T = COPY[langKey];
+function countLabel(n: number, lang: LangKey): string {
+  if (lang === "en") return `${n} ${n === 1 ? "task" : "tasks"}`;
+  if (lang === "nn") return `${n} ${n === 1 ? "oppgåve" : "oppgåver"}`;
+  return `${n} ${n === 1 ? "oppgave" : "oppgaver"}`;
+}
 
-  // Profile lever i localStorage frå /international. SSR/initial-render
-  // kjenner ikkje verdien, så vi treng eit "mounted" for å skilje
-  // "ikkje lasta enno" frå "tom".
-  const [selectedProfile, setSelectedProfile] =
-    useState<EngineeringStandardFamily | null>(null);
-  const [mounted, setMounted] = useState(false);
+// Trufast problem-ark: behald råteksten; berre attkjende section-heads (korte
+// linjer som sluttar med ":") og leiande steg-nummer ("1. ") blir framheva.
+function formatLine(line: string): ReactNode {
+  if (line.length <= 60 && /^[A-Za-z][A-Za-z0-9 ,()/+_'.-]*:\s*$/.test(line)) {
+    return <span className="sheet-h">{line}</span>;
+  }
+  const m = line.match(/^(\d+\.)(\s.*)$/);
+  if (m) {
+    return (
+      <>
+        <span className="sheet-n">{m[1]}</span>
+        {m[2]}
+      </>
+    );
+  }
+  return line;
+}
 
-  useEffect(() => {
-    setMounted(true);
-    try {
-      const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { standards?: { family?: string } };
-      const family = parsed?.standards?.family;
-      if (family) setSelectedProfile(family as EngineeringStandardFamily);
-    } catch {
-      // ignore — corrupt localStorage held vi ikkje på
+function renderSheet(raw: string): ReactNode {
+  const lines = raw.split("\n");
+  return lines.map((line, i) => (
+    <span key={i}>
+      {formatLine(line)}
+      {i < lines.length - 1 ? "\n" : ""}
+    </span>
+  ));
+}
+
+function TaskCard({
+  example,
+  index,
+  langKey,
+  t,
+  reduce,
+}: {
+  example: PilotExample;
+  index: number;
+  langKey: LangKey;
+  t: Copy;
+  reduce: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const copyTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    },
+    [],
+  );
+
+  const diff = example.difficulty as Diff;
+  const std = example.tags.slice(0, 2).join(" · ");
+  const title = pickText(example.title, langKey);
+  const desc = pickText(example.description, langKey);
+  const prompt = pickText(example.prompt, langKey);
+
+  function toggle() {
+    const wrap = wrapRef.current;
+    const next = !open;
+    setOpen(next);
+    if (!wrap) return;
+    if (next) {
+      wrap.style.opacity = "1";
+      wrap.style.marginTop = "16px";
+      if (reduce) {
+        wrap.style.height = "auto";
+        return;
+      }
+      wrap.style.height = `${wrap.scrollHeight}px`;
+      const onEnd = (e: TransitionEvent) => {
+        if (e.propertyName === "height") {
+          wrap.style.height = "auto";
+          wrap.removeEventListener("transitionend", onEnd);
+        }
+      };
+      wrap.addEventListener("transitionend", onEnd);
+    } else {
+      wrap.style.opacity = "0";
+      wrap.style.marginTop = "0";
+      if (reduce) {
+        wrap.style.height = "0px";
+        return;
+      }
+      // frå auto → målt px → reflow → 0, så transisjonen har ein startverdi
+      wrap.style.height = `${wrap.scrollHeight}px`;
+      void wrap.offsetWidth;
+      wrap.style.height = "0px";
     }
-  }, []);
+  }
 
-  // Norske brukarar (uiMode "no"): vis alle eksempel som har nb/nn.
-  // Intl-brukarar: filtrer på vald profil. Inntil mounted veit vi ikkje
-  // profilen, så vi held tom liste for intl for å unngå feil flicker.
-  const filteredExamples = (() => {
-    if (uiMode === "no") return PILOT_EXAMPLES;
-    if (!mounted) return [];
-    if (!selectedProfile) return [];
-    return PILOT_EXAMPLES.filter((e) => e.profiles.includes(selectedProfile));
-  })();
-
-  // I intl-modus før mount: skjul grid for å unngå at "tom"-meldinga
-  // blinkar før profilen er lest.
-  const showEmptyState =
-    filteredExamples.length === 0 && (uiMode === "no" || mounted);
-
-  // Eksempel-tekstar er Partial: norske EC+NA-eksempel har berre nb/nn,
-  // internasjonale har berre en. Fallback: gjeldande språk → en → nb → nn → "".
-  const pickText = (field: Partial<Record<PilotLocale, string>>) =>
-    field[langKey] ?? field.en ?? field.nb ?? field.nn ?? "";
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(prompt);
+    } catch {
+      // Clipboard kan vere utilgjengeleg (usikker kontekst) — ikkje krasj.
+    }
+    setCopied(true);
+    if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied(false), 1600);
+  }
 
   return (
-    <main className="pilot-page">
-      <section className="pilot-hero">
-        <p className="uk-eyebrow">{T.eyebrow}</p>
-        <h1>{T.title}</h1>
-        <p className="pilot-lead">{T.lead}</p>
-        <div className="pilot-actions">
-          <Link href="/" className="uk-btn uk-btn--primary">
-            {T.startOwn}
-          </Link>
-          <Link href="/mine" className="uk-btn">
-            {T.mine}
-          </Link>
+    <article className="task-card reveal" data-diff={diff} style={{ ["--i"]: index } as CSSProperties}>
+      <div className="task-card__top">
+        <span className="task-diff">
+          <span className="diff-rungs" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className="diff-label">{t.diff[diff]}</span>
+        </span>
+        <span className="task-card__std">{std}</span>
+      </div>
+      <h3 className="task-card__title">{title}</h3>
+      <p className="task-card__desc">{desc}</p>
+      <div className={`task-disclosure${open ? " open" : ""}`}>
+        <button
+          type="button"
+          className="task-disclosure__trigger"
+          aria-expanded={open}
+          onClick={toggle}
+        >
+          <span className="chev" aria-hidden="true" />
+          <span className="trig-label">{open ? t.hide : t.show}</span>
+        </button>
+        <div className="task-sheet-wrap" ref={wrapRef}>
+          <div className="task-sheet">
+            <div className="task-sheet__hd">
+              <span className="task-sheet__label">{t.sheetLabel}</span>
+              <button
+                type="button"
+                className={`task-sheet__copy${copied ? " is-copied" : ""}`}
+                onClick={copyPrompt}
+              >
+                <span className="copy-label">{copied ? t.copied : t.copy}</span>
+              </button>
+            </div>
+            <pre className="task-sheet__body">{renderSheet(prompt)}</pre>
+          </div>
         </div>
-      </section>
+      </div>
+    </article>
+  );
+}
 
-      {filteredExamples.length > 0 && (
-        <section className="pilot-grid" aria-label={T.examplesLabel}>
-          {filteredExamples.map((example) => (
-            <article className="pilot-example-card" key={example.id}>
-              <div className="pilot-card-topline uk-eyebrow">
-                <span>{example.difficulty}</span>
-                <span>{example.tags.slice(0, 2).join(" · ")}</span>
+export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
+  const { locale } = useLocale();
+  const langKey: LangKey = uiMode === "intl" ? "en" : locale;
+  const t = COPY[langKey];
+
+  // Standardprofil: norske brukarar → Eurocode-Norge; intl → Eurocode general.
+  // Overstyrast frå lagra engineering-context (/international) etter mount.
+  const [profile, setProfile] = useState<EngineeringStandardFamily>(
+    uiMode === "no" ? "eurocode_norway" : "eurocode_general",
+  );
+  const [reduce, setReduce] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const onMq = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mq.addEventListener("change", onMq);
+
+    try {
+      const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { standards?: { family?: string } };
+        const fam = parsed?.standards?.family;
+        if (fam && STANDARD_OPTIONS.some((o) => o.value === fam)) {
+          setProfile(fam as EngineeringStandardFamily);
+        }
+      }
+    } catch {
+      // ignorer korrupt localStorage — held trygg default
+    }
+
+    return () => mq.removeEventListener("change", onMq);
+  }, []);
+
+  const filtered = PILOT_EXAMPLES.filter((e) => e.profiles.includes(profile));
+
+  // Scroll-reveal (gata bak .js-anim). Re-køyr ved profil/lang-byte slik at
+  // nye kort (remounta via key på grid) blir observert + staggar inn på nytt.
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>(".pilot");
+    if (!root) return;
+    const els = Array.from(root.querySelectorAll<HTMLElement>(".reveal"));
+    if (reduce || typeof IntersectionObserver === "undefined") {
+      els.forEach((el) => el.classList.add("in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -5% 0px" },
+    );
+    els.forEach((el) => {
+      if (!el.classList.contains("in")) io.observe(el);
+    });
+    // Safety-net: avslør alt som alt er i syne om observeren aldri fyrer.
+    const safety = window.setTimeout(() => {
+      els.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) el.classList.add("in");
+      });
+    }, 1200);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(safety);
+    };
+  }, [reduce, profile, langKey]);
+
+  return (
+    <main className="pilot">
+      <div className="pilot__wrap">
+        {/* HERO */}
+        <section className="pilot-hero reveal">
+          <span className="uk-eyebrow pilot-hero__eyebrow">{t.eyebrow}</span>
+          <h1 className="pilot-hero__title">{t.title}</h1>
+          <p className="pilot-hero__lead">{t.lead}</p>
+          <div className="pilot-hero__cta">
+            <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn">
+              {t.startOwn}{" "}
+              <span className="arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+            <span className="pilot-hero__sep">{t.or}</span>
+            <Link href="/mine" className="uk-btn pilot-hero__btn">
+              {t.mine}
+            </Link>
+          </div>
+        </section>
+
+        {/* GALLERY */}
+        <section className="pilot-gallery" aria-label={t.galleryTitle}>
+          <div className="gallery-bar reveal">
+            <div className="gallery-bar__l">
+              <h2 className="gallery-title">{t.galleryTitle}</h2>
+              <span className="gallery-count">{countLabel(filtered.length, langKey)}</span>
+            </div>
+            <div className="gallery-bar__r">
+              <div className="legend" aria-hidden="true">
+                <span className="legend__lbl">{t.legendLabel}</span>
+                {(["easy", "medium", "hard"] as const).map((d) => (
+                  <span className="legend__item" data-diff={d} key={d}>
+                    <span className="diff-rungs">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <span className="diff-label">{t.diff[d]}</span>
+                  </span>
+                ))}
               </div>
-              <h2>{pickText(example.title)}</h2>
-              <p>{pickText(example.description)}</p>
-              <details>
-                <summary>{T.showInput}</summary>
-                <pre>{pickText(example.prompt)}</pre>
-              </details>
-            </article>
-          ))}
-        </section>
-      )}
+              <label className="gallery-profile">
+                <span className="gallery-profile__lbl">{t.profileLabel}</span>
+                <select
+                  className="pilot-select"
+                  value={profile}
+                  onChange={(e) => setProfile(e.target.value as EngineeringStandardFamily)}
+                >
+                  {STANDARD_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
 
-      {showEmptyState && (
-        <section className="pilot-note">
-          <h2>{T.emptyTitle}</h2>
-          <p>{T.emptyBody}</p>
+          {filtered.length > 0 ? (
+            <div className="task-grid" key={profile}>
+              {filtered.map((example, i) => (
+                <TaskCard
+                  key={example.id}
+                  example={example}
+                  index={i}
+                  langKey={langKey}
+                  t={t}
+                  reduce={reduce}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="pilot-empty reveal">
+              <span className="pilot-empty__icon" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              <h3 className="pilot-empty__title">{t.emptyTitle}</h3>
+              <p className="pilot-empty__body">{t.emptyBody}</p>
+              <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn">
+                {t.startOwn}{" "}
+                <span className="arrow" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            </div>
+          )}
         </section>
-      )}
 
-      <section className="pilot-note">
-        <h2>{T.noteTitle}</h2>
-        <p>{T.noteText}</p>
-      </section>
+        {/* HONESTY NOTE — tillitsfunksjon, prominent */}
+        <section className="pilot-honesty reveal">
+          <div className="uk-disclaimer pilot-disclaimer">
+            <div className="pilot-disclaimer__stripe" aria-hidden="true" />
+            <div>
+              <div className="pilot-disclaimer__label">{t.honestyLabel}</div>
+              <h2 className="pilot-disclaimer__title">{t.honestyTitle}</h2>
+              <p className="pilot-disclaimer__body">{t.honestyBody}</p>
+            </div>
+          </div>
+        </section>
+
+        <div className="pilot-foot">
+          <Link href="/terms">{t.terms}</Link>
+        </div>
+      </div>
     </main>
   );
 }

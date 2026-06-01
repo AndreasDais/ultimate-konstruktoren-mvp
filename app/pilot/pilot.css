@@ -1,106 +1,542 @@
-.pilot-page {
-  min-height: 100vh;
-  padding: 56px max(24px, calc((100vw - 1120px) / 2));
+/* =========================================================
+   /pilot — Pilar-native "lab / task gallery" redesign.
+   Porta frå Claude Design-handoff (design_handoff_pilot_gallery).
+   Arvar tokens.css sentralt (3 palettar via [data-palette]) — berre
+   var(), ingen hardkoda hex, ingen parallelt token-system. Alt scopa
+   under .pilot for å unngå global lekkasje.
+
+   Søsterside-konvensjon: same .js-anim-gate på <html> + same --ease +
+   same IntersectionObserver-reveal som /heim og /international. Sida
+   renderer fullstendig utan JS.
+
+   Bevart: difficulty/standard-tags/title/description/raw prompt, empty
+   state, prominent honesty-note, profil-filter, per-kort disclosure.
+   ========================================================= */
+
+.pilot {
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* chevron for <select> — stroke ≈ --fg-muted per palett (som /international) */
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  min-height: 100%;
   background: var(--bg);
   color: var(--fg);
+  font-family: var(--font-ui);
+}
+[data-palette="stone"] .pilot {
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6757' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+[data-palette="graphite"] .pilot {
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8d95' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
-.pilot-hero,
-.pilot-note,
-.pilot-example-card {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
+.pilot__wrap {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 56px) max(20px, 4vw);
 }
 
+/* === HERO ================================================= */
 .pilot-hero {
-  border-radius: var(--r-lg);
-  padding: 44px;
-  margin-bottom: 28px;
+  max-width: 780px;
+  margin-bottom: clamp(34px, 4.5vw, 56px);
 }
-
-.pilot-hero h1 {
-  margin: 12px 0 16px;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  line-height: 1.2;
-  max-width: 920px;
+.pilot-hero__eyebrow {
+  display: block;
+  margin-bottom: 14px;
 }
-
-.pilot-lead {
-  max-width: 820px;
-  color: var(--fg-muted);
-  font-size: 1.08rem;
-  line-height: 1.65;
+.pilot-hero__title {
+  margin: 0 0 16px;
+  font-family: var(--font-doc);
+  font-weight: 500;
+  font-size: clamp(31px, 4.2vw, 46px);
+  line-height: 1.07;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  text-wrap: balance;
 }
-
-.pilot-actions {
+.pilot-hero__lead {
+  margin: 0 0 26px;
+  max-width: 660px;
+  color: var(--fg-2);
+  font-size: clamp(15px, 1.3vw, 16.5px);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.pilot-hero__cta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
-  margin-top: 26px;
+}
+.pilot-hero__btn {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-md);
+}
+.pilot-hero__sep {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-faint);
+}
+.pilot .arrow {
+  display: inline-block;
+  transition: transform 160ms var(--ease);
+}
+.pilot-hero__btn:hover .arrow {
+  transform: translateX(3px);
 }
 
-.pilot-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+/* === GALLERY BAR (header + difficulty-legend + profil-filter) ==== */
+.pilot-gallery {
+  margin-bottom: clamp(28px, 4vw, 44px);
 }
-
-.pilot-example-card,
-.pilot-note {
-  border-radius: var(--r-lg);
-  padding: 24px;
-}
-
-.pilot-card-topline {
+.gallery-bar {
   display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+.gallery-bar__l {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.gallery-title {
+  margin: 0;
+  font-family: var(--font-doc);
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 600;
+  color: var(--fg);
+}
+.gallery-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.gallery-bar__r {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.legend__lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gallery-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.gallery-profile__lbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.pilot-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 8px 34px 8px 12px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 140ms, box-shadow 140ms;
+  background-image: var(--chev);
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 11px;
+}
+.pilot-select:hover {
+  border-color: var(--border-strong);
+}
+.pilot-select:focus {
+  border-color: var(--fg-2);
+  box-shadow: 0 0 0 3px var(--surface-3);
+  outline: none;
+}
+
+/* === DIFFICULTY LADDER (kjerne-signalet) ================== */
+.task-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.diff-rungs {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 13px;
+}
+.diff-rungs i {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--border-2);
+}
+.diff-rungs i:nth-child(1) { height: 5px; }
+.diff-rungs i:nth-child(2) { height: 9px; }
+.diff-rungs i:nth-child(3) { height: 13px; }
+.diff-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+/* Den klatrande 1/2/3-rung-meteren disambiguerer raud frå "feil/fare" —
+   det les som eit nivå, ikkje ein status. Gjeld både kort og legend. */
+.pilot [data-diff="easy"] .diff-rungs i:nth-child(-n + 1) { background: var(--ok); }
+.pilot [data-diff="easy"] .diff-label { color: var(--ok); }
+.pilot [data-diff="medium"] .diff-rungs i:nth-child(-n + 2) { background: var(--warn); }
+.pilot [data-diff="medium"] .diff-label { color: var(--warn); }
+.pilot [data-diff="hard"] .diff-rungs i:nth-child(-n + 3) { background: var(--bad); }
+.pilot [data-diff="hard"] .diff-label { color: var(--bad); }
+
+/* === TASK GRID + KORT ===================================== */
+.task-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.task-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: 22px 24px 20px;
+  /* hover bruker box-shadow (ikkje transform) → ingen konflikt med reveal-translateY */
+  transition: border-color 0.18s, box-shadow 0.28s var(--ease);
+}
+.task-card:hover {
+  border-color: var(--border-2);
+  box-shadow: 0 2px 6px rgba(15, 17, 21, 0.07), 0 14px 34px -14px rgba(15, 17, 21, 0.16);
+}
+[data-palette="graphite"] .pilot .task-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 38px -12px rgba(0, 0, 0, 0.6);
+}
+.task-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.task-card__std {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.task-card__title {
+  /* MERK: ikkje text-wrap: pretty her — det målte boks-høgda feil for
+     korte siste-linjer i nokre motorar (→ overlapp). Vanleg ombrekk er trygt. */
+  margin: 0 0 10px;
+  font-family: var(--font-doc);
+  font-size: clamp(18px, 1.7vw, 20.5px);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.012em;
+  color: var(--fg);
+}
+.task-card__desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--fg-2);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* === DISCLOSURE + PROBLEM-ARK ============================= */
+.task-disclosure {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.task-disclosure__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+.task-disclosure__trigger:hover .trig-label {
+  color: var(--accent);
+}
+.task-disclosure__trigger:hover .chev {
+  border-color: var(--accent);
+}
+.chev {
+  width: 7px;
+  height: 7px;
+  border-right: 1.7px solid var(--fg-muted);
+  border-bottom: 1.7px solid var(--fg-muted);
+  transform: rotate(-45deg);
+  transition: transform 0.32s var(--ease), border-color 0.18s;
+}
+.task-disclosure.open .chev {
+  transform: rotate(45deg);
+}
+/* JS-driven pixel-høgd (sjå PilotClient) — robust på tvers av motorar.
+   Ikkje grid 0fr→1fr (nokre motorar resolverer 1fr til 0). */
+.task-sheet-wrap {
+  overflow: hidden;
+  height: 0;
+  opacity: 0;
+  margin-top: 0;
+  transition: height 0.44s var(--ease), opacity 0.32s ease, margin-top 0.44s var(--ease);
+}
+.task-sheet {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.task-sheet__hd {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-3);
 }
-
-.pilot-example-card h2 {
-  margin: 14px 0 10px;
-  font-size: 1.35rem;
-}
-
-.pilot-example-card p,
-.pilot-note p {
+.task-sheet__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--fg-muted);
+}
+.task-sheet__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-xs);
+  padding: 3px 9px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: border-color 0.14s, color 0.14s, background 0.14s;
+}
+.task-sheet__copy:hover {
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+.task-sheet__copy.is-copied {
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.task-sheet__body {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.72;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-feature-settings: 'tnum';
+}
+.task-sheet__body .sheet-h { color: var(--fg); font-weight: 600; }
+.task-sheet__body .sheet-n { color: var(--accent); }
+
+/* === EMPTY STATE ========================================== */
+.pilot-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  padding: clamp(34px, 6vw, 56px) 28px;
+  text-align: center;
+}
+.pilot-empty__icon {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 32px;
+  opacity: 0.45;
+}
+.pilot-empty__icon i {
+  width: 6px;
+  border-radius: 1px;
+  background: var(--border-strong);
+}
+.pilot-empty__icon i:nth-child(1) { height: 16px; }
+.pilot-empty__icon i:nth-child(2) { height: 28px; }
+.pilot-empty__icon i:nth-child(3) { height: 20px; }
+.pilot-empty__icon i:nth-child(4) { height: 32px; }
+.pilot-empty__title {
+  margin: 0;
+  font-family: var(--font-doc);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.pilot-empty__body {
+  margin: 0;
+  max-width: 440px;
+  font-size: 13.5px;
+  color: var(--fg-2);
   line-height: 1.6;
 }
 
-.pilot-example-card summary {
-  cursor: pointer;
-  font-weight: 800;
-  margin-top: 16px;
+/* === HONESTY-NOTE (tillitsfunksjon — prominent) =========== */
+.pilot-honesty {
+  margin-bottom: 4px;
+}
+/* .uk-disclaimer gjev bg/farge/DNA; vi gjer den til grid med 8px-stripe
+   og nøytraliserer atomet sin 3px venstrekant (stripa er accenten no). */
+.pilot-disclaimer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: start;
+  padding: 20px 24px;
+  border-left: 1px solid var(--warn-border);
+}
+.pilot-disclaimer__stripe {
+  width: 8px;
+  min-height: 54px;
+  border-radius: 2px;
+  background: var(--disclaimer-stripe);
+}
+.pilot-disclaimer__label {
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--disclaimer-stripe);
+}
+.pilot-disclaimer__title {
+  margin: 0 0 8px;
+  font-family: var(--font-doc);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--disclaimer-fg);
+}
+.pilot-disclaimer__body {
+  margin: 0;
+  max-width: 760px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--disclaimer-fg);
 }
 
-.pilot-example-card pre {
-  white-space: pre-wrap;
-  overflow-x: auto;
-  margin-top: 12px;
-  border-radius: var(--r-md);
-  padding: 16px;
-  background: var(--surface-2);
-  font-size: 0.88rem;
-  line-height: 1.55;
+/* === FOOTER =============================================== */
+.pilot-foot {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
-
-.pilot-note {
-  margin-top: 18px;
+.pilot-foot a {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  text-decoration: none;
 }
-
-/* Palett-blokkene er fjerna: pilot-sida arvar no slate/stone/graphite
-   sentralt frå tokens.css via var(--bg)/var(--surface)/var(--fg) osv. */
-
-@media (max-width: 780px) {
-  .pilot-page { padding: 28px 16px; }
-  .pilot-hero { padding: 28px; }
-  .pilot-grid { grid-template-columns: 1fr; }
-}
-
-
-.pilot-example-card summary,
-.pilot-example-card pre {
+.pilot-foot a:hover {
   color: var(--fg);
+}
+
+/* === REVEAL / STAGGER (gata bak .js-anim) ================= */
+.pilot .reveal {
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.js-anim .pilot .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.pilot .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+.js-anim .pilot .task-card.reveal {
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* === RESPONSIV ============================================ */
+@media (max-width: 820px) {
+  .task-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .legend {
+    display: none;
+  }
+  .pilot-hero__sep {
+    display: none;
+  }
+  .pilot-disclaimer {
+    grid-template-columns: 1fr;
+  }
+  .pilot-disclaimer__stripe {
+    width: auto;
+    min-height: 0;
+    height: 4px;
+  }
+}
+
+/* === REDUCED MOTION ======================================= */
+@media (prefers-reduced-motion: reduce) {
+  .js-anim .pilot .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .js-anim .pilot .task-card.reveal {
+    transition-delay: 0s;
+  }
+  .pilot .task-sheet-wrap {
+    transition: opacity 0.001s;
+  }
+  .pilot .chev,
+  .pilot .arrow,
+  .pilot .task-card {
+    transition: none;
+  }
 }
