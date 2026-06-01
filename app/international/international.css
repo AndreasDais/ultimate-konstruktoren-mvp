@@ -35,8 +35,14 @@
 
 /* === HERO ================================================= */
 .intl-hero {
-  max-width: 760px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
   margin-bottom: clamp(32px, 4vw, 52px);
+}
+.intl-hero__text {
+  max-width: 760px;
 }
 .intl-hero__eyebrow {
   display: block;
@@ -64,15 +70,10 @@
   padding: 0 20px;
   font-size: 14px;
 }
-/* CTA bur no INNE i venstre grid-kolonne (.intl-grid__left), rett under
-   config-panelet — venstrejustert, fyller kvitrommet som det høgre (taller)
-   preview-panelet elles ville late stå tomt. */
-.intl-grid__left {
-  min-width: 0;
-}
-.intl-cta-row {
-  display: flex;
-  margin-top: 16px;
+/* CTA nede til høgre i hero-en — bottom-justert med hero-teksten, rett over
+   config-boksen. Header-action, motsett av teksten. */
+.intl-hero__cta {
+  flex-shrink: 0;
 }
 .arrow {
   display: inline-block;
@@ -664,6 +665,11 @@
 
 /* === RESPONSIV ============================================ */
 @media (max-width: 860px) {
+  .intl-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
   .intl-grid {
     grid-template-columns: 1fr;
   }
