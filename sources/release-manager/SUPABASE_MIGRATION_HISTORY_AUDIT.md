@@ -438,3 +438,128 @@ Current 68C.39 classification remains unchanged:
 Do not proceed if the SQL output shows `provider_message_id`, a
 `raw_error_redacted` default, release-proof mode, or anything that would make
 `diagnostic_only=false`.
+
+## 68C.40 Package A user-run read-only results
+
+The deploy owner ran Package A manually in Supabase SQL Editor and pasted the
+results back to Ops. Ops did not run SQL, Supabase CLI, repair, `db push`, or
+`db push --dry-run` from the worktree.
+
+Package A used read-only `select` queries only. No mutation, repair, push,
+dry-run, schema change, or release-proof enabling occurred.
+
+Audited target:
+
+```txt
+current main commit: 7f24e45
+production project ref: uiogylrpclamffhgkjki
+SQL source: user-run Supabase SQL Editor Package A
+```
+
+Migration ledger availability:
+
+```txt
+information_schema.tables where table_schema = 'supabase_migrations': no rows returned
+to_regclass('supabase_migrations.schema_migrations'): null
+```
+
+Interpretation:
+
+- migration ledger entries are not visible in this SQL Editor context
+- production migration history remains unbaselined for CLI purposes
+- no repair is approved from Package A
+
+Public table presence result:
+
+```txt
+admins
+agent_learning_feedback
+agent_outputs
+calculation_runs
+comparisons
+controller_decisions
+daily_intelligence_reports
+daily_metrics_snapshots
+engineering_context_events
+error_reports
+improvement_actions
+input_reviews
+manual_reviews
+pilot_feedback
+reports
+requests
+step_messages
+step_metrics
+trace_events
+```
+
+All expected Package A public tables were present in the user-run result.
+
+Relevant column result:
+
+```txt
+calculation_runs.display_language: text, nullable, no default
+calculation_runs.engineering_context: jsonb, nullable, no default
+calculation_runs.eval_case_id: text, nullable, no default
+step_metrics.completed_at: timestamp with time zone, nullable, no default
+step_metrics.error_category: text, nullable, no default
+step_metrics.raw_error_redacted: boolean, nullable, no default
+step_metrics.retryable: boolean, nullable, no default
+step_metrics.status: text, nullable, no default
+step_metrics.provider_message_id: no row returned
+engineering_context_events.output_mode: no row returned
+engineering_context_events.fallback_language: no row returned
+engineering_context_events.detected_prompt_language: no row returned
+```
+
+Relevant `calculation_runs` and `step_metrics` columns were present. The
+`engineering_context_events` language-policy columns were absent from Package A
+and are classified as drift / partial / pending review only; this is not an
+auto-fix instruction.
+
+Relevant constraint result:
+
+```txt
+calculation_runs_display_language_check:
+  display_language is null or display_language in ('nn', 'nb', 'en')
+
+step_metrics_error_category_check:
+  error_category is null or error_category in
+  ('none', 'quota', 'auth', 'transient', 'bad_request', 'model_output',
+   'validation', 'unsupported_context', 'blocked', 'internal', 'unknown',
+   'not_applicable')
+
+step_metrics_status_check:
+  status is null or status in
+  ('completed', 'failed', 'blocked', 'skipped', 'not_applicable')
+```
+
+Relevant Package A constraints were present and bounded.
+
+Package A classification update:
+
+| Migration | Package A evidence | Current classification | Repair eligibility |
+|---|---|---|---|
+| `20260523000000_pilar_intelligence_foundation.sql` | expected intelligence/core tables are present where covered by Package A table list; detailed columns, indexes, triggers, policies and comments not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260523000002_pilot_readiness_feedback.sql` | `pilot_feedback` table present; indexes, RLS policy and comments not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260524000000_engineering_context_events.sql` | `engineering_context_events` table present; indexes and RLS policy not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260524000001_engineering_context_language_policy.sql` | expected `output_mode`, `fallback_language`, and `detected_prompt_language` columns returned no rows | drift / partial / pending review; not an auto-fix instruction | MUST NOT REPAIR YET |
+| `20260527000000_pilar_core_pipeline.sql` | expected core pipeline tables are present; detailed columns, indexes, RLS, grants and policies not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260527000001_run_display_language.sql` | `calculation_runs.display_language` column and bounded check constraint present | evidence appears exact for Package A fields; ledger repair still not approved | MUST NOT REPAIR YET |
+| `20260528000000_step_messages.sql` | `step_messages` table present; indexes, RLS and grants not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000001_eval_case_id.sql` | `calculation_runs.eval_case_id` column present; partial index not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000002_trace_events_view.sql` | `trace_events` relation present in table-presence query; view definition and grants not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000003_engineering_context_per_run.sql` | `calculation_runs.engineering_context` column present; indexes not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260531000000_step_metrics_release_proof_metadata.sql` | five expected nullable `step_metrics` columns present; bounded status/error_category constraints present; `raw_error_redacted` has no default; `provider_message_id` omitted | partial live evidence plus earlier user-provided comment/row-count verification; exactness still needs comment audit | provisional later repair candidate only inside approved full-baseline strategy |
+
+Package A risks / unknowns:
+
+- policy/RLS output has not been provided yet
+- comments output has not been provided yet
+- indexes and grants were not covered by Package A
+- full per-migration exactness is not complete
+- migration ledger is unavailable/null in SQL Editor context
+- no migration is approved for repair
+- no release-proof mode is enabled
+- `diagnostic_only` remains true
+- `provider_message_id` remains omitted
