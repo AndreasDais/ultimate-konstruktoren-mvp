@@ -563,3 +563,194 @@ Package A risks / unknowns:
 - no release-proof mode is enabled
 - `diagnostic_only` remains true
 - `provider_message_id` remains omitted
+
+## 68C.41 Package B user-run read-only results
+
+The deploy owner ran Package B manually in Supabase SQL Editor and pasted the
+combined result table back to Ops. Ops did not run SQL, Supabase CLI, repair,
+`db push`, or `db push --dry-run` from the worktree.
+
+Package B used read-only `select` queries only. No mutation, repair, push,
+dry-run, schema change, or release-proof enabling occurred.
+
+RLS status result:
+
+```txt
+RLS enabled: true for all expected Package B public tables
+force RLS: false for all expected Package B public tables
+```
+
+Tables covered:
+
+```txt
+admins
+agent_learning_feedback
+agent_outputs
+calculation_runs
+comparisons
+controller_decisions
+daily_intelligence_reports
+daily_metrics_snapshots
+engineering_context_events
+error_reports
+improvement_actions
+input_reviews
+manual_reviews
+pilot_feedback
+reports
+requests
+step_messages
+step_metrics
+```
+
+Policy result:
+
+```txt
+calculation_runs:
+  policy: Innlogga brukar les eigne berekningar
+  cmd: SELECT
+  roles: authenticated
+  qual: user_id = auth.uid()
+
+engineering_context_events:
+  policy: engineering_context_events_service_role_all
+  cmd: ALL
+  roles: public
+  qual / with_check: auth.role() = 'service_role'
+
+pilot_feedback:
+  policy: pilot_feedback_no_public_read
+  cmd: SELECT
+  roles: anon, authenticated
+  qual: false
+```
+
+No other expected Package B tables returned policies in the pasted result.
+
+Table comment result:
+
+```txt
+pilot_feedback:
+  Pilot feedback from report users. Used by admin dashboards and intelligence agent.
+
+step_metrics:
+  Per-step telemetry summary. Release-readiness metadata is safe top-level evidence only; provider_message_id is intentionally omitted/deferred and must not be derived from step_messages.raw_message.
+```
+
+These expected comment rows returned null comments:
+
+```txt
+agent_learning_feedback
+calculation_runs
+daily_intelligence_reports
+daily_metrics_snapshots
+engineering_context_events
+improvement_actions
+step_messages
+trace_events
+```
+
+Column comment result:
+
+```txt
+pilot_feedback.rating:
+  useful, partly, or not_useful.
+
+pilot_feedback.trust_level:
+  How much the tester trusted the output.
+
+step_metrics.completed_at:
+  Safe top-level release-readiness terminal timestamp. Nullable for historical rows and partial rollout; readers must not infer release-proof from null.
+
+step_metrics.error_category:
+  Bounded safe release-readiness error category. Must not contain raw provider text, prompts, stack traces, secrets, or local paths.
+
+step_metrics.raw_error_redacted:
+  Explicit safe redaction evidence for persisted error metadata. No default true: writers must set it when raw error detail is absent or redacted.
+
+step_metrics.retryable:
+  Safe release-readiness retryability hint. Nullable until all pipeline writers populate the trace metadata contract.
+
+step_metrics.status:
+  Safe top-level release-readiness terminal step status. Nullable for backwards compatibility and partial writer rollout; not sufficient for release-proof by itself.
+```
+
+`engineering_context_events.language` returned a null column comment. Package B
+did not return an `engineering_context_events.output_mode` column-comment row.
+
+Safety aggregate result:
+
+```txt
+provider_message_id_columns: 0
+raw_error_redacted_defaults: 0
+nonnullable_release_readiness_fields: 0
+```
+
+Step metrics field default/nullability result:
+
+```txt
+step_metrics.completed_at: nullable, no default
+step_metrics.error_category: nullable, no default
+step_metrics.raw_error_redacted: nullable, no default
+step_metrics.retryable: nullable, no default
+step_metrics.status: nullable, no default
+step_metrics.provider_message_id: no row returned
+```
+
+User-run safety-boundary result:
+
+```txt
+step_messages.raw_message:
+  raw_message exists for replay only; do not use as release-proof metadata
+
+step_metrics.completed_at:
+  safe top-level trace-readiness metadata candidate
+
+step_metrics.error_category:
+  safe top-level trace-readiness metadata candidate
+
+step_metrics.raw_error_redacted:
+  safe top-level trace-readiness metadata candidate
+
+step_metrics.retryable:
+  safe top-level trace-readiness metadata candidate
+
+step_metrics.status:
+  safe top-level trace-readiness metadata candidate
+```
+
+Package B partial interpretation:
+
+- `step_messages.raw_message` is present only as replay/debug evidence and must
+  not be used as release-proof metadata
+- `step_metrics.status`, `completed_at`, `error_category`, `retryable`, and
+  `raw_error_redacted` remain the safe top-level trace-readiness metadata
+  candidates
+- Package B confirms `provider_message_id_columns = 0`
+- Package B confirms `raw_error_redacted_defaults = 0`
+- Package B confirms all five release-readiness fields are nullable
+- RLS is enabled on all expected Package B public tables, with force RLS false
+- only three policies were returned: `calculation_runs`, `engineering_context_events`,
+  and `pilot_feedback`
+- Package B comments support the `20260531000000` safety-boundary intent for
+  `step_metrics`
+- indexes and grants remain unaudited
+- no migration is approved for repair
+- no release-proof mode is enabled
+- `diagnostic_only` remains true
+
+Package B classification update:
+
+| Migration | Package B evidence | Current classification | Repair eligibility |
+|---|---|---|---|
+| `20260523000000_pilar_intelligence_foundation.sql` | expected tables have RLS enabled; no specific policies returned except `calculation_runs`; table comments mostly null; indexes, grants, triggers and full columns not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260523000002_pilot_readiness_feedback.sql` | `pilot_feedback` RLS enabled; no-public-read policy present; table and selected column comments present | stronger partial evidence; indexes still not audited | MUST NOT REPAIR YET |
+| `20260524000000_engineering_context_events.sql` | RLS enabled; service-role policy present; table comment null; indexes not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260524000001_engineering_context_language_policy.sql` | `engineering_context_events.language` comment null and `output_mode` column-comment row absent from Package B; Package A showed language-policy columns absent | drift / partial / pending review; not an auto-fix instruction | MUST NOT REPAIR YET |
+| `20260527000000_pilar_core_pipeline.sql` | core tables have RLS enabled; `calculation_runs` authenticated select policy present; comments mostly null; indexes/grants/full column shape not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260527000001_run_display_language.sql` | Package B does not add new evidence beyond Package A column/constraint proof | evidence appears exact for Package A fields; ledger repair still not approved | MUST NOT REPAIR YET |
+| `20260528000000_step_messages.sql` | `step_messages` RLS enabled; raw_message safety boundary says replay only, not release-proof metadata; grants/indexes not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000001_eval_case_id.sql` | Package B does not add index evidence beyond Package A column proof | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000002_trace_events_view.sql` | table-comment query included `trace_events` and returned null; view definition/grants not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260528000003_engineering_context_per_run.sql` | Package B does not add index evidence beyond Package A column proof | partial evidence; exactness unknown | MUST NOT REPAIR YET |
+| `20260531000000_step_metrics_release_proof_metadata.sql` | Package A+B verify nullable fields, no defaults, bounded constraints, comments, provider id omission, and raw_message exclusion from release-proof metadata | strongest evidence so far; still only a provisional later repair candidate inside approved full-baseline strategy | MUST NOT REPAIR YET |
