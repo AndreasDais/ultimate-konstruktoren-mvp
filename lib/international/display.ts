@@ -720,7 +720,10 @@ export function sanitizeAiscGuardedOutputText(value: string): string {
         ),
       ),
     ),
-  );
+  )
+    .replace(/\b(?:the\s+)?No refined Cb value is computed or assumed without verified input\./gi, "No refined Cb value is computed or assumed without verified input.")
+    .replace(/verified input\.0\s+is used/gi, "verified input is used")
+    .replace(/verified input\.0\s+does not establish any refined\s+Cb effect without verified input\./gi, "verified input. Any refined Cb effect must be computed from verified input before being used.");
 }
 
 

@@ -77,6 +77,79 @@ const sample: UpstreamReportData = {
   },
 };
 
+const englishAiscSample: UpstreamReportData = {
+  ...sample,
+  run: {
+    display_language: "en",
+    request: {
+      raw_text:
+        "AISC/ASCE diagnostic check for a simply supported W12x26 steel beam, L = 20 ft, D = 0.45 kip/ft, Lr = 0.80 kip/ft.",
+    },
+  },
+  inputReview: {
+    input_status: "klar",
+    prompt_version: "input_agent_v0.1",
+    parsed_data: {
+      report_title: "Kapasitetskontroll av st\u00e5lbjelke W12x26",
+      calculation_type: "stalkapasitet",
+    },
+  },
+  report: {
+    ...sample.report,
+    executive_summary:
+      "Konstrukt\u00f8r A og Konstrukt\u00f8r B er einige. w_u = 1,820 kip/ft og M_u = 91,0 kip\u22c5ft.",
+    technical_assessment:
+      "Samanliknar fann ingen kritiske avvik, men Cb er ikkje berekna.",
+    conclusion:
+      "Rapport\u00f8r minner om at dette er f\u00f8rebels og m\u00e5 kontrollerast av fagperson.",
+  },
+  agentA: {
+    agent_name: "agent_a",
+    prompt_version: "agent_a_v0.1",
+    structured_output: {
+      confidence: "medium",
+      assumptions: ["D og Lr er henta fr\u00e5 verifisert input."],
+      results: {
+        wu: "1,820 kip/ft",
+        Mu: "91,0 kip\u22c5ft",
+        Vu: "18,2 kip",
+      },
+      calculation_steps: [
+        {
+          title: "Berekning av last og moment",
+          text:
+            "w_u = 1,2D + 1,6L = 1,820 kip/ft\n" +
+            "M_u = 1,820 * 20^2 / 8 = 91,0 kip\u22c5ft",
+          latex_formula: null,
+        },
+      ],
+      limitations: ["Kapasitetskontroll er ikke utf\u00f8rt"],
+      warnings: ["q m\u00e5 bekreftes som dimensjonerende last"],
+    },
+  },
+  agentB: {
+    agent_name: "agent_b",
+    prompt_version: "agent_b_v0.1",
+    structured_output: {
+      confidence: "medium",
+      results: {
+        wu: "1,820 kip/ft",
+        Mu: "91,0 kip\u00b7ft",
+        Vu: "18,2 kip",
+      },
+    },
+  },
+  comparison: { match_status: "match", comparison_data: {} },
+  controllerDecision: {
+    decision_status: "approved_with_warnings",
+    risk_level: "medium",
+    reason: "aisc_diagnostic_only",
+    user_message:
+      "Kontroll\u00f8r har f\u00f8rebels godkjent visning, men Cb og kapasitet er ikkje berekna.",
+    blocked_outputs: [],
+  },
+};
+
 describe("buildReportModel", () => {
   it("byggjer ein validert rapportmodell frå agent-e respons", () => {
     const model = buildReportModel(sample, {
@@ -167,6 +240,91 @@ describe("buildReportModel", () => {
         expect.objectContaining({ label: "MEd", value: "99", unit: "kNm" }),
       ]),
     );
+  });
+
+  it("formats US customary English result rows and step math with dot decimals", () => {
+    const model = buildReportModel(englishAiscSample, {
+      locale: "nb",
+      reportUrl: "https://pilar.example/report/aisc-diagnostic",
+    });
+
+    const visibleText = [
+      model.summary.text,
+      model.calculation.resultRows.map((row) => row.raw).join("\n"),
+      model.control.comparisonRows.map((row) => `${row.constructorA}\n${row.constructorB}`).join("\n"),
+      model.calculation.steps.map((step) => `${step.title}\n${step.prose}`).join("\n"),
+      model.assessment.limitations.join("\n"),
+      model.assessment.warnings.join("\n"),
+      model.conclusion,
+    ].join("\n");
+
+    expect(model.meta.displayLanguage).toBe("en");
+    expect(model.cover.title).toBe("Steel beam - demand and LTB screening");
+    expect(model.meta.status).toBe("Provisionally accepted with warnings");
+    expect(visibleText).toContain("1.820 kip/ft");
+    expect(visibleText).toContain("91.0 kip-ft");
+    expect(visibleText).not.toMatch(/1,820|91,0|kip[·⋅]ft/);
+  });
+
+  it("keeps warnings, not-calculated items, and step text English in en reports", () => {
+    const model = buildReportModel(englishAiscSample, {
+      locale: "nn",
+      reportUrl: "https://pilar.example/report/aisc-diagnostic",
+    });
+
+    const visibleText = [
+      model.summary.text,
+      model.assessment.professionalAssessment,
+      model.assessment.limitations.join("\n"),
+      model.assessment.warnings.join("\n"),
+      model.calculation.steps.map((step) => `${step.title}\n${step.prose}`).join("\n"),
+      model.control.controllerText,
+      model.conclusion,
+    ].join("\n");
+
+    expect(visibleText).toContain("Capacity check is not performed");
+    expect(visibleText).toContain("q must be confirmed as the governing load");
+    expect(visibleText).toContain("Calculation");
+    expect(visibleText).toContain("Controller");
+    expect(visibleText).toContain("qualified professional");
+    expect(visibleText).not.toMatch(
+      /Kapasitetskontroll|Konstrukt\u00f8r|Samanliknar|Kontroll\u00f8r|Rapport\u00f8r|f\u00f8rebels|ikkje|ikke|m\u00e5/i,
+    );
+  });
+
+  it("does not title Norwegian demand-only steel reports as capacity checks", () => {
+    const model = buildReportModel(
+      {
+        ...sample,
+        run: {
+          request: {
+            raw_text:
+              "Fritt opplagd st\u00e5lbjelke IPE 240, L = 5,0 m, q = 8,0 kN/m. Finn moment og skj\u00e6r.",
+          },
+        },
+        inputReview: {
+          ...sample.inputReview!,
+          parsed_data: {
+            report_title: "Kapasitetskontroll av st\u00e5lbjelke IPE 240",
+            calculation_type: "stalkapasitet",
+          },
+        },
+        agentA: {
+          ...sample.agentA,
+          structured_output: {
+            ...sample.agentA.structured_output,
+            results: { M_Ed: "25,0 kNm", V_Ed: "20,0 kN" },
+          },
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/demand-only",
+      },
+    );
+
+    expect(model.cover.title).toBe("Fritt opplagd st\u00e5lbjelke - moment og skj\u00e6r");
+    expect(model.cover.title).not.toContain("Kapasitetskontroll");
   });
 });
 
