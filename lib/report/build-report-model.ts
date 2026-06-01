@@ -183,11 +183,75 @@ function isDescriptiveResultValue(sourceLabel: string, raw: string): boolean {
   );
 }
 
+function formatEnglishNumericText(value: string): string {
+  return String(value ?? "")
+    .replace(/\bkip\s*[·⋅]\s*ft\b/gi, "kip-ft")
+    .replace(/\bkip\s*-\s*ft\b/gi, "kip-ft")
+    .replace(/(\d),(\d{1,2})(?=\D|$)/g, "$1.$2")
+    .replace(
+      /(\d),(\d{3})(?=\s*(?:kip\/ft|kip-ft|kip|ft|ksi|lb\/ft|psf|ksf|in)\b)/gi,
+      (match, whole: string, fraction: string) =>
+        fraction === "000" ? match : `${whole}.${fraction}`,
+    )
+    .replace(
+      /(\d),(\d{3})(?=\s*(?:[*/+\-=)]|$))/g,
+      (match, whole: string, fraction: string) =>
+        fraction === "000" ? match : `${whole}.${fraction}`,
+    );
+}
+
+function polishEnglishReportText(value: string): string {
+  return formatEnglishNumericText(
+    sprint339FinalNorwegianResidueText(polishEnglishGeneratedText(value))
+      .replace(/Kapasitetskontroll er (?:ikke|ikkje) utf\u00f8rt\.?/gi, "Capacity check is not performed.")
+      .replace(/Kapasitetskontroll er ikkje rekna\.?/gi, "Capacity check is not calculated.")
+      .replace(/q m\u00e5 bekreftes som dimensjonerende last\.?/gi, "q must be confirmed as the governing load.")
+      .replace(/q m\u00e5 stadfestast som dimensjonerande last\.?/gi, "q must be confirmed as the governing load."),
+  );
+}
+
+function polishEnglishReportTextFinal(value: string): string {
+  return polishEnglishReportText(value)
+    .replace(/\bBeregning av\b/gi, "Calculation of")
+    .replace(/\bBerekning av\b/gi, "Calculation of")
+    .replace(/\blast og moment\b/gi, "load and moment")
+    .replace(/\bog\b/g, "and")
+    .replace(/\ber einige\b/gi, "agree")
+    .replace(/\bfann ingen kritiske avvik, men\b/gi, "found no critical deviations, but")
+    .replace(/\bhar f\u00f8rebels godkjent visning, men\b/gi, "has allowed provisional display, but")
+    .replace(/\bkapasitet\b/gi, "capacity")
+    .replace(/\bReporter minner om at dette er preliminary\b/gi, "Reporter notes that this is preliminary")
+    .replace(/\bReporter minner om at dette er f\u00f8rebels\b/gi, "Reporter notes that this is preliminary")
+    .replace(/\bminner om at dette er preliminary\b/gi, "notes that this is preliminary")
+    .replace(/\bminner om at dette er f\u00f8rebels\b/gi, "notes that this is preliminary")
+    .replace(/\band m\u00e5 kontrollerast av\b/gi, "and must be checked by")
+    .replace(/\bm\u00e5 kontrollerast av\b/gi, "must be checked by")
+    .replace(/\bf\u00f8rebels\b/gi, "preliminary")
+    .replace(/\bikkje\b/gi, "not")
+    .replace(/\ber (?:ikkje|ikke|not) berekna\b/gi, "is not calculated")
+    .replace(/\ber (?:ikkje|ikke|not) beregnet\b/gi, "is not calculated")
+    .replace(/\bCb and capacity is not calculated\b/gi, "Cb and capacity are not calculated")
+    .replace(/q m\u00e5 bekreftes som dimensjonerende last\.?/gi, "q must be confirmed as the governing load.")
+    .replace(/q m\u00e5 stadfestast som dimensjonerande last\.?/gi, "q must be confirmed as the governing load.");
+}
+
+function displayTextForLanguage(
+  value: string,
+  displayLanguage: PilarDisplayLanguage,
+): string {
+  return displayLanguage === "en"
+    ? polishEnglishReportTextFinal(value)
+    : polishNorwegianRoleText(value, displayLanguage);
+}
+
 function resultRowsFrom(results: Record<string, string> | undefined, currentDisplayLanguage: PilarDisplayLanguage): CalculationResultRow[] {
   const byCanonical = new Map<string, CalculationResultRow>();
 
   for (const [sourceLabel, raw] of Object.entries(results ?? {})) {
-    const cleanedRaw = compactReportText(raw);
+    const cleanedRaw = displayTextForLanguage(
+      compactReportText(raw),
+      currentDisplayLanguage,
+    );
     if (!cleanedRaw) continue;
 
     const canonical = canonicalResultKey(sourceLabel);
@@ -292,7 +356,8 @@ export function buildComparisonRowsFromResults(
   displayLanguage: PilarDisplayLanguage,
 ): ComparisonRow[] {
   const cmp = compareResults(resultsA, resultsB);
-  const display = (v: string): string => (v && v !== "-" ? compactReportText(v) : "-");
+  const display = (v: string): string =>
+    v && v !== "-" ? displayTextForLanguage(compactReportText(v), displayLanguage) : "-";
 
   type Raw = { key: string; a: string; b: string; match: boolean };
   const rows: Raw[] = [];
@@ -356,7 +421,7 @@ function buildPipelineStatus(data: UpstreamReportData, locale: Locale, displayLa
     ? ({ match: "Agreement", minor_differences: "Minor differences", significant_differences: "Significant differences", critical_disagreement: "Critical disagreement" } as Record<string, string>)[data.comparison?.match_status ?? ""] ?? "-"
     : matchStatusShort(data.comparison?.match_status ?? "", locale);
   const ctrl = displayLanguage === "en"
-    ? ({ approved: "Approved", approved_with_warnings: "With warnings", uncertain: "Uncertain", rejected: "Rejected", needs_more_input: "Needs input" } as Record<string, string>)[data.controllerDecision?.decision_status ?? ""] ?? "-"
+    ? ({ approved: "Provisionally accepted", approved_with_warnings: "Provisionally accepted with warnings", uncertain: "Uncertain", rejected: "Rejected", needs_more_input: "Needs input" } as Record<string, string>)[data.controllerDecision?.decision_status ?? ""] ?? "-"
     : decisionStatusShort(data.controllerDecision?.decision_status ?? "", locale);
 
   return [
@@ -425,9 +490,22 @@ function formatSteelProfileName(value: string): string {
   return value.replace(/\b(IPE|HEA|HEB|HEM|UNP|UPN)\s*(\d{2,4})\b/gi, (_, profile: string, number: string) => `${profile.toUpperCase()} ${number}`);
 }
 
+function hasCapacityResult(rows: CalculationResultRow[]): boolean {
+  return rows.some((row) =>
+    /^(etam|etav|mplrd|vplrd|mrd|vrd|nrd|utilization|dcr)$/.test(
+      canonicalResultKey(row.label),
+    ),
+  );
+}
+
+function titleImpliesCapacity(title: string): boolean {
+  return /\b(kapasitetskontroll|capacity check)\b/i.test(title);
+}
+
 function titleFromResults(rows: CalculationResultRow[], rawRequest: string, locale: Locale, displayLanguage: PilarDisplayLanguage = locale): string {
   const has = (canonical: string) => rows.some((row) => canonicalResultKey(row.label) === canonical);
   const request = rawRequest.toLowerCase();
+  const capacityCalculated = hasCapacityResult(rows);
 
   if (displayLanguage === "en") {
     if (/\bW\d+x\d+\b/i.test(rawRequest) || request.includes("aisc") || request.includes("asce") || request.includes("steel beam")) {
@@ -437,7 +515,7 @@ function titleFromResults(rows: CalculationResultRow[], rawRequest: string, loca
 
   const profile = rawRequest.match(/\b(?:IPE|HEA|HEB|HEM|UNP|UPN)\s*\d{2,4}\b/i)?.[0];
 
-  if (has("etam") || has("etav") || has("mplrd") || has("vplrd") || request.includes("kapasitet")) {
+  if (capacityCalculated) {
     const base = locale === "nn" ? "Kapasitetskontroll av stålbjelke" : "Kapasitetskontroll av stålbjelke";
     return profile ? `${base} ${formatSteelProfileName(profile)}` : base;
   }
@@ -456,6 +534,30 @@ function titleFromResults(rows: CalculationResultRow[], rawRequest: string, loca
   }
 
   return displayLanguage === "en" ? "Technical calculation" : locale === "nn" ? "Teknisk berekning" : "Teknisk beregning";
+}
+
+function calculationTypeFallbackForScope(
+  type: string,
+  rows: CalculationResultRow[],
+  locale: Locale,
+  displayLanguage: PilarDisplayLanguage,
+): string {
+  if (type === "stalkapasitet" && !hasCapacityResult(rows)) return "";
+  return calculationTypeFallback(type, locale, displayLanguage);
+}
+
+function explicitTitleForScope(
+  title: string,
+  rows: CalculationResultRow[],
+  rawRequest: string,
+  locale: Locale,
+  displayLanguage: PilarDisplayLanguage,
+): string {
+  if (!title) return "";
+  if (titleImpliesCapacity(title) && !hasCapacityResult(rows)) {
+    return titleFromResults(rows, rawRequest, locale, displayLanguage);
+  }
+  return title;
 }
 
 function subtitleFromResults(rows: CalculationResultRow[]): string {
@@ -481,11 +583,17 @@ function buildCoverText(
   const rawRequest = cleanReportText(data.run.request.raw_text);
   const calculationType = stringField(parsed, "calculation_type");
 
-  const explicitTitle = stringField(parsed, "report_title");
+  const explicitTitle = explicitTitleForScope(
+    stringField(parsed, "report_title"),
+    rows,
+    rawRequest,
+    locale,
+    displayLanguage,
+  );
   const explicitSubtitle = stringField(parsed, "report_subtitle");
 
   const fallbackTitle =
-    calculationTypeFallback(calculationType, locale, displayLanguage) ||
+    calculationTypeFallbackForScope(calculationType, rows, locale, displayLanguage) ||
     titleFromResults(rows, rawRequest, locale, displayLanguage);
 
   return {
@@ -503,15 +611,14 @@ function sprint3310hTitleDashSpacing(value: string): string {
 }
 
 function reportText(value: string, displayLanguage: "nb" | "nn" | "en"): string {
-  return displayLanguage === "en" ? polishEnglishGeneratedText(value) : polishNorwegianRoleText(value, displayLanguage);
+  return displayTextForLanguage(value, displayLanguage);
 }
 
 
 function polishForDisplay(text: string, displayLanguage: string = "nb"): string {
-  const base = displayLanguage === "en" ? sprint335PolishEnglishText(text) : text;
   return displayLanguage === "en"
-    ? sprint339FinalNorwegianResidueText(base)
-    : polishNorwegianRoleText(base, displayLanguage as "nb" | "nn" | "en");
+    ? polishEnglishReportTextFinal(text)
+    : polishNorwegianRoleText(text, displayLanguage as "nb" | "nn" | "en");
 }
 
 export function buildReportModel(data: UpstreamReportData, options: BuildReportModelOptions): ReportModel {
@@ -531,7 +638,7 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     : tillitVisuals(data.report.tillit_score, locale);
   const decisionCode = decisionStatusCode(data);
   const decision = displayLanguage === "en"
-    ? ({ approved: "Preliminarily approved", approved_with_warnings: "Approved with warnings", uncertain: "Uncertain", rejected: "Rejected — requires review", needs_more_input: "Needs more input" }[decisionCode] ?? LABELS.ukjent[displayLanguage])
+    ? ({ approved: "Provisionally accepted", approved_with_warnings: "Provisionally accepted with warnings", uncertain: "Uncertain", rejected: "Rejected — requires review", needs_more_input: "Needs more input" }[decisionCode] ?? LABELS.ukjent[displayLanguage])
     : decisionStatusLabel(decisionCode, locale) ?? LABELS.ukjent[displayLanguage];
   const comparisonStatus = data.comparison?.match_status ?? "unknown";
   const comparisonText = matchPhrase(comparisonStatus, locale) ?? "";
@@ -575,7 +682,17 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
       resultRows,
       steps: isBlockedOutput(data, "calculation_steps_a")
         ? []
-        : (primary.structured_output.calculation_steps ?? []).map(normalizeCalculationStep).map((step) => ({ ...step, title: localizeGeneratedEngineeringText(step.title, displayLanguage), prose: localizeGeneratedEngineeringText(step.prose, displayLanguage) })),
+        : (primary.structured_output.calculation_steps ?? []).map(normalizeCalculationStep).map((step) => ({
+            ...step,
+            title: displayTextForLanguage(
+              localizeGeneratedEngineeringText(step.title, displayLanguage),
+              displayLanguage,
+            ),
+            prose: displayTextForLanguage(
+              localizeGeneratedEngineeringText(step.prose, displayLanguage),
+              displayLanguage,
+            ),
+          })),
     },
     assessment: {
       professionalAssessment: polishForDisplay(localizeGeneratedEngineeringText(reportText(cleanReportText(data.report.technical_assessment), displayLanguage), displayLanguage), displayLanguage),

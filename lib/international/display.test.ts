@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { inferReportDisplayLanguage } from "./display";
+import {
+  inferReportDisplayLanguage,
+  localizeResultLabel,
+  sanitizeAiscGuardedOutputText,
+} from "./display";
 
 describe("inferReportDisplayLanguage - persistert visningsspraak", () => {
   it("persistert 'en' vinn over alt", () => {
@@ -34,5 +38,28 @@ describe("inferReportDisplayLanguage - persistert visningsspraak", () => {
     expect(inferReportDisplayLanguage({ locale: "nb", persisted: null })).toBe(
       "nb",
     );
+  });
+});
+
+describe("English AISC display polish", () => {
+  it("removes sanitizer artifacts without weakening the Cb guard", () => {
+    const output = sanitizeAiscGuardedOutputText(
+      "the No refined Cb value is computed or assumed without verified input. " +
+        "The verified input.0 is used. " +
+        "verified input.0 does not establish any refined Cb effect without verified input.",
+    );
+
+    expect(output).toContain(
+      "No refined Cb value is computed or assumed without verified input.",
+    );
+    expect(output).toContain("verified input is used");
+    expect(output).toContain(
+      "Any refined Cb effect must be computed from verified input before being used.",
+    );
+    expect(output).not.toMatch(/the No refined|verified input\.0/i);
+  });
+
+  it("labels wD as dead load rather than deflection in English reports", () => {
+    expect(localizeResultLabel("wD", "en")).toBe("Dead load, D");
   });
 });
