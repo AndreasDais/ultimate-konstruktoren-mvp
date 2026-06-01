@@ -1368,3 +1368,82 @@ Candidate summary:
 - no `db push` or `db push --dry-run` was run
 - no mutating SQL or DB work occurred
 - no local Supabase CLI or SQL was run by Chat C
+
+## 68C.47 repair-preflight package
+
+Big Brain decision for this sprint:
+
+- GO for repair-preflight documentation only
+- NO-GO for actual repair execution
+
+Confirmed repair-preflight target:
+
+- production project ref: `uiogylrpclamffhgkjki`
+- exact-evidence candidates only:
+  - `20260527000001`
+  - `20260528000001`
+  - `20260528000003`
+  - `20260531000000`
+
+Blocking preconditions before any later repair execution:
+
+1. Big Brain gives a later explicit execution GO for repair.
+2. Backup/PITR is confirmed for project `uiogylrpclamffhgkjki`.
+3. Rollback/recovery plan is documented with owner, restore path and incident
+   decision point.
+4. Fresh read-only migration ledger check is run immediately before execution.
+5. Fresh ledger state still matches the expected state for the four exact
+   candidates and does not reveal surprise applied versions.
+6. `diagnostic_only=true` is reconfirmed.
+7. Release-proof mode remains disabled.
+8. `provider_message_id` remains omitted.
+
+Future repair command list if all execution gates pass:
+
+```bash
+supabase migration repair --status applied 20260527000001
+supabase migration repair --status applied 20260528000001
+supabase migration repair --status applied 20260528000003
+supabase migration repair --status applied 20260531000000
+```
+
+These commands are documented for a later explicit execution sprint only. They
+are not approved or run in 68C.47.
+
+Explicitly excluded versions:
+
+| Decision | Versions |
+|---|---|
+| DO NOT REPAIR | `20260524000001` |
+| NEEDS MORE EVIDENCE | `20260523000000`, `20260523000002`, `20260524000000`, `20260527000000`, `20260528000000`, `20260528000002` |
+
+Execution gate:
+
+- no repair unless Big Brain gives a later explicit execution GO
+- no repair unless backup/PITR and rollback plan are confirmed
+- no repair unless fresh ledger check still matches expected state
+- no repair if any excluded version appears in the command plan
+- no repair if production project ref is anything other than
+  `uiogylrpclamffhgkjki`
+- no repair if release-proof mode is enabled or `diagnostic_only=false`
+- no repair if `provider_message_id` appears in `step_metrics`
+
+Forbidden now:
+
+- no `supabase migration repair`
+- no `supabase db push`
+- no `supabase db push --dry-run`
+- no mutating SQL
+- no local Supabase CLI
+- no local SQL
+- no DB schema changes
+- no release-proof enabling
+
+68C.47 boundary:
+
+- no migration repair is approved
+- no repair command was run
+- no DB/Supabase CLI/SQL/repair/push/dry-run command was run by Chat C
+- no mutating DB work occurred
+- exact candidates remain blocked by Big Brain execution GO, backup/PITR,
+  rollback plan and fresh ledger check
