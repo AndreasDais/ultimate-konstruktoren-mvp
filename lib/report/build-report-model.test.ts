@@ -120,7 +120,10 @@ const englishAiscSample: UpstreamReportData = {
           text:
             "w_u = 1,2D + 1,6L = 1,820 kip/ft\n" +
             "M_u = 1,820 * 20^2 / 8 = 91,0 kip\u22c5ft",
-          latex_formula: null,
+          latex_formula: [
+            "w_u = 1,2D+1,6L = 1,820 kip/ft",
+            "M_u = 91,0 kip\u22c5ft",
+          ],
         },
       ],
       limitations: ["Kapasitetskontroll er ikke utf\u00f8rt"],
@@ -253,6 +256,7 @@ describe("buildReportModel", () => {
       model.calculation.resultRows.map((row) => row.raw).join("\n"),
       model.control.comparisonRows.map((row) => `${row.constructorA}\n${row.constructorB}`).join("\n"),
       model.calculation.steps.map((step) => `${step.title}\n${step.prose}`).join("\n"),
+      model.calculation.steps.flatMap((step) => step.formulas).join("\n"),
       model.assessment.limitations.join("\n"),
       model.assessment.warnings.join("\n"),
       model.conclusion,
@@ -262,8 +266,38 @@ describe("buildReportModel", () => {
     expect(model.cover.title).toBe("Steel beam - demand and LTB screening");
     expect(model.meta.status).toBe("Provisionally accepted with warnings");
     expect(visibleText).toContain("1.820 kip/ft");
+    expect(visibleText).toContain("1.2D+1.6L");
     expect(visibleText).toContain("91.0 kip-ft");
     expect(visibleText).not.toMatch(/1,820|91,0|kip[·⋅]ft/);
+  });
+
+  it("keeps Norwegian calculation step formulas unchanged", () => {
+    const model = buildReportModel(
+      {
+        ...sample,
+        agentA: {
+          ...sample.agentA,
+          structured_output: {
+            ...sample.agentA.structured_output,
+            calculation_steps: [
+              {
+                title: "Beregning av last",
+                text: "q = 1,2G + 1,5Q = 12,0 kN/m",
+                latex_formula: ["q = 1,2G+1,5Q = 12,0 kN/m"],
+              },
+            ],
+          },
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/nb-formula",
+      },
+    );
+
+    expect(model.calculation.steps[0].formulas).toEqual([
+      "q = 1,2G+1,5Q = 12,0 kN/m",
+    ]);
   });
 
   it("keeps warnings, not-calculated items, and step text English in en reports", () => {
