@@ -1447,3 +1447,73 @@ Forbidden now:
 - no mutating DB work occurred
 - exact candidates remain blocked by Big Brain execution GO, backup/PITR,
   rollback plan and fresh ledger check
+
+## 68C.48 repair execution Gate 0 NO-GO package
+
+Purpose: define Gate 0 for a possible future Supabase migration repair
+execution. This is documentation only and remains NO-GO for repair execution.
+
+Current state:
+
+- `main` is clean/synced at `08ccad0`
+- 68C.47 repair-preflight package is integrated
+- repair execution remains NO-GO
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Gate 0 requirements before any repair:
+
+1. Backup/PITR confirmation is required.
+2. Rollback/recovery plan is required.
+3. Fresh read-only ledger check is required immediately before repair.
+4. Exact command list must be approved before execution.
+5. Big Brain explicit execution GO is required.
+
+Allowed future repair shape:
+
+- only `supabase migration repair --status applied <version>`
+- only for explicitly approved exact-evidence candidates
+- no `supabase db push`
+- no `supabase db push --dry-run`
+- no mutating SQL
+- no repair of excluded versions
+
+Current exact-evidence candidates:
+
+- `20260527000001`
+- `20260528000001`
+- `20260528000003`
+- `20260531000000`
+
+Excluded versions:
+
+| Decision | Versions |
+|---|---|
+| DO NOT REPAIR | `20260524000001` |
+| NEEDS MORE EVIDENCE | `20260523000000`, `20260523000002`, `20260524000000`, `20260527000000`, `20260528000000`, `20260528000002` |
+
+Gate 0 GO/NO-GO table:
+
+| Version | Candidate type | Gate 0 status | Blockers | repair-approved |
+|---|---|---|---|---|
+| `20260527000001` | exact evidence | NO-GO | backup/PITR not pasted; rollback not approved; fresh ledger not run; Big Brain GO missing | false |
+| `20260528000001` | exact evidence | NO-GO | backup/PITR not pasted; rollback not approved; fresh ledger not run; Big Brain GO missing | false |
+| `20260528000003` | exact evidence | NO-GO | backup/PITR not pasted; rollback not approved; fresh ledger not run; Big Brain GO missing | false |
+| `20260531000000` | exact evidence | NO-GO | backup/PITR not pasted; rollback not approved; fresh ledger not run; Big Brain GO missing | false |
+
+Paste-back checklist for the human:
+
+- backup/PITR evidence for project `uiogylrpclamffhgkjki`
+- rollback/recovery note with owner, restore path and incident decision point
+- fresh read-only ledger result from immediately before execution
+- exact command list acknowledgement
+- explicit GO/NO-GO decision from Big Brain
+
+68C.48 boundary:
+
+- no migration repair is approved
+- no repair command was run
+- no `supabase db push` or `supabase db push --dry-run` was run
+- no mutating SQL or DB work occurred
+- no local Supabase CLI or SQL was run by Chat C
