@@ -1307,3 +1307,64 @@ Package C classification update:
 - no mutating DB work occurred
 - Package C was user-run manually in Supabase SQL Editor with a read-only
   `select` query
+
+## 68C.46 repair-decision review
+
+Purpose: classify the documented Package A/B/C evidence into a repair-decision
+review before any mutating Supabase action. This section does not approve or
+execute repair.
+
+Decision labels:
+
+```txt
+DO NOT REPAIR
+NEEDS MORE EVIDENCE
+PROVISIONAL REPAIR CANDIDATE
+EXACT-EVIDENCE REPAIR CANDIDATE
+```
+
+Global repair blockers:
+
+- Big Brain approval is required before repair for every candidate version
+- backup/rollback/PITR evidence is blocking for every repair candidate
+- current remote migration ledger state must be confirmed immediately before
+  any repair command
+- no migration may be repaired from table-presence evidence alone
+- no `partial`, `absent`, `drift` or `unknown` migration may be repaired as
+  applied
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Repair-decision matrix:
+
+| Version | Migration file | Current evidence basis | Decision label | Repair blockers / next action |
+|---|---|---|---|---|
+| `20260523000000` | `pilar_intelligence_foundation.sql` | Package C proves relation, constraint and index presence only; full columns, triggers/functions, grants and RLS-intent are still incomplete. | NEEDS MORE EVIDENCE | Need full Package C follow-up for columns, triggers/functions, grants and RLS intent. No repair from partial evidence. |
+| `20260523000002` | `pilot_readiness_feedback.sql` | Package C proves table, policy, comments, constraints and indexes; full column shape and grants remain incomplete. | NEEDS MORE EVIDENCE | Need full column/grant evidence. No repair from table/policy presence alone. |
+| `20260524000000` | `engineering_context_events.sql` | Package C proves table, constraints, indexes and service-role policy; full columns, grants and comment intent remain incomplete. | NEEDS MORE EVIDENCE | Need full column/grant/comment audit and owner review of policy exactness. |
+| `20260524000001` | `engineering_context_language_policy.sql` | Package C shows all requested columns, constraints and comments absent. | DO NOT REPAIR | Must not mark applied. Needs owner decision: absent deploy, intentional supersession or drift. |
+| `20260527000000` | `pilar_core_pipeline.sql` | Package C proves core table presence and many definitions; full schema/column and reviewer definition comparison remain incomplete. | NEEDS MORE EVIDENCE | Need full schema/column comparison plus definition review. No repair from partial core evidence. |
+| `20260527000001` | `run_display_language.sql` | Package C shows nullable `display_language` with no default and bounded check definition. | EXACT-EVIDENCE REPAIR CANDIDATE | Candidate only; Big Brain approval, backup/PITR, rollback plan and fresh ledger check required before any repair. |
+| `20260528000000` | `step_messages.sql` | Package C proves table, correlation check, indexes and grants; full columns and RLS/policy semantics remain incomplete. | NEEDS MORE EVIDENCE | Need full column audit and RLS/grant review. No repair from partial trace-table evidence. |
+| `20260528000001` | `eval_case_id.sql` | Package C shows nullable `eval_case_id` and partial index where `eval_case_id is not null`. | EXACT-EVIDENCE REPAIR CANDIDATE | Candidate only; Big Brain approval, backup/PITR, rollback plan and fresh ledger check required before any repair. |
+| `20260528000002` | `trace_events_view.sql` | Package C shows `trace_events` view exists and grants exist; view definition and safe selected payload shape were not audited. | NEEDS MORE EVIDENCE | Need view definition diff and grant review before repair consideration. |
+| `20260528000003` | `engineering_context_per_run.sql` | Package C shows nullable `engineering_context` jsonb and both expression indexes. | EXACT-EVIDENCE REPAIR CANDIDATE | Candidate only; Big Brain approval, backup/PITR, rollback plan and fresh ledger check required before any repair. |
+| `20260531000000` | `step_metrics_release_proof_metadata.sql` | Package A/B/C prove nullable fields, no defaults, bounded checks, trace-readiness comments, `provider_message_id` omission and raw-message exclusion. | EXACT-EVIDENCE REPAIR CANDIDATE | Candidate only inside full-baseline strategy; Big Brain approval, backup/PITR, rollback plan and fresh ledger check required. No release-proof enabling. |
+
+Candidate summary:
+
+- `DO NOT REPAIR`: `20260524000001`
+- `NEEDS MORE EVIDENCE`: `20260523000000`, `20260523000002`,
+  `20260524000000`, `20260527000000`, `20260528000000`, `20260528000002`
+- `PROVISIONAL REPAIR CANDIDATE`: none after Package C review
+- `EXACT-EVIDENCE REPAIR CANDIDATE`: `20260527000001`,
+  `20260528000001`, `20260528000003`, `20260531000000`
+
+68C.46 boundary:
+
+- no migration repair is approved
+- no Supabase migration repair was run
+- no `db push` or `db push --dry-run` was run
+- no mutating SQL or DB work occurred
+- no local Supabase CLI or SQL was run by Chat C
