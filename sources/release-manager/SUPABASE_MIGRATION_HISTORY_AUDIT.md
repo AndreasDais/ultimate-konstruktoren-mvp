@@ -1517,3 +1517,86 @@ Paste-back checklist for the human:
 - no `supabase db push` or `supabase db push --dry-run` was run
 - no mutating SQL or DB work occurred
 - no local Supabase CLI or SQL was run by Chat C
+
+## 68C.49 repair evidence paste-back package
+
+Purpose: define the final human/prod-safety evidence that must be pasted back
+before any future Supabase migration repair can be considered. This is still
+not repair execution.
+
+Current state:
+
+- `main` is clean/synced at `2305393`
+- 68C.48 Gate 0 is integrated
+- repair execution remains NO-GO
+- all candidates start NO-GO
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Evidence paste-back fields:
+
+| Field | Current value | Requirement |
+|---|---|---|
+| backup/PITR evidence | empty | required |
+| rollback/recovery plan | empty | required |
+| fresh ledger-check result | empty | required |
+| exact command-list acknowledgement | empty | required |
+| Big Brain explicit GO/NO-GO decision | empty | required |
+
+Exact candidates:
+
+- `20260527000001`
+- `20260528000001`
+- `20260528000003`
+- `20260531000000`
+
+Excluded versions:
+
+| Decision | Versions |
+|---|---|
+| DO NOT REPAIR | `20260524000001` |
+| NEEDS MORE EVIDENCE | `20260523000000`, `20260523000002`, `20260524000000`, `20260527000000`, `20260528000000`, `20260528000002` |
+
+Human paste-back template:
+
+```txt
+timestamp/timezone:
+Supabase project ref:
+backup/PITR evidence:
+rollback/recovery plan:
+fresh ledger check output:
+exact command list reviewed:
+GO/NO-GO decision:
+approver / Big Brain note:
+```
+
+Exact command list to acknowledge if Big Brain later considers execution:
+
+```bash
+supabase migration repair --status applied 20260527000001
+supabase migration repair --status applied 20260528000001
+supabase migration repair --status applied 20260528000003
+supabase migration repair --status applied 20260531000000
+```
+
+Final decision rule:
+
+- if any required paste-back field is missing, the decision is NO-GO
+- if fresh ledger differs from expected state, STOP
+- if command list includes excluded versions, STOP
+- if command list includes `db push`, dry-run, mutating SQL or schema push,
+  STOP
+- if Big Brain GO is absent, the decision is NO-GO
+- if project ref is not `uiogylrpclamffhgkjki`, STOP
+- if `diagnostic_only=false`, release-proof mode is enabled, or
+  `provider_message_id` appears, STOP
+
+68C.49 boundary:
+
+- no migration repair is approved
+- repair execution remains NO-GO
+- no repair command was run
+- no `supabase db push` or `supabase db push --dry-run` was run
+- no mutating SQL or DB work occurred
+- no local Supabase CLI or SQL was run by Chat C
