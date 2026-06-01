@@ -324,6 +324,286 @@ Minimum evidence required before a repair PR or handoff:
 - backup/PITR confirmation for production before any mutating command
 - rollback plan for any future schema mutation
 
+### 68C.37 read-only migration-history audit packet
+
+This packet is copy/paste SQL for Supabase SQL Editor or another trusted
+read-only SQL client. It is an audit only. Do not add `insert`, `update`,
+`delete`, `alter`, `create`, `drop`, `comment`, `grant`, `revoke`, `notify`,
+`repair`, `push`, or `dry-run` steps to this packet.
+
+Record these evidence fields next to the output:
+
+```txt
+current_main_commit:
+production_project_ref:
+schema_history_query_output:
+table_audit_output:
+column_audit_output:
+constraint_audit_output:
+policy_audit_output:
+comment_audit_output:
+per_migration_classification:
+proposed_repair_list:
+still_pending_or_drifted_list:
+backup_or_pitr_confirmation_before_any_later_mutation:
+diagnostic_only: true
+release_proof_mode: disabled
+provider_message_id: omitted
+```
+
+Read migration-history rows without assuming the history table exists:
+
+```sql
+select table_schema, table_name
+from information_schema.tables
+where table_schema = 'supabase_migrations'
+order by table_schema, table_name;
+```
+
+```sql
+select version, name, statements
+from supabase_migrations.schema_migrations
+order by version;
+```
+
+If the second query fails because the relation is absent or hidden, record that
+verbatim as `history_relation_unavailable`; do not repair from that result
+alone.
+
+Audit tables created or touched by the historical migrations:
+
+```sql
+select table_name
+from information_schema.tables
+where table_schema = 'public'
+  and table_name in (
+    'requests',
+    'admins',
+    'input_reviews',
+    'calculation_runs',
+    'agent_outputs',
+    'comparisons',
+    'controller_decisions',
+    'reports',
+    'error_reports',
+    'manual_reviews',
+    'daily_intelligence_reports',
+    'improvement_actions',
+    'agent_learning_feedback',
+    'daily_metrics_snapshots',
+    'pilot_feedback',
+    'engineering_context_events',
+    'step_messages',
+    'step_metrics'
+  )
+order by table_name;
+```
+
+Audit release-relevant columns, including expected omissions:
+
+```sql
+select table_name, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+  and (
+    table_name in (
+      'requests',
+      'admins',
+      'input_reviews',
+      'calculation_runs',
+      'agent_outputs',
+      'comparisons',
+      'controller_decisions',
+      'reports',
+      'error_reports',
+      'manual_reviews',
+      'daily_intelligence_reports',
+      'improvement_actions',
+      'agent_learning_feedback',
+      'daily_metrics_snapshots',
+      'pilot_feedback',
+      'engineering_context_events',
+      'step_messages',
+      'step_metrics'
+    )
+  )
+order by table_name, ordinal_position;
+```
+
+```sql
+select table_name, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'step_metrics'
+  and column_name in (
+    'status',
+    'completed_at',
+    'error_category',
+    'retryable',
+    'raw_error_redacted',
+    'provider_message_id'
+  )
+order by column_name;
+```
+
+Expected for the second column query:
+
+```txt
+status exists, nullable, no default
+completed_at exists, nullable, no default
+error_category exists, nullable, no default
+retryable exists, nullable, no default
+raw_error_redacted exists, nullable, no default true
+provider_message_id returns no row
+```
+
+Audit constraints:
+
+```sql
+select
+  n.nspname as schema_name,
+  c.relname as table_name,
+  con.conname,
+  pg_get_constraintdef(con.oid) as definition
+from pg_constraint con
+join pg_class c on c.oid = con.conrelid
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relname in (
+    'improvement_actions',
+    'agent_learning_feedback',
+    'pilot_feedback',
+    'engineering_context_events',
+    'calculation_runs',
+    'error_reports',
+    'manual_reviews',
+    'step_messages',
+    'step_metrics'
+  )
+order by c.relname, con.conname;
+```
+
+Audit RLS policy posture:
+
+```sql
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename in (
+    'requests',
+    'admins',
+    'input_reviews',
+    'calculation_runs',
+    'agent_outputs',
+    'comparisons',
+    'controller_decisions',
+    'reports',
+    'error_reports',
+    'manual_reviews',
+    'pilot_feedback',
+    'engineering_context_events',
+    'step_messages',
+    'step_metrics'
+  )
+order by tablename, policyname;
+```
+
+Audit comments for the manually applied release-readiness metadata:
+
+```sql
+select
+  c.relname as table_name,
+  a.attname as column_name,
+  col_description(a.attrelid, a.attnum) as comment
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+join pg_attribute a on a.attrelid = c.oid
+where n.nspname = 'public'
+  and c.relname = 'step_metrics'
+  and a.attname in (
+    'status',
+    'completed_at',
+    'error_category',
+    'retryable',
+    'raw_error_redacted'
+  )
+order by a.attname;
+```
+
+```sql
+select obj_description('public.step_metrics'::regclass) as step_metrics_comment;
+```
+
+Audit the release-proof safety boundary:
+
+```sql
+select
+  count(*) filter (where column_name = 'provider_message_id') as provider_message_id_columns,
+  count(*) filter (
+    where column_name = 'raw_error_redacted'
+      and column_default is not null
+  ) as raw_error_redacted_defaults
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'step_metrics'
+  and column_name in ('provider_message_id', 'raw_error_redacted');
+```
+
+Expected:
+
+```txt
+provider_message_id_columns = 0
+raw_error_redacted_defaults = 0
+diagnostic_only remains true
+release-proof mode remains disabled
+```
+
+### Per-migration classification matrix
+
+Use exactly one classification per local migration. Add reviewer notes and link
+to the read-only SQL output that proves the classification.
+
+| Migration | Primary schema proof | Classification | Reviewer notes |
+|---|---|---|---|
+| `20260523000000_pilar_intelligence_foundation.sql` | intelligence tables, indexes, triggers | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260523000002_pilot_readiness_feedback.sql` | `pilot_feedback`, indexes, RLS policy, comments | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260524000000_engineering_context_events.sql` | `engineering_context_events`, indexes, RLS policy | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260524000001_engineering_context_language_policy.sql` | `engineering_context_events` language-policy columns and comments | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260527000000_pilar_core_pipeline.sql` | core pipeline tables, indexes, RLS, grants, policies | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260527000001_run_display_language.sql` | `calculation_runs.display_language` and check constraint | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260528000000_step_messages.sql` | `step_messages`, indexes, RLS, grants | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260528000001_eval_case_id.sql` | `calculation_runs.eval_case_id` and partial index | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260528000002_trace_events_view.sql` | `trace_events` view definition and grants | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260528000003_engineering_context_per_run.sql` | `calculation_runs.engineering_context` and indexes | TBD: already present exactly / absent / partially present / present but drifted / intentionally superseded |  |
+| `20260531000000_step_metrics_release_proof_metadata.sql` | five nullable `step_metrics` columns, bounded checks, comments, no `provider_message_id` | Manually applied and verified; confirm exactness before ledger repair |  |
+
+Allowed classification meanings:
+
+- `already present exactly`: every expected object, constraint, policy, grant,
+  index and comment matches the local migration or an approved equivalent.
+- `absent`: no production schema effect is present.
+- `partially present`: some but not all expected schema effects are present.
+- `present but drifted`: objects exist but differ from the local migration or
+  approved equivalent.
+- `intentionally superseded`: a later reviewed production change replaces the
+  local migration effect; include the superseding evidence.
+
+### Migration-history repair NO-GO rules
+
+Keep these NO-GO rules active until Big Brain explicitly approves a separate
+mutating deploy step:
+
+- no `supabase migration repair` without schema proof for each repaired version
+- no `supabase db push` or `supabase db push --dry-run` until remote history
+  matches actual schema effects
+- no mutating SQL in this audit packet
+- no repair of `absent`, `partially present`, `present but drifted`, or
+  unreviewed migrations
+- no release-proof enabling
+- no `provider_message_id` storage
+- keep `diagnostic_only=true`
+- require backup/PITR confirmation before any later mutating command
+
 The safe target state before future `db push` use is:
 
 - remote migration history matches the schema effects that are already present
