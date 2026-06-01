@@ -1,4 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { buildEngineeringContext } from "@/lib/engineering-context";
+import {
+  buildAgentSystemPrompt,
+  engineeringContextUserMessageBlock,
+} from "@/lib/engineering-context/agent";
 import {
   inferReportDisplayLanguage,
   localizeResultLabel,
@@ -61,5 +66,46 @@ describe("English AISC display polish", () => {
 
   it("labels wD as dead load rather than deflection in English reports", () => {
     expect(localizeResultLabel("wD", "en")).toBe("Dead load, D");
+  });
+});
+
+describe("international English generation contract", () => {
+  it("requires English prose for report-visible agent fields in English mode", () => {
+    const context = buildEngineeringContext({
+      language: "en",
+      languagePolicy: {
+        uiLocale: "en",
+        outputMode: "same_as_prompt",
+        fallbackLanguage: "en",
+      },
+      region: { countryCode: "US", countryName: "United States" },
+      standards: {
+        family: "aisc_asce_aci",
+        label: "AISC / ASCE / ACI",
+        supportLevel: "experimental",
+        confidence: "user_selected",
+      },
+      outputPreferences: { units: "imperial", notationStyle: "us_customary" },
+    });
+
+    const systemPrompt = buildAgentSystemPrompt("BASE", "nb", context);
+    const userBlock = engineeringContextUserMessageBlock(context);
+
+    expect(systemPrompt).toContain(
+      "Generated report/runtime prose fields MUST be written in English",
+    );
+    expect(systemPrompt).toContain("calculation_steps[].text");
+    expect(systemPrompt).toContain("limitations");
+    expect(systemPrompt).toContain("warnings");
+    expect(systemPrompt).toContain("professional verification");
+    expect(systemPrompt).not.toContain(
+      "- Agent output language: same as the user's prompt",
+    );
+    expect(systemPrompt).not.toContain(
+      "Engineering prose mirrors the user's language",
+    );
+    expect(userBlock).toContain(
+      "generated report/runtime prose must be English",
+    );
   });
 });

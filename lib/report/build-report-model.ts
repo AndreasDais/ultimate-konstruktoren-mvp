@@ -189,14 +189,14 @@ function formatEnglishNumericText(value: string): string {
     .replace(/\bkip\s*-\s*ft\b/gi, "kip-ft")
     .replace(/(\d),(\d{1,2})(?=\D|$)/g, "$1.$2")
     .replace(
-      /(\d),(\d{3})(?=\s*(?:kip\/ft|kip-ft|kip|ft|ksi|lb\/ft|psf|ksf|in)\b)/gi,
+      /(\d),(\d{3,4})(?=\s*(?:kip\/ft|kip-ft|kip|ft|ksi|lb\/ft|psf|ksf|in)\b)/gi,
       (match, whole: string, fraction: string) =>
-        fraction === "000" ? match : `${whole}.${fraction}`,
+        /^0+$/.test(fraction) ? match : `${whole}.${fraction}`,
     )
     .replace(
-      /(\d),(\d{3})(?=\s*(?:[*/+\-=)]|$))/g,
+      /(\d),(\d{3,4})(?=\s*(?:[*/+\-=)]|$))/g,
       (match, whole: string, fraction: string) =>
-        fraction === "000" ? match : `${whole}.${fraction}`,
+        /^0+$/.test(fraction) ? match : `${whole}.${fraction}`,
     );
 }
 

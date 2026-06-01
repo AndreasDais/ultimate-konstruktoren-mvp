@@ -122,6 +122,7 @@ const englishAiscSample: UpstreamReportData = {
             "M_u = 1,820 * 20^2 / 8 = 91,0 kip\u22c5ft",
           latex_formula: [
             "w_u = 1,2D+1,6L = 1,820 kip/ft",
+            "w_u = 0,5400+1,2800 = 1,820 kip/ft",
             "M_u = 91,0 kip\u22c5ft",
           ],
         },
@@ -267,6 +268,7 @@ describe("buildReportModel", () => {
     expect(model.meta.status).toBe("Provisionally accepted with warnings");
     expect(visibleText).toContain("1.820 kip/ft");
     expect(visibleText).toContain("1.2D+1.6L");
+    expect(visibleText).toContain("0.5400+1.2800");
     expect(visibleText).toContain("91.0 kip-ft");
     expect(visibleText).not.toMatch(/1,820|91,0|kip[·⋅]ft/);
   });
