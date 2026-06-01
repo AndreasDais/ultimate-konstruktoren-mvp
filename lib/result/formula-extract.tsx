@@ -64,6 +64,10 @@ export const GREEK_LETTERS: Record<string, string> = {
   Phi: "Φ", Chi: "Χ", Psi: "Ψ", Omega: "Ω",
 };
 
+const GREEK_PREFIX_NAMES = Object.keys(GREEK_LETTERS).sort(
+  (a, b) => b.length - a.length,
+);
+
 // Ord som dukkar opp i underscore-segmenter som er KONTEKST, ikkje del av
 // matematisk subscript. Filtrerast vekk frå rendringa.
 //
@@ -80,20 +84,51 @@ const META_SUBSCRIPT_WORDS = new Set<string>([
   "type",
 ]);
 
+function parseMathHead(
+  firstPart: string,
+  restParts: string[],
+): { head: string; subscriptParts: string[] } {
+  const exactGreek = GREEK_LETTERS[firstPart];
+  if (exactGreek) {
+    return { head: exactGreek, subscriptParts: restParts };
+  }
+
+  for (const greekName of GREEK_PREFIX_NAMES) {
+    if (!firstPart.startsWith(greekName) || firstPart.length === greekName.length) {
+      continue;
+    }
+    const suffix = firstPart.slice(greekName.length);
+    if (!/^[A-Z0-9]/.test(suffix)) {
+      continue;
+    }
+    return {
+      head: GREEK_LETTERS[greekName],
+      subscriptParts: [suffix, ...restParts],
+    };
+  }
+
+  return { head: firstPart, subscriptParts: restParts };
+}
+
 export function renderMathKey(key: string): React.ReactNode {
   const parts = key.split("_");
   if (parts.length === 0 || !parts[0]) return key;
 
-  // Første del: Greek-symbol om matchande, elles ordet uendra
-  const head = GREEK_LETTERS[parts[0]] ?? parts[0];
+  // Første del: exact Greek, glued Greek+suffix, eller ordet uendra.
+  const { head, subscriptParts: rawSubscriptParts } = parseMathHead(
+    parts[0],
+    parts.slice(1),
+  );
 
-  // Ingen underscore → only hovudsymbol
-  if (parts.length === 1) return head;
+  // Ingen subscript-delar → only hovudsymbol
+  if (rawSubscriptParts.length === 0) return head;
 
   // Resten: subscript, komma-separert om fleire delar.
   // Filtrer META_SUBSCRIPT_WORDS (kategori, klasse, type) som er kontekst,
   // ikkje matematisk subscript-innhald.
-  const subscriptParts = parts.slice(1).filter((p) => !META_SUBSCRIPT_WORDS.has(p));
+  const subscriptParts = rawSubscriptParts.filter(
+    (p) => !META_SUBSCRIPT_WORDS.has(p),
+  );
 
   // Om alle subscript-delar blei filtrert (rar edge case), vis only head.
   if (subscriptParts.length === 0) return head;
