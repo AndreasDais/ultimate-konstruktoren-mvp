@@ -856,7 +856,9 @@ to run read-only SQL Editor queries that compare each migration's expected
 tables, columns, constraints, indexes, policies, grants, comments, triggers,
 functions and views against production. Package C must preserve the 68C.42
 classification values and may only move a migration toward `exact` when every
-expected object is proven present without drift.
+expected object is proven present without drift. Package C is required before
+any older migration can move from `MUST NOT REPAIR YET`, and no migration may
+be repaired from table-presence evidence alone.
 
 Package D: rollback, backup and PITR evidence. Ask the user to provide the
 project ref, backup/PITR availability, retention window, restore owner, rollback
@@ -877,5 +879,363 @@ Repair decision protocol:
 68C.43 boundary:
 
 - no migration repair is approved
+- no local DB, Supabase CLI, SQL, repair, `db push`, `db push --dry-run` or
+  mutating DB command was run by Chat C
+
+## 68C.44 Package C per-migration evidence hardening
+
+Purpose: turn Package C into the next read-only evidence packet needed to
+strengthen the 68C.42 matrix. This section is not a repair approval.
+
+Package C hardening rules:
+
+- object existence alone can never move a migration to repair-ready
+- each older migration remains `MUST NOT REPAIR YET` until Package C proves all
+  relevant objects, columns, constraints, indexes, policies, grants and comments
+- `20260531000000` remains only a provisional candidate until a full-baseline
+  strategy is approved
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Per-migration Package C evidence needed:
+
+| Version | Migration file | Package C must prove before classification can harden |
+|---|---|---|
+| `20260523000000` | `pilar_intelligence_foundation.sql` | All four intelligence tables exist with expected columns; check constraints exist; expected indexes exist; updated-at trigger/function state is reviewed; RLS posture is intentionally accepted or documented as drift; grants/comments are inventoried. |
+| `20260523000002` | `pilot_readiness_feedback.sql` | `pilot_feedback` full columns, rating/trust checks, four indexes, RLS enabled, `pilot_feedback_no_public_read` policy, table/comment rows and grants are present exactly. |
+| `20260524000000` | `engineering_context_events.sql` | Table, full columns, language/support/units checks, three indexes, RLS enabled, service-role policy and grants/comments are present or drift is explicitly classified. |
+| `20260524000001` | `engineering_context_language_policy.sql` | `output_mode`, `fallback_language`, `detected_prompt_language`, output/fallback checks and language/output comments are either present exactly or owner-classified as intentionally superseded; current Package A/B evidence suggests drift. |
+| `20260527000000` | `pilar_core_pipeline.sql` | Core tables, primary/foreign/check constraints, indexes, RLS, authenticated calculation-run policy and grants are compared against the migration; no table-presence-only repair. |
+| `20260527000001` | `run_display_language.sql` | `display_language` nullable text, no default, bounded constraint, and no unexpected grant/index side effects; ledger strategy still required. |
+| `20260528000000` | `step_messages.sql` | `step_messages` full columns, correlation check, three indexes, RLS enabled, grants and raw-message replay-only semantics are present exactly. |
+| `20260528000001` | `eval_case_id.sql` | `eval_case_id` nullable text and `idx_calc_runs_eval_case_id` partial index are present exactly; no release-proof claim follows from this evidence. |
+| `20260528000002` | `trace_events_view.sql` | `trace_events` view definition, safe selected payload shape and select grants match the migration; relation presence alone is partial. |
+| `20260528000003` | `engineering_context_per_run.sql` | `engineering_context` nullable jsonb and both expression indexes are present exactly. |
+| `20260531000000` | `step_metrics_release_proof_metadata.sql` | Five nullable metadata columns, bounded status/error-category checks, comments, no default true on `raw_error_redacted`, `provider_message_id` absence and raw-message exclusion remain present. This can only support provisional candidacy inside a full-baseline strategy. |
+
+Package C read-only SQL Editor request:
+
+```sql
+with
+expected_relations(version, migration_file, expected_kind, schema_name, relation_name) as (
+  values
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'r', 'public', 'daily_intelligence_reports'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'r', 'public', 'improvement_actions'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'r', 'public', 'agent_learning_feedback'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'r', 'public', 'daily_metrics_snapshots'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'r', 'public', 'pilot_feedback'),
+    ('20260524000000', 'engineering_context_events.sql', 'r', 'public', 'engineering_context_events'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'requests'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'admins'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'input_reviews'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'calculation_runs'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'agent_outputs'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'comparisons'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'controller_decisions'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'reports'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'error_reports'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'r', 'public', 'manual_reviews'),
+    ('20260528000000', 'step_messages.sql', 'r', 'public', 'step_messages'),
+    ('20260528000002', 'trace_events_view.sql', 'v', 'public', 'trace_events'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'r', 'public', 'step_metrics')
+),
+expected_columns(version, migration_file, table_name, column_name, expected_type, expected_nullable, expected_default) as (
+  values
+    ('20260524000001', 'engineering_context_language_policy.sql', 'engineering_context_events', 'output_mode', 'text', 'NO', 'has_default'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'engineering_context_events', 'fallback_language', 'text', 'YES', 'no_default'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'engineering_context_events', 'detected_prompt_language', 'text', 'YES', 'no_default'),
+    ('20260527000001', 'run_display_language.sql', 'calculation_runs', 'display_language', 'text', 'YES', 'no_default'),
+    ('20260528000001', 'eval_case_id.sql', 'calculation_runs', 'eval_case_id', 'text', 'YES', 'no_default'),
+    ('20260528000003', 'engineering_context_per_run.sql', 'calculation_runs', 'engineering_context', 'jsonb', 'YES', 'no_default'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'status', 'text', 'YES', 'no_default'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'completed_at', 'timestamp with time zone', 'YES', 'no_default'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'error_category', 'text', 'YES', 'no_default'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'retryable', 'boolean', 'YES', 'no_default'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'raw_error_redacted', 'boolean', 'YES', 'no_default')
+),
+expected_constraints(version, migration_file, table_name, constraint_name) as (
+  values
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'improvement_actions_category_check'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'improvement_actions_priority_check'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'improvement_actions_effort_check'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'improvement_actions_risk_level_check'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'improvement_actions_status_check'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'agent_learning_feedback', 'agent_learning_feedback_user_rating_check'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_rating_check'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_trust_level_check'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_language_check'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_standard_support_level_check'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_units_check'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'engineering_context_events', 'engineering_context_events_output_mode_check'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'engineering_context_events', 'engineering_context_events_fallback_language_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'calculation_runs', 'calculation_runs_run_type_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'reports', 'reports_tillit_score_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'error_reports_severity_user_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'error_reports_error_type_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'error_reports_status_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'manual_reviews', 'manual_reviews_related_type_check'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'manual_reviews', 'manual_reviews_decision_check'),
+    ('20260527000001', 'run_display_language.sql', 'calculation_runs', 'calculation_runs_display_language_check'),
+    ('20260528000000', 'step_messages.sql', 'step_messages', 'step_messages_has_correlation'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'step_metrics_status_check'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'step_metrics', 'step_metrics_error_category_check')
+),
+expected_indexes(version, migration_file, table_name, index_name) as (
+  values
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'daily_intelligence_reports', 'idx_daily_intelligence_reports_date'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'idx_improvement_actions_status_priority'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'improvement_actions', 'idx_improvement_actions_report_id'),
+    ('20260523000000', 'pilar_intelligence_foundation.sql', 'daily_metrics_snapshots', 'idx_daily_metrics_snapshots_date_key'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_created_at_idx'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_run_id_idx'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_rating_idx'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_use_case_idx'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_created_at_idx'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_standard_family_idx'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_country_code_idx'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'requests', 'idx_requests_created'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'admins', 'idx_admins_email'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'input_reviews', 'idx_input_reviews_request'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'calculation_runs', 'idx_calc_runs_request'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'calculation_runs', 'idx_calculation_runs_user_id'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'agent_outputs', 'idx_agent_outputs_run'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'comparisons', 'idx_comparisons_run'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'controller_decisions', 'idx_controller_decisions_run_id'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'reports', 'idx_reports_tillit_score'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'idx_error_reports_report_id'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'idx_error_reports_status'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports', 'idx_error_reports_created_at'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'manual_reviews', 'idx_manual_reviews_related'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'manual_reviews', 'idx_manual_reviews_created_at'),
+    ('20260528000000', 'step_messages.sql', 'step_messages', 'step_messages_run_id_idx'),
+    ('20260528000000', 'step_messages.sql', 'step_messages', 'step_messages_request_id_idx'),
+    ('20260528000000', 'step_messages.sql', 'step_messages', 'step_messages_step_name_idx'),
+    ('20260528000001', 'eval_case_id.sql', 'calculation_runs', 'idx_calc_runs_eval_case_id'),
+    ('20260528000003', 'engineering_context_per_run.sql', 'calculation_runs', 'idx_calc_runs_engctx_country'),
+    ('20260528000003', 'engineering_context_per_run.sql', 'calculation_runs', 'idx_calc_runs_engctx_family')
+),
+expected_policies(version, migration_file, table_name, policy_name) as (
+  values
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'pilot_feedback', 'pilot_feedback_no_public_read'),
+    ('20260524000000', 'engineering_context_events.sql', 'engineering_context_events', 'engineering_context_events_service_role_all'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'calculation_runs', 'Innlogga brukar les eigne berekningar')
+),
+expected_grant_tables(version, migration_file, table_name) as (
+  values
+    ('20260527000000', 'pilar_core_pipeline.sql', 'requests'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'admins'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'input_reviews'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'calculation_runs'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'agent_outputs'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'comparisons'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'controller_decisions'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'reports'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'error_reports'),
+    ('20260527000000', 'pilar_core_pipeline.sql', 'manual_reviews'),
+    ('20260528000000', 'step_messages.sql', 'step_messages'),
+    ('20260528000002', 'trace_events_view.sql', 'trace_events')
+),
+expected_comments(version, migration_file, object_type, table_name, column_name) as (
+  values
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'table', 'pilot_feedback', null),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'column', 'pilot_feedback', 'rating'),
+    ('20260523000002', 'pilot_readiness_feedback.sql', 'column', 'pilot_feedback', 'trust_level'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'column', 'engineering_context_events', 'language'),
+    ('20260524000001', 'engineering_context_language_policy.sql', 'column', 'engineering_context_events', 'output_mode'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'table', 'step_metrics', null),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'column', 'step_metrics', 'status'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'column', 'step_metrics', 'completed_at'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'column', 'step_metrics', 'error_category'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'column', 'step_metrics', 'retryable'),
+    ('20260531000000', 'step_metrics_release_proof_metadata.sql', 'column', 'step_metrics', 'raw_error_redacted')
+),
+relation_evidence as (
+  select
+    'Package C relation existence' as section_name,
+    er.version,
+    er.migration_file,
+    'object' as evidence_group,
+    er.schema_name || '.' || er.relation_name as expected_item,
+    case er.expected_kind when 'r' then 'table' when 'v' then 'view' else er.expected_kind end as expected_effect,
+    coalesce(case c.relkind::text when 'r' then 'table' when 'v' then 'view' else c.relkind::text end, 'missing') as observed_value,
+    case
+      when c.oid is null then 'absent'
+      when c.relkind::text = er.expected_kind then 'exact_candidate'
+      else 'drift'
+    end as evidence_status
+  from expected_relations er
+  left join pg_namespace n on n.nspname = er.schema_name
+  left join pg_class c on c.relnamespace = n.oid and c.relname = er.relation_name
+),
+column_evidence as (
+  select
+    'Package C column evidence' as section_name,
+    ec.version,
+    ec.migration_file,
+    'column' as evidence_group,
+    'public.' || ec.table_name || '.' || ec.column_name as expected_item,
+    ec.expected_type || ', nullable=' || ec.expected_nullable || ', default=' || ec.expected_default as expected_effect,
+    coalesce(c.data_type || ', nullable=' || c.is_nullable || ', default=' || coalesce(c.column_default, 'null'), 'missing') as observed_value,
+    case
+      when c.column_name is null then 'absent'
+      when c.data_type = ec.expected_type
+        and c.is_nullable = ec.expected_nullable
+        and (
+          (ec.expected_default = 'no_default' and c.column_default is null)
+          or (ec.expected_default = 'has_default' and c.column_default is not null)
+        )
+      then 'exact_candidate'
+      else 'partial_or_drift'
+    end as evidence_status
+  from expected_columns ec
+  left join information_schema.columns c
+    on c.table_schema = 'public'
+   and c.table_name = ec.table_name
+   and c.column_name = ec.column_name
+),
+constraint_evidence as (
+  select
+    'Package C constraint evidence' as section_name,
+    ec.version,
+    ec.migration_file,
+    'constraint' as evidence_group,
+    'public.' || ec.table_name || '.' || ec.constraint_name as expected_item,
+    'constraint definition must match migration intent' as expected_effect,
+    coalesce(pg_get_constraintdef(con.oid), 'missing') as observed_value,
+    case when con.oid is null then 'absent' else 'definition_for_review' end as evidence_status
+  from expected_constraints ec
+  left join pg_class c on c.relname = ec.table_name
+  left join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+  left join pg_constraint con on con.conrelid = c.oid and con.conname = ec.constraint_name
+),
+index_evidence as (
+  select
+    'Package C index evidence' as section_name,
+    ei.version,
+    ei.migration_file,
+    'index' as evidence_group,
+    'public.' || ei.table_name || '.' || ei.index_name as expected_item,
+    'index definition must match migration intent' as expected_effect,
+    coalesce(i.indexdef, 'missing') as observed_value,
+    case when i.indexname is null then 'absent' else 'definition_for_review' end as evidence_status
+  from expected_indexes ei
+  left join pg_indexes i
+    on i.schemaname = 'public'
+   and i.tablename = ei.table_name
+   and i.indexname = ei.index_name
+),
+policy_evidence as (
+  select
+    'Package C policy evidence' as section_name,
+    ep.version,
+    ep.migration_file,
+    'policy' as evidence_group,
+    'public.' || ep.table_name || '.' || ep.policy_name as expected_item,
+    'policy command/roles/qual/with_check must match migration intent' as expected_effect,
+    coalesce('cmd=' || p.cmd || ', roles=' || p.roles::text || ', qual=' || coalesce(p.qual, 'null') || ', with_check=' || coalesce(p.with_check, 'null'), 'missing') as observed_value,
+    case when p.policyname is null then 'absent' else 'definition_for_review' end as evidence_status
+  from expected_policies ep
+  left join pg_policies p
+    on p.schemaname = 'public'
+   and p.tablename = ep.table_name
+   and p.policyname = ep.policy_name
+),
+grant_evidence as (
+  select
+    'Package C grant evidence' as section_name,
+    egt.version,
+    egt.migration_file,
+    'grant' as evidence_group,
+    'public.' || egt.table_name || ' -> anon/authenticated/service_role' as expected_item,
+    'table/view privileges must match migration intent' as expected_effect,
+    coalesce(string_agg(distinct g.grantee || ':' || g.privilege_type, ', ' order by g.grantee || ':' || g.privilege_type), 'missing') as observed_value,
+    case when count(g.privilege_type) = 0 then 'absent' else 'definition_for_review' end as evidence_status
+  from expected_grant_tables egt
+  left join information_schema.role_table_grants g
+    on g.table_schema = 'public'
+   and g.table_name = egt.table_name
+   and g.grantee in ('anon', 'authenticated', 'service_role')
+  group by egt.version, egt.migration_file, egt.table_name
+),
+comment_evidence as (
+  select
+    'Package C comment evidence' as section_name,
+    ec.version,
+    ec.migration_file,
+    'comment' as evidence_group,
+    case
+      when ec.object_type = 'table' then 'public.' || ec.table_name
+      else 'public.' || ec.table_name || '.' || ec.column_name
+    end as expected_item,
+    'comment must match migration safety intent where relevant' as expected_effect,
+    coalesce(
+      case
+        when ec.object_type = 'table' then obj_description(c.oid, 'pg_class')
+        else col_description(c.oid, a.attnum)
+      end,
+      'missing'
+    ) as observed_value,
+    case
+      when (
+        case
+          when ec.object_type = 'table' then obj_description(c.oid, 'pg_class')
+          else col_description(c.oid, a.attnum)
+        end
+      ) is null then 'absent'
+      else 'definition_for_review'
+    end as evidence_status
+  from expected_comments ec
+  left join pg_class c on c.relname = ec.table_name
+  left join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+  left join pg_attribute a on a.attrelid = c.oid and a.attname = ec.column_name
+),
+safety_absence as (
+  select
+    'Package C safety absence evidence' as section_name,
+    '20260531000000' as version,
+    'step_metrics_release_proof_metadata.sql' as migration_file,
+    'safety_absence' as evidence_group,
+    'public.step_metrics.provider_message_id' as expected_item,
+    'column must remain omitted' as expected_effect,
+    case when c.column_name is null then 'omitted' else 'present' end as observed_value,
+    case when c.column_name is null then 'exact_candidate' else 'drift' end as evidence_status
+  from (select 1) one
+  left join information_schema.columns c
+    on c.table_schema = 'public'
+   and c.table_name = 'step_metrics'
+   and c.column_name = 'provider_message_id'
+)
+select * from relation_evidence
+union all select * from column_evidence
+union all select * from constraint_evidence
+union all select * from index_evidence
+union all select * from policy_evidence
+union all select * from grant_evidence
+union all select * from comment_evidence
+union all select * from safety_absence
+order by version, evidence_group, expected_item;
+```
+
+How to paste Package C results back:
+
+- Section name: `68C.44 Package C user-run SQL Editor results`
+- Include the project ref shown in Supabase.
+- Include the SQL Editor role shown in the UI.
+- Include the timestamp and timezone when the query was run.
+- Paste the full query result table as CSV or JSON with these columns preserved:
+  `section_name`, `version`, `migration_file`, `evidence_group`,
+  `expected_item`, `expected_effect`, `observed_value`, `evidence_status`.
+- If the SQL Editor only shows one table, paste that table; the Package C query
+  is intentionally shaped as one combined result table.
+- Screenshots may be attached as backup, but the pasted table/json is the
+  release-manager evidence source.
+
+68C.44 boundary:
+
+- no migration repair is approved
+- older migrations remain `MUST NOT REPAIR YET`
+- `20260531000000` remains only a provisional candidate inside a full-baseline
+  strategy
 - no local DB, Supabase CLI, SQL, repair, `db push`, `db push --dry-run` or
   mutating DB command was run by Chat C
