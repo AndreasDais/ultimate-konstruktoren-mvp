@@ -1600,3 +1600,84 @@ Final decision rule:
 - no `supabase db push` or `supabase db push --dry-run` was run
 - no mutating SQL or DB work occurred
 - no local Supabase CLI or SQL was run by Chat C
+
+## 68C.50 migration-history closeout / STOP
+
+Purpose: close the Ops 68C Supabase migration-history docs, audit and preflight
+run at the decision boundary. This is not repair execution.
+
+Closeout state:
+
+- `main` is clean/synced at `3bc69a5`
+- 68C.49 evidence paste-back package is integrated
+- paste-back fields are still empty / required
+- all candidates remain NO-GO
+- no migration repair is approved
+- Ops 68C migration-history run is complete up to the decision boundary
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Completed artifacts in this run:
+
+| Artifact | Status |
+|---|---|
+| baseline plan | complete |
+| audit packet | complete |
+| prepared audit checkpoint | complete |
+| SQL request packet | complete |
+| Package A results | complete |
+| Package B policy/RLS results | complete |
+| Package C evidence hardening | complete |
+| Package C evidence results | complete |
+| per-migration classification | complete |
+| repair-readiness plan | complete |
+| repair-decision review | complete |
+| repair-preflight package | complete |
+| Gate 0 package | complete |
+| evidence paste-back package | complete |
+
+Final candidate state:
+
+| State | Versions |
+|---|---|
+| DO NOT REPAIR | `20260524000001` |
+| NEEDS MORE EVIDENCE | `20260523000000`, `20260523000002`, `20260524000000`, `20260527000000`, `20260528000000`, `20260528000002` |
+| EXACT-EVIDENCE CANDIDATE but still NO-GO | `20260527000001`, `20260528000001`, `20260528000003`, `20260531000000` |
+| PROVISIONAL | none |
+
+Final blockers before any future repair:
+
+- backup/PITR evidence missing
+- rollback/recovery plan missing
+- fresh ledger check missing
+- exact command-list approval missing
+- explicit Big Brain GO missing
+
+Future handoff:
+
+- if no human GO package is provided, stop and keep ledger unrepaired
+- if human GO package is provided later, start a new explicitly named repair
+  execution protocol
+- that future protocol must re-check fresh ledger immediately before any command
+- no `db push`
+- no mutating SQL
+- no excluded versions
+- only explicitly approved
+  `supabase migration repair --status applied <version>` commands may be
+  considered
+
+STOP statement:
+
+- Ops 68C migration-history docs/audit/preflight work is complete
+- do not create 68C.51 without a new Big Brain plan
+- repair execution remains outside this sprint and outside this run
+
+68C.50 boundary:
+
+- no migration repair is approved
+- repair execution remains NO-GO
+- no repair command was run
+- no `supabase db push` or `supabase db push --dry-run` was run
+- no mutating SQL or DB work occurred
+- no local Supabase CLI or SQL was run by Chat C
