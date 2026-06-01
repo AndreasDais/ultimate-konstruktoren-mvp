@@ -754,3 +754,51 @@ Package B classification update:
 | `20260528000002_trace_events_view.sql` | table-comment query included `trace_events` and returned null; view definition/grants not audited | partial evidence; exactness unknown | MUST NOT REPAIR YET |
 | `20260528000003_engineering_context_per_run.sql` | Package B does not add index evidence beyond Package A column proof | partial evidence; exactness unknown | MUST NOT REPAIR YET |
 | `20260531000000_step_metrics_release_proof_metadata.sql` | Package A+B verify nullable fields, no defaults, bounded constraints, comments, provider id omission, and raw_message exclusion from release-proof metadata | strongest evidence so far; still only a provisional later repair candidate inside approved full-baseline strategy | MUST NOT REPAIR YET |
+
+## 68C.42 migration classification matrix
+
+This matrix summarizes the current Package A/B evidence in the format needed
+for future baseline planning. It is not a repair approval.
+
+Classification values:
+
+```txt
+exact
+partial
+absent
+drift
+unknown
+```
+
+Repair status values:
+
+```txt
+MUST NOT REPAIR YET
+provisional candidate
+blocked
+```
+
+| Version | Migration file name | Expected effect | Observed prod evidence | Classification | Repair status | Blocker / next evidence needed |
+|---|---|---|---|---|---|---|
+| `20260523000000` | `pilar_intelligence_foundation.sql` | Intelligence tables, indexes, updated-at trigger/function and optional RLS posture for daily reports, improvement actions, learning feedback and metric snapshots. | Package A shows `daily_intelligence_reports`, `improvement_actions`, `agent_learning_feedback`, and `daily_metrics_snapshots` present. Package B shows RLS enabled for these tables, but table comments are null and indexes/triggers/grants/full column shape were not audited. | partial | MUST NOT REPAIR YET | Need full column, index, trigger/function, grant and policy comparison before exactness can be claimed. |
+| `20260523000002` | `pilot_readiness_feedback.sql` | `pilot_feedback` table, indexes, RLS enabled, no-public-read policy, table and selected column comments. | Package A shows `pilot_feedback` present. Package B shows RLS enabled, `pilot_feedback_no_public_read` policy, table comment, and `rating` / `trust_level` comments. Indexes and full column shape were not audited. | partial | MUST NOT REPAIR YET | Need full column and index audit before exactness can be claimed. |
+| `20260524000000` | `engineering_context_events.sql` | `engineering_context_events` table, indexes, RLS enabled and service-role-only policy. | Package A shows `engineering_context_events` present. Package B shows RLS enabled and `engineering_context_events_service_role_all` policy. Table comment is null and indexes/full column shape were not audited. | partial | MUST NOT REPAIR YET | Need full column and index audit; confirm intended comments/grants if any. |
+| `20260524000001` | `engineering_context_language_policy.sql` | `engineering_context_events.output_mode`, `fallback_language`, `detected_prompt_language`, and language/output_mode comments. | Package A returned no rows for `output_mode`, `fallback_language`, or `detected_prompt_language`. Package B shows `engineering_context_events.language` comment null and no `output_mode` comment row. | drift | MUST NOT REPAIR YET | Need owner review: determine whether this migration is absent, drifted, or intentionally superseded. No auto-fix. |
+| `20260527000000` | `pilar_core_pipeline.sql` | Core pipeline tables, indexes, constraints, RLS, grants and authenticated calculation-run read policy. | Package A shows the core tables present. Package B shows RLS enabled on covered core tables and the authenticated `calculation_runs` select policy. Comments mostly null; full columns, indexes, grants and all constraints were not audited. | partial | MUST NOT REPAIR YET | Need full schema/index/grant/policy comparison before exactness can be claimed. |
+| `20260527000001` | `run_display_language.sql` | Nullable `calculation_runs.display_language` and bounded `calculation_runs_display_language_check`. | Package A shows `display_language` as nullable text with no default and the expected bounded check constraint. | partial | MUST NOT REPAIR YET | Need index/grant neutrality review and ledger strategy; current field-level evidence appears exact but not enough for repair. |
+| `20260528000000` | `step_messages.sql` | `step_messages` table, correlation constraints, indexes, RLS enabled, grants and raw-message replay storage. | Package A shows `step_messages` present. Package B shows RLS enabled and `raw_message` safety note: replay only, not release-proof metadata. Grants, indexes, constraints and full column shape were not audited. | partial | MUST NOT REPAIR YET | Need full column, constraint, index and grant audit before exactness can be claimed. |
+| `20260528000001` | `eval_case_id.sql` | Nullable `calculation_runs.eval_case_id` and partial index. | Package A shows `eval_case_id` as nullable text with no default. Partial index was not audited. | partial | MUST NOT REPAIR YET | Need partial index audit and ledger strategy before repair consideration. |
+| `20260528000002` | `trace_events_view.sql` | `trace_events` view definition, safe payload shape and select grant. | Package A shows `trace_events` relation present. Package B table-comment query included `trace_events` with null comment. View definition and grants were not audited. | partial | MUST NOT REPAIR YET | Need view definition and grant audit before exactness can be claimed. |
+| `20260528000003` | `engineering_context_per_run.sql` | Nullable `calculation_runs.engineering_context` and two partial expression indexes. | Package A shows `engineering_context` as nullable jsonb with no default. Indexes were not audited. | partial | MUST NOT REPAIR YET | Need both expression indexes audited before exactness can be claimed. |
+| `20260531000000` | `step_metrics_release_proof_metadata.sql` | Nullable safe top-level trace-readiness fields, bounded status/error-category checks, comments, no default true on `raw_error_redacted`, no `provider_message_id`, and raw-message exclusion from release-proof metadata. | Package A+B show five nullable fields, no defaults, bounded checks, `provider_message_id_columns = 0`, comments, and `raw_message` marked replay-only. | partial | provisional candidate | Still only a provisional later repair candidate inside a full-baseline strategy. Need Big Brain approval, backup/PITR confirmation, and a ledger repair plan that does not leave earlier migrations misleadingly pending. |
+
+68C.42 repair boundary:
+
+- no migration is approved for repair
+- older migrations remain `MUST NOT REPAIR YET`
+- `20260531000000` remains only a provisional later repair candidate inside a
+  full-baseline strategy
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- no local DB, Supabase CLI, SQL, repair, `db push`, or `db push --dry-run`
+  command was run by Chat C for this matrix
