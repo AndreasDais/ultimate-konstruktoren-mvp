@@ -14,10 +14,33 @@ const LANGUAGE_TEXT: Record<EngineeringContext["languagePolicy"]["fallbackLangua
 };
 
 export function buildEngineeringContextPromptBlock(context: EngineeringContext): string {
+  const englishReportMode =
+    context.languagePolicy.uiLocale === "en" ||
+    (context.region.countryCode && context.region.countryCode !== "NO") ||
+    (context.standards.family && context.standards.family !== "eurocode_norway");
+  const languageRules = englishReportMode
+    ? [
+        "LANGUAGE RULES",
+        "1. This is an English/international PILAR run. Generated report/runtime prose fields MUST be written in English.",
+        "2. This applies to assumptions, calculation_steps[].title, calculation_steps[].text, limitations, warnings, verification_notes, short_conclusion, executive_summary, technical_assessment, conclusion, and controller/user-facing prose.",
+        "3. Do not copy Norwegian or Nynorsk free-form wording into those generated fields. Preserve the user's original text only when explicitly quoting raw input.",
+        "4. Do not let the language decide the engineering standard. Standard choice is controlled only by the selected standard profile and user-provided project context.",
+        "5. Keep engineering symbols and notation appropriate to the selected standard/profile.",
+      ]
+    : [
+        "LANGUAGE RULES",
+        "1. Detect the language of the user's input and reply in the same language.",
+        "2. If the user's language is unclear or heavily mixed, reply in English.",
+        "3. Do not let the language decide the engineering standard. Standard choice is controlled only by the selected standard profile and user-provided project context.",
+        "4. Keep engineering symbols and notation appropriate to the selected standard/profile.",
+      ];
+
   return [
     "PROJECT ENGINEERING CONTEXT",
     `- UI/default language: ${LANGUAGE_TEXT[context.languagePolicy.uiLocale]}`,
-    "- Agent output language: same as the user's prompt",
+    englishReportMode
+      ? "- Agent output language: English for generated report/runtime prose"
+      : "- Agent output language: same as the user's prompt",
     `- Fallback language if the prompt is unclear or mixed: ${LANGUAGE_TEXT[context.languagePolicy.fallbackLanguage]}`,
     `- User region: ${context.region.countryName} (${context.region.countryCode})`,
     `- Selected standard profile: ${context.standards.label}`,
@@ -25,11 +48,7 @@ export function buildEngineeringContextPromptBlock(context: EngineeringContext):
     `- Unit preference: ${context.outputPreferences.units}`,
     `- Notation style: ${context.outputPreferences.notationStyle}`,
     "",
-    "LANGUAGE RULES",
-    "1. Detect the language of the user's input and reply in the same language.",
-    "2. If the user's language is unclear or heavily mixed, reply in English.",
-    "3. Do not let the language decide the engineering standard. Standard choice is controlled only by the selected standard profile and user-provided project context.",
-    "4. Keep engineering symbols and notation appropriate to the selected standard/profile.",
+    ...languageRules,
     "",
     "STANDARD AND SAFETY RULES",
     "1. Do not claim full code compliance unless the selected standard profile is explicitly supported for the requested calculation type.",

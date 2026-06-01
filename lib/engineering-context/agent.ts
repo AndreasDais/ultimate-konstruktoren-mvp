@@ -40,9 +40,9 @@ export function parseEngineeringContextPayload(value: unknown): EngineeringConte
  *  1. ROLE IDENTITY — translate Norwegian role labels to English
  *     equivalents in all output. Section headers/role labels mirror the
  *     app shell, which is English in intl mode.
- *  2. OUTPUT LANGUAGE — detect the user's request language; respond in it;
- *     default to English when unclear. Engineering prose mirrors the user;
- *     role labels stay English.
+ *  2. OUTPUT LANGUAGE — English/international report runs must keep generated
+ *     report/runtime prose in English, even when the base Norwegian prompt or
+ *     upstream examples contain Norwegian/Nynorsk wording.
  *
  * Norwegian mode (nb/nn) does NOT receive this preamble — wrapPromptWithLocale
  * already injects the SVARSPRÅK directive there.
@@ -60,11 +60,18 @@ Norwegian role label into your output. Always use the English equivalent:
   Rapportør     -> Reporter
 
 OUTPUT LANGUAGE
-Detect the language the user wrote their request in. Respond in THAT
-language. Default to English when the user's language is unclear. Section
-headers and role labels stay in English (they mirror the app shell).
-Engineering prose mirrors the user's language. Do not switch language
-mid-response.
+This is an English/international PILAR run. Generated JSON prose fields that
+can appear in reports or runtime output MUST be written in English, including
+assumptions, calculation_steps[].title, calculation_steps[].text, limitations,
+warnings, verification_notes, short_conclusion, executive_summary,
+technical_assessment, conclusion, and controller/user-facing prose.
+
+Do not copy Norwegian or Nynorsk free-form wording from the base instructions,
+the user request, or upstream agent examples into those generated fields. Only
+preserve the original language when explicitly quoting raw user input.
+
+Section headers and role labels stay in English because they mirror the app
+shell. Do not switch language mid-response.
 `;
 
 export function buildAgentSystemPrompt(
@@ -106,7 +113,9 @@ export function engineeringContextUserMessageBlock(context?: EngineeringContextP
     `- Support level: ${context.standards.supportLevel}`,
     `- Units: ${context.outputPreferences.units}`,
     `- Notation: ${context.outputPreferences.notationStyle}`,
-    `- Agent language policy: answer in the same language as the user's prompt; fallback to ${context.languagePolicy.fallbackLanguage} if unclear.`,
+    isInternationalEnglishContext(context)
+      ? "- Agent language policy: generated report/runtime prose must be English; quote raw user input verbatim only when explicitly quoting."
+      : `- Agent language policy: answer in the same language as the user's prompt; fallback to ${context.languagePolicy.fallbackLanguage} if unclear.`,
     "",
   ].join("\n");
 }
