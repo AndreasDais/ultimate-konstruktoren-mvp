@@ -1645,9 +1645,18 @@ export default function RapportPage() {
                                   />
                                 </>
                               ) : (
-                                <pre className="rapport-step-row__text">
-                                  {step.prose}
-                                </pre>
+                                <>
+                                  <pre className="rapport-step-row__text">
+                                    {step.prose}
+                                  </pre>
+                                  <StepExplain
+                                    runId={runId}
+                                    stepKey={`step-${i}`}
+                                    stepLabel={step.title}
+                                    stepContext={step.prose}
+                                    displayLanguage={reportDisplayLanguage}
+                                  />
+                                </>
                               )}
                             </div>
                           </div>

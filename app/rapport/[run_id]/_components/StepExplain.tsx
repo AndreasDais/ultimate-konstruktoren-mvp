@@ -18,7 +18,7 @@ const stepExplainCache = new Map<string, string>();
 
 const STEP_EXPLAIN_TEXT: Record<
   PilarDisplayLanguage,
-  { button: string; hide: string; loading: string; failed: string; unavailable: string }
+  { button: string; hide: string; loading: string; failed: string; unavailable: string; aiNote: string }
 > = {
   nb: {
     button: "Forklar dette steget",
@@ -26,6 +26,7 @@ const STEP_EXPLAIN_TEXT: Record<
     loading: "Forklarer …",
     failed: "Kunne ikke hente forklaring akkurat nå. La en fagperson vurdere steget.",
     unavailable: "Forklaring er ikke tilgjengelig her.",
+    aiNote: "AI-generert · krever faglig kontroll",
   },
   nn: {
     button: "Forklar dette steget",
@@ -33,6 +34,7 @@ const STEP_EXPLAIN_TEXT: Record<
     loading: "Forklarer …",
     failed: "Klarte ikkje hente forklaring akkurat no. La ein fagperson vurdere steget.",
     unavailable: "Forklaring er ikkje tilgjengeleg her.",
+    aiNote: "AI-generert · krev fagleg kontroll",
   },
   en: {
     button: "Explain this step",
@@ -40,6 +42,7 @@ const STEP_EXPLAIN_TEXT: Record<
     loading: "Explaining …",
     failed: "Could not load an explanation right now. Have a qualified professional review the step.",
     unavailable: "No explanation available here.",
+    aiNote: "AI-generated · requires professional review",
   },
 };
 
@@ -123,7 +126,7 @@ export function StepExplain({
           : t.loading;
 
   return (
-    <div style={{ marginTop: 8 }}>
+    <div className="no-print" style={{ marginTop: 8 }}>
       <button
         type="button"
         onClick={handleClick}
@@ -156,6 +159,18 @@ export function StepExplain({
           }}
         >
           {body}
+        </p>
+      )}
+      {open && fetched !== null && (
+        <p
+          style={{
+            margin: "4px 0 0",
+            fontSize: 11,
+            color: "var(--fg-muted)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          {t.aiNote}
         </p>
       )}
     </div>
