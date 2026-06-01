@@ -692,6 +692,9 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
               localizeGeneratedEngineeringText(step.prose, displayLanguage),
               displayLanguage,
             ),
+            formulas: displayLanguage === "en"
+              ? step.formulas.map((formula) => displayTextForLanguage(formula, displayLanguage))
+              : step.formulas,
           })),
     },
     assessment: {
