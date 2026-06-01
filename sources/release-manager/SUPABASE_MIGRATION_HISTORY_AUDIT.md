@@ -802,3 +802,80 @@ blocked
 - release-proof mode remains disabled
 - no local DB, Supabase CLI, SQL, repair, `db push`, or `db push --dry-run`
   command was run by Chat C for this matrix
+
+## 68C.43 migration repair readiness plan
+
+Current state:
+
+- production schema has useful Package A/B evidence, but the Supabase CLI
+  migration ledger is unavailable or untrusted from the current audit evidence
+- no migration repair is approved yet
+- older migrations remain `MUST NOT REPAIR YET`
+- `20260531000000` remains only a provisional candidate inside a full-baseline
+  strategy
+- `diagnostic_only=true`
+- release-proof mode remains disabled
+- `provider_message_id` remains omitted
+
+Preconditions before any future `supabase migration repair`:
+
+1. Confirm the exact production project ref in the mutating sprint record.
+2. Confirm backup/PITR plan, owner, retention window and restore drill status.
+3. Confirm the current remote migration ledger state immediately before repair.
+4. Review the 68C.42 per-migration classification with Big Brain.
+5. Do not repair any `partial`, `drift` or `unknown` migration blindly.
+6. Document rollback/incident plan before any mutating command.
+7. Get explicit Big Brain approval for each individual migration version.
+8. Reconfirm `diagnostic_only=true` and release-proof disabled before and after.
+
+Allowed future repair action shape:
+
+```bash
+supabase migration repair --status applied <version>
+```
+
+This shape is allowed only in a later approved mutating sprint, and only when
+read-only evidence shows that the migration effect is already present exactly
+in production. The command is not approved by this document.
+
+Forbidden actions from the current evidence:
+
+- no `supabase db push`
+- no `supabase db push --dry-run`
+- no mutating SQL
+- no repair of old migrations with `partial`, `unknown` or `drift` evidence
+- no standalone repair of `20260531000000` outside a full-baseline strategy
+- no release-proof enabling
+- no `provider_message_id` introduction
+- no `diagnostic_only=false`
+
+Next evidence package requests:
+
+Package C: per-migration object, policy, index and grant evidence. Ask the user
+to run read-only SQL Editor queries that compare each migration's expected
+tables, columns, constraints, indexes, policies, grants, comments, triggers,
+functions and views against production. Package C must preserve the 68C.42
+classification values and may only move a migration toward `exact` when every
+expected object is proven present without drift.
+
+Package D: rollback, backup and PITR evidence. Ask the user to provide the
+project ref, backup/PITR availability, retention window, restore owner, rollback
+decision path and incident contact. Package D must be recorded before any
+future mutating repair sprint.
+
+Repair decision protocol:
+
+- `exact` plus Package D proof may become a Big Brain-reviewed repair candidate
+- `partial` remains `MUST NOT REPAIR YET`
+- `drift` is blocked until the owning lane explains the drift or supersession
+- `unknown` remains blocked until Package C supplies live read-only evidence
+- `absent` must not be repaired as applied; it needs an implementation/deploy
+  decision, not ledger repair
+- every approved repair version must be listed explicitly with evidence links
+  and rollback notes in a separate mutating sprint
+
+68C.43 boundary:
+
+- no migration repair is approved
+- no local DB, Supabase CLI, SQL, repair, `db push`, `db push --dry-run` or
+  mutating DB command was run by Chat C
