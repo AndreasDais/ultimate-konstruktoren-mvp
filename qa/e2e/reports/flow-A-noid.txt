@@ -26,12 +26,16 @@ Describe a structural engineering task
 + Upload support file
 PDF, PNG, DOCX — PILAR reads the task and attachment together.
 ▸ See 3 examples
+
+PILAR needs 1 more fields — click to insert
+
++ AISC Manual tabulated section properties for W12x26
 AI-generated · requires professional verification
 Interpret again →
 STATUS
 I
 PARTLY READY
-Steel · 0 items need more input
+Steel · 1 items need more input
 What can be calculated now
 ●
 wu — LRFD factored uniform load (1.2D + 1.6L)
@@ -40,23 +44,23 @@ Mu — maximum factored bending moment at midspan
 ●
 Vu — maximum factored shear at supports
 ○
-phi_b * Mn (LTB capacity) — requires verified AISC section properties (Zx, Lp, Lr, J, Cw, rts, ho) from AISC Manual Table 1-1; these are not available in this session and must not be invented
+phi_b * Mn (LTB capacity) — requires verified AISC section properties (Lp, Lr, Zx, Sx, J, Cw, rts, ho) not available in this session
 NEEDS MORE INPUT
 ○
-phi_v * Vn (shear capacity) — requires verified Aw, kv, and h/tw from AISC Manual
+phi_v * Vn (shear capacity) — requires verified section properties (d, tw, Aw) not available in this session
 NEEDS MORE INPUT
 ○
-Final AISC 360 code compliance check — blocked by missing verified section properties
+Demand-to-capacity ratios — blocked by missing verified section properties
 NEEDS MORE INPUT
 Interpretation
 INTERPRETER
 
-The request is interpreted as a demand-side LRFD calculation for a W12x26 simply supported beam under gravity loads, follow
+The request is a well-defined LRFD beam demand calculation for a W12x26 simply supported over 20 ft with full unbraced length. The Input Agent can resolve factored load, Mu
 
 ▶
-Show full interpretation and parsed values (11)
+Show full interpretation and parsed values (8)
 
 Does the interpretation look right? Then start the calculation.
 
 Cancel
-Start calculation →
+Start calculation · 1 assumptions used

@@ -1,0 +1,270 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+← Tilbake
+INNHOLD
+Sammendrag
+Beregning
+Vurdering
+Kontroll
+METADATA
+ID
+PILAR-33EFEFBB
+DATO
+2. juni 2026
+VERSJON
+Rapportør v0.3
+BEREGNINGSNOTAT
+·
+PILAR-33EFEFBB
+2. JUNI 2026
+Lastkombinasjon i bruddgrense
+
+L = 6,0 m · qEd = 12,0 kN/m
+
+DOKUMENT-ID
+PILAR-33EFEFBB
+DATO
+2. juni 2026
+STATUS
+FORELØPIG GODKJENT
+VERSJON
+Rapportør v0.3
+NETTVERSJON + PIPELINE
+Skann for nettversjon
+
+Åpner rapporten med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.
+
+RAPPORTLENKE
+http://localhost:3000/rapport/33efefbb-e60d-4892-93c7-a4ff352ff1d5
+NØKKELRESULTATER
+MEd
+54,0
+kNm
+VEd
+36,0
+kN
+qEd
+12,0
+kN/m
+L
+6,0
+m
+100
+/100
+HØY
+
+Beregningen er foreløpig godkjent. Resultatet skal kontrolleres av ansvarlig fagperson før bruk.
+
+VIKTIG MERKNAD
+·
+AI-GENERERT DOKUMENT
+
+Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.
+
+01
+Sammendrag
+
+Berekningen gjelder lastvirkning for en fritt opplagd bjelke med spennvidde L = 6,0 m og jevnt fordelt dimensjonerende last qEd = 12,0 kN/m. Konstruktør A og Konstruktør B er i fullstendig numerisk overensstemmelse: maksimalt bøyemoment er MEd = 54,0 kNm i midtspenn og maksimal skjærkraft er VEd = 36,0 kN ved opplagrene. Kontrollør har godkjent berekningen som foreløpig grunnlag.
+
+FORESPØRSEL
+Eg har ein fritt opplagd stålbjelke med spennvidde L = 6,0 m og jamt fordelt dimensjonerande last qEd = 12 kN/m.
+
+Rekn ut:
+1. Maksimalt bøyemoment.
+2. Maksimal skjærkraft ved opplag.
+3. Kort forklaring av kvar moment og skjærkraft er størst.
+
+Svar på norsk/nynorsk.
+Bruk kN, m og kNm.
+Ikkje bruk AISC, ASCE, kip, ft eller amerikanske lastkombinasjonar.
+Dette er berre ein enkel statikk-kontroll, ikkje full kapasitetskontroll etter Eurokode.
+02
+Beregning
+ORDLISTE
+MEd
+dimensjonerande bøyemoment (kNm)
+VEd
+dimensjonerande skjærkraft (kN)
+qEd
+dimensjonerande fordelt last (kN/m)
+L
+spennvidde (m)
+NA
+nasjonalt tillegg (Norge)
+02.1 — FORUTSETNINGER
+.01
+qEd = 12,0 kN/m er allerede dimensjonerande last — ingen videre lastfaktorering utføres (Tolkar sin antakelse)
+.02
+Lasten er jevnt fordelt over hele spennet L = 6,0 m
+.03
+Bjelken er fritt opplagt i begge ender (enkel bjelke, statisk bestemt)
+.04
+Bjelken er rett og har konstant tverrsnitt
+.05
+Maksimalt bøyemoment opptrer i midtspenn (symmetrisk last), maksimal skjærkraft ved opplagrene
+.06
+Fortegnskonvensjon: positivt moment for strekk i underkant (sagging), positivt skjær opp på venstre snittflate
+02.2 — RESULTAT
+DIMENSJONERENDE
+MEd	54,0 kNm
+VEd	36,0 kN
+qEd	12,0 kN/m
+INPUT OG GEOMETRI
+L	6,0 m
+02.3 — STEGVIS UTREGNING
+STEG 01
+Maksimalt bøyemoment i midtspenn
+M
+Ed
+	​
+
+	​
+
+=
+8
+q
+Ed
+	​
+
+⋅L
+2
+	​
+
+=
+8
+12,0⋅6,0
+2
+	​
+
+=
+8
+432,0
+	​
+
+=54,0 kNm
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 02
+Maksimal skjærkraft ved opplag
+V
+Ed
+	​
+
+	​
+
+=
+2
+q
+Ed
+	​
+
+⋅L
+	​
+
+=
+2
+12,0⋅6,0
+	​
+
+=
+2
+72,0
+	​
+
+=36,0 kN
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+03
+Vurdering
+03.1 — FAGLIG VURDERING
+
+For en fritt opplagd bjelke med symmetrisk jevnt fordelt last er momentforløpet parabolsk med topp i midtspenn — dette er årsaken til at MEd opptrer ved L/2. Skjærkraften er lineær og størst der opplagsreaksjonen virker, det vil si ved begge opplegg, og avtar til null i midtspenn. Begge konstruktørene har anvendt de klassiske likevektsformlene direkte, og Konstruktør B har i tillegg verifisert momentresultatet via en uavhengig momentbalanse fra fritt legemediagram — begge fremgangsmåter gir identisk resultat. Samanliknar registrerer 0 % avvik på alle rapporterte størrelser og ingen interne konsistensfeil hos noen av konstruktørene. Konstruktør A påpeker at qEd = 12,0 kN/m er lagt til grunn som allerede dimensjonerende last uten videre faktorering — dette er en forutsetning som må bekreftes av ansvarlig fagperson. Kapasitetskontroll, nedbøyingskontroll og vurdering av vippeknekking ligger utenfor beregningens omfang og er ikke utført.
+
+03.2 — HVA ER IKKE BEREGNET
+IKKE DEKKET AV DENNE RAPPORTEN
+Kapasitetssjekk (MRd, VRd, utnyttingsgrad) er ikke utført	tverrsnitt er ikke oppgitt i input.
+Nedbøying (bruksgrense)	stivhetsdata mangler.
+Det er ikke kontrollert om bjelken er utsatt for vippeknekning	dette krever profildata og understøttelsesforhold.
+03.3 — ADVARSLER
+⚠
+ADVARSEL
+
+Beregningen forutsetter at qEd = 12,0 kN/m allerede inkluderer alle relevante lastfaktorer og kombinasjonsfaktorer. Dersom dette ikke er tilfelle, må lastene faktoreres etter NS-EN 1990 NA tabell NA.A1.2(B) formel 6.10a/6.10b før MEd og VEd kan brukes til dimensjonering.
+
+04
+Kontroll
+04.1 — KONSTRUKTØRKONTROLL
+
+Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B). Begge kom frem til numerisk identiske verdier, vist i tabellen under.
+
+STØRRELSE	KONSTRUKTØR A	KONSTRUKTØR B	SAMSVAR
+MEd	54,0 kNm	54,0 kNm	✓
+VEd	36,0 kN	36,0 kN	✓
+qEd	12,0 kN/m	12,0 kN/m	✓
+L	6,0 m	6,0 m	✓
+04.2 — KONTROLLØRENS AVGJØRELSE
+AVGJØRELSE
+FORELØPIG GODKJENT
+
+Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.
+
+04.3 — KONKLUSJON
+
+Kontrollør har godkjent berekningen uten forbehold på bakgrunn av fullstendig samsvar mellom begge konstruktørene og høy konfidens i begge løsninger. Resultatet — MEd = 54,0 kNm og VEd = 36,0 kN — er foreløpig og skal kontrolleres av ansvarlig fagperson, særlig med hensyn til om den oppgitte lasten faktisk inkluderer alle relevante lastfaktorer og kombinasjonsfaktorer, før det legges til grunn for videre dimensjonering.
+
+FORELØPIG
+Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.
+KONTROLLERT AV
+Navn · stilling · foretak
+SIGNATUR
+Manuell signering
+DATO
+DD.MM.ÅÅÅÅ
+Pilar
+PILAR-33EFEFBB
+·
+Generert 2. juni 2026
+·
+Rapportør v0.3
+http://localhost:3000/rapport/33efefbb-e60d-4892-93c7-a4ff352ff1d5
+SKANN FOR NETTVERSJON
+HANDLINGER
+Last ned PDF
+Last ned Word
+Vis kun beregninger
+Lag ny beregning fra denne →
+Se Mission Control →
+Meld feil i rapporten
+Gi tilbakemelding på piloten
+KONTROLLSTATUS
+Input-tolkning
+i
+KLAR
+Konstruktør A
+i
+HIGH
+Konstruktør B
+i
+HIGH
+Sammenligning
+i
+ENIGE
+Kontrollør
+i
+GODKJENT
+Fagperson
+i
+IKKE KONTROLLERT
+≡
+Ordliste

@@ -40,7 +40,7 @@ VEd (maksimal skjærkraft ved opplag)
 Tolkning
 TOLKER
 
-Forespørselen er en enkel statikkoppgave for en fritt opplagt bjelke med jevnt fordelt dimen
+Forespørselen gjelder enkel statikk for en fritt opplagd bj
 
 ▶
 Vis full tolkning og tolkede verdier (4)

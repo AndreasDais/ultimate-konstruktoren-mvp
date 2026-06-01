@@ -3,15 +3,15 @@
   "name": "Norwegian Eurocode sanity",
   "verdict": "PASS",
   "reportReady": true,
-  "runId": "34a46866-2fb0-4d1a-8388-862af6a3fec2",
-  "url": "http://localhost:3000/rapport/34a46866-2fb0-4d1a-8388-862af6a3fec2",
+  "runId": "33efefbb-e60d-4892-93c7-a4ff352ff1d5",
+  "url": "http://localhost:3000/rapport/33efefbb-e60d-4892-93c7-a4ff352ff1d5",
   "missing": [],
   "forbidden": [],
   "hasPdf": true,
   "hasWord": true,
-  "textLen": 6012,
-  "scanLen": 5575,
-  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-B-34a46866-2fb0-4d1a-8388-862af6a3fec2.png",
+  "textLen": 6220,
+  "scanLen": 5783,
+  "screenshot": "C:\\Users\\rayma\\Code\\ultimate-konstruktoren-mvp\\qa\\e2e\\reports\\flow-B-33efefbb-e60d-4892-93c7-a4ff352ff1d5.png",
   "controls": [
     "PilarAI-KONSTRUKSJONSASSISTENT",
     "Tema▾",
@@ -24,6 +24,7 @@
     "Vurdering",
     "Kontroll",
     "100/100Høy",
+    "Forklar dette steget",
     "Last ned PDF",
     "Last ned Word",
     "Vis kun beregninger",
@@ -34,5 +35,7 @@
     "≡Ordliste"
   ],
   "displayLanguage": "nb",
-  "expectLanguage": "nb"
+  "expectLanguage": "nb",
+  "stalled": false,
+  "note": null
 }
