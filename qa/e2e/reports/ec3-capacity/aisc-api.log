@@ -1,0 +1,10 @@
+POST 200 /api/init-run {"run_id":"7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a"}
+POST 200 /api/agent-a 
+POST 200 /api/agent-b 
+POST 200 /api/agent-c {"result":{"match_status":"match","numeric_differences":[],"unpaired_keys":{"only_a":[],"only_b":[]},"method_differences":["Both Engineer A and Engineer B apply the identical ASCE 7 LRFD gravity combi
+POST 200 /api/agent-d {"result":{"decision_status":"approved_with_warnings","risk_level":"medium","reason":"experimental_standard_profile_demand_only_ltb_critical_screening","user_message":"The demand calculations are cons
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 /api/agent-e 
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {"id":"966564f054cd4543b946a075c56cabdd"}

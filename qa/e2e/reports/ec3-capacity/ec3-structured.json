@@ -1,0 +1,40 @@
+{
+  "resultsA": {
+    "f_y": "355 N/mm²",
+    "M_Ed": "135,0 kNm",
+    "V_Ed": "90,0 kN",
+    "A_v_z": "25,68 cm²",
+    "eta_M": "0,635",
+    "eta_V": "0,180",
+    "Mpl_Rd": "212,5 kNm",
+    "Vpl_Rd": "501,3 kN",
+    "W_pl_y": "628,4 cm³",
+    "M_pl_Rd": "212,5 kNm",
+    "V_pl_Rd": "501,3 kN",
+    "epsilon": "0,8137",
+    "gamma_M0": "1,05",
+    "c_tw_steg": "35,0",
+    "c_tf_flens": "5,28",
+    "V_Ed_halv_Vpl": "250,6 kN",
+    "tverrsnittsklasse": "Klasse 1"
+  },
+  "resultsB": {
+    "f_y": "355 N/mm²",
+    "M_Ed": "135,0 kNm",
+    "V_Ed": "90,0 kN",
+    "A_v_z": "25,68 cm²",
+    "eta_M": "0,635",
+    "eta_V": "0,180",
+    "Mpl_Rd": "212,5 kNm",
+    "Vpl_Rd": "501,3 kN",
+    "W_pl_y": "628,4 cm³",
+    "M_pl_Rd": "212,5 kNm",
+    "V_pl_Rd": "501,3 kN",
+    "epsilon": "0,8136",
+    "gamma_M0": "1,05",
+    "c_f_over_tf": "5,276",
+    "c_w_over_tw": "35,01",
+    "tverrsnittsklasse": "Klasse 1"
+  },
+  "decision": "approved"
+}

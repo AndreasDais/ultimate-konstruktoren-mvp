@@ -1,0 +1,649 @@
+Pilar
+AI-KONSTRUKSJONSASSISTENT
+AI-generert · krever faglig kontroll
+i
+Tema
+▾
+nb
+nn
+Logg inn
+← Tilbake
+INNHOLD
+Sammendrag
+Beregning
+Vurdering
+Kontroll
+METADATA
+ID
+PILAR-2A3CB85E
+DATO
+2. juni 2026
+VERSJON
+Rapportør v0.3
+BEREGNINGSNOTAT
+·
+PILAR-2A3CB85E
+2. JUNI 2026
+Foreløpig kapasitetsscreening av stålbjelke IPE 300
+
+fy = 355 N/mm² · γM0 = 1,05
+
+DOKUMENT-ID
+PILAR-2A3CB85E
+DATO
+2. juni 2026
+STATUS
+FORELØPIG GODKJENT
+VERSJON
+Rapportør v0.3
+NETTVERSJON + PIPELINE
+Skann for nettversjon
+
+Åpner rapporten med kontrollstatus, pipeline og delbar lenke for medstudenter eller kollegaer.
+
+RAPPORTLENKE
+http://localhost:3000/rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117
+NØKKELRESULTATER
+MEd
+135,0
+kNm
+VEd
+90,0
+kN
+Kapasitets-screening (foreløpig)
+
+Foreløpig EC3-tverrsnittsscreening — ikke en fullstendig kapasitetskontroll. Krever faglig kontroll.
+
+UTNYTTING · ΗM
+0,635
+M_Ed 135,0 kNm · Mpl_Rd 212,5 kNm
+UTNYTTING · ΗV
+0,180
+V_Ed 90,0 kN · Vpl_Rd 501,3 kN
+91
+/100
+HØY
+
+Beregningen er foreløpig godkjent. Resultatet skal kontrolleres av ansvarlig fagperson før bruk.
+
+VIKTIG MERKNAD
+·
+AI-GENERERT DOKUMENT
+
+Innholdet skal kun brukes som støtte, læringshjelp eller foreløpig teknisk vurdering. Ikke erstatning for kontroll av kvalifisert fagperson.
+
+01
+Sammendrag
+
+Berekninga gjeld en EC3-tverrsnittsscreening for en fritt opplagd IPE 300 i S355 med dimensjonerende jevnt fordelt last og spennvidde L = 6,0 m. Konstruktør A og Konstruktør B er i praktisk full overensstemmelse: tverrsnittet er klasse 1, momentutnyttingen er ηM ≈ 0,635–0,636 og skjærutnyttingen er ηV = 0,180, begge godt under kapasitetsgrensen. Kontrollør har godkjent berekninga som foreløpig grunnlag. Det understrekes at LT-knekking (vippeknekking) ikke er kontrollert og må vurderes separat før resultatet kan brukes som fullstendig dimensjoneringsgrunnlag.
+
+FORESPØRSEL
+Eg har ein fritt opplagd stålbjelke og vil ha ei førebels EC3-tverrsnittsscreening.
+
+Profil: IPE 300
+Stålkvalitet: S355
+Spennvidde: L = 6,0 m
+Jamt fordelt dimensjonerande last: qEd = 30 kN/m
+
+Rekn ut:
+1. Dimensjonerande bøyemoment MEd og skjærkraft VEd.
+2. Plastisk tverrsnittskapasitet Mpl,Rd og Vpl,Rd.
+3. Utnyttingsgrad ηM og ηV.
+
+Svar på norsk. Bruk kN, m og kNm. Dette er ein førebels EC3-tverrsnittsscreening,
+ikkje ein fullstendig kapasitetskontroll.
+02
+Beregning
+ORDLISTE
+MEd
+dimensjonerande bøyemoment (kNm)
+VEd
+dimensjonerande skjærkraft (kN)
+ηM
+utnyttingsgrad
+fy
+flytespenning, stål (N/mm²)
+ε
+tøyning
+γM0
+materialfaktor, tverrsnittskapasitet
+Av,z
+tverrsnittsareal (mm²)
+Wpl,y
+plastisk motstandsmoment (mm³)
+Mpl,Rd
+plastisk momentkapasitet (kNm)
+Vpl,Rd
+plastisk skjærkapasitet (kN)
+chiLT
+reduksjonsfaktor, vippeknekking
+NA
+nasjonalt tillegg (Norge)
+02.1 — FORUTSETNINGER
+.01
+qEd = 30,0 kN/m er allerede dimensjonerende last — ingen ytterligere lastfaktorering utføres (Tolkar sin antakelse aksepteres).
+.02
+Tverrsnittsscreening kun: LT-knekking (vippeknekking) kontrolleres ikke, eksplisitt avgrenset av bruker.
+.03
+Fritt opplagd bjelke med jevnt fordelt last — klassiske feltformler M = qL²/8 og V = qL/2 brukes.
+.04
+Plastisk momentkapasitet Mpl,Rd forutsetter tverrsnitt klasse 1 — klassetilhørighet verifiseres som eget steg.
+.05
+VEd kontrolleres mot 0,5·Vpl,Rd for å avgjøre om skjærredukt av Mpl,Rd er aktuelt.
+.06
+Positivt moment: sagging (strekk underkant). Positiv skjær: oppover på venstre snittflate.
+.07
+Alle profildata hentet fra PROFILDATA-blokken. Knekkekurver og partialfaktorer hentet fra NA-GRUNNLAG-blokken.
+02.2 — RESULTAT
+DIMENSJONERENDE
+MEd	135,0 kNm
+VEd	90,0 kN
+Mpl,Rd	212,5 kNm
+Vpl,Rd	501,3 kN
+ηM	0,635
+ηV	0,180
+VEdhalvVpl	250,6 kN
+INPUT OG GEOMETRI
+fy	355 N/mm²
+Av,z	25,68 cm²
+γM0	1,05
+tverrsnittsklasse	Klasse 1
+ANNA
+Wpl,y	628,4 cm³
+ε	0,8137
+ctwsteg	35,0
+ctfflens	5,28
+02.3 — STEGVIS UTREGNING
+STEG 01
+Dimensjonerende snittmomenter og -krefter
+M
+Ed
+	​
+
+	​
+
+=
+8
+q
+Ed
+	​
+
+⋅L
+2
+	​
+
+=
+8
+30,0⋅6,0
+2
+	​
+
+=135,0 kNm
+	​
+
+V
+Ed
+	​
+
+	​
+
+=
+2
+q
+Ed
+	​
+
+⋅L
+	​
+
+=
+2
+30,0⋅6,0
+	​
+
+=90,0 kN
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 02
+Materialparameter og dimensjonerende flytespenning
+f
+yd
+	​
+
+	​
+
+=
+γ
+M0
+	​
+
+f
+y
+	​
+
+	​
+
+=
+1,05
+355
+	​
+
+=338,1 N/mm
+2
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 03
+Tverrsnittsklassifisering (steg og flens)
+ε
+	​
+
+=
+f
+y
+	​
+
+235
+	​
+
+	​
+
+=
+355
+235
+	​
+
+	​
+
+=0,8137
+	​
+
+t
+f
+	​
+
+c
+	​
+
+	​
+
+=
+10,7
+56,45
+	​
+
+=5,28≤9ε
+=7,32(flens, klasse 1)
+	​
+
+t
+w
+	​
+
+c
+w
+	​
+
+	​
+
+	​
+
+=
+7,1
+248,6
+	​
+
+=35,0≤72ε
+=58,6(steg, klasse 1)
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 04
+Plastisk momentkapasitet Mpl,Rd
+M
+pl,Rd
+	​
+
+	​
+
+=
+γ
+M0
+	​
+
+W
+pl,y
+	​
+
+⋅f
+y
+	​
+
+	​
+
+=
+1,05
+628,4⋅10
+3
+⋅355
+	​
+
+=212,5 kNm
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 05
+Plastisk skjærkapasitet Vpl,Rd
+V
+pl,Rd
+	​
+
+	​
+
+=
+3
+	​
+
+⋅γ
+M0
+	​
+
+A
+v,z
+	​
+
+⋅f
+y
+	​
+
+	​
+
+=
+3
+	​
+
+⋅1,05
+2568⋅355
+	​
+
+=
+1,8187
+911,640
+	​
+
+=501,3 kN
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+KONTROLL
+Kontroll skjærinteraksjon (50 %-grense)
+V
+Ed
+	​
+
+	​
+
+=90,0 kN<0,5⋅V
+pl,Rd
+	​
+
+=0,5⋅501,3
+=250,6 kN⇒ ingen skjærinteraksjon
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 07
+Utnyttingsgrad moment
+η
+M
+	​
+
+	​
+
+=
+M
+pl,Rd
+	​
+
+M
+Ed
+	​
+
+	​
+
+=
+212,5
+135,0
+	​
+
+=0,636≤1,0OK
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 08
+Utnyttingsgrad skjær
+η
+V
+	​
+
+	​
+
+=
+V
+pl,Rd
+	​
+
+V
+Ed
+	​
+
+	​
+
+=
+501,3
+90,0
+	​
+
+=0,180≤1,0OK
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+STEG 09
+Forelopig EC3-tverrsnittsscreening
+M
+E
+	​
+
+d
+	​
+
+=qEd∗L
+2
+/8
+=135,0kNm
+	​
+
+V
+E
+	​
+
+d
+	​
+
+=qEd∗L/2
+=90,0kN
+	​
+
+Mpl
+R
+	​
+
+d
+	​
+
+=Wpl
+y
+	​
+
+∗fy/gammaM0
+=212,5kNm
+	​
+
+Vpl
+R
+	​
+
+d
+	​
+
+=Av
+z
+	​
+
+∗fy/(sqrt(3)∗gammaM0)
+=501,3kN
+	​
+
+eta
+M
+	​
+
+	​
+
+=M
+E
+	​
+
+d/Mpl
+R
+	​
+
+d
+=0,635
+	​
+
+eta
+V
+	​
+
+	​
+
+=V
+E
+	​
+
+d/Vpl
+R
+	​
+
+d
+=0,180
+	​
+
+Vis prosa-utregning
+Forklar dette steget
+03
+Vurdering
+03.1 — FAGLIG VURDERING
+
+Tverrsnittsklassifiseringen viser at både flens og steg tilfredsstiller klasse 1-grensene med god margin, noe som gjør det metodisk forsvarlig å benytte det plastiske bøyemotstanden Wpl,y i kapasitetsberegningen. Momentutnyttingen på ηM ≈ 0,635–0,636 representerer moderat utnytting — tverrsnittet har tilgjengelig margin, men er ikke overdimensjonert. Skjærutnyttingen på ηV = 0,180 er lav, og VEd ligger godt under 50 %-grensen for plastisk skjærkapasitet, slik at ingen reduksjon av momentkapasiteten for skjærinteraksjon er nødvendig. Det eneste avviket mellom konstruktørene er ηM på 0,001, som utelukkende skyldes at Konstruktør A avrunder Mpl,Rd til 212,5 kNm i nevneren mens Konstruktør B bruker en mer presis mellomverdi — dette er uten faglig betydning. Filetradius r = 15 mm for IPE 300 er antatt som standardverdi av begge konstruktørene; Konstruktør B løfter eksplisitt frem at denne ikke er oppgitt i profildata-blokken, men påpeker at tverrsnittsklassen er klasse 1 med god margin og at usikkerheten ikke er bestemmende. Den viktigste faglige begrensningen ved dette resultatet er at LT-knekking ikke er kontrollert — for en 6 m fritt opplagd bjelke uten sideavstiving vil vippeknekking typisk være en kritisk kontroll som kan redusere den effektive momentkapasiteten under Mpl,Rd = 212,5 kNm.
+
+03.2 — HVA ER IKKE BEREGNET
+IKKE DEKKET AV DENNE RAPPORTEN
+LT-knekking (vippeknekking) er ikke kontrollert	eksplisitt avgrenset av bruker. For en fritt opplagd bjelke uten sidestøtte kan vippeknekking være styrende og må kontrolleres separat.
+Nedbøyingskontroll (SLS) er ikke utført	oppgaven gjelder kun ULS tverrsnittsscreening.
+Sveiseskjøter, boltforbindelser og opplagersdetaljering er ikke vurdert.	—
+Dynamiske eller utmattingseffekter er ikke inkludert.	—
+03.3 — ADVARSLER
+⚠
+ADVARSEL
+
+ηM = 0,636 — IPE 300 er utnyttet til 63,6 % i moment. Dersom LT-knekking kontrolleres og reduksjonsfaktor χLT < 1,0, vil den reelle momentutnyttingen overstige 0,636 og kan bli bestemmende.
+
+⚠
+ADVARSEL
+
+qEd er behandlet som allerede dimensjonerende. Dersom det er karakteristiske laster, må lastfaktorering etter 6.10a/6.10b utføres før disse resultatene er gyldige.
+
+04
+Kontroll
+04.1 — KONSTRUKTØRKONTROLL
+
+Beregningen er løst uavhengig av to AI-konstruktører (Konstruktør A og Konstruktør B). Begge kom frem til numerisk identiske verdier, vist i tabellen under.
+
+STØRRELSE	KONSTRUKTØR A	KONSTRUKTØR B	SAMSVAR
+MEd	135,0 kNm	135,0 kNm	✓
+VEd	90,0 kN	90,0 kN	✓
+ηM	0,635	0,635	✓
+ηV	0,180	0,180	✓
+Mpl,Rd	212,5 kNm	212,5 kNm	✓
+Vpl,Rd	501,3 kN	501,3 kN	✓
+fy	355 N/mm²	355 N/mm²	✓
+Av,z	25,68 cm²	25,68 cm²	✓
+
+Viser de 8 viktigste av 17 sammenlignede verdiene.
+
+04.2 — KONTROLLØRENS AVGJØRELSE
+AVGJØRELSE
+FORELØPIG GODKJENT
+
+Beregningen er godkjent for visning som foreløpig resultat. Forutsetter manuell verifisering av ansvarlig fagperson før bruk i prosjektering.
+
+04.3 — KONKLUSJON
+
+Kontrollør har godkjent EC3-tverrsnittsscreeningen som foreløpig grunnlag, og resultatet er velegnet som grunnlag for videre prosjektering av tverrsnittskapasitet. Før resultatet benyttes som fullstendig dimensjoneringsgrunnlag, må LT-knekking (vippeknekking) kontrolleres separat — dette gjelder særlig dersom bjelken mangler sideveis avstiving langs spennet. Resultatet skal kontrolleres av ansvarlig fagperson.
+
+FORELØPIG
+Må kontrolleres av kvalifisert fagperson før bruk i prosjektering.
+KONTROLLERT AV
+Navn · stilling · foretak
+SIGNATUR
+Manuell signering
+DATO
+DD.MM.ÅÅÅÅ
+Pilar
+PILAR-2A3CB85E
+·
+Generert 2. juni 2026
+·
+Rapportør v0.3
+http://localhost:3000/rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117
+SKANN FOR NETTVERSJON
+HANDLINGER
+Last ned PDF
+Last ned Word
+Vis kun beregninger
+Lag ny beregning fra denne →
+Se Mission Control →
+Meld feil i rapporten
+Gi tilbakemelding på piloten
+KONTROLLSTATUS
+Input-tolkning
+i
+KLAR
+Konstruktør A
+i
+HIGH
+Konstruktør B
+i
+HIGH
+Sammenligning
+i
+MINDRE AVVIK
+Kontrollør
+i
+GODKJENT
+Fagperson
+i
+IKKE KONTROLLERT
+≡
+Ordliste

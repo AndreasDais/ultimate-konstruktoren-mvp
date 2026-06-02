@@ -1,0 +1,14 @@
+Eg har ein fritt opplagd stålbjelke og vil ha ei førebels EC3-tverrsnittsscreening.
+
+Profil: IPE 300
+Stålkvalitet: S355
+Spennvidde: L = 6,0 m
+Jamt fordelt dimensjonerande last: qEd = 30 kN/m
+
+Rekn ut:
+1. Dimensjonerande bøyemoment M_Ed og skjærkraft V_Ed.
+2. Plastisk tverrsnittskapasitet Mpl_Rd og Vpl_Rd.
+3. Utnyttingsgrad eta_M og eta_V.
+
+Svar på norsk. Bruk kN, m og kNm. Dette er ein førebels EC3-tverrsnittsscreening,
+ikkje ein fullstendig kapasitetskontroll.

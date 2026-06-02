@@ -1,0 +1,10 @@
+POST 200 /api/init-run {"run_id":"2a3cb85e-073a-458c-98e4-8a2bc924b117"}
+POST 200 /api/agent-a 
+POST 200 /api/agent-b 
+POST 200 /api/agent-c {"result":{"match_status":"minor_differences","numeric_differences":[{"field":"eta_M","agent_a_value":"0,636","agent_b_value":"0,635","percent_diff":0.2,"severity":"low","likely_cause":"Konstruktør A 
+POST 200 /api/agent-d {"result":{"decision_status":"approved","risk_level":"low","reason":"full_match_high_confidence","user_message":"Tverrsnittsscreeningen for IPE 300 (S355) er gjennomgått og godkjent. Begge konstruktør
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {}
+POST 200 /api/agent-e 
+POST 200 https://o4511373117882368.ingest.de.sentry.io/api/4511373120569424/envelope/?sentry_version=7&sentry_key=dfd3bda1179f572e50e39f6e7f133676&sentry_client=sentry.javascript.nextjs%2F10.53.1 {"id":"873a8f47829f41dca93c0efa6c6056da"}

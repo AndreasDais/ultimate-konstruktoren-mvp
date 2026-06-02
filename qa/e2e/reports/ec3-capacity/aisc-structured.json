@@ -1,0 +1,29 @@
+{
+  "resultsA": {
+    "D": "0.45 kip/ft",
+    "Lb": "20.0 ft",
+    "Mu": "91.00 kip-ft",
+    "Vu": "18.20 kips",
+    "wu": "1.820 kip/ft",
+    "L_load": "0.80 kip/ft",
+    "L_span": "20.0 ft",
+    "Cb_assumed": "1.0",
+    "LTB_screening": "Likely critical — Lb = 20 ft is expected to exceed Lp and approach or exceed Lr for W12x26; full capacity check with verified section properties required",
+    "load_factor_D": "1.2",
+    "load_factor_L": "1.6"
+  },
+  "resultsB": {
+    "D": "0.45 kip/ft",
+    "Lb": "20 ft",
+    "Mu": "91.00 kip-ft",
+    "Vu": "18.20 kips",
+    "wu": "1.820 kip/ft",
+    "L_load": "0.80 kip/ft",
+    "L_span": "20 ft",
+    "Cb_assumed": "1.0",
+    "LTB_screening": "LTB likely critical — Lb = 20 ft is a long unbraced length for W12x26; phi_b*Mn cannot be determined without verified section properties",
+    "load_factor_D": "1.2",
+    "load_factor_L": "1.6"
+  },
+  "decision": "approved_with_warnings"
+}
