@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getDimensjonerandeKeys } from "@/lib/result/tile-heuristics";
+import {
+  EC3_CAPACITY_SCREENING_DISCLAIMER,
+  getDimensjonerandeKeys,
+  tileDescription,
+  tileLabel,
+} from "@/lib/result/tile-heuristics";
 
 // FIKS 4: getDimensjonerandeKeys skal bruke konstruktøren si eksplisitte
 // result_roles-tagging når ho finst, og elles falle tilbake til den
@@ -67,5 +72,74 @@ describe("getDimensjonerandeKeys — rolle-tagging (FIKS 4)", () => {
 
   it("tomt results gir tom liste, uavhengig av roles", () => {
     expect(getDimensjonerandeKeys({}, "lastkombinasjon", { x: "dimensjonerande" })).toEqual([]);
+  });
+});
+
+describe("EC3 capacity screening tile labels", () => {
+  const ec3Keys = ["M_Ed", "V_Ed", "Mpl_Rd", "Vpl_Rd", "eta_M", "eta_V"];
+  const unsafeLabelWords = /approved|compliant|pass|fail|godkjent|bestått|\bOK\b/i;
+
+  it("has explicit nb, nn and en labels for EC3 screening keys", () => {
+    for (const key of ec3Keys) {
+      for (const language of ["nb", "nn", "en"] as const) {
+        const label = tileLabel(key, language);
+
+        expect(label).toBeTruthy();
+        expect(label).not.toMatch(unsafeLabelWords);
+      }
+    }
+
+    expect(tileLabel("eta_M", "nb")).toBe("UTNYTTING · ηM");
+    expect(tileLabel("eta_V", "nn")).toBe("UTNYTTING · ηV");
+    expect(tileLabel("eta_M", "en")).toBe("UTILIZATION · ηM");
+    expect(tileLabel("eta_V", "en")).toBe("UTILIZATION · ηV");
+    expect(tileLabel("Mpl_Rd", "en")).toBe("MOMENT · Mpl,Rd");
+    expect(tileLabel("Vpl_Rd", "en")).toBe("SHEAR · Vpl,Rd");
+  });
+
+  it("does not fall back to ugly uppercase splitting for EC3 screening keys", () => {
+    expect(tileLabel("eta_M", "en")).not.toBe("ETA · M");
+    expect(tileLabel("eta_V", "en")).not.toBe("ETA · V");
+    expect(tileLabel("Mpl_Rd", "en")).not.toBe("MPL · RD");
+    expect(tileLabel("Vpl_Rd", "en")).not.toBe("VPL · RD");
+  });
+
+  it("describes EC3 screening as preliminary and requiring professional review", () => {
+    expect(EC3_CAPACITY_SCREENING_DISCLAIMER).toMatchObject({
+      nb: expect.stringContaining("Foreløpig EC3-tverrsnittsscreening"),
+      nn: expect.stringContaining("Førebels EC3-tverrsnittsscreening"),
+      en: expect.stringContaining("Preliminary EC3 cross-section screening"),
+    });
+
+    for (const key of ["Mpl_Rd", "Vpl_Rd", "eta_M", "eta_V"]) {
+      for (const language of ["nb", "nn", "en"] as const) {
+        const description = tileDescription(key, language);
+
+        expect(description).toBeTruthy();
+        expect(description).toContain(
+          EC3_CAPACITY_SCREENING_DISCLAIMER[language],
+        );
+        expect(description).toMatch(/professional review|fagpersonvurdering/i);
+      }
+    }
+  });
+
+  it("keeps eta utilization visible for EC3 capacity grouping", () => {
+    const keys = getDimensjonerandeKeys(
+      {
+        M_Ed: "81,0 kNm",
+        V_Ed: "54,0 kN",
+        Mpl_Rd: "212,5 kNm",
+        Vpl_Rd: "501,3 kN",
+        eta_M: "0,381",
+        eta_V: "0,108",
+      },
+      "stalkapasitet",
+    );
+
+    expect(keys[0]).toBe("eta_M");
+    expect(keys).toEqual(
+      expect.arrayContaining(["eta_M", "eta_V", "Mpl_Rd", "Vpl_Rd"]),
+    );
   });
 });

@@ -55,9 +55,9 @@ export const DIMENSJONERANDE_PATTERNS: Record<string, RegExp[]> = {
     /^M_Rd$/,
   ],
   // Stålkapasitet (EC3)
-  stalkapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
-  stal_kapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
-  kapasitet: [/^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+  stalkapasitet: [/^eta_[MV]$/i, /^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+  stal_kapasitet: [/^eta_[MV]$/i, /^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
+  kapasitet: [/^eta_[MV]$/i, /^N_Rd$/, /^M_Rd$/, /^V_Rd$/, /^.+_Rd$/],
 };
 
 // STYRANDE_PATTERNS: keys som matchar desse skal hoistast til posisjon 0
@@ -75,6 +75,7 @@ export const STYRANDE_PATTERNS: RegExp[] = [
   /^[Aa]_?s_req$/,
   /^[Aa]_?s_(valgt|valt)$/,
   // Stålkapasitet — utnyttingsgrad eller motstand
+  /^eta_[MV]$/i,
   /^utnytting/i,
   /^N_Rd$/,
   // Generelt: ein Ed_-prefiks kombinasjon (siste utveg)
@@ -85,7 +86,7 @@ export const STYRANDE_PATTERNS: RegExp[] = [
 // (Ed_, Rd_, As_, A_s_) eller endar på output-suffiks (_Ed, _Rd, _req, _min …).
 // Steg 2 i heuristikken — fangar ny berekningstype som ikkje er i allowlist.
 const OUTPUT_PATTERN =
-  /^(Ed_|Rd_|[Aa]_?s_|mu_Ed)|_(Ed|Rd|req|min|max|lim|valgt|valt|net|eff|kombo|tot|brukt|krit)$/i;
+  /^(Ed_|Rd_|[Aa]_?s_|mu_Ed|eta_[MV]$)|_(Ed|Rd|req|min|max|lim|valgt|valt|net|eff|kombo|tot|brukt|krit)$/i;
 
 // Patterns for keys som er åpenonly input/intermediære: einskilde
 // geometri-bokstavar (L, b, d, h), karakteristiske laster (G_k, Q_k, q_k),
@@ -102,6 +103,7 @@ const INPUT_PATTERNS: RegExp[] = [
 export function isInputKey(k: string): boolean {
   // Spesialhandsaming: mu_Ed er output sjølv om mu-prefiks ser ut som input
   if (/^mu_Ed$/i.test(k)) return false;
+  if (/^eta_[MV]$/i.test(k)) return false;
   return INPUT_PATTERNS.some((p) => p.test(k));
 }
 
@@ -177,6 +179,10 @@ const KEY_TILE_LABELS: Record<string, Record<Locale, string>> = {
   N_Rd: { nb: "AKSIAL · N_Rd", nn: "AKSIAL · N_Rd" },
   M_Rd: { nb: "MOMENT · M_Rd", nn: "MOMENT · M_Rd" },
   V_Rd: { nb: "SKJÆR · V_Rd", nn: "SKJÆR · V_Rd" },
+  Mpl_Rd: { nb: "MOMENT · Mpl,Rd", nn: "MOMENT · Mpl,Rd" },
+  Vpl_Rd: { nb: "SKJÆR · Vpl,Rd", nn: "SKJER · Vpl,Rd" },
+  eta_M: { nb: "UTNYTTING · ηM", nn: "UTNYTTING · ηM" },
+  eta_V: { nb: "UTNYTTING · ηV", nn: "UTNYTTING · ηV" },
   // Armering — agentane use As_* (ikkje A_s_*)
   As_req: { nb: "ARMERING · KRAV", nn: "ARMERING · KRAV" },
   As_min: { nb: "ARMERING · MIN", nn: "ARMERING · MIN" },
@@ -192,6 +198,15 @@ const KEY_TILE_LABELS: Record<string, Record<Locale, string>> = {
   mu_lim: { nb: "μ · GRENSE", nn: "μ · GRENSE" },
   xi_lim: { nb: "ξ · GRENSE", nn: "ξ · GRENSE" },
   zeta_Ed: { nb: "ζ · UTNYTTING", nn: "ζ · UTNYTTING" },
+};
+
+export const EC3_CAPACITY_SCREENING_DISCLAIMER: Record<
+  PilarDisplayLanguage,
+  string
+> = {
+  nb: "Foreløpig EC3-tverrsnittsscreening - ikke full kapasitetskontroll. Krever fagpersonvurdering.",
+  nn: "Førebels EC3-tverrsnittsscreening - ikkje full kapasitetskontroll. Krev fagpersonvurdering.",
+  en: "Preliminary EC3 cross-section screening - not a full capacity check. Requires professional review.",
 };
 
 // Per-key fagleg forklaring som vert vist når studenten klikkar på ein tile.
@@ -269,6 +284,22 @@ export const KEY_TILE_DESCRIPTIONS: Record<string, Record<Locale, string>> = {
   V_Rd: {
     nb: "Skjærkapasitet i tverrsnittet. For stål: V_Rd = A_v · f_y / (γ_M0 · √3). For betong uten skjærarmering: V_Rd,c etter EC2 §6.2.2. Krav: V_Rd ≥ V_Ed.",
     nn: "Skjærkapasitet i tverrsnittet. For stål: V_Rd = A_v · f_y / (γ_M0 · √3). For betong utan skjærarmering: V_Rd,c etter EC2 §6.2.2. Krav: V_Rd ≥ V_Ed.",
+  },
+  Mpl_Rd: {
+    nb: `Plastisk momentmotstand i foreløpig EC3-tverrsnittsscreening. Dette er ikke full kapasitetskontroll; LTB, tverrsnittsklasse og andre grensetilstander er ikke dekket. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nb}`,
+    nn: `Plastisk momentmotstand i førebels EC3-tverrsnittsscreening. Dette er ikkje full kapasitetskontroll; LTB, tverrsnittsklasse og andre grensetilstandar er ikkje dekte. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nn}`,
+  },
+  Vpl_Rd: {
+    nb: `Plastisk skjærmotstand i foreløpig EC3-tverrsnittsscreening. Dette er ikke full kapasitetskontroll; skjærknekking, interaksjon og lokale effekter er ikke dekket. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nb}`,
+    nn: `Plastisk skjerkraftmotstand i førebels EC3-tverrsnittsscreening. Dette er ikkje full kapasitetskontroll; skjærknekking, interaksjon og lokale effektar er ikkje dekte. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nn}`,
+  },
+  eta_M: {
+    nb: `Foreløpig momentutnytting, ηM = M_Ed / Mpl_Rd. Viser screening-forholdet mellom dimensjonerende moment og plastisk tverrsnittsmotstand. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nb}`,
+    nn: `Førebels momentutnytting, ηM = M_Ed / Mpl_Rd. Viser screening-forholdet mellom dimensjonerande moment og plastisk tverrsnittsmotstand. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nn}`,
+  },
+  eta_V: {
+    nb: `Foreløpig skjærutnytting, ηV = V_Ed / Vpl_Rd. Viser screening-forholdet mellom dimensjonerende skjær og plastisk skjærmotstand. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nb}`,
+    nn: `Førebels skjerkraftutnytting, ηV = V_Ed / Vpl_Rd. Viser screening-forholdet mellom dimensjonerande skjerkraft og plastisk skjerkraftmotstand. ${EC3_CAPACITY_SCREENING_DISCLAIMER.nn}`,
   },
   N_Rd: {
     nb: "Aksialkapasitet i tverrsnittet. For sentrisk trykk: N_Rd = χ · A · f_y / γ_M1 (med knekk-reduksjon χ). For strekk: N_Rd = A · f_y / γ_M0. Krav: N_Rd ≥ N_Ed.",
@@ -413,7 +444,12 @@ export function getDimensjonerandeKeys(
 // seg frå norsk; MOMENT/RISK og rein-symbol-labels (Mu, phibMn ...) fell
 // tilbake til nb-label, som er språknøytral.
 const KEY_TILE_LABELS_EN: Record<string, string> = {
+  M_Ed: "MOMENT · M_Ed",
   V_Ed: "SHEAR · V_Ed",
+  Mpl_Rd: "MOMENT · Mpl,Rd",
+  Vpl_Rd: "SHEAR · Vpl,Rd",
+  eta_M: "UTILIZATION · ηM",
+  eta_V: "UTILIZATION · ηV",
   V_Rd: "SHEAR · V_Rd",
   N_Ed: "AXIAL · N_Ed",
   N_Rd: "AXIAL · N_Rd",
@@ -496,6 +532,14 @@ const KEY_TILE_DESCRIPTIONS_EN: Record<string, string> = {
     "Bending moment capacity of the cross-section. For steel: M_Rd = W_pl · f_y / γ_M0 (plastic). For concrete: depends on cross-section, material grade and reinforcement amount. Requirement: M_Rd ≥ M_Ed.",
   V_Rd:
     "Shear capacity of the cross-section. For steel: V_Rd = A_v · f_y / (γ_M0 · √3). For concrete without shear reinforcement: V_Rd,c per EC2 §6.2.2. Requirement: V_Rd ≥ V_Ed.",
+  Mpl_Rd:
+    `Plastic bending resistance in preliminary EC3 cross-section screening. This is not a full capacity check; LTB, section classification and other limit states are not covered. ${EC3_CAPACITY_SCREENING_DISCLAIMER.en}`,
+  Vpl_Rd:
+    `Plastic shear resistance in preliminary EC3 cross-section screening. This is not a full capacity check; shear buckling, interaction and local effects are not covered. ${EC3_CAPACITY_SCREENING_DISCLAIMER.en}`,
+  eta_M:
+    `Preliminary moment utilization, ηM = M_Ed / Mpl_Rd. Shows the screening ratio between design moment and plastic cross-section resistance. ${EC3_CAPACITY_SCREENING_DISCLAIMER.en}`,
+  eta_V:
+    `Preliminary shear utilization, ηV = V_Ed / Vpl_Rd. Shows the screening ratio between design shear and plastic shear resistance. ${EC3_CAPACITY_SCREENING_DISCLAIMER.en}`,
   N_Rd:
     "Axial capacity of the cross-section. For concentric compression: N_Rd = χ · A · f_y / γ_M1 (with buckling reduction χ). For tension: N_Rd = A · f_y / γ_M0. Requirement: N_Rd ≥ N_Ed.",
   As_req:
