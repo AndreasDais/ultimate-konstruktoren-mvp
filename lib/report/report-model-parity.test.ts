@@ -291,6 +291,7 @@ describe("report model parity across report surfaces", () => {
       ["calculation page", page],
       ["calculation Word export", word],
       ["calculation LaTeX export", latex],
+      ["calculation PDF export", pdf],
     ] as const) {
       expect(source, `${name} builds ReportModel`).toContain(
         "buildReportModel(",
@@ -306,7 +307,8 @@ describe("report model parity across report surfaces", () => {
     expect(page).toContain("renderCalculationSheetLatex(calculationSheet)");
     expect(word).toContain("renderCalculationSheetDocx(sheet)");
     expect(latex).toContain("renderCalculationSheetLatex(sheet");
-    expect(pdf).toContain('const url = `${origin}/rapport/${run_id}/beregning?print=1&locale=${locale}`;');
+    expect(pdf).toContain("renderCalculationSheetHtml(sheet)");
+    expect(pdf).toContain("page.setContent(html");
     expect(pdf).toContain('[data-calculation-sheet-ready="true"]');
   });
 
@@ -329,6 +331,7 @@ describe("report model parity across report surfaces", () => {
       ["calculation web", calculationPage],
       ["calculation Word export", calculationWord],
       ["calculation LaTeX export", calculationLatex],
+      ["calculation PDF export", calculationPdf],
     ] as const) {
       expect(source, `${name} builds canonical ReportModel before the sheet`).toContain(
         "const reportModel = buildReportModel(",
@@ -344,7 +347,8 @@ describe("report model parity across report surfaces", () => {
       );
     }
 
-    expect(calculationPdf).toContain("?print=1");
+    expect(calculationPdf).toContain("renderCalculationSheetHtml(sheet)");
+    expect(calculationPdf).toContain("page.setContent(html");
     expect(calculationPdf).toContain('[data-calculation-sheet-ready="true"]');
   });
 
@@ -391,7 +395,7 @@ describe("report model parity across report surfaces", () => {
       sheet.notes.join("\n"),
     ].join("\n\n");
 
-    expect(pdfRoute).toContain("?print=1");
+    expect(pdfRoute).toContain("renderCalculationSheetHtml(sheet)");
     expect(pdfRoute).toContain('[data-calculation-sheet-ready="true"]');
     expect(printPage).toContain("const calculationSheet = buildCalculationSheetModel(reportModel)");
     expect(printPage).toContain('data-calculation-sheet-ready="true"');
