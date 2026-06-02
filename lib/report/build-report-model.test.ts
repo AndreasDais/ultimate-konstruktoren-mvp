@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildReportModel, buildComparisonRowsFromResults, type UpstreamReportData } from "./build-report-model";
 import { validateReportModel } from "./validate-report-model";
+import type { EngineeringContext } from "@/lib/engineering-context/types";
 
 function readSource(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
@@ -153,6 +154,91 @@ const englishAiscSample: UpstreamReportData = {
     blocked_outputs: [],
   },
 };
+
+const eurocodeNorwayContext: EngineeringContext = {
+  language: "nb",
+  languagePolicy: {
+    uiLocale: "nb",
+    outputMode: "same_as_prompt",
+    fallbackLanguage: "nb",
+  },
+  region: {
+    countryCode: "NO",
+    countryName: "Norway",
+  },
+  standards: {
+    family: "eurocode_norway",
+    label: "Eurocode Norway",
+    supportLevel: "supported",
+    confidence: "user_selected",
+  },
+  outputPreferences: {
+    units: "metric",
+    notationStyle: "eurocode",
+  },
+  safety: {
+    professionalVerificationRequired: true,
+    allowUnsupportedStandardClaims: false,
+  },
+};
+
+const ec3CapacitySample: UpstreamReportData = {
+  ...sample,
+  run: {
+    request: {
+      raw_text:
+        "Kapasitetskontroll EC3 for IPE 300 i S355, qEd = 18 kN/m og L = 6 m.",
+    },
+  },
+  inputReview: {
+    input_status: "klar",
+    prompt_version: "input_agent_v0.1",
+    parsed_data: {
+      report_title: "Kapasitetskontroll av stalbjelke IPE 300",
+      calculation_type: "stalkapasitet",
+      profileName: "IPE 300",
+      steel_grade: "S355",
+      qEdKnPerM: 18,
+      spanM: 6,
+    },
+  },
+  agentA: {
+    ...sample.agentA,
+    structured_output: {
+      ...sample.agentA.structured_output,
+      results: { M_Ed: "81,0 kNm", V_Ed: "54,0 kN" },
+      calculation_steps: [
+        {
+          title: "Beregning av moment og skjer",
+          text: "M_Ed = qEd * L^2 / 8 = 81,0 kNm. V_Ed = qEd * L / 2 = 54,0 kN.",
+          latex_formula: ["M_Ed = qEd * L^2 / 8", "V_Ed = qEd * L / 2"],
+        },
+      ],
+      limitations: ["LTB er ikkje kontrollert"],
+      warnings: ["Resultatet er forelopig og ma kontrolleres av fagperson"],
+    },
+  },
+  agentB: {
+    ...sample.agentB,
+    structured_output: {
+      ...sample.agentB.structured_output,
+      results: { M_Ed: "81,0 kNm", V_Ed: "54,0 kN" },
+    },
+  },
+  controllerDecision: {
+    ...sample.controllerDecision!,
+    decision_status: "approved_with_warnings",
+    user_message:
+      "Kontrollor har tillatt forelopig visning. Fagperson ma kontrollere resultatet.",
+    blocked_outputs: [],
+  },
+};
+
+function rowRawValues(model: ReturnType<typeof buildReportModel>): Record<string, string> {
+  return Object.fromEntries(
+    model.calculation.resultRows.map((row) => [row.label, row.raw]),
+  );
+}
 
 describe("buildReportModel", () => {
   it("byggjer ein validert rapportmodell frå agent-e respons", () => {
@@ -361,6 +447,138 @@ describe("buildReportModel", () => {
 
     expect(model.cover.title).toBe("Fritt opplagd st\u00e5lbjelke - moment og skj\u00e6r");
     expect(model.cover.title).not.toContain("Kapasitetskontroll");
+  });
+
+  it("adds deterministic EC3 preliminary capacity rows when guarded extraction is computable", () => {
+    const model = buildReportModel(ec3CapacitySample, {
+      locale: "nb",
+      reportUrl: "https://pilar.example/rapport/ec3-capacity",
+      engineeringContext: eurocodeNorwayContext,
+    });
+    const rows = rowRawValues(model);
+    const visibleStepText = model.calculation.steps
+      .map((step) => `${step.title}\n${step.prose}\n${step.formulas.join("\n")}`)
+      .join("\n");
+
+    expect(rows.MEd).toBe("81,0 kNm");
+    expect(rows.VEd).toBe("54,0 kN");
+    expect(rows["Mpl,Rd"]).toBe("212,5 kNm");
+    expect(rows["Vpl,Rd"]).toBe("501,3 kN");
+    expect(rows["ηM"]).toBe("0,381");
+    expect(rows["ηV"]).toBe("0,108");
+    expect(model.calculation.resultRows.map((row) => row.label)).not.toContain("Mb,Rd");
+    expect(model.calculation.resultRows.map((row) => row.label)).not.toContain("DCR");
+    expect(visibleStepText).toContain("EC3-tverrsnittsscreening");
+    expect(visibleStepText).toContain("fagperson");
+    expect(visibleStepText).toContain("LTB-kapasitet");
+    expect(visibleStepText).not.toMatch(/\bAISC\b|\bMb,Rd\b|\bDCR\b|\bgodkjent\b/i);
+  });
+
+  it("does not add EC3 capacity rows when profile, grade, qEd, or span guards fail", () => {
+    const guardedCases: UpstreamReportData[] = [
+      {
+        ...ec3CapacitySample,
+        run: { request: { raw_text: "S355, qEd = 18 kN/m, L = 6 m." } },
+        inputReview: {
+          ...ec3CapacitySample.inputReview!,
+          parsed_data: { steel_grade: "S355", qEdKnPerM: 18, spanM: 6 },
+        },
+      },
+      {
+        ...ec3CapacitySample,
+        run: { request: { raw_text: "IPE 300, S500, qEd = 18 kN/m, L = 6 m." } },
+        inputReview: {
+          ...ec3CapacitySample.inputReview!,
+          parsed_data: { profileName: "IPE 300", steel_grade: "S500", qEdKnPerM: 18, spanM: 6 },
+        },
+      },
+      {
+        ...ec3CapacitySample,
+        run: { request: { raw_text: "IPE 300, S355, q = 18 kN/m, L = 6 m." } },
+        inputReview: {
+          ...ec3CapacitySample.inputReview!,
+          parsed_data: { profileName: "IPE 300", steel_grade: "S355", spanM: 6 },
+        },
+      },
+      {
+        ...ec3CapacitySample,
+        run: { request: { raw_text: "IPE 300, S355, qEd = 18 kN/m." } },
+        inputReview: {
+          ...ec3CapacitySample.inputReview!,
+          parsed_data: { profileName: "IPE 300", steel_grade: "S355", qEdKnPerM: 18 },
+        },
+      },
+    ];
+
+    for (const data of guardedCases) {
+      const model = buildReportModel(data, {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/ec3-guarded",
+        engineeringContext: eurocodeNorwayContext,
+      });
+      const labels = model.calculation.resultRows.map((row) => row.label);
+
+      expect(labels).not.toEqual(expect.arrayContaining(["Mpl,Rd", "Vpl,Rd", "ηM", "ηV"]));
+    }
+  });
+
+  it("keeps AISC steel reports demand-only without EC3 capacity rows", () => {
+    const model = buildReportModel(englishAiscSample, {
+      locale: "nb",
+      reportUrl: "https://pilar.example/report/aisc-diagnostic",
+    });
+    const labels = model.calculation.resultRows.map((row) => row.label);
+
+    expect(model.cover.title).toBe("Steel beam - demand and LTB screening");
+    expect(labels).toEqual(expect.arrayContaining(["wu", "Mu", "Vu"]));
+    expect(labels).not.toEqual(expect.arrayContaining(["Mpl,Rd", "Vpl,Rd", "ηM", "ηV", "DCR"]));
+  });
+
+  it("does not add deterministic EC3 capacity rows when controller blocks result outputs", () => {
+    const model = buildReportModel(
+      {
+        ...ec3CapacitySample,
+        controllerDecision: {
+          ...ec3CapacitySample.controllerDecision!,
+          decision_status: "uncertain",
+          blocked_outputs: ["results_a"],
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/ec3-blocked-results",
+        engineeringContext: eurocodeNorwayContext,
+      },
+    );
+
+    expect(model.calculation.resultRows).toEqual([]);
+    expect(model.keyResults).toEqual([]);
+  });
+
+  it("does not add deterministic EC3 capacity steps when controller blocks calculation steps", () => {
+    const model = buildReportModel(
+      {
+        ...ec3CapacitySample,
+        controllerDecision: {
+          ...ec3CapacitySample.controllerDecision!,
+          decision_status: "uncertain",
+          blocked_outputs: ["calculation_steps_b"],
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/ec3-blocked-steps",
+        engineeringContext: eurocodeNorwayContext,
+      },
+    );
+    const stepText = model.calculation.steps
+      .map((step) => `${step.title}\n${step.prose}`)
+      .join("\n");
+
+    expect(model.calculation.resultRows.map((row) => row.label)).toEqual(
+      expect.arrayContaining(["Mpl,Rd", "Vpl,Rd", "ηM", "ηV"]),
+    );
+    expect(stepText).not.toContain("EC3-tverrsnittsscreening");
   });
 });
 

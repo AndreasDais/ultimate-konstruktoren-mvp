@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildCalculationSheetModel } from "./calculation-sheet-model";
 import { buildReportModel, type UpstreamReportData } from "./build-report-model";
+import type { EngineeringContext } from "@/lib/engineering-context/types";
 
 function readSource(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
@@ -68,6 +69,97 @@ describe("report model parity across report surfaces", () => {
       user_message:
         "Controller withheld Engineer A results and calculation steps. Blocked values require professional review.",
       blocked_outputs: ["results_a", "results_b", "calculation_steps_a"],
+    },
+  };
+
+  const eurocodeNorwayContext: EngineeringContext = {
+    language: "nb",
+    languagePolicy: {
+      uiLocale: "nb",
+      outputMode: "same_as_prompt",
+      fallbackLanguage: "nb",
+    },
+    region: {
+      countryCode: "NO",
+      countryName: "Norway",
+    },
+    standards: {
+      family: "eurocode_norway",
+      label: "Eurocode Norway",
+      supportLevel: "supported",
+      confidence: "user_selected",
+    },
+    outputPreferences: {
+      units: "metric",
+      notationStyle: "eurocode",
+    },
+    safety: {
+      professionalVerificationRequired: true,
+      allowUnsupportedStandardClaims: false,
+    },
+  };
+
+  const ec3CapacitySample: UpstreamReportData = {
+    ...blockedSample,
+    report: {
+      ...blockedSample.report,
+      id: "b4cbaef5-c563-48d0-b08a-6f1b4c7d1722",
+      document_id: "PILAR-EC3-CAPACITY",
+      executive_summary:
+        "Preliminary EC3 capacity screening is available from deterministic runtime evidence.",
+      technical_assessment:
+        "The report remains preliminary and requires professional review.",
+      conclusion:
+        "Professional review is required before use.",
+    },
+    run: {
+      display_language: "nb",
+      request: {
+        raw_text:
+          "Kapasitetskontroll EC3 for IPE 300 i S355, qEd = 18 kN/m og L = 6 m.",
+      },
+    },
+    inputReview: {
+      input_status: "klar",
+      prompt_version: "input_agent_v0.1",
+      parsed_data: {
+        report_title: "Kapasitetskontroll av stalbjelke IPE 300",
+        calculation_type: "stalkapasitet",
+        profileName: "IPE 300",
+        steel_grade: "S355",
+        qEdKnPerM: 18,
+        spanM: 6,
+      },
+    },
+    agentA: {
+      ...blockedSample.agentA,
+      structured_output: {
+        confidence: "high",
+        assumptions: ["qEd is explicit design load"],
+        results: { M_Ed: "81,0 kNm", V_Ed: "54,0 kN" },
+        calculation_steps: [
+          {
+            title: "Demand calculation",
+            text: "M_Ed = 81,0 kNm and V_Ed = 54,0 kN",
+            latex_formula: ["M_Ed = qEd * L^2 / 8", "V_Ed = qEd * L / 2"],
+          },
+        ],
+      },
+    },
+    agentB: {
+      ...blockedSample.agentB,
+      structured_output: {
+        confidence: "high",
+        results: { M_Ed: "81,0 kNm", V_Ed: "54,0 kN" },
+      },
+    },
+    controllerDecision: {
+      decision_status: "approved_with_warnings",
+      risk_level: "medium",
+      reason: "preliminary_ec3_capacity_screening",
+      user_message:
+        "Preliminary EC3 screening is available, but professional review is required.",
+      blocked_outputs: [],
     },
   };
 
@@ -316,5 +408,35 @@ describe("report model parity across report surfaces", () => {
     expect(pdfPrintText).not.toContain("20.0 kN");
     expect(pdfPrintText).not.toContain("Moment calculation");
     expect(pdfPrintText).not.toContain("approved for display");
+  });
+
+  it("keeps deterministic EC3 capacity rows behind canonical ReportModel for sheet exports", () => {
+    const reportModel = buildReportModel(ec3CapacitySample, {
+      locale: "nb",
+      reportUrl:
+        "https://pilar.example/rapport/b4cbaef5-c563-48d0-b08a-6f1b4c7d1722",
+      engineeringContext: eurocodeNorwayContext,
+    });
+    const sheet = buildCalculationSheetModel(reportModel);
+    const modelRows = reportModel.calculation.resultRows
+      .map((row) => `${row.label}: ${row.raw}`)
+      .join("\n");
+    const sheetRows = sheet.results
+      .map((row) => `${row.label}: ${row.unit ? `${row.value} ${row.unit}` : row.value}`)
+      .join("\n");
+    const sheetSteps = sheet.steps
+      .map((step) => `${step.title}\n${step.explanation}`)
+      .join("\n");
+
+    expect(modelRows).toContain("Mpl,Rd: 212,5 kNm");
+    expect(modelRows).toContain("Vpl,Rd: 501,3 kN");
+    expect(modelRows).toContain("ηM: 0,381");
+    expect(modelRows).toContain("ηV: 0,108");
+    expect(sheetRows).toContain("Mpl,Rd");
+    expect(sheetRows).toContain("212,5 kNm");
+    expect(sheetRows).toContain("Vpl,Rd");
+    expect(sheetRows).toContain("501,3 kN");
+    expect(sheetSteps).toContain("EC3-tverrsnittsscreening");
+    expect(sheetRows).not.toMatch(/\bDCR\b|\bMb,Rd\b/i);
   });
 });

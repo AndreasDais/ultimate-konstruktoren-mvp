@@ -130,6 +130,18 @@ export type Ec3SteelBeamCapacityExtractionResult =
       missing: string[];
     };
 
+export type Ec3CapacityTextLanguage = "nb" | "nn" | "en";
+
+export type Ec3SteelBeamCapacityReportArtifacts = {
+  results: Record<string, string>;
+  calculationStep: {
+    title: string;
+    text: string;
+    latex_formula: string[];
+  };
+  evidenceLines: string[];
+};
+
 const SUPPORTED_PROFILE_FAMILIES: ReadonlySet<SteelProfile["family"]> = new Set([
   "IPE",
   "HEA",
@@ -424,11 +436,11 @@ function extractQEdKnPerM(
     ...extractDesignLoadsFromText(text),
   ]);
 
-  if (candidates.length === 1) {
-    return { qEdKnPerM: candidates[0] };
-  }
   if (candidates.length > 1 || hasCharacteristicOrAmbiguousLoadSignal(text)) {
     return extractionGuard("ambiguous_or_characteristic_load", ["qEdKnPerM"]);
+  }
+  if (candidates.length === 1) {
+    return { qEdKnPerM: candidates[0] };
   }
   return extractionGuard("missing_design_load", ["qEdKnPerM"]);
 }
@@ -613,5 +625,104 @@ export function screenEc3SteelBeamCapacity(
       MplRd: "Wpl_y * fy / gammaM0",
       VplRd: "Av_z * fy / (sqrt(3) * gammaM0)",
     },
+  };
+}
+
+function formatNumber(value: number, digits: number, language: Ec3CapacityTextLanguage): string {
+  const formatted = value.toFixed(digits);
+  return language === "en" ? formatted : formatted.replace(".", ",");
+}
+
+function localizedCapacityStepText(
+  result: Extract<Ec3SteelBeamCapacityResult, { computable: true }>,
+  language: Ec3CapacityTextLanguage,
+): { title: string; text: string } {
+  const profileLine = `${result.profileName} ${result.grade}, qEd = ${formatNumber(
+    result.inputs.qEdKnPerM,
+    1,
+    language,
+  )} kN/m, L = ${formatNumber(result.inputs.spanM, 2, language)} m`;
+  const exclusions =
+    "LTB capacity, section classification, shear buckling, M-V interaction, SLS/deflection, connections, torsion and fatigue are not checked.";
+
+  if (language === "en") {
+    return {
+      title: "Preliminary EC3 cross-section capacity screening",
+      text:
+        `Preliminary EC3 cross-section screening from table profile data only (${profileLine}). ` +
+        `${exclusions} This is not a professional sign-off or pass/fail verdict; qualified professional review is required.`,
+    };
+  }
+
+  if (language === "nn") {
+    return {
+      title: "Forebels EC3-tverrsnittsscreening",
+      text:
+        `Forebels EC3-tverrsnittsscreening fra profiltabelldata (${profileLine}). ` +
+        "LTB-kapasitet, tverrsnittsklasse, skjaerknekking, M-V-interaksjon, SLS/nedboying, " +
+        "forbindelsar, torsjon og utmatting er ikkje kontrollert. Dette er ikkje fagleg " +
+        "signering eller pass/fail-vedtak; fagperson ma kontrollere resultatet.",
+    };
+  }
+
+  return {
+    title: "Forelopig EC3-tverrsnittsscreening",
+    text:
+      `Forelopig EC3-tverrsnittsscreening fra profiltabelldata (${profileLine}). ` +
+      "LTB-kapasitet, tverrsnittsklasse, skjaerknekking, M-V-interaksjon, SLS/nedboying, " +
+      "forbindelser, torsjon og utmatting er ikke kontrollert. Dette er ikke faglig " +
+      "signering eller pass/fail-vedtak; fagperson ma kontrollere resultatet.",
+  };
+}
+
+export function buildEc3SteelBeamCapacityReportArtifacts(
+  result: Ec3SteelBeamCapacityResult,
+  language: Ec3CapacityTextLanguage = "nb",
+): Ec3SteelBeamCapacityReportArtifacts | null {
+  if (!result.computable) return null;
+
+  const MEd = formatNumber(result.values.MEdKnm, 1, language);
+  const VEd = formatNumber(result.values.VEdKn, 1, language);
+  const MplRd = formatNumber(result.values.MplRdKnm, 1, language);
+  const VplRd = formatNumber(result.values.VplRdKn, 1, language);
+  const etaM = formatNumber(result.values.etaM, 3, language);
+  const etaV = formatNumber(result.values.etaV, 3, language);
+  const { title, text } = localizedCapacityStepText(result, language);
+
+  return {
+    results: {
+      M_Ed: `${MEd} kNm`,
+      V_Ed: `${VEd} kN`,
+      Mpl_Rd: `${MplRd} kNm`,
+      Vpl_Rd: `${VplRd} kN`,
+      eta_M: etaM,
+      eta_V: etaV,
+    },
+    calculationStep: {
+      title,
+      text,
+      latex_formula: [
+        `M_Ed = qEd * L^2 / 8 = ${MEd} kNm`,
+        `V_Ed = qEd * L / 2 = ${VEd} kN`,
+        `Mpl_Rd = Wpl_y * fy / gammaM0 = ${MplRd} kNm`,
+        `Vpl_Rd = Av_z * fy / (sqrt(3) * gammaM0) = ${VplRd} kN`,
+        `eta_M = M_Ed / Mpl_Rd = ${etaM}`,
+        `eta_V = V_Ed / Vpl_Rd = ${etaV}`,
+      ],
+    },
+    evidenceLines: [
+      `profile=${result.profileName}`,
+      `grade=${result.grade}`,
+      `gammaM0=${result.gammaM0}`,
+      `M_Ed=${MEd} kNm`,
+      `V_Ed=${VEd} kN`,
+      `Mpl_Rd=${MplRd} kNm`,
+      `Vpl_Rd=${VplRd} kN`,
+      `eta_M=${etaM}`,
+      `eta_V=${etaV}`,
+      "scope=preliminary_ec3_cross_section_screening_only",
+      "exclusions=LTB_capacity,section_classification,shear_buckling,MV_interaction,SLS,connections,torsion,fatigue,professional_signoff",
+      "professional_review_required=true",
+    ],
   };
 }
