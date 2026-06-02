@@ -17,6 +17,7 @@ import { getSupabase } from "@/lib/supabase";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { recordStepMetric } from "@/lib/step-metrics";
 import { recordStepMessage } from "@/lib/step-messages/record-message";
+import { insertReportIdempotently } from "@/lib/report/report-save-idempotency";
 
 const PROMPT_VERSION = "agent_e_v0.3";
 const MODEL = PIPELINE_MODEL;
@@ -538,30 +539,26 @@ export async function POST(request: Request) {
               upstream.controllerDecision,
             );
 
-            const { data: newReport, error: insertError } = await supabase
-              .from("reports")
-              .insert({
-                run_id,
-                document_id: documentId,
-                executive_summary: parsed.executive_summary,
-                technical_assessment: parsed.technical_assessment,
-                conclusion: parsed.conclusion,
-                prompt_version: PROMPT_VERSION,
-                tillit_score: tillit?.total ?? null,
-                tillit_breakdown: tillit ?? null,
-              })
-              .select()
-              .single();
+            const saveResult = await insertReportIdempotently(supabase, {
+              run_id,
+              document_id: documentId,
+              executive_summary: parsed.executive_summary,
+              technical_assessment: parsed.technical_assessment,
+              conclusion: parsed.conclusion,
+              prompt_version: PROMPT_VERSION,
+              tillit_score: tillit?.total ?? null,
+              tillit_breakdown: tillit ?? null,
+            });
 
-            if (insertError) {
-              console.error("Failed to insert report:", insertError);
+            if (saveResult.error) {
+              console.error("Failed to insert report:", saveResult.error);
               send("error", { message: "Failed to save report" });
               return;
             }
 
             send("complete", {
-              report: newReport,
-              cached: false,
+              report: saveResult.report,
+              cached: saveResult.recoveredExisting,
               run: upstream.run,
               inputReview: upstream.inputReview,
               agentA: upstream.agentA,
@@ -624,29 +621,25 @@ export async function POST(request: Request) {
       upstream.controllerDecision,
     );
 
-    const { data: newReport, error: insertError } = await supabase
-      .from("reports")
-      .insert({
-        run_id,
-        document_id: documentId,
-        executive_summary: parsed.executive_summary,
-        technical_assessment: parsed.technical_assessment,
-        conclusion: parsed.conclusion,
-        prompt_version: PROMPT_VERSION,
-        tillit_score: tillit?.total ?? null,
-        tillit_breakdown: tillit ?? null,
-      })
-      .select()
-      .single();
+    const saveResult = await insertReportIdempotently(supabase, {
+      run_id,
+      document_id: documentId,
+      executive_summary: parsed.executive_summary,
+      technical_assessment: parsed.technical_assessment,
+      conclusion: parsed.conclusion,
+      prompt_version: PROMPT_VERSION,
+      tillit_score: tillit?.total ?? null,
+      tillit_breakdown: tillit ?? null,
+    });
 
-    if (insertError) {
-      console.error("Failed to insert report:", insertError);
+    if (saveResult.error) {
+      console.error("Failed to insert report:", saveResult.error);
       return NextResponse.json({ error: "Failed to save report" }, { status: 500 });
     }
 
     return NextResponse.json({
-      report: newReport,
-      cached: false,
+      report: saveResult.report,
+      cached: saveResult.recoveredExisting,
       run: upstream.run,
       inputReview: upstream.inputReview,
       agentA: upstream.agentA,

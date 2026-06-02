@@ -523,6 +523,43 @@ type FullReportResponse = {
   controllerDecision: ControllerDecision | null;
 };
 
+type RunReadResponse = {
+  run?: {
+    request_id: string;
+    request?: { raw_text: string };
+    display_language?: string | null;
+  } | null;
+  request?: { raw_text?: string | null } | null;
+  report?: Report | null;
+  inputReview?: InputReview | null;
+  agentA?: AgentOutput | null;
+  agentB?: AgentOutput | null;
+  comparison?: Comparison | null;
+  comparisonRaw?: Comparison | null;
+  controllerDecision?: ControllerDecision | null;
+  controllerDecisionRaw?: ControllerDecision | null;
+};
+
+function existingReportResponse(data: RunReadResponse): FullReportResponse | null {
+  if (!data.report?.executive_summary || !data.run) return null;
+
+  return {
+    report: data.report,
+    cached: true,
+    run: {
+      ...data.run,
+      request: {
+        raw_text: data.run.request?.raw_text ?? data.request?.raw_text ?? "",
+      },
+    },
+    inputReview: data.inputReview ?? null,
+    agentA: data.agentA ?? null,
+    agentB: data.agentB ?? null,
+    comparison: data.comparisonRaw ?? data.comparison ?? null,
+    controllerDecision: data.controllerDecisionRaw ?? data.controllerDecision ?? null,
+  };
+}
+
 function normalizeAgentOutput(
   agent: AgentOutput | null | undefined,
   agentName: "agent_a" | "agent_b",
@@ -545,8 +582,39 @@ export default function RapportPage() {
 
   const [data, setData] = useState<FullReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [existingReportChecked, setExistingReportChecked] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setData(null);
+    setError(null);
+    setExistingReportChecked(false);
+
+    fetch(`/api/runs/${runId}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as RunReadResponse;
+      })
+      .then((runData) => {
+        if (cancelled) return;
+        const existing = runData ? existingReportResponse(runData) : null;
+        if (existing) {
+          setData(existing);
+        }
+        setExistingReportChecked(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setExistingReportChecked(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runId]);
 
   // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
   // Etter konsolidering ser observer only på dei 4 outer-sections.
@@ -620,6 +688,15 @@ export default function RapportPage() {
         <button onClick={() => router.push("/")} className="uk-btn">
           {BASE_RP_LABELS.tilbakeStart[locale]}
         </button>
+      </div>
+    );
+  }
+
+  if (!data && !existingReportChecked) {
+    return (
+      <div className="rapport-loading">
+        <h1>{BASE_RP_LABELS.generererRapport[locale]}</h1>
+        <p>{BASE_RP_LABELS.kanTaTid[locale]}</p>
       </div>
     );
   }

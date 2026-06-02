@@ -81,7 +81,7 @@ export async function GET(
       .maybeSingle(),
     supabase
       .from("reports")
-      .select("id, document_id, tillit_score, created_at")
+      .select("id, run_id, document_id, executive_summary, technical_assessment, conclusion, prompt_version, created_at, tillit_score, tillit_breakdown")
       .eq("run_id", id)
       .maybeSingle(),
   ]);
@@ -162,6 +162,11 @@ export async function GET(
     calculationB,
     comparison: comparisonMapped,
     controllerDecision: controllerDecisionMapped,
+    inputReview: inputReview ?? null,
+    agentA: agentOutputs?.find((o) => o.agent_name === "agent_a") ?? null,
+    agentB: agentOutputs?.find((o) => o.agent_name === "agent_b") ?? null,
+    comparisonRaw: comparison ?? null,
+    controllerDecisionRaw: controllerDecision ?? null,
     report: report ?? null,
   });
 }
