@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildEc3SteelBeamCapacityReportArtifacts,
+  buildEc3SteelBeamCapacityStructuredResultPatch,
   extractEc3SteelBeamCapacityInput,
+  mergeEc3SteelBeamCapacityStructuredResultPatch,
   screenEc3SteelBeamCapacity,
 } from "./ec3-steel-beam-capacity";
 import type { Ec3SteelBeamProfile } from "./ec3-steel-beam-capacity";
@@ -218,6 +220,119 @@ describe("screenEc3SteelBeamCapacity", () => {
         expect.stringContaining("eta_M"),
       ]),
     );
+  });
+});
+
+describe("buildEc3SteelBeamCapacityStructuredResultPatch", () => {
+  const structuredInput = {
+    tolkte_verdiar: {
+      profileName: "IPE 300",
+      steel_grade: "S355",
+      qEdKnPerM: 18,
+      spanM: 6,
+    },
+  };
+
+  it("surfaces deterministic EC3 screening as stable UI-accessible result keys", () => {
+    const patch = buildEc3SteelBeamCapacityStructuredResultPatch({
+      structured: structuredInput,
+      standardFamily: "eurocode_norway",
+      language: "nb",
+    });
+
+    expect(patch).not.toBeNull();
+    expect(patch?.results).toMatchObject({
+      M_Ed: "81,0 kNm",
+      V_Ed: "54,0 kN",
+      Mpl_Rd: "212,5 kNm",
+      Vpl_Rd: "501,3 kN",
+      eta_M: "0,381",
+      eta_V: "0,108",
+    });
+    expect(patch?.resultRoles).toMatchObject({
+      Mpl_Rd: "dimensjonerande",
+      Vpl_Rd: "dimensjonerande",
+      eta_M: "dimensjonerande",
+      eta_V: "dimensjonerande",
+    });
+    expect(patch?.evidenceLines.join("\n")).toContain(
+      "scope=preliminary_ec3_cross_section_screening_only",
+    );
+    expect(patch?.evidenceLines.join("\n")).not.toMatch(/\bDCR\b|\bMb_Rd\b/i);
+  });
+
+  it("keeps AISC and missing EC3 inputs guarded without structured capacity rows", () => {
+    expect(
+      buildEc3SteelBeamCapacityStructuredResultPatch({
+        structured: {
+          tolkte_verdiar: {
+            profileName: "W12x26",
+            steel_grade: "S355",
+            qEdKnPerM: 18,
+            spanM: 6,
+          },
+        },
+        standardFamily: "aisc_asce_aci",
+      }),
+    ).toBeNull();
+
+    expect(
+      buildEc3SteelBeamCapacityStructuredResultPatch({
+        structured: {
+          tolkte_verdiar: {
+            profileName: "IPE 300",
+            steel_grade: "S355",
+            spanM: 6,
+          },
+        },
+        standardFamily: "eurocode_norway",
+      }),
+    ).toBeNull();
+  });
+
+  it("does not surface deterministic rows when controller blocks result outputs", () => {
+    for (const blockedOutput of ["results_a", "results_b"]) {
+      expect(
+        buildEc3SteelBeamCapacityStructuredResultPatch({
+          structured: structuredInput,
+          standardFamily: "eurocode_norway",
+          blockedOutputs: [blockedOutput],
+        }),
+      ).toBeNull();
+    }
+  });
+
+  it("merges deterministic EC3 rows without dropping existing structured output", () => {
+    const patch = buildEc3SteelBeamCapacityStructuredResultPatch({
+      structured: structuredInput,
+      standardFamily: "eurocode_norway",
+      language: "en",
+    });
+    expect(patch).not.toBeNull();
+    if (!patch) throw new Error("Expected EC3 patch");
+
+    const merged = mergeEc3SteelBeamCapacityStructuredResultPatch(
+      {
+        short_conclusion: "Preliminary demand result.",
+        results: { M_Ed: "81.0 kNm", custom_note: "demand-only" },
+        result_roles: { custom_note: "intermediate value" },
+      },
+      patch,
+    );
+
+    expect(merged.short_conclusion).toBe("Preliminary demand result.");
+    expect(merged.results).toMatchObject({
+      custom_note: "demand-only",
+      Mpl_Rd: "212.5 kNm",
+      Vpl_Rd: "501.3 kN",
+      eta_M: "0.381",
+      eta_V: "0.108",
+    });
+    expect(merged.result_roles).toMatchObject({
+      custom_note: "intermediate value",
+      eta_M: "dimensjonerande",
+      eta_V: "dimensjonerande",
+    });
   });
 });
 

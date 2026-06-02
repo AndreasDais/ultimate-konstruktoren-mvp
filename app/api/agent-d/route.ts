@@ -17,10 +17,15 @@ import { recordShadowCheck } from "@/lib/shadow/shadow-check";
 import { recordStepMetric } from "@/lib/step-metrics";
 import { recordStepMessage } from "@/lib/step-messages/record-message";
 import { PIPELINE_MODEL } from "@/lib/models";
-import { isInternationalEnglishContext } from "@/lib/international/display";
+import {
+  displayLanguageForContext,
+  isInternationalEnglishContext,
+} from "@/lib/international/display";
 import {
   buildEc3SteelBeamCapacityReportArtifacts,
+  buildEc3SteelBeamCapacityStructuredResultPatch,
   extractEc3SteelBeamCapacityInput,
+  mergeEc3SteelBeamCapacityStructuredResultPatch,
   screenEc3SteelBeamCapacity,
 } from "@/lib/result/ec3-steel-beam-capacity";
 
@@ -278,6 +283,38 @@ function buildEc3CapacityEvidenceBlock(
     "  - This is preliminary AI-pipeline evidence only, not professional sign-off.",
   );
   return lines.join("\n") + "\n\n";
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+async function persistEc3CapacityStructuredResults(
+  supabase: ReturnType<typeof getSupabase>,
+  runId: string,
+  agentName: "agent_a" | "agent_b",
+  agentOutput: unknown,
+  patch: NonNullable<ReturnType<typeof buildEc3SteelBeamCapacityStructuredResultPatch>>,
+) {
+  const structuredOutput = mergeEc3SteelBeamCapacityStructuredResultPatch(
+    agentOutput,
+    patch,
+  );
+  const { error } = await supabase
+    .from("agent_outputs")
+    .update({ structured_output: structuredOutput })
+    .eq("run_id", runId)
+    .eq("agent_name", agentName);
+
+  if (error) {
+    console.error("[agent-d] Klarte ikkje persistere EC3 capacity screening rows:", {
+      run_id: runId,
+      agent_name: agentName,
+      error,
+    });
+  }
 }
 
 export async function POST(request: Request) {
@@ -559,18 +596,49 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
     let supabase;
     try {
       supabase = getSupabase();
+      const blockedOutputs = stringArray(parsed.blocked_outputs);
+      const allowedOutputs = stringArray(parsed.allowed_outputs);
       await supabase.from("controller_decisions").insert({
         run_id,
         decision_status: parsed.decision_status,
         risk_level: parsed.risk_level,
         reason: parsed.reason,
         user_message: parsed.user_message,
-        blocked_outputs: parsed.blocked_outputs ?? [],
-        allowed_outputs: parsed.allowed_outputs ?? [],
+        blocked_outputs: blockedOutputs,
+        allowed_outputs: allowedOutputs,
         manual_review_required: parsed.manual_review_required ?? false,
         controller_notes: parsed.controller_notes ?? null,
         prompt_version: PROMPT_VERSION,
       });
+
+      // Surface deterministic EC3 screening rows only after final controller
+      // blocking is known; this is data surfacing, not a compliance verdict.
+      const ec3StructuredPatch = buildEc3SteelBeamCapacityStructuredResultPatch({
+        structured: input_review,
+        standardFamily: engineeringContext?.standards?.family,
+        blockedOutputs,
+        language: displayLanguageForContext(locale, engineeringContext),
+      });
+      if (ec3StructuredPatch) {
+        await Promise.all([
+          persistEc3CapacityStructuredResults(
+            supabase,
+            run_id,
+            "agent_a",
+            agent_a_output,
+            ec3StructuredPatch,
+          ),
+          agent_b_output
+            ? persistEc3CapacityStructuredResults(
+                supabase,
+                run_id,
+                "agent_b",
+                agent_b_output,
+                ec3StructuredPatch,
+              )
+            : Promise.resolve(),
+        ]);
+      }
 
       // Marker calculation_run som fullført — dette er siste steg i pipeline
       await supabase
