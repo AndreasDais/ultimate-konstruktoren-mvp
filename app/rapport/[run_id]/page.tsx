@@ -387,6 +387,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
 
 import { QRCodeSVG } from "qrcode.react";
 import { TillitGauge } from "@/app/components/TillitGauge";
+import { CapacityScreening } from "@/app/components/result/CapacityScreening";
 import type { TillitBreakdown } from "@/lib/tillit-score";
 import { InfoPopover } from "@/app/components/InfoPopover";
 
@@ -1344,6 +1345,7 @@ export default function RapportPage() {
                 <div className="rapport-cover-results__grid">
                   {reportModel.keyResults
                     .filter((result) => !/\bltb\s*risk\b/i.test(`${result.label} ${result.raw}`))
+                    .filter((result) => !/η[MV]|[MV]_?pl[_,]?Rd/i.test(`${result.label} ${result.raw}`))
                     .slice(0, 4)
                     .map((result) => (
                     <div key={`${result.label}-${result.raw}`} className="rapport-cover-results__item">
@@ -1357,6 +1359,11 @@ export default function RapportPage() {
                 </div>
               </div>
             )}
+
+            <CapacityScreening
+              results={resultsObj}
+              displayLanguage={reportDisplayLanguage}
+            />
 
             {!reportModelValidation.ok && (
               <aside className="rapport-model-warning no-print" role="note">
