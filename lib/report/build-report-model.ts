@@ -13,6 +13,11 @@ import {
 } from "@/lib/international/display";
 import { tillitVisuals, type TillitBreakdown } from "@/lib/tillit-score";
 import {
+  buildEc3SteelBeamCapacityReportArtifacts,
+  extractEc3SteelBeamCapacityInput,
+  screenEc3SteelBeamCapacity,
+} from "@/lib/result/ec3-steel-beam-capacity";
+import {
   REPORT_DISCLAIMER,
   REPORT_MODEL_VERSION,
   type CalculationResultRow,
@@ -442,6 +447,24 @@ function isBlockedOutput(data: UpstreamReportData, output: string): boolean {
   return (data.controllerDecision?.blocked_outputs ?? []).includes(output);
 }
 
+function buildEc3CapacityArtifactsForReport(
+  data: UpstreamReportData,
+  options: BuildReportModelOptions,
+  displayLanguage: PilarDisplayLanguage,
+) {
+  const extraction = extractEc3SteelBeamCapacityInput({
+    text: data.run.request.raw_text,
+    structured: data.inputReview ?? undefined,
+    standardFamily: options.engineeringContext?.standards?.family,
+  });
+  if (!extraction.computable) return null;
+
+  const screening = screenEc3SteelBeamCapacity(extraction.screeningInput);
+  if (!screening.computable) return null;
+
+  return buildEc3SteelBeamCapacityReportArtifacts(screening, displayLanguage);
+}
+
 function displayDate(createdAt: string, locale: Locale, displayLanguage: PilarDisplayLanguage = locale): string {
   const dateTag = displayLanguage === "en" ? "en-US" : locale === "nb" ? "nb-NO" : "nn-NO";
   const parsed = new Date(createdAt);
@@ -630,7 +653,19 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     text: [data.run.request.raw_text, data.report.executive_summary, data.report.technical_assessment, data.report.conclusion].join("\n"),
   });
   const primary = data.agentA;
-  const primaryResults = isBlockedOutput(data, "results_a") ? {} : primary.structured_output.results;
+  const ec3CapacityArtifacts = buildEc3CapacityArtifactsForReport(
+    data,
+    options,
+    displayLanguage,
+  );
+  const ec3CapacityResultsBlocked =
+    isBlockedOutput(data, "results_a") || isBlockedOutput(data, "results_b");
+  const primaryResults = isBlockedOutput(data, "results_a")
+    ? {}
+    : {
+        ...(primary.structured_output.results ?? {}),
+        ...(!ec3CapacityResultsBlocked ? ec3CapacityArtifacts?.results ?? {} : {}),
+      };
   const resultRows = resultRowsFrom(primaryResults, displayLanguage);
   const keyResults = keyResultsFrom(resultRows);
   const tillit = data.report.tillit_score === null || data.report.tillit_score === undefined
@@ -682,7 +717,12 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
       resultRows,
       steps: isBlockedOutput(data, "calculation_steps_a")
         ? []
-        : (primary.structured_output.calculation_steps ?? []).map(normalizeCalculationStep).map((step) => ({
+        : [
+            ...(primary.structured_output.calculation_steps ?? []),
+            ...(!isBlockedOutput(data, "calculation_steps_b") && ec3CapacityArtifacts
+              ? [ec3CapacityArtifacts.calculationStep]
+              : []),
+          ].map(normalizeCalculationStep).map((step) => ({
             ...step,
             title: displayTextForLanguage(
               localizeGeneratedEngineeringText(step.title, displayLanguage),

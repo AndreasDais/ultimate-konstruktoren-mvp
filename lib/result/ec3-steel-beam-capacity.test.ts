@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildEc3SteelBeamCapacityReportArtifacts,
   extractEc3SteelBeamCapacityInput,
   screenEc3SteelBeamCapacity,
 } from "./ec3-steel-beam-capacity";
@@ -186,6 +187,38 @@ describe("screenEc3SteelBeamCapacity", () => {
     expect(result.reason).toBe("invalid_input");
     expect(result.missing).toEqual(["qEdKnPerM"]);
   });
+
+  it("builds preliminary report artifacts without final compliance wording", () => {
+    const result = expectComputable(
+      screenEc3SteelBeamCapacity({
+        qEdKnPerM: 18,
+        spanM: 6,
+        profileName: "IPE 300",
+        grade: "S355",
+      }),
+    );
+    const artifacts = buildEc3SteelBeamCapacityReportArtifacts(result, "en");
+
+    expect(artifacts).not.toBeNull();
+    expect(artifacts?.results).toMatchObject({
+      M_Ed: "81.0 kNm",
+      V_Ed: "54.0 kN",
+      Mpl_Rd: "212.5 kNm",
+      Vpl_Rd: "501.3 kN",
+    });
+    expect(artifacts?.results).toHaveProperty("eta_M");
+    expect(artifacts?.results).toHaveProperty("eta_V");
+    expect(artifacts?.calculationStep.text).toContain("Preliminary EC3");
+    expect(artifacts?.calculationStep.text).toContain("not a professional sign-off");
+    expect(artifacts?.calculationStep.text).toContain("qualified professional review is required");
+    expect(artifacts?.calculationStep.text).not.toMatch(/\bapproved\b|\bcompliant\b/i);
+    expect(artifacts?.calculationStep.latex_formula).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Mpl_Rd"),
+        expect.stringContaining("eta_M"),
+      ]),
+    );
+  });
 });
 
 describe("extractEc3SteelBeamCapacityInput", () => {
@@ -272,6 +305,17 @@ describe("extractEc3SteelBeamCapacityInput", () => {
     const result = expectExtractionGuard(
       extractEc3SteelBeamCapacityInput({
         text: `IPE 300, S355, ${loadText}, L = 6 m.`,
+      }),
+    );
+
+    expect(result.reason).toBe("ambiguous_or_characteristic_load");
+    expect(result.missing).toEqual(["qEdKnPerM"]);
+  });
+
+  it("guards explicit qEd when a generic q load is also present", () => {
+    const result = expectExtractionGuard(
+      extractEc3SteelBeamCapacityInput({
+        text: "IPE 300, S355, qEd = 18 kN/m, q = 12 kN/m, L = 6 m.",
       }),
     );
 

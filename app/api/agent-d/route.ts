@@ -18,6 +18,11 @@ import { recordStepMetric } from "@/lib/step-metrics";
 import { recordStepMessage } from "@/lib/step-messages/record-message";
 import { PIPELINE_MODEL } from "@/lib/models";
 import { isInternationalEnglishContext } from "@/lib/international/display";
+import {
+  buildEc3SteelBeamCapacityReportArtifacts,
+  extractEc3SteelBeamCapacityInput,
+  screenEc3SteelBeamCapacity,
+} from "@/lib/result/ec3-steel-beam-capacity";
 
 const SYSTEM_PROMPT = `Du er Kontrollør for Pilar, det siste sikkerheitsleddet før brukaren får sjå eit berekningsresultat.
 
@@ -226,6 +231,55 @@ function resolveSteelGrade(
   return m ? (`S${m[1]}` as SteelGrade) : undefined;
 }
 
+function buildEc3CapacityEvidenceBlock(
+  inputReview: unknown,
+  standardFamily: Parameters<typeof extractEc3SteelBeamCapacityInput>[0]["standardFamily"],
+): string {
+  const extraction = extractEc3SteelBeamCapacityInput({
+    structured: inputReview,
+    standardFamily,
+  });
+  const inputBlob = JSON.stringify(inputReview ?? {});
+  const capacityCandidate =
+    /\b(?:EC3|Eurocode|kapasitet|capacity|st[åa]l|steel|IPE|HEA|HEB|q\s*_?\s*Ed|Mpl|Vpl|eta|η)\b/i.test(
+      inputBlob,
+    );
+  if (!extraction.computable && !capacityCandidate) return "";
+
+  const lines = [
+    "EC3 CAPACITY SCREENING - DETERMINISTIC RUNTIME EVIDENCE (not final approval):",
+  ];
+
+  if (!extraction.computable) {
+    lines.push(
+      `  - status: not computed / guarded (${extraction.reason})`,
+      `  - missing_or_guarded: ${extraction.missing.join(", ") || "-"}`,
+      "  - Controller must not invent EC3 capacity rows, utilization, pass/fail, or professional sign-off from this guarded evidence.",
+      "  - Demand-only or diagnostic output may still be shown if otherwise safe, but professional review remains required.",
+    );
+    return lines.join("\n") + "\n\n";
+  }
+
+  const screening = screenEc3SteelBeamCapacity(extraction.screeningInput);
+  if (!screening.computable) {
+    lines.push(
+      `  - status: not computed / guarded (${screening.reason})`,
+      `  - missing_or_guarded: ${screening.missing.join(", ") || "-"}`,
+      "  - Controller must not invent EC3 capacity rows, utilization, pass/fail, or professional sign-off from this guarded evidence.",
+      "  - Demand-only or diagnostic output may still be shown if otherwise safe, but professional review remains required.",
+    );
+    return lines.join("\n") + "\n\n";
+  }
+
+  const artifacts = buildEc3SteelBeamCapacityReportArtifacts(screening, "nb");
+  lines.push(
+    "  - status: computable preliminary EC3 cross-section screening",
+    ...(artifacts?.evidenceLines.map((line) => `  - ${line}`) ?? []),
+    "  - This is preliminary AI-pipeline evidence only, not professional sign-off.",
+  );
+  return lines.join("\n") + "\n\n";
+}
+
 export async function POST(request: Request) {
   let locale: Locale = "nb";
   try {
@@ -364,7 +418,12 @@ USER-FACING PROSE RULES:
 `
         : "";
 
-    const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}${naBasisBlock}${naContextOverride}${forhandskontroll}TOLKAR SI VURDERING:
+    const ec3CapacityEvidenceBlock = buildEc3CapacityEvidenceBlock(
+      input_review,
+      engineeringContext?.standards?.family,
+    );
+
+    const userMessage = `${engineeringContextUserMessageBlock(engineeringContext)}${naBasisBlock}${naContextOverride}${forhandskontroll}${ec3CapacityEvidenceBlock}TOLKAR SI VURDERING:
 ${JSON.stringify(input_review ?? {}, null, 2)}
 
 KONSTRUKTØR A SITT SVAR:
