@@ -142,6 +142,20 @@ export type Ec3SteelBeamCapacityReportArtifacts = {
   evidenceLines: string[];
 };
 
+type Ec3StructuredResultRole = "dimensjonerande" | "intermediate value" | "input";
+
+export type Ec3SteelBeamCapacityStructuredResultPatch = {
+  results: Record<string, string>;
+  resultRoles: Record<string, Ec3StructuredResultRole>;
+  evidenceLines: string[];
+};
+
+export type Ec3SteelBeamCapacityStructuredResultPatchInput =
+  Ec3SteelBeamCapacityExtractionInput & {
+    blockedOutputs?: string[] | null;
+    language?: Ec3CapacityTextLanguage;
+  };
+
 const SUPPORTED_PROFILE_FAMILIES: ReadonlySet<SteelProfile["family"]> = new Set([
   "IPE",
   "HEA",
@@ -724,5 +738,63 @@ export function buildEc3SteelBeamCapacityReportArtifacts(
       "exclusions=LTB_capacity,section_classification,shear_buckling,MV_interaction,SLS,connections,torsion,fatigue,professional_signoff",
       "professional_review_required=true",
     ],
+  };
+}
+
+const EC3_STRUCTURED_RESULT_ROLES: Record<string, Ec3StructuredResultRole> = {
+  M_Ed: "dimensjonerande",
+  V_Ed: "dimensjonerande",
+  Mpl_Rd: "dimensjonerande",
+  Vpl_Rd: "dimensjonerande",
+  eta_M: "dimensjonerande",
+  eta_V: "dimensjonerande",
+};
+
+export function buildEc3SteelBeamCapacityStructuredResultPatch(
+  input: Ec3SteelBeamCapacityStructuredResultPatchInput,
+): Ec3SteelBeamCapacityStructuredResultPatch | null {
+  const blocked = new Set(input.blockedOutputs ?? []);
+  if (blocked.has("results_a") || blocked.has("results_b")) return null;
+
+  const extraction = extractEc3SteelBeamCapacityInput(input);
+  if (!extraction.computable) return null;
+
+  const screening = screenEc3SteelBeamCapacity(extraction.screeningInput);
+  if (!screening.computable) return null;
+
+  const artifacts = buildEc3SteelBeamCapacityReportArtifacts(
+    screening,
+    input.language ?? "nb",
+  );
+  if (!artifacts) return null;
+
+  return {
+    results: artifacts.results,
+    resultRoles: { ...EC3_STRUCTURED_RESULT_ROLES },
+    evidenceLines: artifacts.evidenceLines,
+  };
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+export function mergeEc3SteelBeamCapacityStructuredResultPatch(
+  structuredOutput: unknown,
+  patch: Ec3SteelBeamCapacityStructuredResultPatch,
+): Record<string, unknown> {
+  const output = recordValue(structuredOutput);
+  return {
+    ...output,
+    results: {
+      ...recordValue(output.results),
+      ...patch.results,
+    },
+    result_roles: {
+      ...recordValue(output.result_roles),
+      ...patch.resultRoles,
+    },
   };
 }
