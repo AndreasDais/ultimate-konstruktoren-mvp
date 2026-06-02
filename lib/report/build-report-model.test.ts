@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildReportModel, buildComparisonRowsFromResults, type UpstreamReportData } from "./build-report-model";
+import {
+  buildReportModel,
+  buildComparisonRowsFromResults,
+  type UpstreamAgentOutput,
+  type UpstreamReportData,
+} from "./build-report-model";
 import { validateReportModel } from "./validate-report-model";
 import type { EngineeringContext } from "@/lib/engineering-context/types";
 
@@ -23,7 +28,12 @@ const REPORT_MODEL_BLOCKED_FIELD_AUDIT_FINDING = {
   invariant: "blocked controller evidence must not render as ordinary report results",
 } as const;
 
-const sample: UpstreamReportData = {
+type CompleteUpstreamReportData = UpstreamReportData & {
+  agentA: UpstreamAgentOutput;
+  agentB: UpstreamAgentOutput;
+};
+
+const sample: CompleteUpstreamReportData = {
   report: {
     id: "54461fb9-68f2-40f1-8749-57e84dd115cf",
     document_id: "PILAR-54461FB9",
@@ -182,7 +192,7 @@ const eurocodeNorwayContext: EngineeringContext = {
   },
 };
 
-const ec3CapacitySample: UpstreamReportData = {
+const ec3CapacitySample: CompleteUpstreamReportData = {
   ...sample,
   run: {
     request: {
@@ -330,6 +340,86 @@ describe("buildReportModel", () => {
         expect.objectContaining({ label: "MEd", value: "99", unit: "kNm" }),
       ]),
     );
+  });
+
+  it("degrades without throwing when Engineer B output is missing", () => {
+    const model = buildReportModel(
+      {
+        ...sample,
+        agentB: null,
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/missing-agent-b",
+      },
+    );
+
+    expect(model.calculation.resultRows.map((row) => row.label)).toContain("MEd");
+    expect(model.control.comparisonRows).toEqual([]);
+    expect(model.control.pipelineStatus).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Konstruktør B", value: "-", status: "unknown" }),
+      ]),
+    );
+  });
+
+  it("degrades without throwing when Engineer B structured_output is missing", () => {
+    const model = buildReportModel(
+      {
+        ...sample,
+        agentB: {
+          agent_name: "agent_b",
+          prompt_version: "agent_b_v0.1",
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/partial-agent-b",
+      },
+    );
+
+    expect(model.control.comparisonRows).toEqual([]);
+    expect(model.calculation.resultRows.map((row) => row.label)).toContain("MEd");
+  });
+
+  it("degrades without throwing when Engineer B results are missing", () => {
+    const model = buildReportModel(
+      {
+        ...sample,
+        agentB: {
+          ...sample.agentB,
+          structured_output: {
+            confidence: "medium",
+          },
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/no-agent-b-results",
+      },
+    );
+
+    expect(model.control.comparisonRows).toEqual([]);
+    expect(model.calculation.resultRows.map((row) => row.label)).toContain("MEd");
+  });
+
+  it("does not invent deterministic EC3 capacity rows from partial agent data", () => {
+    const model = buildReportModel(
+      {
+        ...ec3CapacitySample,
+        agentB: null,
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/partial-ec3",
+        engineeringContext: eurocodeNorwayContext,
+      },
+    );
+    const labels = model.calculation.resultRows.map((row) => row.label);
+
+    expect(labels).toEqual(expect.arrayContaining(["MEd", "VEd"]));
+    expect(labels).not.toEqual(expect.arrayContaining(["Mpl,Rd", "Vpl,Rd", "ηM", "ηV"]));
+    expect(model.control.comparisonRows).toEqual([]);
   });
 
   it("formats US customary English result rows and step math with dot decimals", () => {

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildCalculationSheetModel } from "./calculation-sheet-model";
-import { buildReportModel, type UpstreamReportData } from "./build-report-model";
+import { buildReportModel, type UpstreamAgentOutput, type UpstreamReportData } from "./build-report-model";
 import type { EngineeringContext } from "@/lib/engineering-context/types";
 
 function readSource(path: string): string {
@@ -10,7 +10,12 @@ function readSource(path: string): string {
 }
 
 describe("report model parity across report surfaces", () => {
-  const blockedSample: UpstreamReportData = {
+  type CompleteUpstreamReportData = UpstreamReportData & {
+    agentA: UpstreamAgentOutput;
+    agentB: UpstreamAgentOutput;
+  };
+
+  const blockedSample: CompleteUpstreamReportData = {
     report: {
       id: "7a71e6d0-b2a0-4c44-99c0-80c690263c0a",
       document_id: "PILAR-BLOCKED-EXPORT",

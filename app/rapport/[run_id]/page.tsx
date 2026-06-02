@@ -448,7 +448,7 @@ function sprint339FinalNorwegianResidueText(value: string): string {
 
 type AgentOutput = {
   agent_name: string;
-  structured_output: {
+  structured_output?: {
     short_conclusion?: string;
     assumptions?: string[];
     calculation_steps?: { title: string; text: string; latex_formula?: string | null }[];
@@ -456,8 +456,8 @@ type AgentOutput = {
     limitations?: unknown[];
     warnings?: string[];
     confidence?: string;
-  };
-  prompt_version: string;
+  } | null;
+  prompt_version?: string | null;
 };
 
 type ControllerDecision = {
@@ -517,11 +517,25 @@ type FullReportResponse = {
     display_language?: string | null;
   };
   inputReview: InputReview | null;
-  agentA: AgentOutput;
-  agentB: AgentOutput;
+  agentA?: AgentOutput | null;
+  agentB?: AgentOutput | null;
   comparison: Comparison | null;
   controllerDecision: ControllerDecision | null;
 };
+
+function normalizeAgentOutput(
+  agent: AgentOutput | null | undefined,
+  agentName: "agent_a" | "agent_b",
+): AgentOutput & { structured_output: NonNullable<AgentOutput["structured_output"]> } {
+  return {
+    agent_name: agent?.agent_name ?? agentName,
+    prompt_version: agent?.prompt_version ?? null,
+    structured_output:
+      agent?.structured_output && typeof agent.structured_output === "object"
+        ? agent.structured_output
+        : {},
+  };
+}
 
 export default function RapportPage() {
   const { locale } = useLocale();
@@ -622,9 +636,16 @@ export default function RapportPage() {
       />
     );
   }
-  const blocked = data.controllerDecision?.blocked_outputs ?? [];
+  const reportData = {
+    ...data,
+    agentA: normalizeAgentOutput(data.agentA, "agent_a"),
+    agentB: normalizeAgentOutput(data.agentB, "agent_b"),
+  };
+  const degradedAgentOutput =
+    !data.agentA?.structured_output || !data.agentB?.structured_output;
+  const blocked = reportData.controllerDecision?.blocked_outputs ?? [];
   const isBlocked = (field: string) => blocked.includes(field);
-  const primary = data.agentA;
+  const primary = reportData.agentA;
 
   const reportDisplayLanguage = inferReportDisplayLanguage({
     locale,
@@ -766,7 +787,7 @@ export default function RapportPage() {
   const calculationSheetUrl = `/rapport/${runId}/beregning?locale=${locale}`;
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
-  const reportModel = buildReportModel(data as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
+  const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
   // Sprint 6: bruk ReportModel som kjelde for dei delane som er mest
@@ -819,7 +840,7 @@ export default function RapportPage() {
   const agentAConf = primary.structured_output.confidence ?? "";
   const agentATone: Tone = CONFIDENCE_TONES[agentAConf] ?? "neutral";
 
-  const agentBConf = data.agentB.structured_output.confidence ?? "";
+  const agentBConf = reportData.agentB.structured_output?.confidence ?? "";
   const agentBTone: Tone = CONFIDENCE_TONES[agentBConf] ?? "neutral";
 
   const matchStatus = data.comparison?.match_status ?? "";
@@ -1120,7 +1141,7 @@ export default function RapportPage() {
   };
 
   // Bygg normalisert lookup over Engineer B sine results
-  const agentBResults = data.agentB.structured_output.results ?? {};
+  const agentBResults = reportData.agentB.structured_output?.results ?? {};
   const agentBNormalized = new Map<string, string>();
   for (const [k, v] of Object.entries(agentBResults)) {
     if (typeof v === "string") {
@@ -1368,6 +1389,12 @@ export default function RapportPage() {
             {!reportModelValidation.ok && (
               <aside className="rapport-model-warning no-print" role="note">
                 Rapportmodellen manglar nokre felt. PDF/Word use fallback-verdiar.
+              </aside>
+            )}
+
+            {degradedAgentOutput && (
+              <aside className="rapport-model-warning no-print" role="note">
+                Rapporten er ufullstendig fordi ein eller fleire agent-output manglar. Nokre resultat- og kontrollrader kan derfor vere tomme til køyringa er fullført.
               </aside>
             )}
 
