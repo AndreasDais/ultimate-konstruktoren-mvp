@@ -252,7 +252,7 @@ function displayTextForLanguage(
 function resultRowsFrom(results: Record<string, string> | undefined, currentDisplayLanguage: PilarDisplayLanguage): CalculationResultRow[] {
   const byCanonical = new Map<string, CalculationResultRow>();
 
-  for (const [sourceLabel, raw] of Object.entries(results ?? {})) {
+  for (const [sourceLabel, raw] of Object.entries(dedupeResultsByCanonicalKey(results))) {
     const cleanedRaw = displayTextForLanguage(
       compactReportText(raw),
       currentDisplayLanguage,
@@ -280,6 +280,48 @@ function resultRowsFrom(results: Record<string, string> | undefined, currentDisp
   }
 
   return Array.from(byCanonical.values()).sort((a, b) => resultPriorityScore(a.label) - resultPriorityScore(b.label));
+}
+
+const STABLE_EC3_RESULT_KEYS = new Set([
+  "M_Ed",
+  "V_Ed",
+  "Mpl_Rd",
+  "Vpl_Rd",
+  "eta_M",
+  "eta_V",
+]);
+
+const EC3_SCREENING_CANONICAL_KEYS = new Set([
+  "med",
+  "ved",
+  "mplrd",
+  "vplrd",
+  "etam",
+  "etav",
+]);
+
+function resultSourcePreference(key: string, index: number): number {
+  const canonical = canonicalResultKey(key);
+  if (STABLE_EC3_RESULT_KEYS.has(key)) return index - 10_000;
+  if (EC3_SCREENING_CANONICAL_KEYS.has(canonical)) return index;
+  return index;
+}
+
+function dedupeResultsByCanonicalKey(results: Record<string, string> | undefined): Record<string, string> {
+  const byCanonical = new Map<string, { key: string; value: string; preference: number }>();
+
+  Object.entries(results ?? {}).forEach(([key, value], index) => {
+    const canonical = canonicalResultKey(key);
+    const preference = resultSourcePreference(key, index);
+    const existing = byCanonical.get(canonical);
+    if (!existing || preference < existing.preference) {
+      byCanonical.set(canonical, { key, value, preference });
+    }
+  });
+
+  return Object.fromEntries(
+    Array.from(byCanonical.values()).map(({ key, value }) => [key, value]),
+  );
 }
 
 function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
@@ -400,10 +442,10 @@ export function buildComparisonRowsFromResults(
 function buildComparisonRows(data: UpstreamReportData, displayLanguage: PilarDisplayLanguage): ComparisonRow[] {
   const resultsA = isBlockedOutput(data, "results_a")
     ? {}
-    : data.agentA.structured_output.results ?? {};
+    : dedupeResultsByCanonicalKey(data.agentA.structured_output.results);
   const resultsB = isBlockedOutput(data, "results_b")
     ? {}
-    : data.agentB.structured_output.results ?? {};
+    : dedupeResultsByCanonicalKey(data.agentB.structured_output.results);
 
   return buildComparisonRowsFromResults(
     resultsA,
@@ -521,14 +563,41 @@ function hasCapacityResult(rows: CalculationResultRow[]): boolean {
   );
 }
 
+function hasEc3PreliminaryScreeningResult(rows: CalculationResultRow[]): boolean {
+  const canonical = new Set(rows.map((row) => canonicalResultKey(row.label)));
+  return (
+    canonical.has("etam") ||
+    canonical.has("etav") ||
+    canonical.has("mplrd") ||
+    canonical.has("vplrd")
+  );
+}
+
 function titleImpliesCapacity(title: string): boolean {
   return /\b(kapasitetskontroll|capacity check)\b/i.test(title);
+}
+
+function preliminarySteelCapacityScreeningTitle(
+  rawRequest: string,
+  locale: Locale,
+  displayLanguage: PilarDisplayLanguage,
+): string {
+  const profile = rawRequest.match(/\b(?:IPE|HEA|HEB|HEM|UNP|UPN)\s*\d{2,4}\b/i)?.[0];
+  const formattedProfile = profile ? ` ${formatSteelProfileName(profile)}` : "";
+  if (displayLanguage === "en") {
+    return `Preliminary steel beam capacity screening${formattedProfile}`;
+  }
+  if (locale === "nn") {
+    return `Førebels kapasitetsscreening av stålbjelke${formattedProfile}`;
+  }
+  return `Foreløpig kapasitetsscreening av stålbjelke${formattedProfile}`;
 }
 
 function titleFromResults(rows: CalculationResultRow[], rawRequest: string, locale: Locale, displayLanguage: PilarDisplayLanguage = locale): string {
   const has = (canonical: string) => rows.some((row) => canonicalResultKey(row.label) === canonical);
   const request = rawRequest.toLowerCase();
   const capacityCalculated = hasCapacityResult(rows);
+  const ec3PreliminaryScreening = hasEc3PreliminaryScreeningResult(rows);
 
   if (displayLanguage === "en") {
     if (/\bW\d+x\d+\b/i.test(rawRequest) || request.includes("aisc") || request.includes("asce") || request.includes("steel beam")) {
@@ -537,6 +606,10 @@ function titleFromResults(rows: CalculationResultRow[], rawRequest: string, loca
   }
 
   const profile = rawRequest.match(/\b(?:IPE|HEA|HEB|HEM|UNP|UPN)\s*\d{2,4}\b/i)?.[0];
+
+  if (ec3PreliminaryScreening) {
+    return preliminarySteelCapacityScreeningTitle(rawRequest, locale, displayLanguage);
+  }
 
   if (capacityCalculated) {
     const base = locale === "nn" ? "Kapasitetskontroll av stålbjelke" : "Kapasitetskontroll av stålbjelke";
@@ -562,9 +635,13 @@ function titleFromResults(rows: CalculationResultRow[], rawRequest: string, loca
 function calculationTypeFallbackForScope(
   type: string,
   rows: CalculationResultRow[],
+  rawRequest: string,
   locale: Locale,
   displayLanguage: PilarDisplayLanguage,
 ): string {
+  if (type === "stalkapasitet" && hasEc3PreliminaryScreeningResult(rows)) {
+    return preliminarySteelCapacityScreeningTitle(rawRequest, locale, displayLanguage);
+  }
   if (type === "stalkapasitet" && !hasCapacityResult(rows)) return "";
   return calculationTypeFallback(type, locale, displayLanguage);
 }
@@ -577,7 +654,7 @@ function explicitTitleForScope(
   displayLanguage: PilarDisplayLanguage,
 ): string {
   if (!title) return "";
-  if (titleImpliesCapacity(title) && !hasCapacityResult(rows)) {
+  if (titleImpliesCapacity(title) && (!hasCapacityResult(rows) || hasEc3PreliminaryScreeningResult(rows))) {
     return titleFromResults(rows, rawRequest, locale, displayLanguage);
   }
   return title;
@@ -616,7 +693,7 @@ function buildCoverText(
   const explicitSubtitle = stringField(parsed, "report_subtitle");
 
   const fallbackTitle =
-    calculationTypeFallbackForScope(calculationType, rows, locale, displayLanguage) ||
+    calculationTypeFallbackForScope(calculationType, rows, rawRequest, locale, displayLanguage) ||
     titleFromResults(rows, rawRequest, locale, displayLanguage);
 
   return {

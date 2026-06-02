@@ -464,6 +464,8 @@ describe("buildReportModel", () => {
     expect(rows.VEd).toBe("54,0 kN");
     expect(rows["Mpl,Rd"]).toBe("212,5 kNm");
     expect(rows["Vpl,Rd"]).toBe("501,3 kN");
+    expect(model.cover.title).toBe("Foreløpig kapasitetsscreening av stålbjelke IPE 300");
+    expect(model.cover.title).not.toContain("Kapasitetskontroll");
     expect(rows["ηM"]).toBe("0,381");
     expect(rows["ηV"]).toBe("0,108");
     expect(model.calculation.resultRows.map((row) => row.label)).not.toContain("Mb,Rd");
@@ -472,6 +474,94 @@ describe("buildReportModel", () => {
     expect(visibleStepText).toContain("fagperson");
     expect(visibleStepText).toContain("LTB-kapasitet");
     expect(visibleStepText).not.toMatch(/\bAISC\b|\bMb,Rd\b|\bDCR\b|\bgodkjent\b/i);
+  });
+
+  it("uses preliminary EC3 screening title wording across report languages", () => {
+    const cases = [
+      {
+        locale: "nb" as const,
+        displayLanguage: null,
+        expected: "Foreløpig kapasitetsscreening av stålbjelke IPE 300",
+      },
+      {
+        locale: "nn" as const,
+        displayLanguage: null,
+        expected: "Førebels kapasitetsscreening av stålbjelke IPE 300",
+      },
+      {
+        locale: "nb" as const,
+        displayLanguage: "en",
+        expected: "Preliminary steel beam capacity screening IPE 300",
+      },
+    ];
+
+    for (const { locale, displayLanguage, expected } of cases) {
+      const model = buildReportModel(
+        {
+          ...ec3CapacitySample,
+          run: {
+            ...ec3CapacitySample.run,
+            display_language: displayLanguage,
+          },
+        },
+        {
+          locale,
+          reportUrl: "https://pilar.example/rapport/ec3-capacity-title",
+          engineeringContext: eurocodeNorwayContext,
+        },
+      );
+
+      expect(model.cover.title).toBe(expected);
+      expect(model.cover.title).not.toMatch(
+        /Kapasitetskontroll|capacity check|approved|compliant|pass|fail|OK|adequate|godkjent|bestått/i,
+      );
+    }
+  });
+
+  it("deduplicates agent and deterministic EC3 capacity key variants in report and comparison rows", () => {
+    const duplicatedCapacityResults = {
+      M_Ed: "81,0 kNm",
+      V_Ed: "54,0 kN",
+      M_pl_Rd: "212,5 kNm",
+      V_pl_Rd: "501,3 kN",
+      Mpl_Rd: "212,5 kNm",
+      Vpl_Rd: "501,3 kN",
+      eta_M: "0,381",
+      eta_V: "0,108",
+    };
+    const model = buildReportModel(
+      {
+        ...ec3CapacitySample,
+        agentA: {
+          ...ec3CapacitySample.agentA,
+          structured_output: {
+            ...ec3CapacitySample.agentA.structured_output,
+            results: duplicatedCapacityResults,
+          },
+        },
+        agentB: {
+          ...ec3CapacitySample.agentB,
+          structured_output: {
+            ...ec3CapacitySample.agentB.structured_output,
+            results: duplicatedCapacityResults,
+          },
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/ec3-capacity-dedupe",
+        engineeringContext: eurocodeNorwayContext,
+      },
+    );
+
+    const resultLabels = model.calculation.resultRows.map((row) => row.label);
+    const comparisonLabels = model.control.comparisonRows.map((row) => row.label);
+
+    expect(resultLabels.filter((label) => label === "Mpl,Rd")).toHaveLength(1);
+    expect(resultLabels.filter((label) => label === "Vpl,Rd")).toHaveLength(1);
+    expect(comparisonLabels.filter((label) => label === "Mpl,Rd")).toHaveLength(1);
+    expect(comparisonLabels.filter((label) => label === "Vpl,Rd")).toHaveLength(1);
+    expect(resultLabels).toEqual(expect.arrayContaining(["ηM", "ηV", "Mpl,Rd", "Vpl,Rd"]));
   });
 
   it("does not add EC3 capacity rows when profile, grade, qEd, or span guards fail", () => {
