@@ -1,0 +1,118 @@
+{
+  "base": "http://localhost:3000",
+  "verdict": "GREEN",
+  "results": [
+    {
+      "id": "ec3",
+      "name": "EC3 capacity screening (nb, IPE 300 S355)",
+      "runId": "2a3cb85e-073a-458c-98e4-8a2bc924b117",
+      "url": "http://localhost:3000/rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117",
+      "displayLanguage": "nb",
+      "decision": "approved",
+      "asserts": [
+        {
+          "name": "lang nb",
+          "pass": true,
+          "detail": "display_language=nb"
+        },
+        {
+          "name": "report rendered",
+          "pass": true,
+          "detail": "len=9631"
+        },
+        {
+          "name": "structured keys present",
+          "pass": true,
+          "detail": "keys=f_y,M_Ed,V_Ed,A_v_z,eta_M,eta_V,Mpl_Rd,Vpl_Rd,W_pl_y,M_pl_Rd,V_pl_Rd,epsilon,gamma_M0,c_tw_steg,c_tf_flens,V_Ed_halv_Vpl,tverrsnittsklasse,c_f_over_tf,c_w_over_tw"
+        },
+        {
+          "name": "capacity card shows",
+          "pass": true,
+          "detail": "cardLen=243"
+        },
+        {
+          "name": "title preliminary capacity screening",
+          "pass": true,
+          "detail": "title=Foreløpig kapasitetsscreening av stålbjelke IPE 300"
+        },
+        {
+          "name": "card wording preliminary-only",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "no duplicate screening keys in cover/result/comparison rows",
+          "pass": true,
+          "detail": "coverHasScreening=false MplRdCount=1"
+        },
+        {
+          "name": "M_Ed / V_Ed visible",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "no forbidden wording in card",
+          "pass": true,
+          "detail": "cardLen=243 hits=none"
+        },
+        {
+          "name": "tillit gauge separate + present",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "pass": true,
+      "diagnostics": {
+        "reportTitleLine": "Foreløpig kapasitetsscreening av stålbjelke IPE 300",
+        "capacityCardText": "Kapasitets-screening (foreløpig)\n\nForeløpig EC3-tverrsnittsscreening — ikke en fullstendig kapasitetskontroll. Krever faglig kontroll.\n\nUTNYTTING · ΗM\n0,635\nM_Ed 135,0 kNm · Mpl_Rd 212,5 kNm\nUTNYTTING · ΗV\n0,180\nV_Ed 90,0 kN · Vpl_Rd 501,3 kN\n",
+        "capacityCardForbiddenHits": []
+      }
+    },
+    {
+      "id": "aisc",
+      "name": "AISC missing-property guard (en, W12x26)",
+      "runId": "7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a",
+      "url": "http://localhost:3000/rapport/7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a",
+      "displayLanguage": "en",
+      "decision": "approved_with_warnings",
+      "asserts": [
+        {
+          "name": "lang en",
+          "pass": true,
+          "detail": "display_language=en"
+        },
+        {
+          "name": "report rendered",
+          "pass": true,
+          "detail": "len=13054"
+        },
+        {
+          "name": "demand present (Mu/M_Ed + Vu/V_Ed)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "no eta_M / eta_V keys",
+          "pass": true,
+          "detail": "keys=D,Lb,Mu,Vu,wu,L_load,L_span,Cb_assumed,LTB_screening,load_factor_D,load_factor_L"
+        },
+        {
+          "name": "no capacity screening card",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "no DCR value / utilization claim",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "no AISC adequacy / final compliance claim",
+          "pass": true,
+          "detail": "none (disclaimers negation-aware)"
+        }
+      ],
+      "pass": true
+    }
+  ]
+}

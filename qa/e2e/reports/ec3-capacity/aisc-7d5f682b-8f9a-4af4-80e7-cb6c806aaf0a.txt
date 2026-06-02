@@ -1,0 +1,362 @@
+Pilar
+AI STRUCTURAL ASSISTANT
+AI-generated · requires professional review
+i
+Theme
+▾
+Sign in
+← Back
+CONTENTS
+Summary
+Calculation
+Assessment
+Review
+METADATA
+ID
+PILAR-7D5F682B
+DATE
+June 2, 2026
+VERSION
+Reporter v0.3
+CALCULATION NOTE
+·
+PILAR-7D5F682B
+JUNE 2, 2026
+Steel beam - demand and LTB screening
+
+AI-generated calculation note
+
+DOCUMENT ID
+PILAR-7D5F682B
+DATE
+June 2, 2026
+STATUS
+APPROVED WITH WARNINGS
+VERSION
+Reporter v0.3
+WEB VERSION + PIPELINE
+Scan for web version
+
+Opens the report with control status, pipeline trace and a shareable link for classmates or colleagues.
+
+REPORT LINK
+http://localhost:3000/rapport/7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a
+KEY RESULTS
+Dead load, D
+0.45
+kip/ft
+Unbraced length, Lb
+20.0
+ft
+Live load, L
+0.80
+kip/ft
+Span, L
+20.0
+ft
+76
+/100
+GOOD
+
+The demand calculations are consistent and internally verified: wu = 1.820 kip/ft, Mu = 91.00 kip-ft, Vu = 18.20 kips. Both independent engineers reached identical results with no discrepancies. …
+
+IMPORTANT NOTE
+·
+AI-GENERATED DOCUMENT
+
+The content is support, learning aid or preliminary technical assessment only. It does not replace review by a qualified professional.
+
+01
+Summary
+
+This calculation evaluates a simply supported W12x26 steel beam (ASTM A992, Fy = 50 ksi) with a 20 ft span under a dead load of 0.45 kip/ft and a live load of 0.80 kip/ft, using an ASCE 7 LRFD gravity load combination. The demand calculations are complete: the governing factored uniform load is wu = 1.820 kip/ft, producing a maximum factored bending moment of Mu = 91.00 kip-ft at midspan and a maximum factored shear of Vu = 18.20 kips at the supports. The Controller has approved this output with warnings — LTB may be critical for this section and unbraced length, and no flexural or shear capacity check could be completed due to the absence of verified AISC section properties. All results are preliminary and require independent verification by a licensed structural engineer before use in any design or construction document.
+
+REQUEST
+I am testing PILAR with a United States structural engineering context.
+
+Please evaluate a simply supported steel beam using an AISC/ASCE-style workflow, but clearly state if full code verification is not supported yet.
+
+Beam:
+- Span: L = 20 ft
+- Section: W12x26
+- Steel grade: ASTM A992, Fy = 50 ksi
+- Supports: simply supported
+- Lateral bracing: only at the supports, unbraced length Lb = 20 ft
+- Dead load: D = 0.45 kip/ft
+- Live load: L = 0.80 kip/ft
+
+Requested checks:
+1. Determine the LRFD factored uniform load using a typical ASCE 7 gravity load combination.
+2. Calculate the maximum factored bending moment.
+3. Calculate the maximum factored shear.
+4. Determine whether lateral-torsional buckling is likely to be a critical issue.
+5. If AISC section properties or code-specific equations are missing, do not invent them.
+6. Produce a clear calculation note and a calculation-only summary suitable for a student report.
+
+Important requirements:
+- Answer in English.
+- Use US customary units.
+- Do not use Eurocode notation or Eurocode partial factors.
+- Do not use γG, γQ, MEd, VEd, NS-EN, Eurocode 3, or Norwegian National Annex logic.
+- Do not claim final AISC code compliance unless the required AISC checks and section properties are available.
+- Clearly mark the result as preliminary and requiring verification by a licensed structural engineer.
+02
+Calculation
+GLOSSARY
+D
+dead load (kip/ft)
+Lb
+unbraced length (ft)
+Vu
+factored shear force (kips)
+wu
+factored distributed load (kip/ft)
+Mu
+factored bending moment (kip-ft)
+Lload
+span length (ft)
+Cbassumed
+LTB modification factor (Cb)
+phib
+resistance factor, flexure (typ. 0.90)
+phiv
+resistance factor, shear (typ. 0.90 or 1.00)
+02.1 — ASSUMPTIONS
+.01
+ASCE 7 LRFD gravity load combination 1.2D + 1.6L is applied as the governing combination for maximum moment and shear demand.
+.02
+Dead load D = 0.45 kip/ft and live load L = 0.80 kip/ft are uniformly distributed along the full 20-ft span; beam self-weight is included in D.
+.03
+Simply supported boundary conditions: pin at one end, roller at the other. Maximum moment occurs at midspan; maximum shear occurs at the supports.
+.04
+Load is applied at the centroid of the cross-section (conservative baseline for LTB screening; top-flange destabilizing loading is not assumed).
+.05
+Unbraced length Lb = 20 ft — bracing is provided only at the two supports.
+.06
+Cb = 1.0 assumed conservatively for LTB screening. For a simply supported beam with uniform load, No refined Cb value is computed or assumed without verified input is used here to provide a conservative lower bound without requiring verified tabulated properties.
+.07
+Sign convention: positive moment produces tension in the bottom fiber (sagging). Positive shear acts upward on the left face of a cut section.
+.08
+Section properties (Zx, Sx, J, Cw, rts, ho, Lp, Lr) are NOT available as verified input; therefore phib*Mn and phiv*Vn are not computed. This output covers demand calculations and qualitative LTB screening only.
+.09
+Standard profile is AISC/ASCE/ACI at experimental support level. Results are preliminary and require independent professional verification.
+02.2 — RESULTS
+INPUT AND GEOMETRY
+Dead load, D	0.45 kip/ft
+Unbraced length, Lb	20.0 ft
+Live load, L	0.80 kip/ft
+Span, L	20.0 ft
+LTB screening	Likely critical — Lb = 20 ft is expected to exceed Lp and approach or exceed Lr for W12x26; full capacity check with verified section properties required
+Dead load factor	1.2
+Live load factor	1.6
+OTHER
+Mu	91.00 kip-ft
+Vu	18.20 kips
+wu	1.820 kip/ft
+Assumed Cb	1.0
+02.3 — STEP-BY-STEP CALCULATION
+STEP 01
+Step 1 — LRFD Factored Uniform Load (wu)
+w
+u
+	​
+
+	​
+
+=1.2D+1.6L
+=1.2(0.45)+1.6(0.80)
+=0.540+1.280
+=1.820 kip/ft
+	​
+
+Show prose calculation
+Explain this step
+STEP 02
+Step 2 — Maximum Factored Bending Moment (Mu)
+M
+u
+	​
+
+	​
+
+=
+8
+w
+u
+	​
+
+⋅L
+2
+	​
+
+=
+8
+1.820×(20.0)
+2
+	​
+
+=
+8
+728.0
+	​
+
+=91.00 kip-ft
+	​
+
+Show prose calculation
+Explain this step
+STEP 03
+Step 3 — Maximum Factored Shear (Vu)
+V
+u
+	​
+
+	​
+
+=
+2
+w
+u
+	​
+
+⋅L
+	​
+
+=
+2
+1.820×20.0
+	​
+
+=
+2
+36.40
+	​
+
+=18.20 kips
+	​
+
+Show prose calculation
+Explain this step
+STEP 04
+Step 4 — LTB Qualitative Screening
+Lateral-torsional buckling (LTB) governs the available flexural strength when the unbraced length Lb exceeds the limiting unbraced length Lp (full plastic moment) and potentially Lr (inelastic-to-elastic LTB boundary). A quantitative assessment requires verified AISC Manual values for Lp, Lr, Zx, Sx, J, Cw, rts, and ho — none of which are available as verified input for this run.
+
+Qualitative assessment:
+
+1. The W12x26 is a relatively shallow (d ≈ 12 in) wide-flange section with a modest flange width. Shallow W-shapes tend to have lower torsional stiffness and shorter Lp and Lr limits compared to deeper, wider sections.
+
+2. Lb = 20 ft represents a long unbraced length relative to the nominal depth of a W12 section. For typical W12 compact sections of ASTM A992 steel, the unbraced length of 20 ft is expected to be well beyond Lp and likely near or beyond Lr — placing the section in the inelastic or potentially elastic LTB range.
+
+3. With Cb = 1.0 (conservative assumption — uniform moment), no amplification of the LTB capacity is taken. No refined Cb value is computed or assumed without verified input.
+
+4. Conclusion of screening: LTB is assessed as LIKELY CRITICAL for this configuration. The available moment phib*Mn is expected to be meaningfully less than phib*Mp. A complete capacity check with verified AISC section properties is required before proceeding with design.
+Explain this step
+03
+Assessment
+03.1 — ENGINEERING ASSESSMENT
+
+Engineer A and Engineer B produced exact numerical agreement across all computed quantities, with no discrepancies identified by the Comparator — the match status is confirmed. The governing load combination wu = 1.2D + 1.6L = 1.820 kip/ft is standard ASCE 7 LRFD practice for gravity-only loading; the 1.4D alternate combination (0.630 kip/ft) does not govern and was correctly set aside. The midspan moment formula Mu = wu·L²/8 and support shear formula Vu = wu·L/2 are the appropriate closed-form expressions for a uniformly loaded simply supported beam, and Engineer B independently confirmed Mu via an equilibrium superposition route, which further validates the result. The qualitative LTB screening raises a significant concern: an unbraced length of Lb = 20 ft covering the full span is a long unbraced condition for a W12x26, a relatively shallow and lightly built wide-flange section, and LTB is assessed as likely critical — meaning the available moment strength phib·Mn is expected to be appreciably less than the full plastic moment capacity. This finding cannot be resolved quantitatively in this run because verified AISC Manual section properties (Zx, Sx, J, Cw, rts, ho, Lp, Lr) are not available as input, and the AISC data guard correctly prohibits generating those values from memory. Additionally, the AISC/ASCE standard profile is at an experimental support level in this application, which means factor values and code-compliance logic have not been independently validated by the platform — this is the basis for the approvedwithwarnings classification alongside the LTB criticality finding.
+
+03.2 — WHAT IS NOT CALCULATED
+NOT COVERED BY THIS REPORT
+phib * Mn (available flexural strength) cannot be computed without verified AISC Manual section properties for W12x26 (Zx, Sx, J, Cw, rts, ho, Lp, Lr). A demand-to-capacity check for bending is therefore not possible in this run.	—
+phiv * Vn (available shear strength) cannot be computed without verified tw and d for the W12x26 section.	—
+Demand-to-capacity ratios (DCR) for both flexure and shear require the capacity values listed above and are outside the scope of this output.	—
+Quantitative LTB reduction factor Fcr and Cb-adjusted Mn are not computed due to missing verified section properties.	—
+Deflection (serviceability) check under unfactored loads is not performed in this run.	—
+Web crippling, flange local bending, and connection design are not addressed.	—
+Standard profile is AISC/ASCE/ACI at experimental support level	results are preliminary and must be verified by a licensed structural engineer against current AISC 360 provisions.
+03.3 — WARNINGS
+⚠
+WARNING
+
+LTB may be critical for Lb = 20 ft on a W12x26. Do not proceed with this section without a full AISC 360 Chapter F capacity check using verified section properties.
+
+⚠
+WARNING
+
+This output covers demand calculations only. No capacity or adequacy conclusion can be drawn until phib*Mn is established from verified data.
+
+⚠
+WARNING
+
+The AISC/ASCE standard profile is marked experimental in this application. All numerical results require independent verification by a licensed engineer before use in any design or construction document.
+
+⚠
+WARNING
+
+Beam self-weight is assumed included in D = 0.45 kip/ft. If self-weight has not been accounted for separately, the W12x26 self-weight (approximately 0.026 kip/ft) should be verified against the stated dead load.
+
+04
+Review
+04.1 — ENGINEER COMPARISON
+
+The calculation was solved independently by two AI engineers (Engineer A and Engineer B). Both engineers reached numerically identical values, shown in the table below.
+
+QUANTITY	ENGINEER A	ENGINEER B	MATCH
+Dead load, D	0.45 kip/ft	0.45 kip/ft	✓
+Unbraced length, Lb	20.0 ft	20 ft	✓
+Mu	91.00 kip-ft	91.00 kip-ft	✓
+Vu	18.20 kips	18.20 kips	✓
+wu	1.820 kip/ft	1.820 kip/ft	✓
+Live load, L	0.80 kip/ft	0.80 kip/ft	✓
+Span, L	20.0 ft	20 ft	✓
+Assumed Cb	1.0	1.0	✓
+
+Showing the 8 most important of 11 compared values.
+
+04.2 — CONTROLLER DECISION
+DECISION
+APPROVED WITH WARNINGS
+
+The calculation is preliminarily approved with warnings. Must be verified by a responsible professional before use in design.
+
+04.3 — CONCLUSION
+
+The demand results — wu = 1.820 kip/ft, Mu = 91.00 kip-ft, Vu = 18.20 kips — are consistent, internally verified, and suitable for use as a preliminary engineering basis. However, the W12x26 should not be considered adequate for this loading configuration until a licensed structural engineer obtains verified section properties from the AISC Steel Construction Manual and completes a full AISC 360 Chapter F flexural capacity check, confirming that phib·Mn ≥ Mu at the governing LTB condition. If the capacity check reveals that LTB controls significantly, a larger section, a different section shape, or intermediate lateral bracing should be considered.
+
+PRELIMINARY
+Must be checked by a qualified professional before use in design work.
+REVIEWED BY
+Name · title · company
+SIGNATURE
+Manual signature
+DATE
+MM/DD/YYYY
+Pilar
+PILAR-7D5F682B
+·
+Generated June 2, 2026
+·
+Reporter v0.3
+http://localhost:3000/rapport/7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a
+SCAN FOR WEB VERSION
+ACTIONS
+Download PDF
+Download Word
+Calculation sheet
+Create new calculation from this →
+See Mission Control →
+Report an error
+Give pilot feedback
+CONTROL STATUS
+Input interpretation
+i
+PARTLY READY
+Engineer A
+i
+HIGH
+Engineer B
+i
+HIGH
+Comparison
+i
+MATCH
+Controller
+i
+WARNINGS
+Professional reviewer
+i
+NOT REVIEWED
+≡
+Glossary
