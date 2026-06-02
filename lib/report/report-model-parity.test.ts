@@ -193,6 +193,22 @@ describe("report model parity across report surfaces", () => {
     expect(source).toContain("model.meta.documentId");
   });
 
+  it("keeps full PDF export as an actual attachment download", () => {
+    const page = readSource("app/rapport/[run_id]/page.tsx");
+    const pdfRoute = readSource("app/api/rapport/[run_id]/pdf/route.ts");
+
+    expect(page).toContain("const pdfUrl = `/api/rapport/${runId}/pdf`");
+    expect(page).toContain("href={pdfUrl}");
+    expect(page).toContain("download={pdfFilename}");
+    expect(page).toContain('data-report-ready="true"');
+    expect(page).not.toContain("onClick={handlePdfPrint}");
+
+    expect(pdfRoute).toContain('const url = `${origin}/rapport/${run_id}?print=1&locale=${locale}`;');
+    expect(pdfRoute).toContain('[data-report-ready="true"]');
+    expect(pdfRoute).toContain('"Content-Type": "application/pdf"');
+    expect(pdfRoute).toContain('"Content-Disposition": `attachment; filename="${filename}.pdf"`');
+  });
+
   it("renders full web and Word prose from the same ReportModel text fields", () => {
     const fullWebReport = readSource("app/rapport/[run_id]/page.tsx");
     const wordRenderer = readSource("lib/report/render-docx.ts");
