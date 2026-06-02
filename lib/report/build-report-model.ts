@@ -97,7 +97,7 @@ function sprint339FinalNorwegianResidueText(value: string): string {
 
 export type UpstreamAgentOutput = {
   agent_name: string;
-  structured_output: {
+  structured_output?: {
     short_conclusion?: string;
     assumptions?: string[];
     calculation_steps?: { title: string; text: string; latex_formula?: string | string[] | null }[];
@@ -105,8 +105,8 @@ export type UpstreamAgentOutput = {
     limitations?: string[];
     warnings?: string[];
     confidence?: string;
-  };
-  prompt_version: string;
+  } | null;
+  prompt_version?: string | null;
 };
 
 export type UpstreamReportData = {
@@ -128,8 +128,8 @@ export type UpstreamReportData = {
     parsed_data?: unknown;
     prompt_version: string;
   } | null;
-  agentA: UpstreamAgentOutput;
-  agentB: UpstreamAgentOutput;
+  agentA?: UpstreamAgentOutput | null;
+  agentB?: UpstreamAgentOutput | null;
   comparison: { match_status: string; comparison_data: unknown } | null;
   controllerDecision: {
     decision_status: string;
@@ -324,6 +324,18 @@ function dedupeResultsByCanonicalKey(results: Record<string, string> | undefined
   );
 }
 
+type SafeStructuredOutput = NonNullable<UpstreamAgentOutput["structured_output"]>;
+
+function structuredOutput(agent: UpstreamAgentOutput | null | undefined): SafeStructuredOutput {
+  return agent?.structured_output && typeof agent.structured_output === "object"
+    ? agent.structured_output
+    : {};
+}
+
+function hasStructuredOutput(agent: UpstreamAgentOutput | null | undefined): boolean {
+  return !!agent?.structured_output && typeof agent.structured_output === "object";
+}
+
 function keyResultsFrom(rows: CalculationResultRow[]): KeyResult[] {
   const byCanonical = new Map<string, CalculationResultRow>();
   for (const row of rows) {
@@ -440,12 +452,17 @@ export function buildComparisonRowsFromResults(
 }
 
 function buildComparisonRows(data: UpstreamReportData, displayLanguage: PilarDisplayLanguage): ComparisonRow[] {
+  const agentAOutput = structuredOutput(data.agentA);
+  const agentBOutput = structuredOutput(data.agentB);
   const resultsA = isBlockedOutput(data, "results_a")
     ? {}
-    : dedupeResultsByCanonicalKey(data.agentA.structured_output.results);
+    : dedupeResultsByCanonicalKey(agentAOutput.results);
   const resultsB = isBlockedOutput(data, "results_b")
     ? {}
-    : dedupeResultsByCanonicalKey(data.agentB.structured_output.results);
+    : dedupeResultsByCanonicalKey(agentBOutput.results);
+  if (Object.keys(resultsA).length === 0 || Object.keys(resultsB).length === 0) {
+    return [];
+  }
 
   return buildComparisonRowsFromResults(
     resultsA,
@@ -455,15 +472,17 @@ function buildComparisonRows(data: UpstreamReportData, displayLanguage: PilarDis
 }
 
 function buildPipelineStatus(data: UpstreamReportData, locale: Locale, displayLanguage: PilarDisplayLanguage): PipelineStatusRow[] {
+  const agentAOutput = structuredOutput(data.agentA);
+  const agentBOutput = structuredOutput(data.agentB);
   const input = displayLanguage === "en"
     ? ({ klar: "Ready", delvis_klar: "Partly ready", mangelfull: "Incomplete", avvist: "Rejected", relevant_ikkje_stotta: "Not supported", uklar: "Unclear", uklart: "Unclear" } as Record<string, string>)[data.inputReview?.input_status ?? ""] ?? "-"
     : data.inputReview ? inputStatusLabel(data.inputReview.input_status, locale) : "-";
   const a = displayLanguage === "en"
-    ? ({ high: "High", medium: "Medium", low: "Low" } as Record<string, string>)[data.agentA.structured_output.confidence ?? ""] ?? "-"
-    : confidenceLabel(data.agentA.structured_output.confidence ?? "", locale);
+    ? ({ high: "High", medium: "Medium", low: "Low" } as Record<string, string>)[agentAOutput.confidence ?? ""] ?? "-"
+    : confidenceLabel(agentAOutput.confidence ?? "", locale) || "-";
   const b = displayLanguage === "en"
-    ? ({ high: "High", medium: "Medium", low: "Low" } as Record<string, string>)[data.agentB.structured_output.confidence ?? ""] ?? "-"
-    : confidenceLabel(data.agentB.structured_output.confidence ?? "", locale);
+    ? ({ high: "High", medium: "Medium", low: "Low" } as Record<string, string>)[agentBOutput.confidence ?? ""] ?? "-"
+    : confidenceLabel(agentBOutput.confidence ?? "", locale) || "-";
   const comp = displayLanguage === "en"
     ? ({ match: "Agreement", minor_differences: "Minor differences", significant_differences: "Significant differences", critical_disagreement: "Critical disagreement" } as Record<string, string>)[data.comparison?.match_status ?? ""] ?? "-"
     : matchStatusShort(data.comparison?.match_status ?? "", locale);
@@ -473,8 +492,8 @@ function buildPipelineStatus(data: UpstreamReportData, locale: Locale, displayLa
 
   return [
     { label: LABELS.inputTolking[displayLanguage], value: input, status: statusTone(input) },
-    { label: LABELS.konstruktorA[displayLanguage], value: a, status: statusTone(data.agentA.structured_output.confidence) },
-    { label: LABELS.konstruktorB[displayLanguage], value: b, status: statusTone(data.agentB.structured_output.confidence) },
+    { label: LABELS.konstruktorA[displayLanguage], value: a, status: statusTone(agentAOutput.confidence) },
+    { label: LABELS.konstruktorB[displayLanguage], value: b, status: statusTone(agentBOutput.confidence) },
     { label: LABELS.samanlikning[displayLanguage], value: comp, status: statusTone(data.comparison?.match_status) },
     { label: LABELS.kontrollor[displayLanguage], value: ctrl, status: statusTone(data.controllerDecision?.decision_status) },
     { label: LABELS.fagperson[displayLanguage], value: LABELS.ikkjeKontrollert[displayLanguage], status: "warning" },
@@ -729,18 +748,22 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     persisted: data.run.display_language,
     text: [data.run.request.raw_text, data.report.executive_summary, data.report.technical_assessment, data.report.conclusion].join("\n"),
   });
-  const primary = data.agentA;
-  const ec3CapacityArtifacts = buildEc3CapacityArtifactsForReport(
-    data,
-    options,
-    displayLanguage,
-  );
+  const primary = structuredOutput(data.agentA);
+  const hasCompleteAgentOutputs =
+    hasStructuredOutput(data.agentA) && hasStructuredOutput(data.agentB);
+  const ec3CapacityArtifacts = hasCompleteAgentOutputs
+    ? buildEc3CapacityArtifactsForReport(
+        data,
+        options,
+        displayLanguage,
+      )
+    : null;
   const ec3CapacityResultsBlocked =
     isBlockedOutput(data, "results_a") || isBlockedOutput(data, "results_b");
   const primaryResults = isBlockedOutput(data, "results_a")
     ? {}
     : {
-        ...(primary.structured_output.results ?? {}),
+        ...(primary.results ?? {}),
         ...(!ec3CapacityResultsBlocked ? ec3CapacityArtifacts?.results ?? {} : {}),
       };
   const resultRows = resultRowsFrom(primaryResults, displayLanguage);
@@ -788,14 +811,14 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     interpretation: {
       status: displayLanguage === "en" ? ({ klar: "Ready", delvis_klar: "Partly ready", mangelfull: "Incomplete", avvist: "Rejected", uklar: "Unclear", uklart: "Unclear", relevant_ikkje_stotta: "Not supported" }[data.inputReview?.input_status ?? ""] ?? "Unknown") : data.inputReview ? inputStatusLabel(data.inputReview.input_status, locale) : "-",
       statusCode: data.inputReview?.input_status ?? "unknown",
-      assumptions: (primary.structured_output.assumptions ?? []).map((text) => reportText(text, displayLanguage)),
+      assumptions: (primary.assumptions ?? []).map((text) => reportText(text, displayLanguage)),
     },
     calculation: {
       resultRows,
       steps: isBlockedOutput(data, "calculation_steps_a")
         ? []
         : [
-            ...(primary.structured_output.calculation_steps ?? []),
+            ...(primary.calculation_steps ?? []),
             ...(!isBlockedOutput(data, "calculation_steps_b") && ec3CapacityArtifacts
               ? [ec3CapacityArtifacts.calculationStep]
               : []),
@@ -816,8 +839,8 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     },
     assessment: {
       professionalAssessment: polishForDisplay(localizeGeneratedEngineeringText(reportText(cleanReportText(data.report.technical_assessment), displayLanguage), displayLanguage), displayLanguage),
-      limitations: (primary.structured_output.limitations ?? []).map((text) => reportText(text, displayLanguage)),
-      warnings: (primary.structured_output.warnings ?? []).map((text) => reportText(text, displayLanguage)),
+      limitations: (primary.limitations ?? []).map((text) => reportText(text, displayLanguage)),
+      warnings: (primary.warnings ?? []).map((text) => reportText(text, displayLanguage)),
     },
     control: {
       decision,
