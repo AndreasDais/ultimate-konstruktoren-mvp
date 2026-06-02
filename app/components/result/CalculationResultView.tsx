@@ -45,6 +45,7 @@ import {
 import { Badge } from "@/app/components/Badge";
 import { StatusStripe } from "@/app/components/StatusStripe";
 import { DimensjonerandeTiles } from "./DimensjonerandeTile";
+import { CapacityScreening, EC3_SCREENING_KEYS } from "./CapacityScreening";
 import { ControllerDecisionCard } from "./ControllerDecisionCard";
 
 type CalculationResultViewProps = {
@@ -357,9 +358,16 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 const resultsAvailable =
                   !isBlocked("results_a") &&
                   Object.keys(calculationA.results || {}).length > 0;
+                // EC3 screening keys render in <CapacityScreening/>; keep them
+                // out of the dimensjonerande tiles so they don't show twice.
+                const tileResults = Object.fromEntries(
+                  Object.entries(calculationA.results || {}).filter(
+                    ([k]) => !EC3_SCREENING_KEYS.has(k),
+                  ),
+                ) as Record<string, string>;
                 const tilesKeys = resultsAvailable
                   ? getDimensjonerandeKeys(
-                      calculationA.results,
+                      tileResults,
                       result?.berekningstype ?? null,
                       calculationA.result_roles,
                     )
@@ -382,7 +390,7 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                         Erstattar "Kort svar"-prosa når results er tilgjengelege. */}
                     {tilesShown && (
                       <DimensjonerandeTiles
-                        results={calculationA.results}
+                        results={tileResults}
                         calculationType={result?.berekningstype ?? null}
                         displayLanguage={displayLanguage}
                         resultRoles={calculationA.result_roles}
@@ -410,21 +418,33 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                 );
               })()}
 
+              <CapacityScreening
+                results={calculationA.results}
+                displayLanguage={displayLanguage}
+              />
+
               {/* Resultat-objekt — splittast i Dimensjonerande + Mellomledd (#06).
                   Dimensjonerande rader: same keys som tiles i #01, men med
                   fag-typografi (15px tal, høgrejustert eining) for studenten
                   som vil verifisere. Mellomledd: alle andre keys, kollapsa
                   bak ein "Vis X intermediate value ▸"-toggle. */}
               {!isBlocked("results_a") && Object.keys(calculationA.results || {}).length > 0 && (() => {
-                const allEntries = Object.entries(calculationA.results);
+                // EC3 screening keys render in <CapacityScreening/> above —
+                // exclude them here so the result rows don't duplicate them.
+                const cardResults = Object.fromEntries(
+                  Object.entries(calculationA.results).filter(
+                    ([k]) => !EC3_SCREENING_KEYS.has(k),
+                  ),
+                ) as Record<string, string>;
+                const allEntries = Object.entries(cardResults);
                 const dimensjonerandeKeys = getDimensjonerandeKeys(
-                  calculationA.results,
+                  cardResults,
                   result?.berekningstype ?? null,
                   calculationA.result_roles,
                 );
                 const dimensjonerandeSet = new Set(dimensjonerandeKeys);
                 const dimensjonerandeEntries = dimensjonerandeKeys
-                  .map((k) => [k, calculationA.results[k]] as [string, string])
+                  .map((k) => [k, cardResults[k]] as [string, string])
                   .filter(([, v]) => v !== undefined);
                 const intermediateValueEntries = allEntries.filter(([k]) => !dimensjonerandeSet.has(k));
                 const intermediateValueCount = intermediateValueEntries.length;
