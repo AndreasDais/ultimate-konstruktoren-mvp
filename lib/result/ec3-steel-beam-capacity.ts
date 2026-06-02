@@ -97,6 +97,39 @@ export type Ec3SteelBeamCapacityResult =
       missing: string[];
     });
 
+export type Ec3CapacityExtractionGuardReason =
+  | "missing_profile"
+  | "ambiguous_profile"
+  | "unsupported_profile"
+  | "missing_grade"
+  | "unsupported_grade"
+  | "missing_design_load"
+  | "ambiguous_or_characteristic_load"
+  | "missing_span"
+  | "unsupported_standard"
+  | "missing_factor_set";
+
+export type Ec3SteelBeamCapacityExtractionInput = {
+  text?: string | null;
+  structured?: unknown;
+  standardFamily?: EngineeringStandardFamily;
+};
+
+export type Ec3SteelBeamCapacityExtractionResult =
+  | {
+      computable: true;
+      profileName: string;
+      grade: SteelGrade;
+      qEdKnPerM: number;
+      spanM: number;
+      screeningInput: Ec3SteelBeamCapacityInput;
+    }
+  | {
+      computable: false;
+      reason: Ec3CapacityExtractionGuardReason;
+      missing: string[];
+    };
+
 const SUPPORTED_PROFILE_FAMILIES: ReadonlySet<SteelProfile["family"]> = new Set([
   "IPE",
   "HEA",
@@ -179,6 +212,330 @@ function requiredPropertyGaps(profile: Ec3SteelBeamProfile): string[] {
   if (!finitePositive(profile.Av_z)) missing.push("Av_z");
   if (!finitePositive(profile.tf)) missing.push("tf");
   return missing;
+}
+
+function extractionGuard(
+  reason: Ec3CapacityExtractionGuardReason,
+  missing: string[],
+): Ec3SteelBeamCapacityExtractionResult {
+  return {
+    computable: false,
+    reason,
+    missing,
+  };
+}
+
+function isSupportedEc3StandardFamily(
+  family: EngineeringStandardFamily | undefined,
+): boolean {
+  return (
+    family === undefined ||
+    family === "eurocode_norway" ||
+    family === "eurocode_general"
+  );
+}
+
+type StructuredEntry = {
+  path: string;
+  key: string;
+  value: unknown;
+};
+
+function collectStructuredEntries(
+  value: unknown,
+  path: string[] = [],
+  depth = 0,
+): StructuredEntry[] {
+  if (value === null || value === undefined || depth > 8) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) =>
+      collectStructuredEntries(item, [...path, String(index)], depth + 1),
+    );
+  }
+  if (typeof value !== "object") {
+    const key = path.at(-1) ?? "";
+    return [{ path: path.join("."), key, value }];
+  }
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
+    collectStructuredEntries(item, [...path, key], depth + 1),
+  );
+}
+
+function sourceTextForExtraction(input: Ec3SteelBeamCapacityExtractionInput): {
+  text: string;
+  entries: StructuredEntry[];
+} {
+  const entries = collectStructuredEntries(input.structured);
+  const parts = [
+    input.text ?? "",
+    ...entries
+      .filter(
+        (entry) =>
+          typeof entry.value === "string" ||
+          typeof entry.value === "number" ||
+          typeof entry.value === "boolean",
+      )
+      .map((entry) => `${entry.path}: ${String(entry.value)}`),
+  ];
+  return { text: parts.join("\n"), entries };
+}
+
+function normalizeKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function parseDecimal(value: string): number | null {
+  const normalized = value.trim().replace(",", ".");
+  const parsed = Number(normalized);
+  return finitePositive(parsed) ? parsed : null;
+}
+
+function numericValue(value: unknown): number | null {
+  if (typeof value === "number") return finitePositive(value) ? value : null;
+  if (typeof value === "string") {
+    const match = value.match(/\d+(?:[.,]\d+)?/);
+    return match ? parseDecimal(match[0]) : null;
+  }
+  return null;
+}
+
+function uniqueValues<T>(values: T[]): T[] {
+  return [...new Set(values)];
+}
+
+function uniqueNumbers(values: number[]): number[] {
+  const unique: number[] = [];
+  for (const value of values) {
+    if (!unique.some((existing) => Math.abs(existing - value) < 1e-9)) {
+      unique.push(value);
+    }
+  }
+  return unique;
+}
+
+function extractProfileName(text: string): Ec3SteelBeamCapacityExtractionResult | {
+  profileName: string;
+} {
+  const supportedNames = uniqueValues(
+    [...text.matchAll(/\b(IPE|HEA|HEB)\s*-?\s*(\d{2,3})\b/gi)].map(
+      (match) => `${match[1].toUpperCase()} ${match[2]}`,
+    ),
+  );
+  const unsupportedProfileSeen =
+    /\bW\s*\d{1,3}\s*[xX]\s*\d+\b/.test(text) ||
+    /\b(?:UB|UC|SHS|RHS|CHS|HP)\s*\d{2,4}\b/i.test(text);
+
+  if (supportedNames.length === 0) {
+    return extractionGuard(
+      unsupportedProfileSeen ? "unsupported_profile" : "missing_profile",
+      ["profileName"],
+    );
+  }
+  if (supportedNames.length > 1) {
+    return extractionGuard("ambiguous_profile", supportedNames);
+  }
+  if (!findProfile(supportedNames[0])) {
+    return extractionGuard("unsupported_profile", [supportedNames[0]]);
+  }
+  return { profileName: supportedNames[0] };
+}
+
+function extractGrade(text: string): Ec3SteelBeamCapacityExtractionResult | {
+  grade: SteelGrade;
+} {
+  const gradeTokens = uniqueValues(
+    [...text.matchAll(/\bS\s*(\d{3})\b/gi)].map((match) => `S${match[1]}`),
+  );
+  const supported = uniqueValues(
+    gradeTokens
+      .map((token) => parseSteelGrade(token))
+      .filter((grade): grade is SteelGrade => grade !== null),
+  );
+
+  if (gradeTokens.length === 0) {
+    return extractionGuard("missing_grade", ["grade"]);
+  }
+  if (supported.length !== 1 || supported.length !== gradeTokens.length) {
+    return extractionGuard("unsupported_grade", gradeTokens);
+  }
+  return { grade: supported[0] };
+}
+
+function isDesignLoadKey(key: string): boolean {
+  const normalized = normalizeKey(key);
+  return (
+    normalized === "qed" ||
+    normalized === "qd" ||
+    normalized.includes("qedknperm") ||
+    normalized.includes("qedknm") ||
+    normalized.includes("qdknperm") ||
+    normalized.includes("designload") ||
+    normalized.includes("dimensjonerandelast") ||
+    normalized.includes("dimensjonerendelast")
+  );
+}
+
+function normalizeLoadUnitToKnPerM(value: number, unit: string): number | null {
+  const normalized = unit.toLowerCase().replace(/\s+/g, "");
+  if (normalized === "kn/m" || normalized === "knperm") return value;
+  if (normalized === "n/mm") return value;
+  return null;
+}
+
+function extractDesignLoadsFromText(text: string): number[] {
+  const numberPattern = String.raw`(\d+(?:[.,]\d+)?)`;
+  const signalPattern = String.raw`(?:\bq\s*[_-]?\s*ed\b|\bq\s*[_-]?\s*d\b|\bdimensjonerande\s+last\b|\bdimensjonerende\s+last\b|\bdesign\s+load\b)`;
+  const unitPattern = String.raw`(kN\s*(?:/|per)\s*m|N\s*/\s*mm)`;
+  const pattern = new RegExp(
+    `${signalPattern}\\s*(?:=|:|er|is)?\\s*${numberPattern}\\s*${unitPattern}`,
+    "gi",
+  );
+  return [...text.matchAll(pattern)]
+    .map((match) => {
+      const value = parseDecimal(match[1]);
+      return value === null ? null : normalizeLoadUnitToKnPerM(value, match[2]);
+    })
+    .filter((value): value is number => value !== null);
+}
+
+function extractDesignLoadsFromStructured(entries: StructuredEntry[]): number[] {
+  return entries
+    .filter((entry) => isDesignLoadKey(entry.key) || isDesignLoadKey(entry.path))
+    .map((entry) => numericValue(entry.value))
+    .filter((value): value is number => value !== null);
+}
+
+function hasCharacteristicOrAmbiguousLoadSignal(text: string): boolean {
+  return (
+    /\bq\b\s*(?:=|:)\s*\d+(?:[.,]\d+)?/i.test(text) ||
+    /\b(?:g|q)\s*[_-]?\s*k\b/i.test(text) ||
+    /\bw\s*[_-]?\s*u\b/i.test(text) ||
+    /\b(?:dead|live|characteristic)\s+load\b/i.test(text) ||
+    /\bkarakteristisk(?:e)?\s+last(?:er)?\b/i.test(text)
+  );
+}
+
+function extractQEdKnPerM(
+  text: string,
+  entries: StructuredEntry[],
+): Ec3SteelBeamCapacityExtractionResult | { qEdKnPerM: number } {
+  const candidates = uniqueNumbers([
+    ...extractDesignLoadsFromStructured(entries),
+    ...extractDesignLoadsFromText(text),
+  ]);
+
+  if (candidates.length === 1) {
+    return { qEdKnPerM: candidates[0] };
+  }
+  if (candidates.length > 1 || hasCharacteristicOrAmbiguousLoadSignal(text)) {
+    return extractionGuard("ambiguous_or_characteristic_load", ["qEdKnPerM"]);
+  }
+  return extractionGuard("missing_design_load", ["qEdKnPerM"]);
+}
+
+function isSpanKey(key: string): boolean {
+  const normalized = normalizeKey(key);
+  return (
+    normalized === "spanm" ||
+    normalized === "spennviddem" ||
+    normalized === "lm" ||
+    normalized === "spanmm" ||
+    normalized === "spennviddemm" ||
+    normalized === "lmm"
+  );
+}
+
+function normalizeSpanUnitToM(value: number, unit: string): number | null {
+  const normalized = unit.toLowerCase();
+  if (["m", "meter", "meters", "metre", "metres"].includes(normalized)) {
+    return value;
+  }
+  if (normalized === "mm") return value / 1000;
+  return null;
+}
+
+function extractSpansFromText(text: string): number[] {
+  const numberPattern = String.raw`(\d+(?:[.,]\d+)?)`;
+  const signalPattern = String.raw`(?:\bL\b|\bspan\b|\bspennvidde\b)`;
+  const unitPattern = String.raw`(m|meter|meters|metre|metres|mm)`;
+  const pattern = new RegExp(
+    `${signalPattern}\\s*(?:=|:|er|is)?\\s*${numberPattern}\\s*${unitPattern}\\b`,
+    "gi",
+  );
+  return [...text.matchAll(pattern)]
+    .map((match) => {
+      const value = parseDecimal(match[1]);
+      return value === null ? null : normalizeSpanUnitToM(value, match[2]);
+    })
+    .filter((value): value is number => value !== null);
+}
+
+function extractSpansFromStructured(entries: StructuredEntry[]): number[] {
+  return entries
+    .filter((entry) => isSpanKey(entry.key) || isSpanKey(entry.path))
+    .map((entry) => {
+      const value = numericValue(entry.value);
+      if (value === null) return null;
+      const normalized = normalizeKey(entry.key);
+      return normalized.endsWith("mm") ? value / 1000 : value;
+    })
+    .filter((value): value is number => value !== null);
+}
+
+function extractSpanM(
+  text: string,
+  entries: StructuredEntry[],
+): Ec3SteelBeamCapacityExtractionResult | { spanM: number } {
+  const candidates = uniqueNumbers([
+    ...extractSpansFromStructured(entries),
+    ...extractSpansFromText(text),
+  ]);
+  if (candidates.length === 1) {
+    return { spanM: candidates[0] };
+  }
+  return extractionGuard("missing_span", ["spanM"]);
+}
+
+export function extractEc3SteelBeamCapacityInput(
+  input: Ec3SteelBeamCapacityExtractionInput,
+): Ec3SteelBeamCapacityExtractionResult {
+  if (!isSupportedEc3StandardFamily(input.standardFamily)) {
+    return extractionGuard("unsupported_standard", ["standardFamily"]);
+  }
+
+  const factorSet = resolveFactorSet(input.standardFamily);
+  if (!finitePositive(factorSet?.gammaM0)) {
+    return extractionGuard("missing_factor_set", ["gammaM0"]);
+  }
+
+  const { text, entries } = sourceTextForExtraction(input);
+
+  const profile = extractProfileName(text);
+  if ("computable" in profile) return profile;
+
+  const grade = extractGrade(text);
+  if ("computable" in grade) return grade;
+
+  const qEd = extractQEdKnPerM(text, entries);
+  if ("computable" in qEd) return qEd;
+
+  const span = extractSpanM(text, entries);
+  if ("computable" in span) return span;
+
+  return {
+    computable: true,
+    profileName: profile.profileName,
+    grade: grade.grade,
+    qEdKnPerM: qEd.qEdKnPerM,
+    spanM: span.spanM,
+    screeningInput: {
+      qEdKnPerM: qEd.qEdKnPerM,
+      spanM: span.spanM,
+      profileName: profile.profileName,
+      grade: grade.grade,
+      standardFamily: input.standardFamily,
+    },
+  };
 }
 
 export function screenEc3SteelBeamCapacity(
