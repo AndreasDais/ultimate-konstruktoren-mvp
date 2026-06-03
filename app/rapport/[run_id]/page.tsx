@@ -861,6 +861,8 @@ export default function RapportPage() {
 
   const wordUrl = `/api/rapport/${runId}/word`;
   const wordFilename = `${data.report.document_id}.docx`;
+  const pdfUrl = `/api/rapport/${runId}/pdf`;
+  const pdfFilename = `${data.report.document_id}.pdf`;
   const calculationSheetUrl = `/rapport/${runId}/beregning?locale=${locale}`;
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
@@ -1348,7 +1350,7 @@ export default function RapportPage() {
 
       {/* === Hovudkolonne: dokument === */}
       <main className="rapport-main">
-        <article className="rapport-document">
+        <article className="rapport-document" data-report-ready="true">
           {/* ============================================================
               FORSIDE — Retning B (Konsulent-notat). PageStripe topp,
               serif-tittel + italic underrubrikk, tabular metadata,
@@ -2133,12 +2135,14 @@ export default function RapportPage() {
       <aside className="rapport-sidebar rapport-sidebar--right no-print">
         <div className="rapport-actions">
           <div className="uk-eyebrow">{RP_LABELS.handlingar[locale]}</div>
-          <button
-            onClick={handlePdfPrint}
+          <a
+            href={pdfUrl}
             className="uk-btn uk-btn--primary"
+            download={pdfFilename}
+            title={RP_LABELS.lastNedPDF[locale]}
           >
             {RP_LABELS.lastNedPDF[locale]}
-          </button>
+          </a>
           <a href={wordUrl} className="uk-btn" download={wordFilename}>
             {RP_LABELS.lastNedWord[locale]}
           </a>
