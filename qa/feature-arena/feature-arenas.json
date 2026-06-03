@@ -1,0 +1,51 @@
+[
+  {
+    "key": "safety",
+    "name": "Safety",
+    "objective": "Which hypothesis most reduces risk of misleading or unsafe structural engineering output?",
+    "higher_is_better": true,
+    "requires_human_review": true
+  },
+  {
+    "key": "trust",
+    "name": "Trust",
+    "objective": "Which hypothesis most improves user trust, explainability, traceability and professional-review clarity?",
+    "higher_is_better": true,
+    "requires_human_review": true
+  },
+  {
+    "key": "eval",
+    "name": "Eval",
+    "objective": "Which hypothesis most improves measurable regression coverage and product correctness?",
+    "higher_is_better": true,
+    "requires_human_review": false
+  },
+  {
+    "key": "product",
+    "name": "Product",
+    "objective": "Which hypothesis most improves practical product usefulness and user workflow value?",
+    "higher_is_better": true,
+    "requires_human_review": false
+  },
+  {
+    "key": "moat",
+    "name": "Moat",
+    "objective": "Which hypothesis most builds durable PILAR-specific data, workflow, evaluation or trust advantage?",
+    "higher_is_better": true,
+    "requires_human_review": false
+  },
+  {
+    "key": "effort",
+    "name": "Effort",
+    "objective": "Which hypothesis gives the most value per implementation risk and effort?",
+    "higher_is_better": true,
+    "requires_human_review": false
+  },
+  {
+    "key": "international",
+    "name": "International",
+    "objective": "Which hypothesis most improves international mode without damaging Norwegian mode or standard separation?",
+    "higher_is_better": true,
+    "requires_human_review": true
+  }
+]
