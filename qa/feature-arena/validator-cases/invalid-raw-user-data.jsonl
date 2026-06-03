@@ -1,0 +1,1 @@
+{"schema_version":"pilar.feature_evidence.v0","id":"ev-invalid-raw-user-001","hypothesis_id":"fh-user-feedback-micro-form","type":"user_feedback_cluster","source_ref":"feedback inbox","source_url":null,"summary":"Aggregated user feedback summary.","polarity":"supports","strength":0.6,"reliability":0.7,"observed_at":"2026-06-01","redaction_status":"raw_user_data","metadata":{}}
