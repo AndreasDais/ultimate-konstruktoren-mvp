@@ -1,0 +1,33 @@
+{
+  "schema_version": "pilar.feature_judgement.v0",
+  "match_id": "match-safety-001",
+  "arena": "safety",
+  "objective": "Which hypothesis most reduces risk of misleading or unsafe structural engineering output?",
+  "hypothesis_a_id": "fh-aisc-verified-source-guardrail",
+  "hypothesis_b_id": "fh-guardrail-decision-dashboard",
+  "winner": "a_win",
+  "confidence": 0.82,
+  "rationale": "Under the safety objective, blocking final-approval language when verified AISC source is missing (A) reduces the misleading-output risk more directly than exposing pass/warn/block decisions (B). Confidence is moderate-high but not certain: the effect size is not yet measured.",
+  "facts_used": [
+    "ev-international-policy-aisc-001: AISC/ASCE experimental mode must not invent verified section properties or claim final compliance without verified input or source.",
+    "ev-agent-ecosystem-guardrail-001: the agent ecosystem strategy recommends guardrails that block final-approval language, invented AISC values and mixed standards."
+  ],
+  "inferences": [
+    "Blocking final-approval language at output time acts on the professional-review boundary itself, whereas a read-only decision dashboard improves observability of existing decisions without preventing the unsafe claim.",
+    "Both improve safety, but A addresses the failure mode (false confidence) more directly than B."
+  ],
+  "evidence_ids": ["ev-international-policy-aisc-001", "ev-agent-ecosystem-guardrail-001"],
+  "risk_flags": ["professional_review_boundary", "may_increase_warnings"],
+  "safety_concerns": [
+    "Must not over-block legitimate demand-only or diagnostic output; the blocking wording itself requires professional review."
+  ],
+  "hard_veto_flags": [],
+  "missing_evidence": [
+    "measured_false_confidence_rate_before_after",
+    "user_impact_of_increased_warnings"
+  ],
+  "implementation_decision": null,
+  "judge_type": "agent_committee",
+  "judge_version": "pairwise-judge-v0.1",
+  "created_at": "2026-06-01"
+}
