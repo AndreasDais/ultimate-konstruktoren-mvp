@@ -1,0 +1,374 @@
+{
+  "schema_version": "pilar.feature_ratings_snapshot.v0",
+  "rating_model": "elo_v0",
+  "generated_at": null,
+  "source_data_as_of": "2026-06-01",
+  "deterministic": true,
+  "note": "Per-arena, evidence-weighted prioritization under uncertainty. Not truth, not a roadmap order, not a build decision. Human remains final. Mirrors lib/feature-arena (Sprint 35.2).",
+  "rated_hypothesis_arena_pairs": 18,
+  "ratings": [
+    {
+      "hypothesis_id": "fh-preliminary-status-explainer",
+      "arena": "safety",
+      "rating": 1525.2,
+      "uncertainty": 0.7407,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 2,
+      "evidence_quality": 0.856,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "professional_review_boundary",
+        "wording_review_required"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 25.2,
+      "movement": "rose +25.2 from start 1500 — win vs fh-human-review-capture-form (match-safety-002, +25.2)"
+    },
+    {
+      "hypothesis_id": "fh-aisc-verified-source-guardrail",
+      "arena": "safety",
+      "rating": 1511.81,
+      "uncertainty": 0.8591,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 2,
+      "evidence_quality": 0.856,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "professional_review_boundary",
+        "aisc_verified_source_required",
+        "may_increase_warnings"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 11.81,
+      "movement": "rose +11.81 from start 1500 — win vs fh-guardrail-decision-dashboard (match-safety-001, +11.81)"
+    },
+    {
+      "hypothesis_id": "fh-guardrail-decision-dashboard",
+      "arena": "safety",
+      "rating": 1488.19,
+      "uncertainty": 0.8591,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "read_only_first",
+        "no_raw_user_data"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -11.81,
+      "movement": "fell -11.81 from start 1500 — loss vs fh-aisc-verified-source-guardrail (match-safety-001, -11.81)"
+    },
+    {
+      "hypothesis_id": "fh-human-review-capture-form",
+      "arena": "safety",
+      "rating": 1474.8,
+      "uncertainty": 0.7407,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "privacy_redaction_required",
+        "professional_review_boundary"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -25.2,
+      "movement": "fell -25.2 from start 1500 — loss vs fh-preliminary-status-explainer (match-safety-002, -25.2)"
+    },
+    {
+      "hypothesis_id": "fh-report-qa-agent-v0",
+      "arena": "trust",
+      "rating": 1509.5,
+      "uncertainty": 0.8834,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.765,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "suggest_only_first",
+        "no_auto_block_without_policy"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 9.5,
+      "movement": "rose +9.5 from start 1500 — win vs fh-pdf-word-report-parity-checker (match-trust-001, +9.5)"
+    },
+    {
+      "hypothesis_id": "fh-pdf-word-report-parity-checker",
+      "arena": "trust",
+      "rating": 1490.5,
+      "uncertainty": 0.8834,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 2,
+      "evidence_quality": 0.72,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "report_rendering_scope",
+        "pdf_docx_parity"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -9.5,
+      "movement": "fell -9.5 from start 1500 — loss vs fh-report-qa-agent-v0 (match-trust-001, -9.5)"
+    },
+    {
+      "hypothesis_id": "fh-eval-failure-case-generator",
+      "arena": "eval",
+      "rating": 1519.59,
+      "uncertainty": 0.7837,
+      "matches_count": 2,
+      "wins": 2,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "eval_quality_required",
+        "may_create_noisy_tests"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 19.59,
+      "movement": "rose +19.59 from start 1500 — win vs fh-synthetic-user-playwright-smoke (match-eval-001, +9.79); win vs fh-calculation-sheet-math-regression (match-eval-002, +9.8)"
+    },
+    {
+      "hypothesis_id": "fh-synthetic-user-playwright-smoke",
+      "arena": "eval",
+      "rating": 1490.21,
+      "uncertainty": 0.8803,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "browser_test_flakiness",
+        "scope_to_smoke_first"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -9.79,
+      "movement": "fell -9.79 from start 1500 — loss vs fh-eval-failure-case-generator (match-eval-001, -9.79)"
+    },
+    {
+      "hypothesis_id": "fh-calculation-sheet-math-regression",
+      "arena": "eval",
+      "rating": 1490.2,
+      "uncertainty": 0.8772,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.675,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "math_rendering_regression",
+        "report_scope"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -9.8,
+      "movement": "fell -9.8 from start 1500 — loss vs fh-eval-failure-case-generator (match-eval-002, -9.8)"
+    },
+    {
+      "hypothesis_id": "fh-result-evidence-trace-panel",
+      "arena": "product",
+      "rating": 1508.64,
+      "uncertainty": 0.8929,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.72,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "ui_scope",
+        "trace_data_required"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 8.64,
+      "movement": "rose +8.64 from start 1500 — win vs fh-user-feedback-micro-form (match-product-001, +8.64)"
+    },
+    {
+      "hypothesis_id": "fh-user-feedback-micro-form",
+      "arena": "product",
+      "rating": 1491.36,
+      "uncertainty": 0.8929,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "privacy_redaction_required",
+        "feedback_quality_noise"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -8.64,
+      "movement": "fell -8.64 from start 1500 — loss vs fh-result-evidence-trace-panel (match-product-001, -8.64)"
+    },
+    {
+      "hypothesis_id": "fh-feature-hypothesis-arena-v0",
+      "arena": "moat",
+      "rating": 1500,
+      "uncertainty": 0.9428,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 0,
+      "draws": 1,
+      "evidence_count": 1,
+      "evidence_quality": 0.855,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "not_roadmap_manager",
+        "read_only_first",
+        "anti_goodhart_required"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 0,
+      "movement": "held 0 from start 1500 — draw vs fh-human-review-capture-form (match-moat-001, +0)"
+    },
+    {
+      "hypothesis_id": "fh-human-review-capture-form",
+      "arena": "moat",
+      "rating": 1500,
+      "uncertainty": 0.9428,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 0,
+      "draws": 1,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "privacy_redaction_required",
+        "professional_review_boundary"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 0,
+      "movement": "held 0 from start 1500 — draw vs fh-feature-hypothesis-arena-v0 (match-moat-001, +0)"
+    },
+    {
+      "hypothesis_id": "fh-release-risk-score",
+      "arena": "effort",
+      "rating": 1511.16,
+      "uncertainty": 0.8658,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 2,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "read_only_first",
+        "no_auto_deploy"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 11.16,
+      "movement": "rose +11.16 from start 1500 — win vs fh-agent-cost-latency-monitor (match-effort-001, +11.16)"
+    },
+    {
+      "hypothesis_id": "fh-agent-cost-latency-monitor",
+      "arena": "effort",
+      "rating": 1488.84,
+      "uncertainty": 0.8658,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 1,
+      "draws": 0,
+      "evidence_count": 1,
+      "evidence_quality": 0.81,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "observability_required",
+        "do_not_log_sensitive_content"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -11.16,
+      "movement": "fell -11.16 from start 1500 — loss vs fh-release-risk-score (match-effort-001, -11.16)"
+    },
+    {
+      "hypothesis_id": "fh-aisc-verified-source-guardrail",
+      "arena": "international",
+      "rating": 1510.66,
+      "uncertainty": 0.8711,
+      "matches_count": 1,
+      "wins": 1,
+      "losses": 0,
+      "draws": 0,
+      "evidence_count": 2,
+      "evidence_quality": 0.856,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "professional_review_boundary",
+        "aisc_verified_source_required",
+        "may_increase_warnings"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": 10.66,
+      "movement": "rose +10.66 from start 1500 — win vs fh-international-shell-language-regression-pack (match-international-001, +10.66)"
+    },
+    {
+      "hypothesis_id": "fh-norwegian-mode-regression-pack",
+      "arena": "international",
+      "rating": 1499.6,
+      "uncertainty": 0.8451,
+      "matches_count": 1,
+      "wins": 0,
+      "losses": 0,
+      "draws": 1,
+      "evidence_count": 1,
+      "evidence_quality": 0.902,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "preserve_norwegian_mode",
+        "i18n_regression"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -0.4,
+      "movement": "fell -0.4 from start 1500 — draw vs fh-international-shell-language-regression-pack (match-international-002, -0.4)"
+    },
+    {
+      "hypothesis_id": "fh-international-shell-language-regression-pack",
+      "arena": "international",
+      "rating": 1489.75,
+      "uncertainty": 0.7511,
+      "matches_count": 2,
+      "wins": 0,
+      "losses": 1,
+      "draws": 1,
+      "evidence_count": 1,
+      "evidence_quality": 0.902,
+      "last_reviewed_at": null,
+      "risk_flags": [
+        "i18n_regression",
+        "standard_language_separation"
+      ],
+      "human_decision_status": "not_decided",
+      "delta_from_start": -10.25,
+      "movement": "fell -10.25 from start 1500 — loss vs fh-aisc-verified-source-guardrail (match-international-001, -10.66); draw vs fh-norwegian-mode-regression-pack (match-international-002, +0.4)"
+    }
+  ]
+}
