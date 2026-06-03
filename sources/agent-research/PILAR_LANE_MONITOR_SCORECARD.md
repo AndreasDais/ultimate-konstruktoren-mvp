@@ -1,7 +1,7 @@
 # PILAR Lane Monitor Scorecard
 
 **Status:** Current monitor snapshot
-**Date:** 2026-06-02
+**Date:** 2026-06-03
 **Scope:** Coordination only
 **Primary protocol:** `sources/agent-research/PILAR_LANE_MONITOR_PROTOCOL.md`
 **Primary plan:** `sources/agent-research/WORLD_CLASS_AGENT_ECOSYSTEM_50_SPRINT_PLAN.md`
@@ -13,24 +13,24 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main clean/synced @ 48fac24
-Runtime track:       EC3 Capacity & Utilization v1 complete (#54-#58, #60, #63)
-UI track:            EC3 preliminary capacity screening card complete (#59)
-QA/Eval track:       EC3/AISC evidence complete (#61); launch + post-launch browser checks GREEN
-Ops/Monitor:         launch operator checklist complete (#65); post-launch watch GREEN
-Open PR branches:    none outstanding after PR #65 cleanup
-Post-launch canary:  GREEN after PR #65
+Integrator checkout: main clean/synced @ a6416c1
+Runtime track:       EC3 complete; P1-a/P1-b report/PDF fixes live (#67-#70)
+UI track:            EC3 card complete; P1-c /heim CTA fix live (#59, #71)
+QA/Eval track:       final paid-user regression sweep GREEN
+Ops/Monitor:         launch operator checklist complete; P1 closeout GREEN
+Open PR branches:    none outstanding after PR #71 cleanup
+Post-launch canary:  GREEN after PR #71; launch decision GO
 ```
 
 ## 2. Lane Status
 
 | Lane | Latest known sprint / track | Latest known integration | Monitor verdict | Next allowed action |
 |---|---|---|---|---|
-| Integrator | Launch execution / post-launch watch | `48fac24` main clean/synced after PR #65 | DONE | monitor stop-the-line criteria |
-| Chat B / Runtime | EC3 helper, guards, wiring, labels, persistence, report polish, incomplete-run tolerance | PR #54, #55, #56, #57, #58, #60, #63 integrated on main | DONE | wait for new Runtime task |
-| UI / Features | EC3 preliminary capacity screening card | PR #59 integrated on main | DONE | wait for new UI task |
-| Smarten / QA/Eval | EC3/AISC fixture + browser launch/post-launch checks | PR #61 integrated; PR #63 recheck GREEN; post-launch canary GREEN | DONE | no action |
-| Ops / Monitor | launch operator checklist + post-launch watch | PR #65 integrated; browser canary GREEN | DONE | commit scorecard after review |
+| Integrator | Launch execution / P1 closeout | `a6416c1` main clean/synced after PR #71 | DONE | monitor stop-the-line criteria |
+| Chat B / Runtime | EC3 complete; P1-a report idempotency; P1-b PDF endpoints | PR #54-#58, #60, #63, #67-#70 integrated on main | DONE | wait for new Runtime task |
+| UI / Features | EC3 card; P1-c `/heim` CTA routing | PR #59 and PR #71 integrated on main | DONE | P3 polish only, not launch-gating |
+| Smarten / QA/Eval | EC3/AISC fixture + final paid-user regression sweep | PR #61 integrated; final production sweep GREEN on `a6416c1` | DONE | no action |
+| Ops / Monitor | launch checklist + post-launch/P1 scorecard | PR #65 integrated; P1 closeout GREEN | DONE | commit scorecard after review |
 
 ## 3. Completed EC3 Capacity & Utilization v1 Track
 
@@ -45,7 +45,7 @@ PR #60 EC3 report polish integrated on main.
 PR #61 QA/Eval evidence integrated on main.
 PR #63 incomplete/stalled report tolerance integrated on main.
 
-Final main state: clean/synced @ 48fac24.
+Final main state after P1 closeout: clean/synced @ a6416c1.
 Post-merge canary: GREEN.
 Open PR branches outstanding: none.
 QA/Eval final verdict: GREEN.
@@ -113,7 +113,89 @@ Mutating DB work: none.
 Final post-launch watch verdict: GREEN.
 ```
 
-## 6. Evidence Register
+## 6. P1 Paid-User Closeout GREEN
+
+```txt
+Final main/prod commit: a6416c1.
+Local main == origin/main: YES.
+Worktree clean: YES.
+Open PRs: 0.
+Launch decision: GO.
+
+P1-a idempotent report generation: FIXED and live.
+P1-b PDF downloads: FIXED and live.
+- calculation PDF fixed.
+- full-report PDF fixed.
+- serverless-safe PDF endpoint fixed.
+P1-c /heim CTA routing: FIXED and live.
+
+Final paid-user regression sweep verdict: GREEN.
+Perspective: strict 60-70-year-old Norwegian paying customer.
+```
+
+Production QA evidence:
+
+```txt
+Routes tested:
+- /heim
+- /pilot
+- /rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117
+- /rapport/7d5f682b-8f9a-4af4-80e7-cb6c806aaf0a
+- /rapport/9a94617f
+- /rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117/feedback
+
+/heim primary CTA: routes to /pilot, not /international.
+/pilot start flow: works and routes to /.
+/international: remains available.
+
+PDF endpoint:
+- /api/rapport/2a3cb85e-073a-458c-98e4-8a2bc924b117/pdf
+- HTTP 200.
+- Content-Type: application/pdf.
+- Attachment filename: PILAR-2A3CB85E.pdf.
+- Body prefix: %PDF-1.4.
+- Size: 42,314 bytes.
+
+Word export: HTTP 200, DOCX attachment.
+Duplicate report save race: not observed.
+Failed to save report: not observed.
+Feil ved generering on completed reports: not observed.
+Degraded/missing report: renders gracefully.
+Console errors: none.
+Next error overlay: none.
+App crash strings: none.
+```
+
+Trust and safety:
+
+```txt
+AISC remains demand/LTB diagnostic only.
+AISC capacity card: NO.
+AISC eta/utilization: NO.
+Mb,Rd: NO.
+Adequacy claim: NO.
+DCR computed output: NO; only out-of-scope disclaimer.
+EC3 remains preliminary/provisional.
+Final professional approval/pass/fail wording: NO.
+Professional review requirement: visible.
+```
+
+Remaining non-blocking P3 polish:
+
+```txt
+P3: mobile /heim hero has about 34px horizontal overflow at 375px due to the
+    long word "konstruksjonsproblem.".
+P3: /pilot Norwegian "Vilkar for bruk" label links to /terms instead of /vilkar.
+P3: minor unconfirmed "Vis eksempelinput" behavior worth a glance.
+```
+
+Evidence path:
+
+```txt
+C:\Users\rayma\AppData\Local\Temp\pilar-final-sweep\
+```
+
+## 7. Evidence Register
 
 Blessed evidence used for the final QA/Eval verdict:
 
@@ -131,7 +213,7 @@ Stale prior-run EC3/AISC evidence:
 Deleted after inventory as superseded by the blessed committed PR #61 evidence.
 ```
 
-## 7. Material Flags
+## 8. Material Flags
 
 ```txt
 EC3 v1 scope: preliminary cross-section capacity screening only.
@@ -143,11 +225,16 @@ Final compliance/pass/fail wording: NO.
 PR #61 source changes: none; QA/Eval evidence only.
 PR #63 behavior: graceful incomplete/stalled report handling only.
 PR #65 source changes: none; release/ops docs only.
+PR #67 behavior: calculation PDF download fix only.
+PR #68 behavior: idempotent report generation only.
+PR #69 behavior: full-report PDF link/route wiring only.
+PR #70 behavior: serverless-safe full-report PDF generation only.
+PR #71 behavior: /heim CTA routes to /pilot only.
 DB/Supabase/SQL/repair/db push/db push --dry-run: not run.
 Mutating DB work: none.
 ```
 
-## 8. Monitor Decision Rules
+## 9. Monitor Decision Rules
 
 ```txt
 GREEN  - exact next sprint, lane-owned files, gates reported, no safety drift.
@@ -156,7 +243,7 @@ RED    - boundary/safety violation, cross-lane edit, hidden evidence, or dirty s
 DONE   - track completed with closeout; lane must stop or await a new plan.
 ```
 
-## 9. Progress Meters
+## 10. Progress Meters
 
 This is a qualitative monitor read, not a release gate:
 
@@ -176,16 +263,16 @@ The launch-readiness loop also closed a real degraded-path P1: incomplete
 reports no longer hard-crash, do not fabricate capacity/comparison rows, and do
 not show approval/status when agent data is partial.
 
-The post-launch loop closed the last monitoring uncertainty: live browser
-hydration across public and report routes is GREEN with zero console/page
-errors.
+The P1 closeout loop closed the launch-critical paid-user issues: idempotent
+report loading, real PDF downloads, and the Norwegian /heim start CTA are all
+GREEN in production.
 
 The remaining gap to 1000/1000 is not more bravado; it is repeatable evidence:
 automated freshness checks, durable dashboards, and policy-backed autonomous
 stop/go decisions across every lane.
 ```
 
-## 10. Previously Completed Track
+## 11. Previously Completed Track
 
 English-report integrity is already closed out and remains DONE:
 
@@ -204,13 +291,13 @@ PR #51 prompt behavior change: intentional and scoped to English prose contract.
 PR #52 source changes: none; QA evidence only.
 ```
 
-## 11. Next Integrator Recommendation
+## 12. Next Integrator Recommendation
 
 ```txt
 Do not start a new implementation lane from stale context.
 
 Next safe step:
-1. Commit this post-launch monitor scorecard refresh.
+1. Commit this P1 closeout monitor scorecard refresh.
 2. Stay in launch watch mode and only open new implementation work after a
    deliberate lane-selection prompt:
    - UI/Features for P2/P3 product polish
