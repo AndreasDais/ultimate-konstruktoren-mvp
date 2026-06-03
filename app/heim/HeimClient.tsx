@@ -270,7 +270,7 @@ export default function HeimClient({
               <em>{t.leadEm}</em>
             </p>
             <div className="hero__cta">
-              <Link className="btn btn--primary" href="/international">
+              <Link className="btn btn--primary" href="/pilot">
                 {t.startCta}
               </Link>
               <a className="btn btn--secondary" href="#how">
