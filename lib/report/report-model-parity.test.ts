@@ -203,10 +203,16 @@ describe("report model parity across report surfaces", () => {
     expect(page).toContain('data-report-ready="true"');
     expect(page).not.toContain("onClick={handlePdfPrint}");
 
-    expect(pdfRoute).toContain('const url = `${origin}/rapport/${run_id}?print=1&locale=${locale}`;');
-    expect(pdfRoute).toContain('[data-report-ready="true"]');
+    expect(pdfRoute).toContain(
+      'from "@/lib/report/build-report-model"',
+    );
+    expect(pdfRoute).toContain("const model = buildReportModel(");
+    expect(pdfRoute).toContain("validateReportModel(model)");
+    expect(pdfRoute).toContain("buildReportPdfBytes(model)");
     expect(pdfRoute).toContain('"Content-Type": "application/pdf"');
     expect(pdfRoute).toContain('"Content-Disposition": `attachment; filename="${filename}.pdf"`');
+    expect(pdfRoute).not.toContain("puppeteer");
+    expect(pdfRoute).not.toContain("@sparticuz/chromium");
   });
 
   it("renders full web and Word prose from the same ReportModel text fields", () => {
