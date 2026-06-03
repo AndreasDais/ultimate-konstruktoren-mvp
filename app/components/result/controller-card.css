@@ -153,6 +153,18 @@
   height: 7px;
   border-radius: 50%;
   background: currentColor;
+  /* Pustande live-prikk — same rytme (2.6s) som statusprikkane på /heim
+     (.lp .demo__verdict-dot) og /international (.intl-badge__dot).
+     currentColor → haloen følgjer tone-fargen (ok/warn/bad/info). */
+  animation: cdDotBreathe 2.6s ease-in-out infinite, cdDotHalo 2.6s ease-out infinite;
+}
+@keyframes cdDotBreathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.8); }
+}
+@keyframes cdDotHalo {
+  0%        { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 38%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent); }
 }
 
 .cd__verdict {
@@ -623,7 +635,8 @@ button.cd-group__hd {
 
 /* === REDUCED MOTION ======================================= */
 @media (prefers-reduced-motion: reduce) {
-  .cd {
+  .cd,
+  .cd-pill__dot {
     animation: none;
   }
   .cd-collapse {
