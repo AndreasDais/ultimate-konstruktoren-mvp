@@ -1,7 +1,7 @@
 # PILAR Lane Monitor Scorecard
 
 **Status:** Current monitor snapshot
-**Date:** 2026-06-03
+**Date:** 2026-06-04
 **Scope:** Coordination only
 **Primary protocol:** `sources/agent-research/PILAR_LANE_MONITOR_PROTOCOL.md`
 **Primary plan:** `sources/agent-research/WORLD_CLASS_AGENT_ECOSYSTEM_50_SPRINT_PLAN.md`
@@ -13,24 +13,26 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main clean/synced @ a6416c1
+Integrator checkout: main clean/synced @ 794da25
 Runtime track:       EC3 complete; P1-a/P1-b report/PDF fixes live (#67-#70)
 UI track:            EC3 card complete; P1-c /heim CTA fix live (#59, #71)
 QA/Eval track:       final paid-user regression sweep GREEN
-Ops/Monitor:         launch operator checklist complete; P1 closeout GREEN
-Open PR branches:    none outstanding after PR #71 cleanup
-Post-launch canary:  GREEN after PR #71; launch decision GO
+Feature Arena:       v0 complete; 35.0-35.5 landed (#75-#82)
+Ops/Monitor:         launch operator checklist complete; P1 and Feature Arena closeout GREEN
+Open PR branches:    none outstanding after PR #82 cleanup
+Post-launch canary:  GREEN after PR #82; launch decision GO
 ```
 
 ## 2. Lane Status
 
 | Lane | Latest known sprint / track | Latest known integration | Monitor verdict | Next allowed action |
 |---|---|---|---|---|
-| Integrator | Launch execution / P1 closeout | `a6416c1` main clean/synced after PR #71 | DONE | monitor stop-the-line criteria |
+| Integrator | Launch execution / Feature Arena 35.x closeout | `794da25` main clean/synced after PR #82 | DONE | monitor stop-the-line criteria |
 | Chat B / Runtime | EC3 complete; P1-a report idempotency; P1-b PDF endpoints | PR #54-#58, #60, #63, #67-#70 integrated on main | DONE | wait for new Runtime task |
 | UI / Features | EC3 card; P1-c `/heim` CTA routing | PR #59 and PR #71 integrated on main | DONE | P3 polish only, not launch-gating |
 | Smarten / QA/Eval | EC3/AISC fixture + final paid-user regression sweep | PR #61 integrated; final production sweep GREEN on `a6416c1` | DONE | no action |
-| Ops / Monitor | launch checklist + post-launch/P1 scorecard | PR #65 integrated; P1 closeout GREEN | DONE | commit scorecard after review |
+| Feature Arena | v0 file-based hypothesis arena | PR #75-#82 integrated on main; 35.0-35.5 complete | DONE | await explicit next arena/admin direction |
+| Ops / Monitor | launch checklist + post-launch/P1/Feature Arena scorecards | PR #65 integrated; Feature Arena closeout GREEN | DONE | commit scorecard after review |
 
 ## 3. Completed EC3 Capacity & Utilization v1 Track
 
@@ -195,7 +197,61 @@ Evidence path:
 C:\Users\rayma\AppData\Local\Temp\pilar-final-sweep\
 ```
 
-## 7. Evidence Register
+## 7. Feature Arena v0 Closeout GREEN
+
+```txt
+Final main/prod commit: 794da25.
+Local main == origin/main: YES.
+Worktree clean: YES.
+Open PRs: 0.
+Post-merge canary: GREEN.
+
+Feature Arena v0 status: COMPLETE.
+Launch decision: GO.
+```
+
+Integrated Feature Arena sprints:
+
+```txt
+Sprint 35.0 scaffold: landed.
+Sprint 35.1 seed data: landed.
+Sprint 35.2 Elo rating engine: landed.
+Sprint 35.3 pairwise judge prompts/sample matches: landed.
+Sprint 35.4 validator: landed.
+Sprint 35.5 read-only leaderboard snapshot: landed.
+```
+
+Feature Arena v0 safety/truth conditions:
+
+```txt
+No DB/Supabase CLI/SQL/repair/db push/db push --dry-run: not run.
+Mutating DB work: none.
+Auto-roadmap behavior: none.
+Auto-implementation behavior: none.
+build_next decision: none.
+Human remains final: YES.
+```
+
+Feature Arena v0 artifacts now on main:
+
+```txt
+sources/feature-arena/                  definitions, templates, safety policy, non-goals, prompts
+qa/feature-arena/                       seed data, sample matches, validator cases, snapshots
+lib/feature-arena/                      deterministic Elo/rating engine
+scripts/validate-feature-arena.mjs      read-only validator
+scripts/build-feature-arena-leaderboard.mjs read-only snapshot builder
+```
+
+Final 35.x monitor verdict:
+
+```txt
+GREEN. Feature Arena v0 is complete as a file-based, read-only hypothesis
+arena. It can structure hypotheses, evidence, matches, ratings, validation, and
+leaderboard snapshots, but it cannot decide roadmap priority, auto-implement,
+auto-merge, auto-deploy, edit prompts, or change database state.
+```
+
+## 8. Evidence Register
 
 Blessed evidence used for the final QA/Eval verdict:
 
@@ -213,7 +269,7 @@ Stale prior-run EC3/AISC evidence:
 Deleted after inventory as superseded by the blessed committed PR #61 evidence.
 ```
 
-## 8. Material Flags
+## 9. Material Flags
 
 ```txt
 EC3 v1 scope: preliminary cross-section capacity screening only.
@@ -234,7 +290,7 @@ DB/Supabase/SQL/repair/db push/db push --dry-run: not run.
 Mutating DB work: none.
 ```
 
-## 9. Monitor Decision Rules
+## 10. Monitor Decision Rules
 
 ```txt
 GREEN  - exact next sprint, lane-owned files, gates reported, no safety drift.
@@ -243,7 +299,7 @@ RED    - boundary/safety violation, cross-lane edit, hidden evidence, or dirty s
 DONE   - track completed with closeout; lane must stop or await a new plan.
 ```
 
-## 10. Progress Meters
+## 11. Progress Meters
 
 This is a qualitative monitor read, not a release gate:
 
@@ -267,12 +323,16 @@ The P1 closeout loop closed the launch-critical paid-user issues: idempotent
 report loading, real PDF downloads, and the Norwegian /heim start CTA are all
 GREEN in production.
 
+The Feature Arena 35.x loop is also closed: scaffold, seed data, Elo engine,
+judge prompts, validator, and read-only leaderboard snapshots are all on main
+with human-final and no-auto-roadmap constraints intact.
+
 The remaining gap to 1000/1000 is not more bravado; it is repeatable evidence:
 automated freshness checks, durable dashboards, and policy-backed autonomous
 stop/go decisions across every lane.
 ```
 
-## 11. Previously Completed Track
+## 12. Previously Completed Track
 
 English-report integrity is already closed out and remains DONE:
 
@@ -291,15 +351,17 @@ PR #51 prompt behavior change: intentional and scoped to English prose contract.
 PR #52 source changes: none; QA evidence only.
 ```
 
-## 12. Next Integrator Recommendation
+## 13. Next Integrator Recommendation
 
 ```txt
 Do not start a new implementation lane from stale context.
 
 Next safe step:
-1. Commit this P1 closeout monitor scorecard refresh.
+1. Commit this Feature Arena 35.x closeout monitor scorecard refresh.
 2. Stay in launch watch mode and only open new implementation work after a
    deliberate lane-selection prompt:
+   - Agent LiveOps Sprint 36 for admin observability/scaffold work
+   - RESONANS R1 for Vaktar policy/sample reviews
    - UI/Features for P2/P3 product polish
    - Runtime/Debug for the next verified calculation capability
    - Smarten/Premium QA for a new paid-engineer audit
