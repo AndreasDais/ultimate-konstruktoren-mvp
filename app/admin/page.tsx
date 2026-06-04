@@ -44,6 +44,14 @@ const COPY: Record<Locale, {
         status: "Ny",
       },
       {
+        title: "Agent LiveOps",
+        href: "/admin/agent-liveops",
+        eyebrow: "Agentovervåking",
+        description:
+          "Skrivebeskyttet visning av saniterte agent-hendelser og overleveringer fra kjøringer.",
+        status: "Mock",
+      },
+      {
         title: "Feilrapporter",
         href: "/admin/error-reports",
         eyebrow: "Kvalitetskontroll",
@@ -85,6 +93,14 @@ const COPY: Record<Locale, {
         description:
           "Dagleg analyse av pipeline, forslag, kostnad, prising, marknadssignal og forbetringsloop.",
         status: "Ny",
+      },
+      {
+        title: "Agent LiveOps",
+        href: "/admin/agent-liveops",
+        eyebrow: "Agentovervaking",
+        description:
+          "Skrivebeskytta vising av saniterte agent-hendingar og overleveringar frå køyringar.",
+        status: "Mock",
       },
       {
         title: "Feilrapportar",
