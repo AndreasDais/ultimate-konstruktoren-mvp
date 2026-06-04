@@ -385,7 +385,10 @@
 .graphSurface {
   position: relative;
   min-height: 560px;
-  overflow: hidden;
+  /* Node coords are tuned for a ~1240px field (see .nodeLayer min-width).
+     Guarantee that width and scroll horizontally on narrower viewports so
+     cards never clip at the edges or crowd together. */
+  overflow: auto hidden;
   border-radius: 0 0 var(--r-md) var(--r-md);
   background:
     linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
@@ -401,6 +404,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
+  min-width: 1240px;
   height: 100%;
 }
 
@@ -452,6 +456,7 @@
 .nodeLayer {
   position: absolute;
   inset: 0;
+  min-width: 1240px;
 }
 
 .nodePosition {
@@ -645,8 +650,8 @@
 }
 
 .inspectorPanel {
-  position: sticky;
-  top: 72px;
+  /* Not sticky: it shares the right column with the event feed below it, so
+     a sticky inspector slides down over the feed and hides it on scroll. */
   overflow: hidden;
 }
 
@@ -829,6 +834,7 @@
     display: grid;
     gap: 10px;
     padding: 14px;
+    min-width: 0;
   }
 
   .edgeLayer {
