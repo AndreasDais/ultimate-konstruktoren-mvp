@@ -7,6 +7,8 @@ import {
   AGENT_LIVEOPS_SAFE_SELECTS,
   buildAgentLiveOpsEventsFromReader,
   buildAgentLiveOpsEventsFromRows,
+  createSupabaseAgentLiveOpsReader,
+  readAgentLiveOpsRowsFromReader,
   type AgentLiveOpsLiveEventReader,
   type AgentLiveOpsLiveRows,
 } from "./live-event-adapter";
@@ -147,6 +149,80 @@ function jsonl(events: unknown[]): string {
   return events.map((event) => JSON.stringify(event)).join("\n");
 }
 
+type QueryCall = {
+  table: string;
+  select?: string;
+  eq: Array<[string, unknown]>;
+  order?: [string, unknown];
+};
+
+type TableResult = {
+  single?: unknown | null;
+  many?: unknown[];
+  error?: unknown;
+};
+
+function makeSupabaseReaderMock(results: Record<string, TableResult>) {
+  const calls: QueryCall[] = [];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table, eq: [] };
+        calls.push(call);
+        const chain = {
+          select(select: string) {
+            call.select = select;
+            return chain;
+          },
+          eq(column: string, value: unknown) {
+            call.eq.push([column, value]);
+            return chain;
+          },
+          order(column: string, options: unknown) {
+            call.order = [column, options];
+            return chain;
+          },
+          maybeSingle() {
+            const result = results[table] ?? {};
+            return Promise.resolve({
+              data: result.single ?? null,
+              error: result.error ?? null,
+            });
+          },
+          then(
+            resolve: (value: { data: unknown[] | null; error: unknown }) => unknown,
+            reject: (reason?: unknown) => unknown,
+          ) {
+            const result = results[table] ?? {};
+            return Promise.resolve({
+              data: result.many ?? [],
+              error: result.error ?? null,
+            }).then(resolve, reject);
+          },
+        };
+        return chain;
+      },
+    },
+  };
+}
+
+function supabaseRowsFromSample(
+  rows = sampleRows(),
+): Record<string, TableResult> {
+  return {
+    calculation_runs: { single: rows.run },
+    input_reviews: { single: rows.inputReview },
+    agent_outputs: { many: rows.agentOutputs },
+    comparisons: { single: rows.comparison },
+    controller_decisions: { single: rows.controllerDecision },
+    reports: { single: rows.report },
+    step_metrics: { many: rows.stepMetrics },
+    step_messages: { many: rows.stepMessages },
+  };
+}
+
 describe("Agent LiveOps live event adapter contract", () => {
   it("locks exact safe select strings", () => {
     expect(AGENT_LIVEOPS_SAFE_SELECTS).toMatchInlineSnapshot(`
@@ -236,6 +312,78 @@ describe("Agent LiveOps live event adapter contract", () => {
       runId: RUN_ID,
       select: AGENT_LIVEOPS_SAFE_SELECTS.stepMessages,
     });
+  });
+
+  it("builds a Supabase reader using only exact safe selects", async () => {
+    const service = makeSupabaseReaderMock(supabaseRowsFromSample());
+    const reader = createSupabaseAgentLiveOpsReader(
+      service.client as unknown as Parameters<typeof createSupabaseAgentLiveOpsReader>[0],
+    );
+
+    const rows = await readAgentLiveOpsRowsFromReader(reader, RUN_ID);
+
+    expect(rows?.run?.id).toBe(RUN_ID);
+    expect(service.calls.map((call) => [call.table, call.select])).toEqual(
+      expect.arrayContaining([
+        ["calculation_runs", AGENT_LIVEOPS_SAFE_SELECTS.run],
+        ["input_reviews", AGENT_LIVEOPS_SAFE_SELECTS.inputReview],
+        ["agent_outputs", AGENT_LIVEOPS_SAFE_SELECTS.agentOutputs],
+        ["comparisons", AGENT_LIVEOPS_SAFE_SELECTS.comparison],
+        ["controller_decisions", AGENT_LIVEOPS_SAFE_SELECTS.controllerDecision],
+        ["reports", AGENT_LIVEOPS_SAFE_SELECTS.report],
+        ["step_metrics", AGENT_LIVEOPS_SAFE_SELECTS.stepMetrics],
+        ["step_messages", AGENT_LIVEOPS_SAFE_SELECTS.stepMessages],
+      ]),
+    );
+    expect(service.calls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          table: "step_metrics",
+          order: ["created_at", { ascending: true }],
+        }),
+        expect.objectContaining({
+          table: "step_messages",
+          order: ["created_at", { ascending: true }],
+        }),
+      ]),
+    );
+
+    const selectedFields = service.calls.map((call) => call.select).join("\n");
+    expect(selectedFields).not.toMatch(/raw_message|raw_text|structured_output|input_payload|output_text|executive_summary|technical_assessment|conclusion|provider_payload|stack_trace|chain_of_thought/i);
+  });
+
+  it("returns null for an unknown run without inventing downstream progress", async () => {
+    const service = makeSupabaseReaderMock({
+      ...supabaseRowsFromSample(),
+      calculation_runs: { single: null },
+    });
+    const reader = createSupabaseAgentLiveOpsReader(
+      service.client as unknown as Parameters<typeof createSupabaseAgentLiveOpsReader>[0],
+    );
+
+    await expect(readAgentLiveOpsRowsFromReader(reader, RUN_ID)).resolves.toBeNull();
+    expect(service.calls.map((call) => call.table)).toEqual(["calculation_runs"]);
+  });
+
+  it("normalizes Supabase read failures without leaking raw error details", async () => {
+    const service = makeSupabaseReaderMock({
+      ...supabaseRowsFromSample(),
+      step_metrics: {
+        error: new Error(
+          "SUPABASE_SERVICE_ROLE_KEY stack raw_message provider envelope",
+        ),
+      },
+    });
+    const reader = createSupabaseAgentLiveOpsReader(
+      service.client as unknown as Parameters<typeof createSupabaseAgentLiveOpsReader>[0],
+    );
+
+    await expect(readAgentLiveOpsRowsFromReader(reader, RUN_ID)).rejects.toThrow(
+      "agent_liveops_read_failed",
+    );
+    await expect(readAgentLiveOpsRowsFromReader(reader, RUN_ID)).rejects.not.toThrow(
+      /SUPABASE_SERVICE_ROLE_KEY|stack|raw_message|provider envelope/i,
+    );
   });
 
   it("rejects unsafe injected rows before building events", () => {

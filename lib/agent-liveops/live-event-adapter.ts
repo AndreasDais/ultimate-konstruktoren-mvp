@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   AGENT_LIVEOPS_SCHEMA_VERSION,
   type AgentLiveOpsEvent,
@@ -169,6 +170,16 @@ export type AgentLiveOpsLiveEventReader = {
     runId: string;
     select: typeof AGENT_LIVEOPS_SAFE_SELECTS.stepMessages;
   }): Promise<AgentLiveOpsStepMessageMetaRow[]>;
+};
+
+type SupabaseMaybeSingleResult<T> = {
+  data: T | null;
+  error: unknown;
+};
+
+type SupabaseManyResult<T> = {
+  data: T[] | null;
+  error: unknown;
 };
 
 const FORBIDDEN_KEYS = new Set([
@@ -411,6 +422,167 @@ function messageMetadataByStep(
     if (key && !map.has(key)) map.set(key, row);
   }
   return map;
+}
+
+function hasReadError(error: unknown): boolean {
+  return error !== null && error !== undefined;
+}
+
+async function readMaybeSingle<T>(
+  query: PromiseLike<SupabaseMaybeSingleResult<T>>,
+): Promise<T | null> {
+  const { data, error } = await query;
+  if (hasReadError(error)) {
+    throw new Error("agent_liveops_read_failed");
+  }
+  return data ?? null;
+}
+
+async function readMany<T>(
+  query: PromiseLike<SupabaseManyResult<T>>,
+): Promise<T[]> {
+  const { data, error } = await query;
+  if (hasReadError(error)) {
+    throw new Error("agent_liveops_read_failed");
+  }
+  return data ?? [];
+}
+
+export function createSupabaseAgentLiveOpsReader(
+  supabase: SupabaseClient,
+): AgentLiveOpsLiveEventReader {
+  return {
+    readRun({ runId, select }) {
+      return readMaybeSingle<AgentLiveOpsRunRow>(
+        supabase
+          .from("calculation_runs")
+          .select(select)
+          .eq("id", runId)
+          .maybeSingle(),
+      );
+    },
+    readInputReview({ requestId, select }) {
+      if (!requestId) return Promise.resolve(null);
+      return readMaybeSingle<AgentLiveOpsInputReviewRow>(
+        supabase
+          .from("input_reviews")
+          .select(select)
+          .eq("request_id", requestId)
+          .maybeSingle(),
+      );
+    },
+    readAgentOutputs({ runId, select }) {
+      return readMany<AgentLiveOpsAgentOutputRow>(
+        supabase.from("agent_outputs").select(select).eq("run_id", runId),
+      );
+    },
+    readComparison({ runId, select }) {
+      return readMaybeSingle<AgentLiveOpsComparisonRow>(
+        supabase
+          .from("comparisons")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readControllerDecision({ runId, select }) {
+      return readMaybeSingle<AgentLiveOpsControllerDecisionRow>(
+        supabase
+          .from("controller_decisions")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readReport({ runId, select }) {
+      return readMaybeSingle<AgentLiveOpsReportRow>(
+        supabase
+          .from("reports")
+          .select(select)
+          .eq("run_id", runId)
+          .maybeSingle(),
+      );
+    },
+    readStepMetrics({ runId, select }) {
+      return readMany<AgentLiveOpsStepMetricRow>(
+        supabase
+          .from("step_metrics")
+          .select(select)
+          .eq("run_id", runId)
+          .order("created_at", { ascending: true }),
+      );
+    },
+    readStepMessages({ runId, select }) {
+      return readMany<AgentLiveOpsStepMessageMetaRow>(
+        supabase
+          .from("step_messages")
+          .select(select)
+          .eq("run_id", runId)
+          .order("created_at", { ascending: true }),
+      );
+    },
+  };
+}
+
+export async function readAgentLiveOpsRowsFromReader(
+  reader: AgentLiveOpsLiveEventReader,
+  runId: string,
+): Promise<AgentLiveOpsLiveRows | null> {
+  const run = await reader.readRun({
+    runId,
+    select: AGENT_LIVEOPS_SAFE_SELECTS.run,
+  });
+  if (!run) return null;
+
+  const [
+    inputReview,
+    agentOutputs,
+    comparison,
+    controllerDecision,
+    report,
+    stepMetrics,
+    stepMessages,
+  ] = await Promise.all([
+    reader.readInputReview({
+      requestId: run.request_id ?? "",
+      select: AGENT_LIVEOPS_SAFE_SELECTS.inputReview,
+    }),
+    reader.readAgentOutputs({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.agentOutputs,
+    }),
+    reader.readComparison({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.comparison,
+    }),
+    reader.readControllerDecision({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.controllerDecision,
+    }),
+    reader.readReport({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.report,
+    }),
+    reader.readStepMetrics({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.stepMetrics,
+    }),
+    reader.readStepMessages({
+      runId: run.id,
+      select: AGENT_LIVEOPS_SAFE_SELECTS.stepMessages,
+    }),
+  ]);
+
+  return {
+    run,
+    inputReview,
+    agentOutputs,
+    comparison,
+    controllerDecision,
+    report,
+    stepMetrics,
+    stepMessages,
+  };
 }
 
 export function buildAgentLiveOpsEventsFromRows(
@@ -691,59 +863,6 @@ export async function buildAgentLiveOpsEventsFromReader(
   reader: AgentLiveOpsLiveEventReader,
   runId: string,
 ): Promise<AgentLiveOpsEvent[]> {
-  const run = await reader.readRun({
-    runId,
-    select: AGENT_LIVEOPS_SAFE_SELECTS.run,
-  });
-  if (!run) return [];
-
-  const [
-    inputReview,
-    agentOutputs,
-    comparison,
-    controllerDecision,
-    report,
-    stepMetrics,
-    stepMessages,
-  ] = await Promise.all([
-    reader.readInputReview({
-      requestId: run.request_id ?? "",
-      select: AGENT_LIVEOPS_SAFE_SELECTS.inputReview,
-    }),
-    reader.readAgentOutputs({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.agentOutputs,
-    }),
-    reader.readComparison({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.comparison,
-    }),
-    reader.readControllerDecision({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.controllerDecision,
-    }),
-    reader.readReport({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.report,
-    }),
-    reader.readStepMetrics({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.stepMetrics,
-    }),
-    reader.readStepMessages({
-      runId: run.id,
-      select: AGENT_LIVEOPS_SAFE_SELECTS.stepMessages,
-    }),
-  ]);
-
-  return buildAgentLiveOpsEventsFromRows({
-    run,
-    inputReview,
-    agentOutputs,
-    comparison,
-    controllerDecision,
-    report,
-    stepMetrics,
-    stepMessages,
-  });
+  const rows = await readAgentLiveOpsRowsFromReader(reader, runId);
+  return rows ? buildAgentLiveOpsEventsFromRows(rows) : [];
 }
