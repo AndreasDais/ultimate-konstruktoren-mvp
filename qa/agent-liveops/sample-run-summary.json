@@ -1,0 +1,24 @@
+{
+  "run_id": "run-liveops-demo-ec3-001",
+  "standard_profile": "norway_eurocode_ec3_preliminary",
+  "answer_language": "nn",
+  "shell_language": "nb",
+  "event_count": 20,
+  "warning_count": 6,
+  "blocked_count": 0,
+  "artifact_statuses": {
+    "web": "ready",
+    "pdf": "ready",
+    "docx": "ready",
+    "report_qa": "needs_human_review",
+    "feature_arena_evidence": "created_read_only"
+  },
+  "redaction_status": "safe_summary_only",
+  "read_only": true,
+  "human_final": true,
+  "safety_notes": [
+    "No raw prompt, raw user data, unredacted file text, personal data, or chain-of-thought is present.",
+    "EC3 capacity screening remains preliminary and requires qualified professional review.",
+    "Agent LiveOps is read-only and does not approve engineering output."
+  ]
+}
