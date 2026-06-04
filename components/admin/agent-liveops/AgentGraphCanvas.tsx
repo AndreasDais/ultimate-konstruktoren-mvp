@@ -72,7 +72,12 @@ export function AgentGraphCanvas({
         <span>{graph.edges.length} handoffs</span>
       </div>
       <div className={styles.graphSurface}>
-        <svg className={styles.edgeLayer} viewBox="0 0 100 100" aria-hidden="true">
+        <svg
+          className={styles.edgeLayer}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
           {graph.edges.map((edge) => {
             const from = positions.get(edge.source);
             const to = positions.get(edge.target);
