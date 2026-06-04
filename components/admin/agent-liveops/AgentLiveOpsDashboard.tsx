@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   AgentLiveOpsEvent,
@@ -44,6 +44,9 @@ function formatTime(value: string | null) {
 type LiveOpsMode = "mock" | "live";
 type LoadStatus = "idle" | "loading" | "loaded" | "error";
 type LiveDataset = AgentLiveOpsDashboardProps;
+
+// Replay auto-advance cadence (ms per event) — a readable pace, not real-time.
+const REPLAY_STEP_MS = 1100;
 
 const DIAGNOSTIC_ERRORS = {
   notFound: "Run not found",
@@ -98,6 +101,7 @@ export function AgentLiveOpsDashboard(props: AgentLiveOpsDashboardProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     props.timeline.items.at(-1)?.event_id ?? null,
   );
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const eventById = useMemo(
     () => new Map(events.map((event) => [event.event_id, event])),
@@ -107,13 +111,55 @@ export function AgentLiveOpsDashboard(props: AgentLiveOpsDashboardProps) {
   const selectedEvent = selectedEventId ? eventById.get(selectedEventId) ?? null : null;
   const lastUpdated = timeline.run_state.last_updated_at;
 
+  // Auto-advance one event per tick while playing; stops at the last event.
+  // Re-runs on each index change to schedule the next step (no stale closure).
+  useEffect(() => {
+    if (!isPlaying) return;
+    const items = timeline.items;
+    if (activeIndex >= items.length - 1) {
+      setIsPlaying(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const nextIndex = activeIndex + 1;
+      setActiveIndex(nextIndex);
+      setSelectedEventId(items[nextIndex]?.event_id ?? null);
+    }, REPLAY_STEP_MS);
+    return () => clearTimeout(timer);
+  }, [isPlaying, activeIndex, timeline]);
+
+  // Manual event selection (graph/timeline/feed clicks) pauses playback.
   function selectEvent(eventId: string) {
+    setIsPlaying(false);
     setSelectedEventId(eventId);
     const index = timeline.items.findIndex((item) => item.event_id === eventId);
     if (index >= 0) setActiveIndex(index);
   }
 
+  // Slider / step buttons seek and also pause playback.
+  function seekTo(index: number) {
+    setIsPlaying(false);
+    setActiveIndex(index);
+    setSelectedEventId(timeline.items[index]?.event_id ?? null);
+  }
+
+  function togglePlay() {
+    const items = timeline.items;
+    if (items.length <= 1) return;
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
+    }
+    // Pressing play at the last event restarts the replay from the first.
+    if (activeIndex >= items.length - 1) {
+      setActiveIndex(0);
+      setSelectedEventId(items[0]?.event_id ?? null);
+    }
+    setIsPlaying(true);
+  }
+
   function resetSelection(next: AgentLiveOpsTimeline) {
+    setIsPlaying(false);
     setActiveIndex(next.items.length > 0 ? next.items.length - 1 : 0);
     setSelectedEventId(next.items.at(-1)?.event_id ?? null);
   }
@@ -293,7 +339,9 @@ export function AgentLiveOpsDashboard(props: AgentLiveOpsDashboardProps) {
           <ReplayControls
             activeIndex={activeIndex}
             eventCount={timeline.items.length}
-            onChange={setActiveIndex}
+            isPlaying={isPlaying}
+            onChange={seekTo}
+            onTogglePlay={togglePlay}
           />
           <AgentGraphCanvas
             activeEventId={activeItem?.event_id ?? null}
