@@ -13,28 +13,28 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main clean/synced @ a49af60
+Integrator checkout: main clean/synced @ 5f611b8
 Runtime track:       EC3 complete; P1-a/P1-b report/PDF fixes live (#67-#70)
-UI track:            EC3 card complete; P1-c /heim CTA fix live (#59, #71)
+UI track:            EC3 card complete; P1-c /heim CTA fix live; Agent LiveOps admin nav/live-mode UI live (#59, #71, #92-#94)
 QA/Eval track:       final paid-user regression sweep GREEN
 Feature Arena:       v0 complete; 35.0-35.5 landed (#75-#82)
-Agent LiveOps:       36.0-36.3 landed; read-only mock admin UI live (#84-#87)
-Ops/Monitor:         launch operator checklist complete; P1, Feature Arena, and Agent LiveOps closeouts GREEN
-Open PR branches:    none outstanding after PR #87 cleanup
-Post-launch canary:  GREEN after PR #87; launch decision GO
+Agent LiveOps:       36.0-36.4d landed; read-only diagnostic manual live mode GREEN (#84-#90, #92-#94)
+Ops/Monitor:         launch operator checklist complete; P1, Feature Arena, and Agent LiveOps closeouts GREEN through 36.4d
+Open PR branches:    none outstanding after PR #94 cleanup
+Post-launch canary:  GREEN after PR #94; launch decision GO
 ```
 
 ## 2. Lane Status
 
 | Lane | Latest known sprint / track | Latest known integration | Monitor verdict | Next allowed action |
 |---|---|---|---|---|
-| Integrator | Launch execution / Agent LiveOps 36.3 closeout | `a49af60` main clean/synced after PR #87 | DONE | monitor stop-the-line criteria |
+| Integrator | Launch execution / Agent LiveOps 36.4d closeout | `5f611b8` main clean/synced after PR #94 | DONE | monitor stop-the-line criteria |
 | Chat B / Runtime | EC3 complete; P1-a report idempotency; P1-b PDF endpoints | PR #54-#58, #60, #63, #67-#70 integrated on main | DONE | wait for new Runtime task |
 | UI / Features | EC3 card; P1-c `/heim` CTA routing | PR #59 and PR #71 integrated on main | DONE | P3 polish only, not launch-gating |
 | Smarten / QA/Eval | EC3/AISC fixture + final paid-user regression sweep | PR #61 integrated; final production sweep GREEN on `a6416c1` | DONE | no action |
 | Feature Arena | v0 file-based hypothesis arena | PR #75-#82 integrated on main; 35.0-35.5 complete | DONE | await explicit next arena/admin direction |
-| Agent LiveOps | read-only admin observability scaffold | PR #84-#87 integrated on main; 36.0-36.3 complete | DONE | await explicit 36.4 live-adapter plan |
-| Ops / Monitor | launch checklist + post-launch/P1/Feature Arena/Agent LiveOps scorecards | PR #65 integrated; Agent LiveOps 36.0-36.3 closeout GREEN | DONE | commit scorecard after review |
+| Agent LiveOps | read-only admin observability scaffold + manual diagnostic live mode | PR #84-#90 and #92-#94 integrated on main; 36.0-36.4d complete | DONE | await explicit next LiveOps plan |
+| Ops / Monitor | launch checklist + post-launch/P1/Feature Arena/Agent LiveOps scorecards | PR #65 integrated; Agent LiveOps 36.4d closeout GREEN | DONE | commit scorecard after review |
 
 ## 3. Completed EC3 Capacity & Utilization v1 Track
 
@@ -253,16 +253,16 @@ leaderboard snapshots, but it cannot decide roadmap priority, auto-implement,
 auto-merge, auto-deploy, edit prompts, or change database state.
 ```
 
-## 8. Agent LiveOps 36.0-36.3 Closeout GREEN
+## 8. Agent LiveOps 36.0-36.4d Closeout GREEN
 
 ```txt
-Final main/prod commit: a49af60.
+Final main/prod commit: 5f611b8.
 Local main == origin/main: YES.
 Worktree clean: YES.
 Open PRs: 0.
 Post-merge canary: GREEN.
 
-Agent LiveOps status: 36.0-36.3 LANDED.
+Agent LiveOps status: 36.0-36.4d LANDED.
 Launch decision: GO.
 ```
 
@@ -273,18 +273,26 @@ Sprint 36.0 docs/concept: landed.
 Sprint 36.1 mock sanitized events + validator: landed.
 Sprint 36.2 graph/timeline/status helpers: landed.
 Sprint 36.3 read-only admin UI: landed.
-Sprint 36.4 live adapter: NOT STARTED.
+Sprint 36.4a live event adapter contract: landed.
+Sprint 36.4b known-run admin events API: landed.
+Sprint 36.4c authenticated/admin UI verification: GREEN-clean after hydration fix.
+Sprint 36.4d manual diagnostic live mode: landed and production-verified.
 ```
 
-Agent LiveOps 36.3 production state:
+Agent LiveOps 36.4d production state:
 
 ```txt
+/admin shows Agent LiveOps card with Mock badge.
 /admin/agent-liveops exists.
-Admin UI mode: read-only static prototype.
-Data source: sanitized Sprint 36.1 mock/sample events only.
-Live data source: NONE.
-API route changes in 36.3: NONE.
-DB/Supabase/schema/migration/package changes in 36.3: NONE.
+Default admin UI mode: read-only mock/sample events.
+Live diagnostic mode: manual known-run load only.
+Auto-fetch on page load: NO.
+Run-list endpoint: NO.
+Known run 2a3cb85e-073a-458c-98e4-8a2bc924b117: rendered 13 diagnostic events.
+Unknown run: bounded Run not found message.
+React #418 / hydration warnings / page errors: none observed after PR #93.
+API route changes for 36.4d: NONE.
+DB/Supabase/schema/migration/package changes for 36.4d: NONE.
 Prompt changes: NONE.
 ```
 
@@ -298,8 +306,12 @@ UI can edit prompts: NO.
 UI can decide release: NO.
 UI can decide build_next: NO.
 UI can decide roadmap: NO.
+Manual live mode can discover runs: NO.
+Manual live mode can auto-load on page entry: NO.
 Raw user data exposed: NO.
 Chain-of-thought exposed: NO.
+Forbidden DOM scan: CLEAN.
+`prompt` / `chain-of-thought` appearances: negated safety copy only.
 DB/Supabase CLI/SQL/repair/db push/db push --dry-run: not run.
 Mutating DB work: none.
 ```
@@ -312,17 +324,21 @@ qa/agent-liveops/                        36.1 sanitized mock events and invalid 
 scripts/validate-agent-liveops-events.mjs 36.1 read-only validator
 lib/agent-liveops/                       36.2 graph/timeline/status helpers and tests
 app/admin/agent-liveops/                 36.3 protected admin route
-components/admin/agent-liveops/          36.3 read-only admin UI components and CSS module
+app/api/admin/agent-liveops/             36.4b admin-gated known-run events API
+components/admin/agent-liveops/          36.3 UI plus 36.4d manual diagnostic mode
+lib/agent-liveops/live-event-adapter.ts  36.4a server-only safe adapter contract
+lib/agent-liveops/live-api-response.ts   36.4d client fail-closed response parser
 ```
 
-Final 36.0-36.3 monitor verdict:
+Final 36.0-36.4d monitor verdict:
 
 ```txt
-GREEN. Agent LiveOps is live as a read-only, mock-data-backed admin prototype.
-It can visualize sanitized agent-run events and pipeline state, but it cannot
-read live production streams, expose raw user data, reveal chain-of-thought,
-deploy, merge, edit prompts, decide release, decide build_next, decide roadmap,
-or mutate database state.
+GREEN. Agent LiveOps is live as a read-only, mock-default admin observability
+surface with an opt-in manual diagnostic known-run live mode. It can visualize
+sanitized mock events by default and sanitized live diagnostic events after an
+explicit admin runId submit, but it cannot auto-fetch, list runs, expose raw
+user data, reveal chain-of-thought, deploy, merge, edit prompts, decide release,
+decide build_next, decide roadmap, or mutate database state.
 ```
 
 ## 9. Evidence Register
@@ -364,6 +380,11 @@ PR #84 behavior: Agent LiveOps 36.0 docs/concept only.
 PR #85 behavior: Agent LiveOps 36.1 mock sanitized events + validator only.
 PR #86 behavior: Agent LiveOps 36.2 graph/timeline/status helpers only.
 PR #87 behavior: Agent LiveOps 36.3 read-only mock admin UI only.
+PR #89 behavior: Agent LiveOps 36.4a live adapter contract only; not wired.
+PR #90 behavior: Agent LiveOps 36.4b known-run events API only; no UI switch.
+PR #92 behavior: Agent LiveOps admin-home nav card only; Mock badge preserved.
+PR #93 behavior: Agent LiveOps hydration time formatting fix only.
+PR #94 behavior: Agent LiveOps 36.4d manual diagnostic live mode only; no run-list.
 DB/Supabase/SQL/repair/db push/db push --dry-run: not run.
 Mutating DB work: none.
 ```
@@ -405,10 +426,11 @@ The Feature Arena 35.x loop is also closed: scaffold, seed data, Elo engine,
 judge prompts, validator, and read-only leaderboard snapshots are all on main
 with human-final and no-auto-roadmap constraints intact.
 
-The Agent LiveOps 36.0-36.3 loop now gives PILAR a protected, read-only admin
-observability surface backed by sanitized mock events and typed graph/timeline
-helpers. It deliberately stops before live adapters, runtime instrumentation,
-DB writes, or any release/roadmap authority.
+The Agent LiveOps 36.0-36.4d loop now gives PILAR a protected, read-only admin
+observability surface backed by sanitized mock events, typed graph/timeline
+helpers, an admin-gated known-run events API, and a manual diagnostic live mode.
+It deliberately stops before run discovery, auto-live dashboards, runtime
+instrumentation writes, DB writes, or any release/roadmap authority.
 
 The remaining gap to 1000/1000 is not more bravado; it is repeatable evidence:
 automated freshness checks, durable dashboards, and policy-backed autonomous
@@ -440,10 +462,10 @@ PR #52 source changes: none; QA evidence only.
 Do not start a new implementation lane from stale context.
 
 Next safe step:
-1. Commit this Agent LiveOps 36.0-36.3 monitor scorecard refresh.
+1. Commit this Agent LiveOps 36.4d monitor scorecard refresh.
 2. Stay in launch watch mode and only open new implementation work after a
    deliberate lane-selection prompt:
-   - Agent LiveOps Sprint 36.4 for a strictly read-only live adapter plan
+   - Agent LiveOps next sprint only with explicit scope beyond manual diagnostic mode
    - RESONANS R1 for Vaktar policy/sample reviews
    - UI/Features for P2/P3 product polish
    - Runtime/Debug for the next verified calculation capability
