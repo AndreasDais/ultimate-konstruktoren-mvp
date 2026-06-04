@@ -544,10 +544,16 @@
   color: var(--fg);
 }
 .lp .region-modal__body {
-  margin: 0 0 22px;
+  margin: 0 0 10px;
   font-size: 14px;
   line-height: 1.55;
   color: var(--fg-muted);
+}
+.lp .region-modal__helper {
+  margin: 0 0 22px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-faint);
 }
 .lp .region-modal__actions { display: flex; gap: 12px; }
 .lp .region-modal__actions .btn { flex: 1; justify-content: center; }

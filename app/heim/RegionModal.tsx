@@ -5,40 +5,30 @@ import { useRouter } from "next/navigation";
 
 type Lang = "nb" | "en";
 
-const COPY: Record<Lang, {
-  title: string;
-  body: string;
-  norway: string;
-  other: string;
-}> = {
-  nb: {
-    title: "Hvor jobber du?",
-    body: "Vi tilpasser språk og standarder. Du kan endre dette når som helst.",
-    norway: "Norge",
-    other: "Annet område",
-  },
-  en: {
-    title: "Where do you work?",
-    body: "We tailor language and standards. You can change this any time.",
-    norway: "Norway",
-    other: "Other region",
-  },
+/**
+ * Første-besøk region-pop-up. Viser berre når pilar-ui-mode-cookie
+ * manglar (styrt av page.tsx) — altså FØR brukaren har valt region/språk.
+ * Difor er primærteksten engelsk, slik at kven som helst forstår valet,
+ * med ei kort norsk hjelpelinje. Norsk er aldri naudsynt for å forstå
+ * valet. Sjølve valet (og rutinga) er uendra:
+ *   Norway         → pilar-ui-mode=no   (norsk landing)
+ *   Outside Norway → pilar-ui-mode=intl (engelsk landing)
+ * router.refresh() re-rendrar server-komponenten i rett språk. Faktisk
+ * ingeniør-region/standard veljast framleis på /international.
+ */
+const COPY = {
+  title: "Where are you based?",
+  body: "Choose the market so PILAR can show the right entry point.",
+  helper: "Hvor holder du til? Velg marked for riktig inngang.",
+  norway: "Norway",
+  other: "Outside Norway",
 };
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-/**
- * Første-besøk region-pop-up. Viser berre når pilar-ui-mode-cookie
- * manglar (styrt av page.tsx). Valet set cookien heile appen les:
- *   Noreg        → pilar-ui-mode=no   (nynorsk landing)
- *   Anna område  → pilar-ui-mode=intl (engelsk landing)
- * router.refresh() re-rendrar server-komponenten i rett språk.
- * Faktisk ingeniør-region/standard veljast framleis på /international.
- */
 export function RegionModal({ lang }: { lang: Lang }) {
   const router = useRouter();
   const firstBtnRef = useRef<HTMLButtonElement>(null);
-  const t = COPY[lang];
 
   useEffect(() => {
     const original = document.body.style.overflow;
@@ -72,8 +62,11 @@ export function RegionModal({ lang }: { lang: Lang }) {
         aria-modal="true"
         aria-labelledby="region-modal-title"
       >
-        <h2 id="region-modal-title" className="region-modal__title">{t.title}</h2>
-        <p className="region-modal__body">{t.body}</p>
+        <h2 id="region-modal-title" className="region-modal__title">{COPY.title}</h2>
+        <p className="region-modal__body">{COPY.body}</p>
+        {lang === "nb" && (
+          <p className="region-modal__helper" lang="no">{COPY.helper}</p>
+        )}
         <div className="region-modal__actions">
           <button
             ref={firstBtnRef}
@@ -81,10 +74,10 @@ export function RegionModal({ lang }: { lang: Lang }) {
             className="btn btn--primary"
             onClick={() => choose("no")}
           >
-            {t.norway}
+            {COPY.norway}
           </button>
           <button type="button" className="btn btn--secondary" onClick={() => choose("intl")}>
-            {t.other}
+            {COPY.other}
           </button>
         </div>
       </div>
