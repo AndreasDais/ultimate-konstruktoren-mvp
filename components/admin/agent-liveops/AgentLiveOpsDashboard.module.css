@@ -135,6 +135,148 @@
   font-weight: 500;
 }
 
+.diagnostic {
+  width: min(1440px, 100%);
+  margin: 14px auto 0;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.diagnosticHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.diagnosticNote {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.modeBadgeMock {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--fg-2);
+}
+
+.modeBadgeLive {
+  border-color: var(--info-border);
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.diagnosticRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.diagnosticField {
+  display: grid;
+  flex: 1;
+  min-width: 220px;
+  gap: 4px;
+}
+
+.diagnosticField span {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.diagnosticInput {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.diagnosticInput:focus-visible {
+  outline: 2px solid var(--info-border);
+  outline-offset: 1px;
+}
+
+.diagnosticButton,
+.diagnosticReset {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.diagnosticButton {
+  border: 1px solid var(--info-border);
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.diagnosticButton:disabled {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--fg-faint);
+  cursor: not-allowed;
+}
+
+.diagnosticReset {
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--fg-2);
+}
+
+.diagnosticStatus {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.diagnosticError {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  border: 1px solid var(--bad-border);
+  border-radius: var(--r-xs);
+  background: var(--bad-bg);
+  color: var(--bad);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
