@@ -1,0 +1,711 @@
+.shell {
+  min-height: 100vh;
+  padding: 28px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.hero,
+.metrics,
+.mainGrid,
+.safetyNotes {
+  width: min(1440px, 100%);
+  margin-inline: auto;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.heroCopy,
+.heroStatus,
+.replayPanel,
+.graphPanel,
+.timelinePanel,
+.inspectorPanel,
+.feedPanel,
+.safetyNotes {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.heroCopy {
+  padding: 24px;
+}
+
+.eyebrow,
+.panelKicker {
+  margin: 0 0 8px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroCopy h1,
+.panelHeader h2,
+.replayPanel h2,
+.inspectorPanel h2 {
+  margin: 0;
+  color: var(--fg);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.heroCopy h1 {
+  font-size: 2rem;
+}
+
+.heroCopy p {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: var(--fg-2);
+  line-height: 1.6;
+}
+
+.heroStatus {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+}
+
+.heroStatus dl,
+.inspectorGrid {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.heroStatus dl div,
+.inspectorGrid div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.heroStatus dt,
+.inspectorGrid dt {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.heroStatus dd,
+.inspectorGrid dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.safetyStrip {
+  display: flex;
+  width: min(1440px, 100%);
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px auto 0;
+}
+
+.safetyStrip span,
+.nodeArtifacts small,
+.reasonBlock span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--warn-border);
+  border-radius: var(--r-xs);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.metrics article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.metrics span,
+.metrics small {
+  display: block;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.metrics strong {
+  display: block;
+  margin: 8px 0 4px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(360px, 0.9fr);
+  gap: 16px;
+  margin-top: 18px;
+  align-items: start;
+}
+
+.leftColumn,
+.rightColumn {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelHeader h2,
+.replayPanel h2,
+.inspectorPanel h2 {
+  font-size: 1rem;
+}
+
+.panelHeader > span {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.replayPanel {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+}
+
+.replayControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.replayControls button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.replayControls button:disabled {
+  color: var(--fg-faint);
+  cursor: not-allowed;
+}
+
+.replayControls input {
+  flex: 1;
+  min-width: 140px;
+  accent-color: var(--accent);
+}
+
+.graphSurface {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 47px,
+      var(--border) 48px
+    );
+}
+
+.edgeLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.edge line {
+  stroke: var(--border-strong);
+  stroke-width: 0.45;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+
+.edge circle {
+  fill: currentColor;
+}
+
+.edgeActive {
+  color: var(--info);
+}
+
+.edgeCompleted {
+  color: var(--ok);
+}
+
+.edgeWarning {
+  color: var(--warn);
+}
+
+.edgeBlocked,
+.edgeFailed {
+  color: var(--bad);
+}
+
+.edgeEvidence {
+  color: var(--accent);
+}
+
+.edgeIdle {
+  color: var(--fg-muted);
+}
+
+.edgeIsActive line {
+  stroke: currentColor;
+  opacity: 1;
+}
+
+.edgeIsActive circle {
+  animation: liveops-edge-pulse 820ms ease-out both;
+}
+
+.nodeLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.nodePosition {
+  position: absolute;
+  width: min(190px, 22vw);
+  transform: translate(-50%, -50%);
+}
+
+.nodeCard {
+  display: grid;
+  width: 100%;
+  min-height: 116px;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--fg);
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+.nodeCard:hover,
+.nodeCardSelected {
+  border-color: var(--border-strong);
+}
+
+.nodeCardActive {
+  box-shadow: 0 0 0 2px var(--info-border), var(--shadow-md);
+}
+
+.nodeTopline {
+  display: grid;
+  gap: 6px;
+}
+
+.nodeTopline strong,
+.feedTopline strong {
+  min-width: 0;
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nodeMeta,
+.feedType,
+.feedIndex {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.nodeSignals,
+.nodeArtifacts,
+.reasonBlock div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.nodeSignals em {
+  color: var(--warn);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.nodeArtifacts small {
+  min-height: 20px;
+  border-color: var(--info-border);
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 10px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusBadge span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusBadgeCompact {
+  padding-inline: 6px;
+  font-size: 10px;
+}
+
+.badgeActive {
+  border-color: var(--info-border);
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.badgeCompleted {
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.badgeWarning {
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.badgeBlocked,
+.badgeFailed {
+  border-color: var(--bad-border);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.badgeEvidence {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.badgeIdle {
+  color: var(--fg-muted);
+}
+
+.waterfall {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.waterfallRow {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.waterfallRow:hover,
+.waterfallRowActive {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.waterfallLabel {
+  min-width: 0;
+  color: var(--fg-2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waterfallTrack {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+}
+
+.waterfallTrack i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.inspectorPanel {
+  position: sticky;
+  top: 72px;
+  overflow: hidden;
+}
+
+.inspectorSummary {
+  margin: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-2);
+  line-height: 1.55;
+}
+
+.inspectorGrid {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reasonBlock,
+.metadataBlock {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reasonBlock h3,
+.metadataBlock h3 {
+  margin: 0;
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.metadataBlock pre {
+  max-height: 220px;
+  margin: 0;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.feedList {
+  display: grid;
+  max-height: 660px;
+  gap: 0;
+  margin: 0;
+  overflow: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.feedItem {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+}
+
+.feedItem:hover,
+.feedItemSelected {
+  background: var(--surface-2);
+}
+
+.feedItemActive {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.feedBody,
+.feedTopline {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.feedTopline {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.feedTopline em {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.feedText {
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.safetyNotes {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+.safetyNotes p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+@keyframes liveops-edge-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+    transform-origin: center;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3);
+    transform-origin: center;
+  }
+}
+
+@media (max-width: 1160px) {
+  .hero,
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inspectorPanel {
+    position: static;
+  }
+
+  .nodePosition {
+    width: min(180px, 28vw);
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    padding: 16px;
+  }
+
+  .hero,
+  .metrics,
+  .replayPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .mainGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rightColumn {
+    min-width: 0;
+  }
+
+  .graphSurface {
+    min-height: 760px;
+  }
+
+  .nodePosition {
+    position: static;
+    width: auto;
+    transform: none;
+  }
+
+  .nodeLayer {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .edgeLayer {
+    display: none;
+  }
+
+  .waterfallRow,
+  .feedItem {
+    grid-template-columns: 1fr;
+  }
+
+  .inspectorGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edgeIsActive circle {
+    animation: none;
+    opacity: 1;
+  }
+}
