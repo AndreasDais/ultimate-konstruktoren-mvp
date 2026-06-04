@@ -29,6 +29,9 @@ function formatTime(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleTimeString("nb-NO", {
+    // Pin the zone so SSR (server TZ) and hydration (browser TZ) render the
+    // same text — avoids React #418 hydration mismatch. Format unchanged.
+    timeZone: "Europe/Oslo",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
