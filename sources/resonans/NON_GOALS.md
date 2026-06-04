@@ -24,6 +24,8 @@ RESONANS v0 is not:
 13. A system that can merge, deploy, or implement code.
 14. A system that ranks growth above trust or safety.
 15. A place to store raw user data or private feedback.
+16. A system that can publish, reply, or schedule public messages without
+    explicit human approval.
 
 ## Deferred Until Separate Approval
 
@@ -37,6 +39,7 @@ The following ideas from the original RESONANS concept are deferred:
 - MCP tools;
 - A2A Agent Cards;
 - automatic Feature Arena rating updates from marketing outcomes;
+- automatic Feature Arena evidence creation from unreviewed public data;
 - campaign calendar automation;
 - auto-replies to community comments;
 - cost-bearing agent loops.
@@ -64,6 +67,7 @@ Stop if a proposed change:
 - adds DB, Supabase, migration, schema, or SQL files;
 - requires DB/Supabase CLI, SQL, repair, `db push`, or dry-run;
 - introduces public posting automation;
+- allows public posting or replying without human approval;
 - introduces scraping or platform monitoring;
 - edits production prompts;
 - weakens professional-review language;
@@ -93,6 +97,9 @@ human-approved public experiment
   -> Feature Arena review
   -> human decision
 ```
+
+The bridge is read-only evidence candidate sourcing. It must not become a
+roadmap, implementation, or posting authority.
 
 ## Launch Position
 
