@@ -13,26 +13,28 @@ than `LANES.md`, the 50-sprint plan, or the newest concrete lane summary.
 ## 1. Current Snapshot
 
 ```txt
-Integrator checkout: main clean/synced @ 794da25
+Integrator checkout: main clean/synced @ a49af60
 Runtime track:       EC3 complete; P1-a/P1-b report/PDF fixes live (#67-#70)
 UI track:            EC3 card complete; P1-c /heim CTA fix live (#59, #71)
 QA/Eval track:       final paid-user regression sweep GREEN
 Feature Arena:       v0 complete; 35.0-35.5 landed (#75-#82)
-Ops/Monitor:         launch operator checklist complete; P1 and Feature Arena closeout GREEN
-Open PR branches:    none outstanding after PR #82 cleanup
-Post-launch canary:  GREEN after PR #82; launch decision GO
+Agent LiveOps:       36.0-36.3 landed; read-only mock admin UI live (#84-#87)
+Ops/Monitor:         launch operator checklist complete; P1, Feature Arena, and Agent LiveOps closeouts GREEN
+Open PR branches:    none outstanding after PR #87 cleanup
+Post-launch canary:  GREEN after PR #87; launch decision GO
 ```
 
 ## 2. Lane Status
 
 | Lane | Latest known sprint / track | Latest known integration | Monitor verdict | Next allowed action |
 |---|---|---|---|---|
-| Integrator | Launch execution / Feature Arena 35.x closeout | `794da25` main clean/synced after PR #82 | DONE | monitor stop-the-line criteria |
+| Integrator | Launch execution / Agent LiveOps 36.3 closeout | `a49af60` main clean/synced after PR #87 | DONE | monitor stop-the-line criteria |
 | Chat B / Runtime | EC3 complete; P1-a report idempotency; P1-b PDF endpoints | PR #54-#58, #60, #63, #67-#70 integrated on main | DONE | wait for new Runtime task |
 | UI / Features | EC3 card; P1-c `/heim` CTA routing | PR #59 and PR #71 integrated on main | DONE | P3 polish only, not launch-gating |
 | Smarten / QA/Eval | EC3/AISC fixture + final paid-user regression sweep | PR #61 integrated; final production sweep GREEN on `a6416c1` | DONE | no action |
 | Feature Arena | v0 file-based hypothesis arena | PR #75-#82 integrated on main; 35.0-35.5 complete | DONE | await explicit next arena/admin direction |
-| Ops / Monitor | launch checklist + post-launch/P1/Feature Arena scorecards | PR #65 integrated; Feature Arena closeout GREEN | DONE | commit scorecard after review |
+| Agent LiveOps | read-only admin observability scaffold | PR #84-#87 integrated on main; 36.0-36.3 complete | DONE | await explicit 36.4 live-adapter plan |
+| Ops / Monitor | launch checklist + post-launch/P1/Feature Arena/Agent LiveOps scorecards | PR #65 integrated; Agent LiveOps 36.0-36.3 closeout GREEN | DONE | commit scorecard after review |
 
 ## 3. Completed EC3 Capacity & Utilization v1 Track
 
@@ -251,7 +253,79 @@ leaderboard snapshots, but it cannot decide roadmap priority, auto-implement,
 auto-merge, auto-deploy, edit prompts, or change database state.
 ```
 
-## 8. Evidence Register
+## 8. Agent LiveOps 36.0-36.3 Closeout GREEN
+
+```txt
+Final main/prod commit: a49af60.
+Local main == origin/main: YES.
+Worktree clean: YES.
+Open PRs: 0.
+Post-merge canary: GREEN.
+
+Agent LiveOps status: 36.0-36.3 LANDED.
+Launch decision: GO.
+```
+
+Integrated Agent LiveOps sprints:
+
+```txt
+Sprint 36.0 docs/concept: landed.
+Sprint 36.1 mock sanitized events + validator: landed.
+Sprint 36.2 graph/timeline/status helpers: landed.
+Sprint 36.3 read-only admin UI: landed.
+Sprint 36.4 live adapter: NOT STARTED.
+```
+
+Agent LiveOps 36.3 production state:
+
+```txt
+/admin/agent-liveops exists.
+Admin UI mode: read-only static prototype.
+Data source: sanitized Sprint 36.1 mock/sample events only.
+Live data source: NONE.
+API route changes in 36.3: NONE.
+DB/Supabase/schema/migration/package changes in 36.3: NONE.
+Prompt changes: NONE.
+```
+
+Agent LiveOps safety/truth conditions:
+
+```txt
+Human review remains final: YES.
+UI can deploy: NO.
+UI can merge: NO.
+UI can edit prompts: NO.
+UI can decide release: NO.
+UI can decide build_next: NO.
+UI can decide roadmap: NO.
+Raw user data exposed: NO.
+Chain-of-thought exposed: NO.
+DB/Supabase CLI/SQL/repair/db push/db push --dry-run: not run.
+Mutating DB work: none.
+```
+
+Agent LiveOps artifacts now on main:
+
+```txt
+sources/admin-agent-liveops/             36.0 admin concept, schema, visual language, safety, non-goals
+qa/agent-liveops/                        36.1 sanitized mock events and invalid fixtures
+scripts/validate-agent-liveops-events.mjs 36.1 read-only validator
+lib/agent-liveops/                       36.2 graph/timeline/status helpers and tests
+app/admin/agent-liveops/                 36.3 protected admin route
+components/admin/agent-liveops/          36.3 read-only admin UI components and CSS module
+```
+
+Final 36.0-36.3 monitor verdict:
+
+```txt
+GREEN. Agent LiveOps is live as a read-only, mock-data-backed admin prototype.
+It can visualize sanitized agent-run events and pipeline state, but it cannot
+read live production streams, expose raw user data, reveal chain-of-thought,
+deploy, merge, edit prompts, decide release, decide build_next, decide roadmap,
+or mutate database state.
+```
+
+## 9. Evidence Register
 
 Blessed evidence used for the final QA/Eval verdict:
 
@@ -269,7 +343,7 @@ Stale prior-run EC3/AISC evidence:
 Deleted after inventory as superseded by the blessed committed PR #61 evidence.
 ```
 
-## 9. Material Flags
+## 10. Material Flags
 
 ```txt
 EC3 v1 scope: preliminary cross-section capacity screening only.
@@ -286,11 +360,15 @@ PR #68 behavior: idempotent report generation only.
 PR #69 behavior: full-report PDF link/route wiring only.
 PR #70 behavior: serverless-safe full-report PDF generation only.
 PR #71 behavior: /heim CTA routes to /pilot only.
+PR #84 behavior: Agent LiveOps 36.0 docs/concept only.
+PR #85 behavior: Agent LiveOps 36.1 mock sanitized events + validator only.
+PR #86 behavior: Agent LiveOps 36.2 graph/timeline/status helpers only.
+PR #87 behavior: Agent LiveOps 36.3 read-only mock admin UI only.
 DB/Supabase/SQL/repair/db push/db push --dry-run: not run.
 Mutating DB work: none.
 ```
 
-## 10. Monitor Decision Rules
+## 11. Monitor Decision Rules
 
 ```txt
 GREEN  - exact next sprint, lane-owned files, gates reported, no safety drift.
@@ -299,7 +377,7 @@ RED    - boundary/safety violation, cross-lane edit, hidden evidence, or dirty s
 DONE   - track completed with closeout; lane must stop or await a new plan.
 ```
 
-## 11. Progress Meters
+## 12. Progress Meters
 
 This is a qualitative monitor read, not a release gate:
 
@@ -327,12 +405,17 @@ The Feature Arena 35.x loop is also closed: scaffold, seed data, Elo engine,
 judge prompts, validator, and read-only leaderboard snapshots are all on main
 with human-final and no-auto-roadmap constraints intact.
 
+The Agent LiveOps 36.0-36.3 loop now gives PILAR a protected, read-only admin
+observability surface backed by sanitized mock events and typed graph/timeline
+helpers. It deliberately stops before live adapters, runtime instrumentation,
+DB writes, or any release/roadmap authority.
+
 The remaining gap to 1000/1000 is not more bravado; it is repeatable evidence:
 automated freshness checks, durable dashboards, and policy-backed autonomous
 stop/go decisions across every lane.
 ```
 
-## 12. Previously Completed Track
+## 13. Previously Completed Track
 
 English-report integrity is already closed out and remains DONE:
 
@@ -351,16 +434,16 @@ PR #51 prompt behavior change: intentional and scoped to English prose contract.
 PR #52 source changes: none; QA evidence only.
 ```
 
-## 13. Next Integrator Recommendation
+## 14. Next Integrator Recommendation
 
 ```txt
 Do not start a new implementation lane from stale context.
 
 Next safe step:
-1. Commit this Feature Arena 35.x closeout monitor scorecard refresh.
+1. Commit this Agent LiveOps 36.0-36.3 monitor scorecard refresh.
 2. Stay in launch watch mode and only open new implementation work after a
    deliberate lane-selection prompt:
-   - Agent LiveOps Sprint 36 for admin observability/scaffold work
+   - Agent LiveOps Sprint 36.4 for a strictly read-only live adapter plan
    - RESONANS R1 for Vaktar policy/sample reviews
    - UI/Features for P2/P3 product polish
    - Runtime/Debug for the next verified calculation capability
