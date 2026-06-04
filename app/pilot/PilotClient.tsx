@@ -39,6 +39,7 @@ type Copy = {
   honestyTitle: string;
   honestyBody: string;
   terms: string;
+  termsHref: string;
 };
 
 const COPY: Record<LangKey, Copy> = {
@@ -67,6 +68,7 @@ const COPY: Record<LangKey, Copy> = {
     honestyBody:
       "PILAR er et AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrolleres av kvalifisert fagperson før bruk i prosjektering.",
     terms: "Vilkår for bruk →",
+    termsHref: "/vilkar",
   },
   nn: {
     eyebrow: "PILAR · Pilot",
@@ -93,6 +95,7 @@ const COPY: Record<LangKey, Copy> = {
     honestyBody:
       "PILAR er eit AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrollerast av kvalifisert fagperson før bruk i prosjektering.",
     terms: "Vilkår for bruk →",
+    termsHref: "/vilkar",
   },
   en: {
     eyebrow: "PILAR · Pilot",
@@ -119,6 +122,7 @@ const COPY: Record<LangKey, Copy> = {
     honestyBody:
       "PILAR is an AI-generated learning and documentation tool. Results must always be verified by a qualified engineer before use in real design work.",
     terms: "Terms of use →",
+    termsHref: "/terms",
   },
 };
 
@@ -465,7 +469,7 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
         </section>
 
         <div className="pilot-foot">
-          <Link href="/terms">{t.terms}</Link>
+          <Link href={t.termsHref}>{t.terms}</Link>
         </div>
       </div>
     </main>

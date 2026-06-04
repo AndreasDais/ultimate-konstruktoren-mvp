@@ -125,6 +125,11 @@
   letter-spacing: -0.025em;
   margin: 0 0 26px;
   text-wrap: balance;
+  /* Let long compound words (e.g. "konstruksjonsproblem") break/hyphenate
+     only when they cannot fit — prevents 375px horizontal overflow without
+     changing the headline size at any other width. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 .lp .hero__lead {
   font-family: var(--font-doc);
