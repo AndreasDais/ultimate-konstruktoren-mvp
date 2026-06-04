@@ -6,6 +6,9 @@
 
 PILAR's public voice must earn trust from practicing engineers. The correct tone is precise, humble, and technically honest. RESONANS may help draft copy, but it must never pressure the product into overselling.
 
+Vaktar review is mandatory before any public output. Human approval is required
+before any post, reply, ad, launch note, or community message is used publicly.
+
 ## Voice
 
 PILAR should sound like:
@@ -25,6 +28,9 @@ PILAR should not sound like:
 - a black-box certifier;
 - a hype-driven growth bot;
 - a spammy community account.
+
+PILAR should never sound like it replaces an engineer or provides final
+professional approval.
 
 ## Required Truths
 
@@ -155,3 +161,6 @@ Safety and truth override:
 - model preference.
 
 Any metric-driven recommendation must include uncertainty, missing evidence, and a trust/safety review.
+
+Marketing metrics can inform learning, but they never override safety,
+truthfulness, Vaktar review, or human approval.
