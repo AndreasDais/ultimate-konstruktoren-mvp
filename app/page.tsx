@@ -327,6 +327,7 @@ export default function Home() {
     runId: string | null;
     documentId: string | null;
   } | null>(null);
+  const [publicResumeBlocked, setPublicResumeBlocked] = useState<"run" | "request" | null>(null);
 
   useEffect(() => {
     if (!result || !startBerekningRef.current) {
@@ -362,9 +363,9 @@ export default function Home() {
       try {
         // from_run har forrang (gir meir data) hvis begge er sett
         if (fromRun) {
-          const res = await fetch(`/api/runs/${fromRun}`);
+          const res = await fetch(`/api/runs/${fromRun}?mode=resume`);
           if (!res.ok) {
-            console.error("Klarte ikkje hente run:", res.status);
+            if (!cancelled) setPublicResumeBlocked("run");
             return;
           }
           const data = await res.json();
@@ -417,7 +418,7 @@ export default function Home() {
         // from_request — only workbench-state
         const res = await fetch(`/api/requests/${fromRequest}`);
         if (!res.ok) {
-          console.error("Klarte ikkje hente request:", res.status);
+          if (!cancelled) setPublicResumeBlocked("request");
           return;
         }
         const data = await res.json();
@@ -439,7 +440,7 @@ export default function Home() {
           documentId: data.report?.document_id ?? null,
         });
       } catch (err) {
-        console.error("Klarte ikkje hente tidlegare berekning:", err);
+        if (!cancelled) setPublicResumeBlocked(fromRun ? "run" : "request");
       }
     })();
 
@@ -1524,6 +1525,23 @@ useEffect(() => {
               {restoredFrom.documentId && restoredFrom.runId && (
                 <a href={`/rapport/${restoredFrom.runId}`} style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline", whiteSpace: "nowrap" }}>{restoredFrom.documentId} ↗</a>
               )}
+            </div>
+          )}
+
+          {publicResumeBlocked && (
+            <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)" }}>
+              <strong style={{ color: "var(--fg, #1a1a1a)" }}>
+                {pageDisplayLanguage === "en"
+                  ? "Public resume is temporarily disabled."
+                  : locale === "nn"
+                    ? "Offentleg gjenopptak er mellombels av."
+                    : "Offentlig gjenopptak er midlertidig av."}
+              </strong>{" "}
+              {pageDisplayLanguage === "en"
+                ? "Open the report directly, or start a new calculation from a fresh prompt."
+                : locale === "nn"
+                  ? "Opne rapporten direkte, eller start ei ny berekning frå ei ny oppgåvetekst."
+                  : "Åpne rapporten direkte, eller start en ny beregning fra en ny oppgavetekst."}
             </div>
           )}
 

@@ -366,6 +366,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   lastNedWord: { nb: "Last ned Word", nn: "Last ned Word" },
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
+  resumeDisabledLaunch: { nb: "Kopiering og Mission Control-gjenopptak er midlertidig av for offentlige rapportlenker.", nn: "Kopiering og Mission Control-gjenopptak er mellombels av for offentlege rapportlenker." },
   sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
   giPilotFeedback: { nb: "Gi tilbakemelding på piloten", nn: "Gi tilbakemelding på piloten" },
   // Kontrollstatus-panel
@@ -512,7 +513,7 @@ type FullReportResponse = {
   report: Report;
   cached: boolean;
   run: {
-    request_id: string;
+    request_id?: string | null;
     request: { raw_text: string };
     display_language?: string | null;
   };
@@ -525,7 +526,7 @@ type FullReportResponse = {
 
 type RunReadResponse = {
   run?: {
-    request_id: string;
+    request_id?: string | null;
     request?: { raw_text: string };
     display_language?: string | null;
   } | null;
@@ -829,6 +830,7 @@ export default function RapportPage() {
     lastNedWord: "Download Word",
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
+    resumeDisabledLaunch: "Copying and Mission Control resume are temporarily disabled for public report links.",
     sendTilbakemelding: "Report an error",
     giPilotFeedback: "Give pilot feedback",
     kontrollstatus: "Control status",
@@ -2149,14 +2151,9 @@ export default function RapportPage() {
           <a href={calculationSheetUrl} className="uk-btn">
             {calculationSheetLabel}
           </a>
-          {data.run.request_id && (
-            <a href={`/?from_request=${data.run.request_id}`} className="uk-btn">
-              {RP_LABELS.lagNyBerekning[locale]}
-            </a>
-          )}
-          <a href={`/?from_run=${runId}`} className="uk-btn">
-            {RP_LABELS.saMissionControl[locale]}
-          </a>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--fg-2, #475569)", maxWidth: 320 }}>
+            {RP_LABELS.resumeDisabledLaunch[locale]}
+          </p>
           <button
             onClick={() => setFeedbackOpen(true)}
             className="uk-btn"

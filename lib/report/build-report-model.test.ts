@@ -14,13 +14,6 @@ function readSource(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
 }
 
-const LIVE_EVAL_INPUT_PROMPT_VERSION_GAP = {
-  readSurface: "app/api/runs/[id]/route.ts",
-  canonicalConsumer: "lib/report/build-report-model.ts",
-  missingRuntimeField: "inputReview.prompt_version",
-  reason: "live eval read mode needs the input-agent prompt version alongside downstream agent prompt versions",
-} as const;
-
 const REPORT_MODEL_BLOCKED_FIELD_AUDIT_FINDING = {
   reportField: "calculation.resultRows",
   sourceField: "agentA.structured_output.results",
@@ -272,30 +265,21 @@ describe("buildReportModel", () => {
     expect(validation.ok).toBe(true);
   });
 
-  it("identifies inputReview prompt_version as missing mapped runtime evidence", () => {
+  it("keeps the public run read surface as a sanitized report snapshot", () => {
     const runRead = readSource("app/api/runs/[id]/route.ts");
-    const reportModel = readSource("lib/report/build-report-model.ts");
-    const tolkingMapping = runRead.slice(
-      runRead.indexOf("const tolking = inputReview"),
-      runRead.indexOf("// agent_outputs", runRead.indexOf("const tolking = inputReview")),
-    );
-    const agentOutputQuery = runRead.slice(
-      runRead.indexOf('.from("agent_outputs")'),
-      runRead.indexOf('.eq("run_id", id)', runRead.indexOf('.from("agent_outputs")')),
-    );
 
-    expect(LIVE_EVAL_INPUT_PROMPT_VERSION_GAP).toEqual({
-      readSurface: "app/api/runs/[id]/route.ts",
-      canonicalConsumer: "lib/report/build-report-model.ts",
-      missingRuntimeField: "inputReview.prompt_version",
-      reason: "live eval read mode needs the input-agent prompt version alongside downstream agent prompt versions",
-    });
-
-    expect(reportModel).toContain("inputReview: {");
-    expect(reportModel).toContain("prompt_version: string;");
-    expect(agentOutputQuery).toContain("prompt_version");
-    expect(tolkingMapping).toContain("inputReview.input_status");
-    expect(tolkingMapping).not.toContain("prompt_version");
+    expect(runRead).toContain('mode: "public_report_snapshot"');
+    expect(runRead).toContain("resume_requires_owner_or_share_token");
+    expect(runRead).toContain("Cache-Control");
+    expect(runRead).toContain("executive_summary, technical_assessment, conclusion");
+    expect(runRead).not.toContain("raw_text");
+    expect(runRead).not.toContain("structured_output");
+    expect(runRead).not.toContain("inputReview");
+    expect(runRead).not.toContain("agentA:");
+    expect(runRead).not.toContain("agentB:");
+    expect(runRead).not.toContain("comparisonRaw");
+    expect(runRead).not.toContain("controllerDecisionRaw");
+    expect(runRead).not.toContain("user_id");
   });
 
   it("omits results_a from ReportModel result rows when controller blocks it", () => {
