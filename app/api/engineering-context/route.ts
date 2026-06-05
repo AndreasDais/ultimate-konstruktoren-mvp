@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buildEngineeringContext } from "@/lib/engineering-context";
 import type { EngineeringContext } from "@/lib/engineering-context";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -24,8 +25,11 @@ function getServiceClient() {
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const rateLimited = await checkRateLimit(request);
+    if (rateLimited) return rateLimited;
+
     const payload = (await request.json()) as RequestPayload;
     const context = buildEngineeringContext(payload.context);
     const source = payload.source ?? "unknown";
@@ -50,14 +54,15 @@ export async function POST(request: Request) {
       });
 
       if (error) {
-        return NextResponse.json({ ok: true, stored: false, context, warning: error.message });
+        console.error("[engineering-context] telemetry insert failed:", error);
+        return NextResponse.json({ ok: true, stored: false, context, warning: "storage_unavailable" });
       }
     }
 
     return NextResponse.json({ ok: true, stored: Boolean(supabase), context });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
+      { ok: false, error: "invalid_engineering_context" },
       { status: 400 },
     );
   }

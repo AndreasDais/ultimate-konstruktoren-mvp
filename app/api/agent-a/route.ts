@@ -468,7 +468,6 @@ export async function POST(request: Request) {
             if (!result.ok) {
               send("error", {
                 message: result.error,
-                raw: result.raw,
                 stopReason: result.stopReason,
               });
             } else {
@@ -500,7 +499,7 @@ export async function POST(request: Request) {
 
     if (!result.ok) {
       return Response.json(
-        { error: result.error, raw: result.raw, stop_reason: result.stopReason },
+        { error: result.error, stop_reason: result.stopReason },
         { status: result.status }
       );
     }

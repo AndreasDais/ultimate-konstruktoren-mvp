@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { checkRateLimit } from "@/lib/ratelimit";
+import type { NextRequest } from "next/server";
 
 const VALID_ERROR_TYPES = [
   "feil_talverdi",
@@ -103,8 +105,11 @@ async function notifyHighSeveritySlack(payload: {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const rateLimited = await checkRateLimit(request);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const {
       report_id,
@@ -139,7 +144,7 @@ export async function POST(request: Request) {
     for (const t of typesArray) {
       if (typeof t !== "string" || !VALID_ERROR_TYPES.includes(t)) {
         return NextResponse.json(
-          { error: `Ugyldig feiltype: ${t}` },
+          { error: "Ugyldig feiltype" },
           { status: 400 }
         );
       }
@@ -230,8 +235,10 @@ export async function POST(request: Request) {
       error_report_id: data.id,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Ukjend feil";
     console.error("[error-reports] FAILED:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Kunne ikkje lagre tilbakemelding" },
+      { status: 500 },
+    );
   }
 }

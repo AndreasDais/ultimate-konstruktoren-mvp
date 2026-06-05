@@ -648,9 +648,10 @@ export async function POST(request: Request) {
       controllerDecision: upstream.controllerDecision,
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error in Rapportør";
     console.error("Rapportør error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Kunne ikkje generere rapport" },
+      { status: 500 },
+    );
   }
 }

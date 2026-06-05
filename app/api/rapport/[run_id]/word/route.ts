@@ -58,15 +58,13 @@ export async function GET(
     });
 
     if (!agentERes.ok) {
-      const errBody = await agentERes.json().catch(() => ({}));
       console.error("Word export: agent-e fetch failed", {
         run_id,
         status: agentERes.status,
-        body: errBody,
         had_cookie: cookieHeader.length > 0,
       });
       return NextResponse.json(
-        { error: errBody.error || ERROR_LABELS[locale].couldNotFetch, stage },
+        { error: ERROR_LABELS[locale].couldNotFetch },
         { status: agentERes.status },
       );
     }
@@ -123,6 +121,6 @@ export async function GET(
     const message = error instanceof Error ? error.message : ERROR_LABELS[locale].unknown;
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("Word export error:", { stage, message, stack });
-    return NextResponse.json({ error: message, stage }, { status: 500 });
+    return NextResponse.json({ error: ERROR_LABELS[locale].unknown }, { status: 500 });
   }
 }
