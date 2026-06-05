@@ -3,7 +3,7 @@ import Link from "next/link";
 
 // Public-launch footer navigation. Kept in one place so every public page
 // exposes the same set of routes.
-const FOOTER_LINKS: { href: string; label: string }[] = [
+export const PUBLIC_FOOTER_LINKS: { href: string; label: string }[] = [
   { href: "/about", label: "About" },
   { href: "/guide", label: "Guide" },
   { href: "/safety", label: "Safety" },
@@ -90,7 +90,7 @@ export function PublicShell({
       <footer className="border-t" style={{ borderColor: "var(--border)" }}>
         <div className="mx-auto max-w-2xl px-4 py-8 flex flex-col gap-4">
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
-            {FOOTER_LINKS.map((link) => (
+            {PUBLIC_FOOTER_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

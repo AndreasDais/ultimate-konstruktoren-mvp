@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HeimClient from "@/app/heim/HeimClient";
+import { PUBLIC_FOOTER_LINKS } from "@/app/components/public-page";
 import "@/app/heim/heim.css";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function HomePage() {
             "try{document.documentElement.classList.add('js-anim')}catch(e){}",
         }}
       />
-      <HeimClient lang="en" showRegionModal={false} />
+      <HeimClient lang="en" showRegionModal={false} footerLinks={PUBLIC_FOOTER_LINKS} />
     </>
   );
 }

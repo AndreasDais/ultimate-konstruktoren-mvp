@@ -174,9 +174,11 @@ const COPY: Record<Lang, {
 export default function HeimClient({
   lang,
   showRegionModal,
+  footerLinks,
 }: {
   lang: Lang;
   showRegionModal: boolean;
+  footerLinks?: ReadonlyArray<{ href: string; label: string }>;
 }) {
   const t = COPY[lang];
 
@@ -509,9 +511,19 @@ export default function HeimClient({
             <span className="dot" aria-hidden="true" />
             {t.footerNote}
           </span>
-          <Link className="footer__link" href={t.termsHref}>
-            {t.terms}
-          </Link>
+          {footerLinks && footerLinks.length > 0 ? (
+            <nav className="footer__nav" aria-label="Footer">
+              {footerLinks.map((link) => (
+                <Link key={link.href} className="footer__link" href={link.href}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          ) : (
+            <Link className="footer__link" href={t.termsHref}>
+              {t.terms}
+            </Link>
+          )}
         </div>
       </footer>
 
