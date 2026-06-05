@@ -16,6 +16,9 @@ hardening is not complete until domain, email, security, English canonical
 routes, legal/footer pages, SEO, and analytics/privacy decisions have explicit
 owners and evidence.
 
+P0.5 footer/public-shell is DONE/GREEN at `ddd6dbd`. Domain/email cutover
+remains RED until provider evidence is pasted back and reviewed.
+
 This document is not a launch approval and not professional engineering
 approval.
 
@@ -26,6 +29,10 @@ Known:
 - current production launch/canary evidence has been GREEN in recent Ops checks;
 - `/api/health` has been used as the read-only dependency health surface;
 - existing public routes include `/`, `/heim`, `/international`, and `/vilkar`;
+- P0.5 footer/public-shell is GREEN on production at `ddd6dbd`;
+- the global non-admin footer is landed;
+- exactly one footer appears on user-facing routes;
+- `/admin` and `/admin/login` show zero footer instances;
 - Norwegian Bokmal/Nynorsk support must be preserved;
 - Agent LiveOps remains admin-only and manual live-read only;
 - DB/Supabase migration repair remains outside launch hardening.
@@ -34,11 +41,57 @@ Unknown or not yet hardened:
 
 - final public domain and apex/www routing policy;
 - email sender domain and DNS authentication;
-- complete security review against public-launch posture;
-- English canonical route policy and redirect plan;
-- final footer/legal/info page ownership and copy;
+- launch-domain/provider cutover evidence;
+- final redirect/canonical-host implementation for the launch domain;
 - SEO/social preview ownership;
 - analytics and privacy posture.
+
+## P0.5 Footer/Public Shell Evidence
+
+**Verdict:** DONE/GREEN.
+
+**Final main/prod commit:** `ddd6dbd`.
+
+Production browser-console pass:
+
+- GREEN.
+- No console errors.
+- No hydration warnings.
+
+Footer evidence:
+
+- Global non-admin footer landed.
+- Exactly one footer on user-facing routes.
+- Zero footer instances on `/admin` and `/admin/login`.
+
+Footer link smoke:
+
+| Route | Result |
+|---|---|
+| `/about` | 200 |
+| `/guide` | 200 |
+| `/safety` | 200 |
+| `/roadmap` | 200 |
+| `/vilkar` | 200 |
+| `/privacy` | 200 |
+| `/contact` | 200 |
+| `/terms` | 200 |
+
+Public-shell language evidence:
+
+| Surface | Routes | Result |
+|---|---|---|
+| English shell | `/home`, `/international`, `/privacy`, `/terms`, `/about` | Clean |
+| Norwegian shell | `/heim`, `/vilkar` | Clean |
+
+Trust-framing evidence:
+
+- No final professional approval claim observed.
+- No compliance guarantee observed.
+- No engineer-replacement claim observed.
+- Professional-review framing remains visible.
+
+Domain/email cutover remains RED until provider evidence is pasted back.
 
 ## P0 Checklist
 
@@ -59,9 +112,9 @@ Unknown or not yet hardened:
 | Security | Define CSP/security header plan before broad public traffic. | Ops C + UI | Header inventory and implementation owner |
 | Security | Confirm Sentry/logging redacts raw prompts, provider payloads, PII, secrets, and stack context with sensitive data. | Ops C + Runtime B | Logging safety note |
 | Security | Document backup/recovery posture and rollback contacts. | Ops C + Integrator | Backup/PITR/recovery runbook reference |
-| English routes | Approve canonical English route list: `/home`, `/terms`, `/privacy`, `/about`, `/roadmap`, `/guide`, `/safety`, `/contact`. | UI + Integrator + Ops C | Route decision record |
-| Norwegian aliases | Preserve `/heim` and `/vilkar` as redirects, aliases, or locale routes. | UI + Integrator | Redirect/alias test plan |
-| Footer/legal | Ship minimum footer pages: Terms, Privacy, Contact, Safety/professional-review disclaimer. | UI + Ops C review | Page copy reviewed for no final approval claims |
+| English routes | Approve canonical English route list: `/home`, `/terms`, `/privacy`, `/about`, `/roadmap`, `/guide`, `/safety`, `/contact`. | UI + Integrator + Ops C | P0.5 shell evidence GREEN at `ddd6dbd`; launch-domain redirect policy still depends on P0.4 |
+| Norwegian aliases | Preserve `/heim` and `/vilkar` as redirects, aliases, or locale routes. | UI + Integrator | P0.5 shell evidence GREEN at `ddd6dbd`; aliases remain preserved |
+| Footer/legal | Ship minimum footer pages: Terms, Privacy, Contact, Safety/professional-review disclaimer. | UI + Ops C review | DONE/GREEN in P0.5 at `ddd6dbd` |
 
 ## P1 Checklist
 
