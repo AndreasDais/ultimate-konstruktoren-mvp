@@ -38,7 +38,7 @@ export const PILAR_REPORT_TEMPLATE: ReportTemplateSection[] = [
   },
   {
     id: "interpretation",
-    label: "Input og assumptioner",
+    label: "Input og forutsetninger",
     required: false,
     pagePolicy: "allow-break",
     printHint: "Kan bryte over sider ved lang assumptionsliste.",

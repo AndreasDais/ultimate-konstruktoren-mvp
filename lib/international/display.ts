@@ -45,8 +45,8 @@ export const SPRINT336_ENGLISH_LABEL_BY_KEY: Record<string, string> = {
   sub43Konklusjon: "04.3 — CONCLUSION",
   bandIkkjeDekka: "NOT COVERED BY THIS REPORT",
   advarselLabel: "WARNING",
-  avgjerdLabel: "DECISION",
-  signKontrollertCaption: "Name · title · company",
+  avgjerdLabel: "AI PIPELINE STATUS",
+  signKontrollertCaption: "Name · role · company",
   signSignaturCaption: "Manual signature",
   signDatoCaption: "MM/DD/YYYY",
   marginaliaTitle: "GLOSSARY",
@@ -213,8 +213,8 @@ function englishProductPolish(value: string): string {
     .replace(/\bGodkjent med advarsler\b/g, "Approved with warnings")
     .replace(/\bPRELIMINARY\b/g, "PRELIMINARY")
     .replace(/\bForeløpig\b/g, "Preliminary")
-    .replace(/Beregningen er foreløpig godkjent med advarsler\. Forbeholdene må avklares før prosjekteringsbruk\./gi, "The calculation is preliminarily approved with warnings. The reservations must be resolved before use in design work.")
-    .replace(/Beregningen er foreløpig godkjent med advarsler\. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering\./gi, "The calculation is preliminarily approved with warnings and must be verified by a qualified professional before use in design work.")
+    .replace(/Beregningen er foreløpig godkjent med advarsler\. Forbeholdene må avklares før prosjekteringsbruk\./gi, "The calculation is provisionally accepted with warnings. The reservations must be resolved before use in design work.")
+    .replace(/Beregningen er foreløpig godkjent med advarsler\. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering\./gi, "The calculation is provisionally accepted with warnings and must be verified by a qualified professional before use in design work.")
     .replace(/Må kontrolleres av fagperson før bruk i prosjektering\./gi, "Must be checked by a qualified professional before use in design work.")
     .replace(/må kontrolleres av fagperson før bruk i prosjektering/gi, "must be checked by a qualified professional before use in design work")
     .replace(/\bKonstruktør A\b/g, "Engineer A")
@@ -282,8 +282,8 @@ export function sprint335PolishEnglishText(value: string): string {
     .replace(/\bGodkjent med advarsler\b/g, "Approved with warnings")
     .replace(/\bPRELIMINARY\b/g, "PRELIMINARY")
     .replace(/\bForeløpig\b/g, "Preliminary")
-    .replace(/Beregningen er foreløpig godkjent med advarsler\. Forbeholdene må avklares før prosjekteringsbruk\./gi, "The calculation is preliminarily approved with warnings. The reservations must be resolved before use in design work.")
-    .replace(/Beregningen er foreløpig godkjent med advarsler\. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering\./gi, "The calculation is preliminarily approved with warnings and must be verified by a qualified professional before use in design work.")
+    .replace(/Beregningen er foreløpig godkjent med advarsler\. Forbeholdene må avklares før prosjekteringsbruk\./gi, "The calculation is provisionally accepted with warnings. The reservations must be resolved before use in design work.")
+    .replace(/Beregningen er foreløpig godkjent med advarsler\. Skal verifiseres av ansvarlig fagperson før bruk i prosjektering\./gi, "The calculation is provisionally accepted with warnings and must be verified by a qualified professional before use in design work.")
     .replace(/Det er små forskjeller mellom svarene, hovedsakelig avrunding\./gi, "There are minor differences between the answers, mainly rounding.")
     .replace(/Tabellen viser de viktigste kontrollpunktene\. Full variabel-\/pipeline-sporing finnes i nettversjonen:/gi, "The table shows the most important control points. Full variable and pipeline trace is available in the web version:")
     .replace(/Må kontrolleres av fagperson før bruk i prosjektering\./gi, "Must be checked by a qualified professional before use in design work.")
@@ -303,7 +303,7 @@ export function sprint335PolishEnglishText(value: string): string {
     .replace(/\bSkjul vurderingen\b/g, "Hide assessment")
     .replace(/\bSelvkontroll: Ingen inkonsistenser funnet\b/g, "Self-check: no inconsistencies found")
     .replace(/\bOTHER\b/g, "OTHER")
-    .replace(/\bNavn · stilling · foretak\b/g, "Name · title · company")
+    .replace(/\bNavn · stilling · foretak\b/g, "Name · role · company")
     .replace(/\bDD\.MM\.ÅÅÅÅ\b/g, "MM/DD/YYYY")
     .replace(/\bFullstendighet\b/g, "Completeness")
     .replace(/\bHøg\b/g, "High")
@@ -730,8 +730,8 @@ export function sanitizeAiscGuardedOutputText(value: string): string {
 
 export function sprint3310eFix2AiscGuardExtraText(value: string): string {
   return String(value ?? "")
-    .replace(/\bFORELØPIG GODKJENT\b/gi, "PRELIMINARILY APPROVED")
-    .replace(/\bFOREL├ÿPIG GODKJENT\b/gi, "PRELIMINARILY APPROVED")
+    .replace(/\bFORELØPIG GODKJENT\b/gi, "PROVISIONALLY ACCEPTED")
+    .replace(/\bFOREL├ÿPIG GODKJENT\b/gi, "PROVISIONALLY ACCEPTED")
     .replace(/Engineer\s+Engineer A and Engineer B fully agree om alle design values\.?/gi, "Engineer A and Engineer B fully agree on all design values.")
     .replace(/Engineer A and Engineer B fully agree om alle design values\.?/gi, "Engineer A and Engineer B fully agree on all design values.")
     .replace(/fully agree om alle design values/gi, "fully agree on all design values")
@@ -923,7 +923,7 @@ export function polishNorwegianRoleText(
       isNn
         ? "Berekninga er godkjend for visning som førebels resultat. Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering."
         : "Beregningen er godkjent for visning som foreløpig resultat. Manuell kontroll av kvalifisert fagperson er nødvendig før bruk i prosjektering.")
-    .replace(/\bThe calculation is preliminarily approved\.\s*The result must be checked by a qualified professional before use\./gi,
+    .replace(/\bThe calculation is provisionally accepted\.\s*The result must be checked by a qualified professional before use\./gi,
       isNn
         ? "Berekninga er førebels godkjend. Resultatet må kontrollerast av kvalifisert fagperson før bruk."
         : "Beregningen er foreløpig godkjent. Resultatet må kontrolleres av kvalifisert fagperson før bruk.")
@@ -964,7 +964,7 @@ export function polishNorwegianRoleText(
 
     .replace(/\bBOTH ENGINEERS AGREE\b/g, isNn ? "BEGGE KONSTRUKTØRAR ER EINIGE" : "BEGGE KONSTRUKTØRER ER ENIGE")
     .replace(/\bBOTH ENGINEERS ER ENIGE\b/g, isNn ? "BEGGE KONSTRUKTØRAR ER EINIGE" : "BEGGE KONSTRUKTØRER ER ENIGE")
-    .replace(/\bPRELIMINARILY APPROVED\b/g, approved)
+    .replace(/\bPROVISIONALLY ACCEPTED\b/g, approved)
     .replace(/\bApproved with warnings\b/g, isNn ? "Godkjent med åtvaringar" : "Godkjent med advarsler")
     .replace(/\bLOW\b/g, "LAV")
     .replace(/\bHIGH\b/g, high)
@@ -974,8 +974,8 @@ export function polishNorwegianRoleText(
     .replace(/\bENGINEER B SIN KONKLUSJON\b/g, "KONSTRUKTØR B SIN KONKLUSJON")
     .replace(/\bENGINEER B SINE RESULTATER\b/g, isNn ? "KONSTRUKTØR B SINE RESULTAT" : "KONSTRUKTØR B SINE RESULTATER")
     .replace(/\bENGINEER B SINE RESULTAT\b/g, "KONSTRUKTØR B SINE RESULTAT")
-    .replace(/\bFORSKJELLER I ASSUMPTIONER\b/g, isNn ? "SKILNADER I FØRESETNADER" : "FORSKJELLER I FORUTSETNINGER")
-    .replace(/\bassumptioner\b/gi, isNn ? "føresetnader" : "forutsetninger")
+    .replace(/\bFORSKJELLER I ASSUMPTION(?:ER)\b/g, isNn ? "SKILNADER I FØRESETNADER" : "FORSKJELLER I FORUTSETNINGER")
+    .replace(/\bassumption(?:er)\b/gi, isNn ? "føresetnader" : "forutsetninger")
     .replace(/\bassumptions\b/gi, isNn ? "føresetnader" : "forutsetninger")
   );
 }
@@ -998,8 +998,8 @@ export function localizeGeneratedEngineeringText(
     .replace(/\bSamanliknar\b/g, "Comparator")
     .replace(/\bSamanliknar\b/g, "Comparator")
     .replace(/\bFagperson\b/g, "Professional reviewer")
-    .replace(/\bforeløpig godkjent\b/gi, "preliminarily approved")
-    .replace(/\bførebels godkjend\b/gi, "preliminarily approved")
+    .replace(/\bforeløpig godkjent\b/gi, "provisionally accepted")
+    .replace(/\bførebels godkjend\b/gi, "provisionally accepted")
     .replace(/\bprosjektering\b/gi, "design work"));
 }
 
@@ -1258,7 +1258,7 @@ export function sprint337PolishEnglishText(value: string): string {
     .replace(/GOOD/g, "GOOD")
     .replace(/God/g, "Good")
     .replace(/GOODKJENT/g, "APPROVED")
-    .replace(/PRELIMINARILY APPROVED/g, "PRELIMINARILY APPROVED")
+    .replace(/PRELIMINARILY\s+APPROVED/g, "PROVISIONALLY ACCEPTED")
     .replace(/MINOR DIFFERENCES/g, "MINOR DIFFERENCES")
     .replace(/Mindre forskjeller/g, "Minor differences")
     .replace(/Enige/g, "Agreement")
@@ -1304,7 +1304,7 @@ export function sprint337PolishEnglishText(value: string): string {
     .replace(/topplastscenarioet/gi, "the top-flange loading scenario")
     .replace(/ekstra risikofaktor/gi, "additional risk factor")
     .replace(/assumption/gi, "assumption")
-    .replace(/assumptioner/gi, "assumptions")
+    .replace(/assumption(?:er)/gi, "assumptions")
     .replace(/assumption/gi, "assumption")
     .replace(/antakinga/gi, "assumption")
     .replace(/forskjell/gi, "difference")
@@ -1339,7 +1339,7 @@ export function sprint338PolishEnglishText(value: string): string {
   return sprint335PolishEnglishText(String(value ?? ""))
     .replace(/Fortsetter fra tidligere beregning\. Endringer oppretter en ny beregning — originalen forblir uendret\./g, "Continuing from a previous calculation. Changes create a new calculation — the original remains unchanged.")
     .replace(/Beregningen er godkjent for visning\. Forutsetter manuell verifikasjon av ansvarlig fagperson før bruk i prosjektering\./g, "The calculation is approved for display as a preliminary result. Manual verification by a qualified professional is required before use in design work.")
-    .replace(/\bPRELIMINARILY APPROVED\b/g, "PRELIMINARILY APPROVED")
+    .replace(/\bPRELIMINARILY\s+APPROVED\b/g, "PROVISIONALLY ACCEPTED")
     .replace(/\bMINOR DIFFERENCES\b/g, "MINOR DIFFERENCES")
     .replace(/\bGOOD\b/g, "GOOD")
     .replace(/\bEngineer A and Engineer B\b/g, "Engineer A and Engineer B")
@@ -1384,7 +1384,7 @@ export function sprint339FinalNorwegianResidueText(value: string): string {
     .replace(/\bEngineer A and Engineer B er enige\b/gi, "Engineer A and Engineer B agree")
     .replace(/\ber enige\b/gi, "agree")
     .replace(/\ber trygg\b/gi, "is confident")
-    .replace(/\bFORELØPIG GODKJENT\b/g, "PRELIMINARILY APPROVED")
+    .replace(/\bFORELØPIG GODKJENT\b/g, "PROVISIONALLY ACCEPTED")
     .replace(/\bMINDRE FORSKJELLER\b/g, "MINOR DIFFERENCES")
     .replace(/\bBEGGE KONSTRUKTØRER ER ENIGE\b/g, "BOTH ENGINEERS AGREE")
     .replace(/\bØVRIG\b/g, "OTHER")

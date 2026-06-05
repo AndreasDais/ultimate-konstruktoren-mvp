@@ -8,6 +8,7 @@ import {
   type UpstreamReportData,
 } from "./build-report-model";
 import { validateReportModel } from "./validate-report-model";
+import { REPORT_DISCLAIMER } from "./report-model";
 import type { EngineeringContext } from "@/lib/engineering-context/types";
 
 function readSource(path: string): string {
@@ -257,12 +258,92 @@ describe("buildReportModel", () => {
     expect(model.keyResults.map((row) => row.label)).toContain("MEd");
     expect(model.summary.text).toContain("MEd");
     expect(model.summary.text).not.toContain("_");
+    expect(model.summary.request).toContain("Tema:");
+    expect(model.summary.request).toContain("Fritt opplagd stålbjelke");
+    expect(model.summary.request).not.toContain(sample.run.request.raw_text);
     expect(model.calculation.steps[0].prose).not.toContain("_");
     expect(model.calculation.steps[1].isControlStep).toBe(true);
     expect(model.cover.qrUrl).toContain("https://pilar.example/rapport/");
 
     const validation = validateReportModel(model);
     expect(validation.ok).toBe(true);
+  });
+
+  it("uses a sanitized canonical problem summary instead of raw free-form request text", () => {
+    const rawRequest = [
+      ["Fritt opplagd stålbjelke med spennvidde", "L = 5,0 m."].join(" "),
+      "Rekn ut: moment, skjær og om bjelken er god nok.",
+    ].join(" ");
+    const model = buildReportModel(
+      {
+        ...sample,
+        run: { request: { raw_text: rawRequest } },
+        inputReview: {
+          ...sample.inputReview!,
+          parsed_data: {
+            report_title: "Fritt opplagd stålbjelke — moment og skjær",
+            report_subtitle: "L = 5,0 m · qEd = 8,0 kN/m",
+            calculation_type: "bjelke_lastverknad",
+            profileName: "IPE 300",
+            steel_grade: "S355",
+            qEdKnPerM: 8,
+            spanM: 5,
+            kan_reknast_no: ["MEd", "VEd"],
+          },
+        },
+      },
+      {
+        locale: "nb",
+        reportUrl: "https://pilar.example/rapport/sanitized-request",
+      },
+    );
+
+    expect(model.summary.request).toContain("Tema: Fritt opplagd stålbjelke");
+    expect(model.summary.request).toContain("Grunnlag: L = 5,0 m");
+    expect(model.summary.request).toContain("Profil: IPE 300");
+    expect(model.summary.request).toContain("Dimensjonerende last: 8 kN/m");
+    expect(model.summary.request).toContain("Spennvidde: 5 m");
+    expect(model.summary.request).not.toContain(rawRequest);
+    expect(model.summary.request).not.toMatch(/Rekn ut|god nok|raw_text/i);
+  });
+
+  it("keeps report disclaimers free of mixed-language assumption wording", () => {
+    expect(REPORT_DISCLAIMER.nb).toContain("forutsetninger");
+    expect(REPORT_DISCLAIMER.nn).toContain("føresetnader");
+    expect(REPORT_DISCLAIMER.en).toContain("assumptions");
+
+    for (const text of Object.values(REPORT_DISCLAIMER)) {
+      expect(text).not.toMatch(/assumption(?:er)/i);
+      expect(text).toMatch(/fagperson|qualified professional|responsible engineer|kontroller/i);
+    }
+  });
+
+  it("keeps downloadable report export wording bounded and localized", () => {
+    const sources = [
+      readSource("lib/report/build-report-model.ts"),
+      readSource("lib/report/render-docx.ts"),
+      readSource("lib/report/render-calculation-docx.ts"),
+      readSource("lib/report/report-model.ts"),
+      readSource("lib/report/validate-report-model.ts"),
+      readSource("lib/international/display.ts"),
+    ].join("\n");
+
+    expect(sources).toContain("PROVISIONALLY ACCEPTED");
+    expect(sources).toContain("AI_PIPELINE_STATUS_LABELS");
+    expect(sources).toContain("Navn · rolle · foretak");
+    expect(sources).toContain("Namn · rolle · føretak");
+    expect(sources).toContain("Name · role · company");
+    expect(sources).not.toMatch(
+      new RegExp(
+        [
+          ["PRELIMINARILY", "APPROVED"].join(" "),
+          ["DECISION", " "].join(" "),
+          ["Name", "title", "company"].join(" · "),
+          ["assumption", "er"].join(""),
+        ].join("|"),
+        "i",
+      ),
+    );
   });
 
   it("keeps the public run read surface as a sanitized report snapshot", () => {
