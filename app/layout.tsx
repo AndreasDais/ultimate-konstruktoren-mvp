@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { type HeaderUiMode } from "./components/Header";
 import ConditionalAppHeader from "./components/ConditionalAppHeader";
+import ConditionalAppFooter from "./components/ConditionalAppFooter";
 import { LocaleProvider } from "@/lib/locale-context";
 import "./globals.css";
 import "./tokens.css";
@@ -78,6 +79,7 @@ export default async function RootLayout({
         <LocaleProvider>
           <ConditionalAppHeader uiMode={uiMode} />
           {children}
+          <ConditionalAppFooter uiMode={uiMode} />
         </LocaleProvider>
       </body>
     </html>
