@@ -38,11 +38,12 @@ import {
   normalizeReportModel,
   normalizeTitleTypography,
   resultPriorityScore,
-  splitValueUnit, cleanReportTextPreserveUserInput } from "./normalize-report-model";
+  splitValueUnit,
+} from "./normalize-report-model";
 
 function sprint339FinalNorwegianResidueText(value: string): string {
   return String(value ?? "")
-    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/FORELØPIG GODKJENT/g, "PROVISIONALLY ACCEPTED")
     .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
     .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
     .replace(/ØVRIG/g, "OTHER")
@@ -126,6 +127,11 @@ export type UpstreamReportData = {
   inputReview: {
     input_status: string;
     parsed_data?: unknown;
+    calculation_type?: string | null;
+    extracted_inputs?: unknown;
+    can_calculate?: unknown;
+    cannot_calculate?: unknown;
+    assumptions?: unknown;
     prompt_version: string;
   } | null;
   agentA?: UpstreamAgentOutput | null;
@@ -544,6 +550,100 @@ function stringField(source: Record<string, unknown> | null, key: string): strin
   return typeof value === "string" ? cleanReportText(value) : "";
 }
 
+function safeScalarText(value: unknown): string {
+  if (typeof value === "string") return limitText(cleanReportText(value.replace(/\s+/g, " ")), 90);
+  if (typeof value === "number" && Number.isFinite(value)) return String(value).replace(".", ",");
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return "";
+}
+
+function firstSafeField(
+  sources: Array<Record<string, unknown> | null>,
+  keys: string[],
+): { key: string; value: string } | null {
+  for (const source of sources) {
+    if (!source) continue;
+    for (const key of keys) {
+      const text = safeScalarText(source[key]);
+      if (text) return { key, value: text };
+    }
+  }
+  return null;
+}
+
+function arrayField(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(safeScalarText).filter(Boolean).slice(0, 6);
+}
+
+const PROBLEM_SUMMARY_LABELS: Record<string, Record<PilarDisplayLanguage, string>> = {
+  topic: { nb: "Tema", nn: "Tema", en: "Topic" },
+  basis: { nb: "Grunnlag", nn: "Grunnlag", en: "Basis" },
+  type: { nb: "Beregningstype", nn: "Berekningstype", en: "Calculation type" },
+  profile: { nb: "Profil", nn: "Profil", en: "Profile" },
+  grade: { nb: "Stålkvalitet", nn: "Stålkvalitet", en: "Steel grade" },
+  designLoad: { nb: "Dimensjonerende last", nn: "Dimensjonerande last", en: "Design load" },
+  span: { nb: "Spennvidde", nn: "Spennvidde", en: "Span" },
+  canCalculate: { nb: "Kan beregnes", nn: "Kan reknast", en: "Can calculate" },
+};
+
+function formatStructuredValue(field: { key: string; value: string }, unitForNumber?: string): string {
+  if (unitForNumber && /^[-+]?\d+(?:[,.]\d+)?$/.test(field.value)) {
+    return `${field.value} ${unitForNumber}`;
+  }
+  return field.value;
+}
+
+function buildSanitizedProblemSummary(
+  data: UpstreamReportData,
+  displayLanguage: PilarDisplayLanguage,
+): string {
+  const review = asRecord(data.inputReview);
+  const parsed = asRecord(data.inputReview?.parsed_data);
+  const extracted =
+    asRecord(review?.extracted_inputs) ??
+    asRecord(parsed?.tolkte_verdiar) ??
+    asRecord(parsed?.extracted_inputs);
+  const lines: string[] = [];
+  const append = (labelKey: keyof typeof PROBLEM_SUMMARY_LABELS, value: string) => {
+    const text = displayTextForLanguage(value, displayLanguage);
+    if (!text) return;
+    lines.push(`${PROBLEM_SUMMARY_LABELS[labelKey][displayLanguage]}: ${text}`);
+  };
+
+  const title = stringField(parsed, "report_title");
+  const subtitle = stringField(parsed, "report_subtitle");
+  const calculationType =
+    stringField(parsed, "calculation_type") ||
+    safeScalarText(review?.calculation_type);
+
+  if (title) append("topic", title);
+  if (subtitle && subtitle !== title) append("basis", subtitle);
+  if (calculationType) append("type", calculationType);
+
+  const sources = [parsed, extracted, review];
+  const profile = firstSafeField(sources, ["profileName", "profile", "profil"]);
+  const grade = firstSafeField(sources, ["steel_grade", "stalkvalitet", "stålkvalitet", "grade"]);
+  const designLoad = firstSafeField(sources, ["qEdKnPerM", "qEd", "q_Ed", "qd", "q_d"]);
+  const span = firstSafeField(sources, ["spanM", "span", "L", "spennvidde"]);
+
+  if (profile) append("profile", formatStructuredValue(profile));
+  if (grade) append("grade", formatStructuredValue(grade));
+  if (designLoad) append("designLoad", formatStructuredValue(designLoad, designLoad.key === "qEdKnPerM" ? "kN/m" : undefined));
+  if (span) append("span", formatStructuredValue(span, span.key === "spanM" ? "m" : undefined));
+
+  const canCalculate = [
+    ...arrayField(review?.can_calculate),
+    ...arrayField(parsed?.kan_reknast_no),
+    ...arrayField(parsed?.can_calculate),
+  ];
+  if (canCalculate.length > 0) {
+    append("canCalculate", Array.from(new Set(canCalculate)).slice(0, 6).join(", "));
+  }
+
+  return lines.slice(0, 8).join("\n");
+}
+
 function calculationTypeFallback(type: string, locale: Locale, displayLanguage: PilarDisplayLanguage = locale): string {
   const labels: Record<string, Record<PilarDisplayLanguage, string>> = {
     lastkombinasjon: {
@@ -806,7 +906,7 @@ export function buildReportModel(data: UpstreamReportData, options: BuildReportM
     keyResults,
     summary: {
       text: polishForDisplay(summary, displayLanguage),
-      request: cleanReportTextPreserveUserInput(data.run.request.raw_text),
+      request: buildSanitizedProblemSummary(data, displayLanguage),
     },
     interpretation: {
       status: displayLanguage === "en" ? ({ klar: "Ready", delvis_klar: "Partly ready", mangelfull: "Incomplete", avvist: "Rejected", uklar: "Unclear", uklart: "Unclear", relevant_ikkje_stotta: "Not supported" }[data.inputReview?.input_status ?? ""] ?? "Unknown") : data.inputReview ? inputStatusLabel(data.inputReview.input_status, locale) : "-",

@@ -13,7 +13,7 @@ import { normalizeCalculationSyntaxText } from "./normalize-report-model";
 
 function sprint339FinalNorwegianResidueText(value: string): string {
   return String(value ?? "")
-    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/FORELØPIG GODKJENT/g, "PROVISIONALLY ACCEPTED")
     .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
     .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
     .replace(/ØVRIG/g, "OTHER")
@@ -132,6 +132,18 @@ const LABELS: Record<string, Record<PilarDisplayLanguage, string>> = {
   a: { nb: "Konstruktør A", nn: "Konstruktør A", en: "Engineer A" },
   b: { nb: "Konstruktør B", nn: "Konstruktør B", en: "Engineer B" },
   match: { nb: "Samsvar", nn: "Samsvar", en: "Match" },
+};
+
+const AI_PIPELINE_STATUS_LABELS: Record<PilarDisplayLanguage, string> = {
+  nb: "AI-PIPELINESTATUS  ",
+  nn: "AI-PIPELINESTATUS  ",
+  en: "AI PIPELINE STATUS  ",
+};
+
+const SIGNATURE_PLACEHOLDERS: Record<PilarDisplayLanguage, { reviewer: string; date: string }> = {
+  nb: { reviewer: "Navn · rolle · foretak", date: "DD.MM.ÅÅÅÅ" },
+  nn: { reviewer: "Namn · rolle · føretak", date: "DD.MM.ÅÅÅÅ" },
+  en: { reviewer: "Name · role · company", date: "MM/DD/YYYY" },
 };
 
 function cleanText(value: string | null | undefined): string {
@@ -609,7 +621,7 @@ function decisionBox(model: ReportModel): Table {
   return calloutTable([
     new Paragraph({
       children: [
-        new TextRun({ text: "DECISION  ", font: FONT_MONO, size: 16, bold: true, color: COLOR_BLUE_BORDER }),
+        new TextRun({ text: AI_PIPELINE_STATUS_LABELS[displayLanguage], font: FONT_MONO, size: 16, bold: true, color: COLOR_BLUE_BORDER }),
         new TextRun({ text: displayLanguage === "en" ? sprint335PolishEnglishText(model.control.decision).toUpperCase() : model.control.decision.toUpperCase(), font: FONT_SANS, size: 19, bold: true, color: COLOR_INK }),
       ],
       spacing: { after: 100 },
@@ -621,10 +633,11 @@ function decisionBox(model: ReportModel): Table {
 function signatureTable(model: ReportModel): Table {
   const locale = model.meta.locale;
   const displayLanguage: PilarDisplayLanguage = model.meta.displayLanguage ?? locale;
+  const placeholders = SIGNATURE_PLACEHOLDERS[displayLanguage];
   const rows: [string, string][] = [
-    [LABELS.checkedBy[displayLanguage], "Name · title · company"],
+    [LABELS.checkedBy[displayLanguage], placeholders.reviewer],
     [LABELS.signed[displayLanguage], LABELS.manualSignature[displayLanguage]],
-    [LABELS.date[displayLanguage], "MM/DD/YYYY"],
+    [LABELS.date[displayLanguage], placeholders.date],
   ];
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },

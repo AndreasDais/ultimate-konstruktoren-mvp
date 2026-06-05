@@ -43,13 +43,13 @@ export function validateReportModel(model: ReportModel): ReportValidationResult 
     issues.push(issue("warning", "missing_summary", "summary.text", "Rapporten manglar samandrag."));
   }
   if (isBlank(model.summary.request)) {
-    issues.push(issue("warning", "missing_request", "summary.request", "Rapporten manglar original førespurnad."));
+    issues.push(issue("warning", "missing_request", "summary.request", "Rapporten manglar strukturert problemgrunnlag."));
   }
   if (model.keyResults.length === 0 && model.calculation.resultRows.length === 0) {
     issues.push(issue("warning", "missing_results", "keyResults", "Rapporten har ingen nøkkelresultat."));
   }
   if (model.interpretation.assumptions.length === 0) {
-    issues.push(issue("warning", "missing_assumptions", "interpretation.assumptions", "Rapporten har ingen assumptioner."));
+    issues.push(issue("warning", "missing_assumptions", "interpretation.assumptions", "Rapporten har ingen forutsetninger/føresetnader."));
   }
   if (model.calculation.steps.length === 0) {
     issues.push(issue("warning", "missing_steps", "calculation.steps", "Rapporten har ingen berekningssteg."));

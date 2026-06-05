@@ -21,7 +21,7 @@ import type {
 
 function sprint339FinalNorwegianResidueText(value: string): string {
   return String(value ?? "")
-    .replace(/FORELØPIG GODKJENT/g, "PRELIMINARILY APPROVED")
+    .replace(/FORELØPIG GODKJENT/g, "PROVISIONALLY ACCEPTED")
     .replace(/MINDRE FORSKJELLER/g, "MINOR DIFFERENCES")
     .replace(/BEGGE KONSTRUKTØRER ER ENIGE/g, "BOTH ENGINEERS AGREE")
     .replace(/ØVRIG/g, "OTHER")
