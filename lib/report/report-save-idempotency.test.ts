@@ -129,7 +129,19 @@ describe("report save idempotency", () => {
       page.indexOf("<RapportLoadingPilelinja"),
     );
     expect(runRead).toContain("executive_summary, technical_assessment, conclusion");
-    expect(runRead).toContain("agentA:");
-    expect(runRead).toContain("agentB:");
+    expect(runRead).toContain('mode: "public_report_snapshot"');
+    expect(runRead).not.toContain("structured_output");
+    expect(runRead).not.toContain("agentA:");
+    expect(runRead).not.toContain("agentB:");
+  });
+
+  it("blocks public request resume without exposing raw request data", () => {
+    const requestRead = readSource("app/api/requests/[id]/route.ts");
+
+    expect(requestRead).toContain("request_resume_requires_owner_or_share_token");
+    expect(requestRead).toContain("Cache-Control");
+    expect(requestRead).not.toContain("raw_text");
+    expect(requestRead).not.toContain("user_id");
+    expect(requestRead).not.toContain('select("*")');
   });
 });
