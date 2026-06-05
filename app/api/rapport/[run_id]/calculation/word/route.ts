@@ -85,9 +85,13 @@ export async function GET(
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Ukjent feil";
-    const stack = error instanceof Error ? error.stack : undefined;
-    console.error("Calculation Word export error:", { stage, message, stack });
+    const errorName = error instanceof Error ? error.name : typeof error;
+    const messageLength = error instanceof Error ? error.message.length : String(error).length;
+    console.error("Calculation Word export error:", {
+      stage,
+      error_name: errorName,
+      message_length: messageLength,
+    });
     return NextResponse.json({ error: "Ukjent feil" }, { status: 500 });
   }
 }

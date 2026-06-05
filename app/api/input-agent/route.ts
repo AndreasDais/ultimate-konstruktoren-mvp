@@ -460,7 +460,7 @@ async function buildContent(
 
 type CoreCallResult =
   | { ok: true; result: Record<string, unknown>; requestId: string | null }
-  | { ok: false; status: number; error: string; raw?: string };
+  | { ok: false; status: number; error: string };
 
 async function callTolkar(args: {
   content: ContentBlock[];
@@ -503,14 +503,13 @@ async function callTolkar(args: {
   if (!parsedResult.ok) {
     console.error("[input-agent] Tolkar returned invalid JSON", {
       error: parsedResult.error,
-      preview: parsedResult.preview,
+      response_length: responseText.length,
     });
 
     return {
       ok: false,
       status: 502,
       error: "Tolkar returnerte ugyldig JSON. Prøv igjen, eller rapporter bug dersom feilen gjentar seg.",
-      raw: responseText,
     };
   }
 

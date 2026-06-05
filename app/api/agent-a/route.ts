@@ -221,7 +221,6 @@ type CoreCallResult =
       ok: false;
       status: number;
       error: string;
-      raw?: string;
       stopReason?: string;
     };
 
@@ -353,9 +352,7 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     } catch (parseErr) {
       console.error("[agent-a] JSON.parse feila (også etter jsonrepair):", {
         stop_reason: message.stop_reason,
-        raw_length: responseText.length,
-        first_500_chars: responseText.slice(0, 500),
-        last_500_chars: responseText.slice(-500),
+        response_length: responseText.length,
         error_context: (() => {
           const errMsg = initialErr instanceof Error ? initialErr.message : "";
           const m = errMsg.match(/position (\d+)/);
@@ -363,7 +360,6 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
           const p = parseInt(m[1], 10);
           return {
             position: p,
-            context_200_chars: responseText.slice(Math.max(0, p - 100), p + 100),
           };
         })(),
         initialErr: initialErr instanceof Error ? initialErr.message : String(initialErr),
@@ -376,7 +372,6 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
         error: wasTruncated
           ? "Engineer A nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
           : "Klarte ikkje parse Engineer A sitt svar som JSON",
-        raw: responseText,
         stopReason: message.stop_reason ?? undefined,
       };
     }
