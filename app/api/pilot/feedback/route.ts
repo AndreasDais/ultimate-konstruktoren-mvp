@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { PilotFeedbackPayload } from "@/lib/pilot/types";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -28,8 +29,11 @@ function isValidTrust(value: unknown): value is PilotFeedbackPayload["trustLevel
   return value === "trusted" || value === "partly_trusted" || value === "not_trusted" || value === "not_sure";
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let payload: PilotFeedbackPayload;
+
+  const rateLimited = await checkRateLimit(request);
+  if (rateLimited) return rateLimited;
 
   try {
     payload = (await request.json()) as PilotFeedbackPayload;
@@ -64,13 +68,15 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      console.error("[pilot/feedback] insert failed:", error);
+      return NextResponse.json({ ok: false, error: "Could not save feedback." }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, id: data?.id ?? null });
   } catch (error) {
+    console.error("[pilot/feedback] FAILED:", error);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
+      { ok: false, error: "Could not save feedback." },
       { status: 500 },
     );
   }

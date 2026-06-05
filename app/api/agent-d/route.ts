@@ -549,7 +549,6 @@ Vurder om resultatet kan visast til brukaren, og i kva form. Følg systeminstruk
             error: wasTruncated
               ? "Controller nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
               : "Klarte ikkje parse Controller sitt svar som JSON",
-            raw: responseText,
             stop_reason: message.stop_reason,
           },
           { status: 500 }

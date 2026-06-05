@@ -247,9 +247,8 @@ export async function GET(
     });
 
     if (!agentERes.ok) {
-      const errBody = await agentERes.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errBody.error || "Kunne ikke hente rapport-data", stage },
+        { error: "Kunne ikke hente rapport-data" },
         { status: agentERes.status },
       );
     }
@@ -337,7 +336,7 @@ export async function GET(
     const message = error instanceof Error ? error.message : "Ukjent feil";
     const stack = error instanceof Error ? error.stack : undefined;
     console.error("Calculation PDF export error:", { stage, message, stack });
-    return NextResponse.json({ error: message, stage }, { status: 500 });
+    return NextResponse.json({ error: "Ukjent feil" }, { status: 500 });
   } finally {
     if (browser) {
       await browser.close().catch(() => undefined);

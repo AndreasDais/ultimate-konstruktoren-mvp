@@ -668,7 +668,7 @@ export async function POST(request: Request) {
             });
 
             if (!result.ok) {
-              send("error", { message: result.error, raw: result.raw });
+              send("error", { message: result.error });
             } else {
               send("complete", {
                 result: { ...result.result, request_id: result.requestId },
@@ -699,7 +699,7 @@ export async function POST(request: Request) {
 
     if (!result.ok) {
       return Response.json(
-        { error: result.error, raw: result.raw },
+        { error: result.error },
         { status: result.status }
       );
     }

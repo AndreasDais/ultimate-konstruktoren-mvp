@@ -250,7 +250,6 @@ ${tailInstruction}`;
             error: wasTruncated
               ? "Comparator nådde token-grensa før han fullførte JSON. Aukar max_tokens kan hjelpe."
               : "Klarte ikkje parse Comparator sitt svar som JSON",
-            raw: responseText,
             stop_reason: message.stop_reason,
           },
           { status: 500 }
@@ -297,7 +296,6 @@ ${tailInstruction}`;
     return Response.json({ result: parsed });
   } catch (err) {
     console.error("Comparator error:", err);
-    const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
-    return Response.json({ error: errorMessage }, { status: 500 });
+    return Response.json({ error: "Comparator feila" }, { status: 500 });
   }
 }
