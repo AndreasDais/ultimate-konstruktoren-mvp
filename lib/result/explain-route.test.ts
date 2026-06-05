@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { messagesCreateMock } = vi.hoisted(() => ({
+const { checkRateLimitMock, messagesCreateMock } = vi.hoisted(() => ({
+  checkRateLimitMock: vi.fn(),
   messagesCreateMock: vi.fn(),
+}));
+
+vi.mock("@/lib/ratelimit", () => ({
+  checkRateLimit: checkRateLimitMock,
 }));
 
 vi.mock("@anthropic-ai/sdk", () => ({
@@ -14,11 +19,13 @@ vi.mock("@anthropic-ai/sdk", () => ({
 
 import { __clearExplainCacheForTests, POST } from "@/app/api/explain/route";
 
-function request(body: unknown): Request {
+type ExplainRequest = Parameters<typeof POST>[0];
+
+function request(body: unknown): ExplainRequest {
   return new Request("http://localhost/api/explain", {
     method: "POST",
     body: JSON.stringify(body),
-  });
+  }) as ExplainRequest;
 }
 
 async function postJson(body: unknown): Promise<Record<string, unknown>> {
@@ -35,7 +42,27 @@ function expectSafeClientPayload(json: Record<string, unknown>): void {
 describe("/api/explain", () => {
   beforeEach(() => {
     __clearExplainCacheForTests();
+    checkRateLimitMock.mockReset();
+    checkRateLimitMock.mockResolvedValue(null);
     messagesCreateMock.mockReset();
+  });
+
+  it("passes rate limits through before body parsing or LLM calls", async () => {
+    checkRateLimitMock.mockResolvedValueOnce(
+      Response.json({ error: "rate_limited" }, { status: 429 }),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/explain", {
+        method: "POST",
+        body: "{not-json",
+      }) as ExplainRequest,
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(json).toEqual({ error: "rate_limited" });
+    expect(messagesCreateMock).not.toHaveBeenCalled();
   });
 
   it("returns catalog explanations without calling the LLM", async () => {
@@ -83,7 +110,7 @@ describe("/api/explain", () => {
       new Request("http://localhost/api/explain", {
         method: "POST",
         body: "{not-json",
-      }),
+      }) as ExplainRequest,
     );
     const malformed = await malformedResponse.json();
     const missing = await postJson({ displayLanguage: "en" });

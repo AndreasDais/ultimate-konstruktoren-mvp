@@ -1,8 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
+import type { NextRequest } from "next/server";
 import { jsonrepair } from "jsonrepair";
 import { PIPELINE_MODEL } from "@/lib/models";
 import type { PilarDisplayLanguage } from "@/lib/international/display";
 import { tileDescription } from "@/lib/result/tile-heuristics";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 type ExplainBody = {
   run_id?: unknown;
@@ -151,7 +153,10 @@ export function __clearExplainCacheForTests(): void {
   explainCache.clear();
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimited = await checkRateLimit(request);
+  if (rateLimited) return rateLimited;
+
   let body: ExplainBody;
   try {
     body = await request.json();

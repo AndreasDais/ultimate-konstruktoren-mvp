@@ -238,7 +238,6 @@ type CoreCallResult =
       ok: false;
       status: number;
       error: string;
-      raw?: string;
       stopReason?: string;
     };
 
@@ -355,9 +354,7 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
     const wasTruncated = message.stop_reason === "max_tokens";
     console.error("[agent-b] Fann ikkje gyldig JSON-objekt i svaret", {
       stop_reason: message.stop_reason,
-      raw_length: responseText.length,
-      first_500_chars: responseText.slice(0, 500),
-      last_500_chars: responseText.slice(-500),
+      response_length: responseText.length,
     });
     return {
       ok: false,
@@ -365,7 +362,6 @@ Løys oppgåva i samsvar med systeminstruksen din. Hugs verification_checklist f
       error: wasTruncated
         ? "Engineer B nådde token-grensa før han fullførte JSON. Aukar max_tokens i route.ts kan hjelpe."
         : "Klarte ikkje parse Engineer B sitt svar som JSON",
-      raw: responseText,
       stopReason: message.stop_reason ?? undefined,
     };
   }
