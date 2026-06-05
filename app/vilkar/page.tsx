@@ -12,7 +12,7 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
   // Topp
   eyebrow: { nb: "Pilar v0.1", nn: "Pilar v0.1" },
   h1: { nb: "Vilkår for bruk", nn: "Vilkår for bruk" },
-  sistOppdatert: { nb: "Sist oppdatert: 12. mai 2026", nn: "Sist oppdatert: 12. mai 2026" },
+  sistOppdatert: { nb: "Sist oppdatert: 27. mai 2026", nn: "Sist oppdatert: 27. mai 2026" },
 
   // Intro
   introPre: { nb: "Pilar er en ", nn: "Pilar er ein " },
@@ -61,6 +61,10 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
     nb: "Vi gir ingen garanti for at AI-genererte beregninger er korrekte, komplette eller i samsvar med gjeldende regelverk. Bruk av Pilar skjer på eget ansvar.",
     nn: "Vi gir ingen garanti for at AI-genererte berekningar er korrekte, komplette eller i samsvar med gjeldande regelverk. Bruk av Pilar skjer på eige ansvar.",
   },
+  s2P3: {
+    nb: "Støtte utenfor Eurokode/Norge er eksperimentell. Andre regionale standarder kan være delvis modellert eller ikke modellert i det hele tatt. Behandle resultater utenfor Eurokode som et utgangspunkt for manuelt arbeid, ikke som et verifisert resultat.",
+    nn: "Støtte utanfor Eurokode/Noreg er eksperimentell. Andre regionale standardar kan vere delvis modellerte eller ikkje modellerte i det heile. Handsam resultat utanfor Eurokode som eit utgangspunkt for manuelt arbeid, ikkje som eit verifisert resultat.",
+  },
 
   // 3. Data vi lagrar
   s3Title: { nb: "3. Data vi lagrer", nn: "3. Data vi lagrar" },
@@ -86,8 +90,8 @@ const VILKAR_LABELS: Record<string, Record<Locale, string>> = {
   // 5. Endringar i pilot
   s5Title: { nb: "5. Endringer i pilot", nn: "5. Endringar i pilot" },
   s5P1: {
-    nb: "Pilar er under aktiv utvikling. Funksjonalitet, priser (gratis i pilot), og vilkår kan endres uten varsel. Større endringer blir kommunisert via e-post til registrerte usee.",
-    nn: "Pilar er under aktiv utvikling. Funksjonalitet, prisar (gratis i pilot), og vilkår kan endrast utan varsel. Større endringar blir kommunisert via e-post til registrerte usear.",
+    nb: "Pilar er under aktiv utvikling. Funksjonalitet, priser (gratis i pilot), og vilkår kan endres uten varsel. Større endringer blir kommunisert via e-post til registrerte brukere.",
+    nn: "Pilar er under aktiv utvikling. Funksjonalitet, prisar (gratis i pilot), og vilkår kan endrast utan varsel. Større endringar blir kommunisert via e-post til registrerte brukarar.",
   },
 
   // 6. Kontakt
@@ -136,6 +140,7 @@ export default async function VilkarPage() {
               {VILKAR_LABELS.s2P1Pre[locale]}<strong>{VILKAR_LABELS.s2P1Bold[locale]}</strong>{VILKAR_LABELS.s2P1Post[locale]}
             </p>
             <p>{VILKAR_LABELS.s2P2[locale]}</p>
+            <p>{VILKAR_LABELS.s2P3[locale]}</p>
           </Section>
 
           <Section title={VILKAR_LABELS.s3Title[locale]}>
