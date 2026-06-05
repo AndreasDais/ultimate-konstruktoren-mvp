@@ -502,19 +502,6 @@ export default function HeimClient({
         </section>
       </main>
 
-      {/* ===================== FOOTER ===================== */}
-      <footer className="footer">
-        <div className="footer__inner">
-          <span className="footer__note">
-            <span className="dot" aria-hidden="true" />
-            {t.footerNote}
-          </span>
-          <Link className="footer__link" href={t.termsHref}>
-            {t.terms}
-          </Link>
-        </div>
-      </footer>
-
       {showRegionModal && <RegionModal lang={lang} />}
     </div>
   );
