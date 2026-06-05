@@ -47,7 +47,7 @@ const COPY: Record<LangKey, Copy> = {
     eyebrow: "PILAR · Pilot",
     title: "Test PILAR med ferdige oppgaver",
     lead:
-      "Målet med piloten er å se om PILAR kan hjelpe byggingeniørstudenter med å tolke, beregne, kontrollere og dokumentere konstruksjonsoppgaver raskere og ryddigare.",
+      "Målet med piloten er å se om PILAR kan hjelpe byggingeniørstudenter med å tolke, beregne, kontrollere og dokumentere konstruksjonsoppgaver raskere og ryddigere.",
     startOwn: "Start med egen oppgave",
     or: "eller",
     mine: "Mine rapporter",
