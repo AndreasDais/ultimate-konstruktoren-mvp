@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
-// TEMPORARY base URL: no production launch domain is configured yet. Using the
-// current Vercel host. Update this when the launch domain is set.
-const SITE_URL = "https://pilar-mvp.vercel.app";
+// Canonical public launch domain. The apex pilarcalc.com 308-redirects to www;
+// the prior Vercel preview host remains a valid fallback.
+const SITE_URL = "https://www.pilarcalc.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {
