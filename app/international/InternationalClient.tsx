@@ -70,6 +70,10 @@ export default function InternationalClient() {
   const [fbStandard, setFbStandard] = useState("");
   const [fbImprove, setFbImprove] = useState("");
   const [fbEmail, setFbEmail] = useState("");
+  const [fbSubmitting, setFbSubmitting] = useState(false);
+  const [fbMessage, setFbMessage] = useState<{ kind: "success" | "error"; text: string } | null>(
+    null,
+  );
 
   const ctxRef = useRef<HTMLElement>(null);
   const bridgeRef = useRef<HTMLDivElement>(null);
@@ -236,20 +240,82 @@ export default function InternationalClient() {
     }
   }
 
-  // International region/standard feedback is sent via the user's email app
-  // (mailto). Backend submission is deferred: the existing /api/pilot/feedback
-  // endpoint is shaped for calculation rating/trust, not region/standard needs.
-  function submitFeedback() {
+  async function submitFeedback() {
+    if (fbSubmitting) return;
+    setFbMessage(null);
+    const regionText = fbRegion.trim();
+    const standardText = fbStandard.trim();
+    const improveText = fbImprove.trim();
+    const emailText = fbEmail.trim();
+    if (!regionText && !standardText && !improveText) {
+      setFbMessage({
+        kind: "error",
+        text: "Add a region, standard, or improvement before submitting.",
+      });
+      return;
+    }
+
     const lines = [
-      fbRegion.trim() ? `Region/country: ${fbRegion.trim()}` : null,
-      fbStandard.trim() ? `Standard/profile: ${fbStandard.trim()}` : null,
-      fbImprove.trim() ? `What to implement/improve:\n${fbImprove.trim()}` : null,
-      fbEmail.trim() ? `Contact: ${fbEmail.trim()}` : null,
+      regionText ? `Region/country: ${regionText}` : null,
+      standardText ? `Standard/profile: ${standardText}` : null,
+      improveText ? `What to implement/improve:\n${improveText}` : null,
+      emailText ? `Contact: ${emailText}` : null,
     ].filter(Boolean);
-    const subject = encodeURIComponent("PILAR international pilot feedback");
-    const body = encodeURIComponent(lines.join("\n\n"));
-    window.location.href = `mailto:pilot@pilarcalc.com?subject=${subject}&body=${body}`;
-    setFeedbackOpen(false);
+
+    setFbSubmitting(true);
+    try {
+      const response = await fetch("/api/pilot/feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          rating: "partly",
+          trustLevel: "not_sure",
+          useCase: "international_support",
+          comment: lines.join("\n\n"),
+          wantsFollowup: Boolean(emailText),
+          reportUrl: `${window.location.pathname}${window.location.search}`,
+          source: "international_page",
+          metadata: {
+            region: regionText,
+            standard: standardText,
+            requested_improvement: improveText,
+            followup_email: emailText,
+            current_path: `${window.location.pathname}${window.location.search}`,
+            ui_mode: "intl",
+            locale: "en",
+            selected_region: region,
+            selected_standard: standard,
+            support_level: option.supportLevel,
+            page: "international",
+          },
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        setFbMessage({
+          kind: "error",
+          text: data?.error || "Could not save feedback. Try again in a moment.",
+        });
+        return;
+      }
+
+      setFbMessage({
+        kind: "success",
+        text: "Feedback saved. Thank you - the pilot team can review it in admin.",
+      });
+      setFbRegion("");
+      setFbStandard("");
+      setFbImprove("");
+      setFbEmail("");
+    } catch {
+      setFbMessage({
+        kind: "error",
+        text: "Could not save feedback. Try again in a moment.",
+      });
+    } finally {
+      setFbSubmitting(false);
+    }
   }
 
   return (
@@ -515,27 +581,33 @@ export default function InternationalClient() {
               />
             </label>
             <p className="intl-modal__note">
-              Submitting opens your email app, pre-filled to the pilot team.
-              PILAR output stays preliminary and requires review by a qualified
-              engineer.
+              Feedback is saved for pilot review. PILAR output stays preliminary
+              and requires review by a qualified engineer.
             </p>
+            {fbMessage && (
+              <p className={`intl-modal__status is-${fbMessage.kind}`} role="status">
+                {fbMessage.text}
+              </p>
+            )}
             <div className="intl-modal__actions">
               <button
                 type="button"
                 className="uk-btn"
                 onClick={() => setFeedbackOpen(false)}
+                disabled={fbSubmitting}
               >
-                Cancel
+                {fbMessage?.kind === "success" ? "Close" : "Cancel"}
               </button>
               <button
                 type="button"
                 className="uk-btn uk-btn--primary"
                 onClick={submitFeedback}
                 disabled={
-                  !fbRegion.trim() && !fbStandard.trim() && !fbImprove.trim()
+                  fbSubmitting ||
+                  (!fbRegion.trim() && !fbStandard.trim() && !fbImprove.trim())
                 }
               >
-                Send feedback
+                {fbSubmitting ? "Sending..." : "Send feedback"}
               </button>
             </div>
           </div>
