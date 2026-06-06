@@ -1,4 +1,4 @@
-import Link from "next/link";
+import BackToPilar from "@/app/components/BackToPilar";
 import { cookies } from "next/headers";
 import type { Locale } from "@/lib/locale";
 import { getLocaleFromCookies } from "@/lib/locale";
@@ -177,12 +177,10 @@ export default async function VilkarPage() {
         </div>
 
         <div className="mt-12 pt-6 border-t" style={{ borderColor: "var(--border)" }}>
-          <Link
-            href="/"
-            className="text-sm hover:underline" style={{ color: "var(--fg-muted)" }}
-          >
-            {VILKAR_LABELS.tilbakePilar[locale]}
-          </Link>
+          <BackToPilar
+            fallback="/heim"
+            label={VILKAR_LABELS.tilbakePilar[locale]}
+          />
         </div>
       </article>
     </main>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+
+import BackToPilar from "./BackToPilar";
 
 export function PublicSection({
   title,
@@ -64,13 +65,7 @@ export function PublicShell({
           className="mt-12 pt-6 border-t"
           style={{ borderColor: "var(--border)" }}
         >
-          <Link
-            href="/home"
-            className="text-sm hover:underline"
-            style={{ color: "var(--fg-muted)" }}
-          >
-            ← Back to Pilar
-          </Link>
+          <BackToPilar fallback="/home" label="← Back to Pilar" />
         </div>
       </article>
     </main>

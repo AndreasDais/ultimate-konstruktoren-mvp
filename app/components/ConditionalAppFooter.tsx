@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import type { HeaderUiMode } from "./Header";
@@ -9,6 +9,7 @@ import {
   NO_FOOTER_LINKS,
   FOOTER_NOTE,
 } from "./public-footer-links";
+import { FROM_PARAM, originFor, sanitizeFrom, withFrom } from "./from-nav";
 
 /**
  * Global public footer, analogous to ConditionalAppHeader. Rendered once in the
@@ -41,7 +42,12 @@ export default function ConditionalAppFooter({
   uiMode: HeaderUiMode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   if (isFooterless(pathname)) return null;
+
+  // Carry the originating page so "Back to Pilar" can return there. Preserve an
+  // inbound from on info pages; use the current page as origin otherwise.
+  const origin = originFor(pathname, sanitizeFrom(searchParams.get(FROM_PARAM)));
 
   const variant: "en" | "no" = EN_FORCE_ROUTES.has(pathname)
     ? "en"
@@ -63,7 +69,7 @@ export default function ConditionalAppFooter({
           {links.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={withFrom(link.href, origin)}
               className="text-sm hover:underline"
               style={{ color: "var(--fg-muted)" }}
             >

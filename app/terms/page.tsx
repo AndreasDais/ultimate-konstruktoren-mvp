@@ -1,4 +1,4 @@
-import Link from "next/link";
+import BackToPilar from "@/app/components/BackToPilar";
 
 export const metadata = {
   title: "Terms of use — Pilar",
@@ -114,12 +114,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-12 pt-6 border-t" style={{ borderColor: "var(--border)" }}>
-          <Link
-            href="/"
-            className="text-sm hover:underline" style={{ color: "var(--fg-muted)" }}
-          >
-            ← Back to Pilar
-          </Link>
+          <BackToPilar fallback="/" label="← Back to Pilar" />
         </div>
       </article>
     </main>
