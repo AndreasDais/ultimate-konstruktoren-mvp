@@ -85,6 +85,41 @@ import {
   StepIndicator,
 } from "@/app/components/workbench/WorkbenchComponents";
 
+const WORKBENCH_SESSION_STATE_KEY = "uk-state";
+
+type WorkbenchSessionState = {
+  input: string;
+  result: AgentResult | null;
+  requestId: string | null;
+  calculationA: CalculationResult | null;
+  calculationB: CalculationResult | null;
+  comparison: ComparisonResult | null;
+  controllerDecision: ControllerDecision | null;
+  currentRunId: string | null;
+  phase: Phase | "input" | "result";
+  engineeringContext: EngineeringContext | null;
+  streamingA: AgentStreamingState;
+  streamingB: AgentStreamingState;
+  retryCountA: number;
+  retryCountB: number;
+  streamInterrupted?: boolean;
+};
+
+function isRestorablePhase(value: unknown): value is Phase {
+  return value === "workbench" || value === "calculating" || value === "calculation_result";
+}
+
+// A live SSE stream cannot resume after the user navigates away (the fetch is
+// aborted on unmount). When restoring an interrupted run, settle a still-running
+// agent into a calm, non-error state — keep the steps it had already shown, but
+// drop the live spinner and never fabricate a red "error" card. Genuine prior
+// outcomes (a finished agent, or one that truly failed before navigation) are
+// preserved as-is, so a real failure still surfaces its own retry affordance.
+function settleInterruptedStreamingState(state: AgentStreamingState): AgentStreamingState {
+  if (state.phase === "complete" || state.phase === "error") return state;
+  return { ...state, phase: "idle" };
+}
+
 export default function Home() {
   const { locale } = useLocale();
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
@@ -322,6 +357,8 @@ export default function Home() {
     documentId: string | null;
   } | null>(null);
   const [publicResumeBlocked, setPublicResumeBlocked] = useState<"run" | "request" | null>(null);
+  const [activeCalculationRestored, setActiveCalculationRestored] = useState(false);
+  const latestSessionStateRef = useRef<WorkbenchSessionState | null>(null);
 
   useEffect(() => {
     if (!result || !startBerekningRef.current) {
@@ -486,9 +523,9 @@ export default function Home() {
         }
       }
 
-      const saved = sessionStorage.getItem("uk-state");
+      const saved = sessionStorage.getItem(WORKBENCH_SESSION_STATE_KEY);
       if (!saved) return;
-      const state = JSON.parse(saved);
+      const state = JSON.parse(saved) as Partial<WorkbenchSessionState>;
       if (!state.currentRunId) return;
 
       setInput(state.input ?? "");
@@ -502,42 +539,132 @@ export default function Home() {
       setEngineeringContext(state.engineeringContext ?? loadEngineeringContextFromStorage());
 
       // Map legacy phase names for bakoverkompatibilitet med pågåande sessions
+      const restoredPhase = isRestorablePhase(state.phase) ? state.phase : "calculation_result";
+      const restoredFromInterruptedStream =
+        restoredPhase === "calculating" && state.streamInterrupted === true;
+
+      if (state.streamingA) {
+        setStreamingA(
+          restoredFromInterruptedStream
+            ? settleInterruptedStreamingState(state.streamingA)
+            : state.streamingA,
+        );
+      }
+      if (state.streamingB) {
+        setStreamingB(
+          restoredFromInterruptedStream
+            ? settleInterruptedStreamingState(state.streamingB)
+            : state.streamingB,
+        );
+      }
+      setRetryCountA(typeof state.retryCountA === "number" ? state.retryCountA : 0);
+      setRetryCountB(typeof state.retryCountB === "number" ? state.retryCountB : 0);
+      if (restoredFromInterruptedStream) {
+        setActiveCalculationRestored(true);
+      }
+
       const legacyPhase = state.phase;
       if (legacyPhase === "input" || legacyPhase === "result") {
         setPhase("workbench");
-      } else if (legacyPhase === "calculation_result" || legacyPhase === "calculating") {
-        setPhase(legacyPhase);
       } else {
-        setPhase("calculation_result");
+        setPhase(restoredPhase);
       }
 
-      sessionStorage.removeItem("uk-state");
+      sessionStorage.removeItem(WORKBENCH_SESSION_STATE_KEY);
     } catch (e) {
       console.warn("Klarte ikkje laste tilstand frå sessionStorage", e);
     }
   }, []);
 
-  const saveStateToSession = () => {
+  useEffect(() => {
+    latestSessionStateRef.current = {
+      input,
+      result,
+      requestId,
+      calculationA,
+      calculationB,
+      comparison,
+      controllerDecision,
+      currentRunId,
+      phase,
+      engineeringContext,
+      streamingA,
+      streamingB,
+      retryCountA,
+      retryCountB,
+    };
+  }, [
+    input,
+    result,
+    requestId,
+    calculationA,
+    calculationB,
+    comparison,
+    controllerDecision,
+    currentRunId,
+    phase,
+    engineeringContext,
+    streamingA,
+    streamingB,
+    retryCountA,
+    retryCountB,
+  ]);
+
+  function writeStateToSession(state: WorkbenchSessionState, streamInterrupted = false) {
     try {
       sessionStorage.setItem(
-        "uk-state",
+        WORKBENCH_SESSION_STATE_KEY,
         JSON.stringify({
-          input,
-          result,
-          requestId,
-          calculationA,
-          calculationB,
-          comparison,
-          controllerDecision,
-          currentRunId,
-          phase: "calculation_result",
-          engineeringContext,
-        })
+          ...state,
+          streamInterrupted,
+        }),
       );
     } catch (e) {
       console.warn("Klarte ikkje lagre tilstand til sessionStorage", e);
     }
+  }
+
+  const saveStateToSession = () => {
+    const state = latestSessionStateRef.current;
+    if (state?.currentRunId) writeStateToSession(state);
   };
+
+  useEffect(() => {
+    return () => {
+      const state = latestSessionStateRef.current;
+      if (!state?.currentRunId) return;
+      if (state.phase === "calculating" || state.phase === "calculation_result") {
+        writeStateToSession(state, state.phase === "calculating");
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeCalculationRestored || !currentRunId) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch(`/api/runs/${currentRunId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        if (data?.report?.document_id) {
+          setRestoredFrom({
+            requestId: requestId ?? null,
+            runId: currentRunId,
+            documentId: data.report.document_id,
+          });
+        }
+      } catch {
+        // Public snapshot is best-effort; never block local session restore.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCalculationRestored, currentRunId, requestId]);
 
 // Ref til tolking-panelet for auto-scroll når Tolkar er ferdig.
 const tolkingPanelRef = useRef<HTMLDivElement | null>(null);
@@ -793,6 +920,8 @@ useEffect(() => {
     setStreamingTolkar(INITIAL_TOLKAR);
     setRetryCountA(0);
     setRetryCountB(0);
+    setActiveCalculationRestored(false);
+    sessionStorage.removeItem(WORKBENCH_SESSION_STATE_KEY);
     pipelineRunningRef.current = false;
     // Reset eksempel-kollaps slik at neste sesjon ser eksempla igjen
     setExamplesCollapsed(false);
@@ -881,6 +1010,7 @@ useEffect(() => {
     setStreamingB({ ...INITIAL_STREAMING, phase: "thinking" });
     setRetryCountA(0);
     setRetryCountB(0);
+    setActiveCalculationRestored(false);
     pipelineRunningRef.current = false;
 
     try {
@@ -1496,7 +1626,7 @@ useEffect(() => {
               (workbench, calculating, calculation_result). Lenke tilbake til
               original-rapport hvis han finst. Klargjer at redigering opprettar
               ein NY berekning (fork-model). */}
-          {restoredFrom && (
+          {restoredFrom && !activeCalculationRestored && (
             <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span>
                 <strong style={{ color: "var(--fg, #1a1a1a)" }}>
@@ -1528,6 +1658,59 @@ useEffect(() => {
                 : locale === "nn"
                   ? "Opne rapporten direkte, eller start ei ny berekning frå ei ny oppgåvetekst."
                   : "Åpne rapporten direkte, eller start en ny beregning fra en ny oppgavetekst."}
+            </div>
+          )}
+
+          {activeCalculationRestored && phase !== "calculation_result" && (
+            <div
+              role="status"
+              style={{ marginBottom: 16, padding: "12px 14px", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--fg-2, #475569)", display: "flex", flexDirection: "column", gap: 8 }}
+            >
+              <strong style={{ color: "var(--fg, #1a1a1a)" }}>
+                {pageDisplayLanguage === "en"
+                  ? "Calculation restored"
+                  : locale === "nn"
+                    ? "Berekning gjenoppretta"
+                    : "Beregning gjenopprettet"}
+              </strong>
+              <span>
+                {pageDisplayLanguage === "en"
+                  ? "We brought your calculation back after you opened another page. The live view can't continue from here — open the report or My reports if it finished, or run the calculation again for a live result."
+                  : locale === "nn"
+                    ? "Vi henta tilbake berekninga di etter at du opna ei anna side. Direktevisinga kan ikkje halde fram herfrå — opne rapporten eller Mine rapportar viss ho er ferdig, eller køyr berekninga på nytt for eit live-resultat."
+                    : "Vi hentet tilbake beregningen din etter at du åpnet en annen side. Direktevisningen kan ikke fortsette herfra — åpne rapporten eller Mine rapporter hvis den er ferdig, eller kjør beregningen på nytt for et live-resultat."}
+              </span>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                {restoredFrom?.documentId && restoredFrom.runId && (
+                  <a href={`/rapport/${restoredFrom.runId}`} style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline" }}>
+                    {pageDisplayLanguage === "en"
+                      ? "Open report"
+                      : locale === "nn"
+                        ? "Opne rapport"
+                        : "Åpne rapport"}
+                  </a>
+                )}
+                <a href="/mine" style={{ color: "var(--fg, #1a1a1a)", textDecoration: "underline" }}>
+                  {pageDisplayLanguage === "en"
+                    ? "Open My reports"
+                    : locale === "nn"
+                      ? "Opne Mine rapportar"
+                      : "Åpne Mine rapporter"}
+                </a>
+                {requestId && (
+                  <button
+                    type="button"
+                    onClick={handleStartCalculation}
+                    style={{ padding: "6px 12px", background: "var(--fg, #1F2937)", color: "var(--surface, #fff)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    {pageDisplayLanguage === "en"
+                      ? "Run the calculation again"
+                      : locale === "nn"
+                        ? "Køyr berekninga på nytt"
+                        : "Kjør beregningen på nytt"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
