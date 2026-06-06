@@ -19,10 +19,31 @@ export const INFO_ROUTES = new Set<string>([
   "/vilkar",
 ]);
 
+// Internal routes that must never be a `from` target (app-internal, auth and
+// API surfaces). Segment-aware: matches the exact prefix and any nested path
+// (e.g. /api and /api/foo both reject) but not unrelated paths like /apidocs.
+const RESERVED_PREFIXES = [
+  "/admin",
+  "/api",
+  "/auth",
+  "/login",
+  "/mine",
+  "/innstillingar",
+  "/rapport",
+  "/private",
+];
+
+function isReservedPath(path: string): boolean {
+  return RESERVED_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}
+
 /**
  * Validate a `from` value as a safe internal path. Rejects external URLs,
- * protocol-relative ("//host"), admin paths, and anything with unexpected
- * characters. Returns the clean path, or null when unsafe/absent.
+ * protocol-relative ("//host"), reserved app/auth/api routes, and anything
+ * with unexpected characters. Returns the clean path, or null when
+ * unsafe/absent.
  */
 export function sanitizeFrom(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -34,7 +55,7 @@ export function sanitizeFrom(raw: string | null | undefined): string | null {
   }
   if (value.startsWith("//")) return null;
   if (!/^\/[A-Za-z0-9\-/_]*$/.test(value)) return null;
-  if (value === "/admin" || value.startsWith("/admin/")) return null;
+  if (isReservedPath(value)) return null;
   return value;
 }
 
