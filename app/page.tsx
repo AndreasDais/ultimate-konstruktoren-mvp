@@ -303,12 +303,6 @@ export default function Home() {
   // utvida. Klikk på steg-tittel togglar den.
   const [collapsedSteps, setCollapsedSteps] = useState<Set<number>>(new Set());
 
-  // Første-gongs-guide (#09): viser éi-setnings forklaring over input første
-  // gong studenten besøker Workbench. Default false så SSR-rendering ikkje
-  // mismatchar med klient (klient sjekker localStorage i useEffect).
-  // Vert dismissa via krys eller automatisk når første berekning er fullført.
-  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
-
   // Mobil-tabs (#08): på viewport < 720px viser vi dei tre seksjonane
   // (Status, Hva kan beregnes, Tolkning) i ein tab-kontroll i staden for
   // stabla. Default isMobile=false for SSR-safety, oppdaterast på mount.
@@ -615,35 +609,6 @@ useEffect(() => {
       hasAutoCollapsedRef.current = true;
     }
   }, [result]);
-
-  // Første-gongs-guide (#09): på mount, sjekk om use har sett guiden før.
-  // Om ikkje, vis han. Vi gjer dette i useEffect (ikkje initial state) for å
-  // unngå SSR-mismatch — localStorage er klient-only.
-  useEffect(() => {
-    try {
-      const onboarded = window.localStorage.getItem("pilar-onboarded-v1");
-      if (onboarded !== "true") {
-        setShowFirstTimeGuide(true);
-      }
-    } catch {
-      // localStorage kan vere blokkert (private modus, cookies-block) — då
-      // viser vi guiden kvar gong, som er det tryggaste fallback-et.
-      setShowFirstTimeGuide(true);
-    }
-  }, []);
-
-  // Når studenten kjem til calculation_result-fasen første gong, marker
-  // som onboarded — dei har då sett heile flyten og treng ikkje guiden meir.
-  useEffect(() => {
-    if (phase === "calculation_result" && showFirstTimeGuide) {
-      try {
-        window.localStorage.setItem("pilar-onboarded-v1", "true");
-      } catch {
-        // Ignorer — neste mount vil vise guiden igjen om localStorage feila
-      }
-      setShowFirstTimeGuide(false);
-    }
-  }, [phase, showFirstTimeGuide]);
 
   // Visningsprofil → default-state (#03). Ved profil-endring setter vi
   // default for blokker som ikkje har eigen "null = auto"-state. Sida si
@@ -1584,57 +1549,6 @@ useEffect(() => {
                     : undefined,
               }}
             >
-              {/* Første-gongs-guide (#09) — éi-setnings forklaring av kva
-                  Workbench er. Synleg only første gong studenten besøker
-                  sida, persistert i localStorage. Auto-skjult når dei har
-                  fullført ein berekning. */}
-              {showFirstTimeGuide && (
-                <div
-                  role="region"
-                  aria-label="Velkomstmelding"
-                  style={{
-                    marginBottom: 16,
-                    padding: "12px 16px",
-                    background: "var(--surface-alt, #FAFAFA)",
-                    border: "1px solid var(--rule, #E2E8F0)",
-                    borderRadius: 10,
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 12,
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    color: "var(--fg-2, #475569)",
-                  }}
-                >
-                  <span style={{ flex: 1 }}>{WB_LABELS.forsteGongGuide[locale]}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      try {
-                        window.localStorage.setItem("pilar-onboarded-v1", "true");
-                      } catch {
-                        // Ignorer — neste mount vil vise guiden igjen
-                      }
-                      setShowFirstTimeGuide(false);
-                    }}
-                    aria-label={WB_LABELS.forsteGongDismiss[locale]}
-                    style={{
-                      flexShrink: 0,
-                      background: "none",
-                      border: "none",
-                      padding: "0 4px",
-                      fontSize: 18,
-                      lineHeight: 1,
-                      color: "var(--fg-muted, #94A3B8)",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
               <label htmlFor="oppgave" className="uk-label">
                 {WB_LABELS.skrivInnOppgave[locale]}
               </label>
