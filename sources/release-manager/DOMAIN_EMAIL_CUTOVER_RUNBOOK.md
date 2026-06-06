@@ -1,6 +1,6 @@
 # PILAR Domain and Email Cutover Runbook
 
-Status: RED for domain/email cutover until human/provider evidence is pasted back.
+Status: DONE/GREEN for P0.4 domain/email readiness at `061e4ea`.
 
 Mode: docs-only runbook. This file does not authorize DNS, email, Vercel,
 Supabase, provider, DB, SQL, migration repair, `db push`, or dry-run changes.
@@ -9,23 +9,75 @@ Do not paste secrets into this file.
 ## Current Known State
 
 - Production host: `https://pilar-mvp.vercel.app`
+- Canonical launch host: `https://www.pilarcalc.com`
+- Apex host: `https://pilarcalc.com`, redirecting 308 to the canonical `www`
+  host.
 - P0.1 public launch pages: complete.
 - P0.2 security headers: complete and live.
 - P0.3 launch-security: GREEN/DONE at `a91022c`.
-- `app/sitemap.ts` and `app/robots.ts` currently point at
-  `https://pilar-mvp.vercel.app`.
-- No custom launch-domain or branded email/auth provider evidence is closed in
-  the repo yet.
+- `app/sitemap.ts`, `app/robots.ts`, live `sitemap.xml`, and live `robots.txt`
+  now point at `https://www.pilarcalc.com`.
+- Branded email/auth provider evidence is closed for P0.4.
+- `https://pilar-mvp.vercel.app` remains a valid fallback host.
 
 ## Current Verdict
 
 ```txt
-RED
+GREEN
 ```
 
-Cutover remains RED until the required domain, Vercel, DNS, Supabase Auth, and
-email evidence below is pasted back and reviewed. The app can remain live on the
-current Vercel host while this evidence is gathered.
+P0.4 domain/email readiness is DONE/GREEN. Future domain, DNS, email, Vercel,
+or Supabase Auth changes must reuse this runbook and paste back fresh evidence
+before mutation.
+
+## Closed P0.4 Evidence
+
+Latest main/prod commit: `061e4ea`.
+
+Domain and Vercel:
+
+- Launch domain: `pilarcalc.com`.
+- Canonical host: `https://www.pilarcalc.com`.
+- Apex `https://pilarcalc.com` redirects 308 to `https://www.pilarcalc.com`.
+- Vercel configuration is valid for apex, `www`, and
+  `https://pilar-mvp.vercel.app` fallback.
+
+DNS:
+
+| Record | Observed value |
+|---|---|
+| A `@` | `216.198.79.1` |
+| CNAME `www` | `3bd164a41359b88c.vercel-dns-017.com` |
+| MX | Present |
+| SPF | `v=spf1 include:spf.privateemail.com ~all` |
+| DKIM | TXT present at `privateemail._domainkey.pilarcalc.com` |
+| DMARC | Present at `_dmarc.pilarcalc.com`; `p=none` for launch monitoring |
+
+Supabase Auth:
+
+- Site URL: `https://www.pilarcalc.com`.
+- Redirect URLs include localhost, Vercel fallback, `www.pilarcalc.com`
+  callback, and apex `pilarcalc.com` callback.
+
+Email:
+
+- Provider: Namecheap Private Email.
+- `pilot@pilarcalc.com` created and ON.
+- DKIM generated/enabled.
+- Gmail to `pilot@pilarcalc.com` receive smoke: PASS.
+- `pilot@pilarcalc.com` to Gmail send/reply smoke: PASS.
+- Message appeared in inbox, not spam.
+
+Repo/prod:
+
+- `sitemap.xml` and `robots.txt` reference `https://www.pilarcalc.com`.
+- Old Vercel base URL is absent from live sitemap/robots output.
+- `/contact`, `/privacy`, `/terms`, and `/vilkar` show
+  `pilot@pilarcalc.com` in mailto and visible text.
+- `pilot@pilar.no` is absent.
+
+No DNS, email, provider, Vercel, Supabase, DB, SQL, migration repair, `db push`,
+or dry-run mutation was performed while recording this evidence.
 
 ## Final Domain Decision Needed
 
@@ -49,6 +101,18 @@ Required decision points:
 - whether `https://pilar-mvp.vercel.app` remains a fallback during the stability
   window;
 - whether old/current links keep working during and after cutover.
+
+P0.4 closed values:
+
+```txt
+launch_domain: pilarcalc.com
+canonical_policy: www
+canonical_host: https://www.pilarcalc.com
+fallback_vercel_host_policy: keep_active
+old_domain_redirect_policy: apex redirects 308 to canonical www
+decision_owner: human/operator + Integrator
+decision_timestamp: closed in repo at 061e4ea
+```
 
 ## Vercel Evidence Needed
 
@@ -74,6 +138,9 @@ Required evidence:
 - HTTPS certificate issued for apex and/or `www`;
 - canonical redirect policy documented;
 - current Vercel fallback host policy documented.
+
+P0.4 status: CLOSED/GREEN. Apex, `www`, and fallback Vercel host were reported
+valid; `www.pilarcalc.com` is Production.
 
 ## DNS Evidence Needed
 
@@ -101,6 +168,11 @@ Required evidence:
 - TTL before cutover;
 - rollback target and rollback TTL;
 - owner with registrar/DNS access.
+
+P0.4 status: CLOSED/GREEN. Namecheap DNS was reported as A `@` to
+`216.198.79.1`, CNAME `www` to
+`3bd164a41359b88c.vercel-dns-017.com`, old parking/URL redirect removed, and
+Private Email untouched.
 
 ## Supabase Auth Evidence Needed
 
@@ -131,6 +203,10 @@ Required evidence:
 - OTP/magic-link smoke plan covers both consumer login and admin login;
 - rollback plan says how auth redirects return to the Vercel host if cutover is
   stopped.
+
+P0.4 status: CLOSED/GREEN. Site URL is `https://www.pilarcalc.com`; redirect
+URLs include localhost, Vercel fallback, canonical `www` callback, and apex
+callback.
 
 ## Email Evidence Needed
 
@@ -166,10 +242,17 @@ Required evidence:
 - auth-link smoke completed with the launch domain;
 - rollback sender plan documented.
 
+P0.4 status: CLOSED/GREEN. Namecheap Private Email is active for
+`pilot@pilarcalc.com`; SPF, DKIM, and DMARC were verified; send/receive smoke
+passed. DMARC remains `p=none` intentionally for launch monitoring.
+
 ## Repo-Only Prep List
 
 Repo changes are allowed only in a separate implementation sprint after the
 provider evidence above is ready.
+
+P0.4 repo prep is CLOSED/GREEN at `061e4ea` for sitemap/robots and contact/legal
+email copy.
 
 Likely repo files:
 
@@ -184,6 +267,12 @@ Likely repo files:
 - `next.config.ts` or middleware - only if canonical redirects are implemented
   in repo rather than provider settings.
 
+Closed repo evidence:
+
+- `app/sitemap.ts` and `app/robots.ts` now emit `https://www.pilarcalc.com`.
+- `/contact`, `/privacy`, `/terms`, and `/vilkar` now use
+  `pilot@pilarcalc.com` and no longer use `pilot@pilar.no`.
+
 Repo-only prep must preserve:
 
 - `/heim` and `/vilkar` availability;
@@ -192,6 +281,9 @@ Repo-only prep must preserve:
 - no final approval, compliance guarantee, or engineer-replacement claims.
 
 ## Cutover Sequence
+
+P0.4 sequence is complete for the current launch domain. Keep this sequence for
+future domain/email changes.
 
 1. Confirm final launch domain, canonical apex/`www` policy, and fallback
    Vercel host policy.
@@ -239,6 +331,8 @@ Rollback must be owned before cutover starts.
    user impact.
 
 ## STOP Conditions
+
+These remain active for any future provider or repo change after P0.4.
 
 Stop before mutation if any of these are true:
 
