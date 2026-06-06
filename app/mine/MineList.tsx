@@ -12,7 +12,8 @@ export type MineRow = {
   title: string;
   date: string | null;
   phase: "workbench" | "mission_control" | "rapport" | "krasja";
-  href: string;
+  href: string | null;
+  pipelineHref: string | null;
   tillit: number | null;
   documentId: string | null;
 };
@@ -35,66 +36,66 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
     workbench: {
       label: "Workbench",
       explanation:
-        "Tolkeren har lest spørsmålet, men beregningen er ikke startet ennå. Klikk på raden for å fortsette derfra.",
+        "Tolkeren har lest spørsmålet, men det finnes ikke en ferdig rapport ennå.",
     },
     mission_control: {
-      label: "Mission Control",
+      label: "Status",
       explanation:
-        "Konstruktør A og Konstruktør B er ferdige med utregningen. Klikk for å se sammenligning, kontrollør-vurdering og generere rapporten.",
+        "Beregningen har pipeline-status, men ingen ferdig rapport som kan åpnes her ennå.",
     },
     rapport: {
       label: "Rapport",
       explanation:
-        "Ferdig beregningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
+        "Ferdig beregningsnotat. Åpne rapporten eller se en sanitert pipeline-review.",
     },
     krasja: {
       label: "Krasjet",
       explanation:
-        "Beregningen ble avbrutt eller feilet. Du kan starte på nytt fra samme input ved å klikke på raden.",
+        "Beregningen ble avbrutt eller feilet før en trygg rapport kunne lages.",
     },
   },
   nn: {
     workbench: {
       label: "Workbench",
       explanation:
-        "Tolkar har lese spørsmålet, men berekninga er ikkje starta enno. Klikk på rada for å halde fram derifrå.",
+        "Tolkar har lese spørsmålet, men det finst ikkje ein ferdig rapport enno.",
     },
     mission_control: {
-      label: "Mission Control",
+      label: "Status",
       explanation:
-        "Konstruktør A og Konstruktør B er ferdige med utrekninga. Klikk for å sjå samanlikning, kontrollør-vurdering og generere rapporten.",
+        "Berekninga har pipeline-status, men ingen ferdig rapport som kan opnast her enno.",
     },
     rapport: {
       label: "Rapport",
       explanation:
-        "Ferdig berekningsnotat. Klikk for å lese, eksportere til Word eller dele via QR-kode.",
+        "Ferdig berekningsnotat. Opne rapporten eller sjå ein sanitert pipeline-review.",
     },
     krasja: {
       label: "Krasja",
       explanation:
-        "Berekninga vart avbroten eller feila. Du kan starte på nytt frå same input ved å klikke på rada.",
+        "Berekninga vart avbroten eller feila før ein trygg rapport kunne lagast.",
     },
   },
   en: {
     workbench: {
       label: "Workbench",
       explanation:
-        "The interpreter has read the request, but the calculation has not started yet. Click the row to continue from there.",
+        "The interpreter has read the request, but there is no completed report yet.",
     },
     mission_control: {
-      label: "Mission Control",
+      label: "Status",
       explanation:
-        "Engineer A and Engineer B have finished their calculations. Click to view the comparison, controller assessment and generate the report.",
+        "The run has pipeline status, but no completed report is available here yet.",
     },
     rapport: {
       label: "Report",
       explanation:
-        "Completed calculation note. Click to read, export to Word or share via QR code.",
+        "Completed calculation note. Open the report or inspect a sanitized pipeline review.",
     },
     krasja: {
       label: "Crashed",
       explanation:
-        "The calculation was aborted or failed. Click the row to start over from the same input.",
+        "The calculation was aborted or failed before a safe report could be created.",
     },
   },
 };
@@ -126,6 +127,15 @@ const ML_LABELS: Record<string, Record<LangKey, string>> = {
     nb: "fagperson-kontroll. Formelen er en pilot-hypotese og blir kalibrert i v0.2.",
     nn: "fagperson-kontroll. Formelen er ein pilot-hypotese og blir kalibrert i v0.2.",
     en: "replace professional review. The formula is a pilot hypothesis and will be recalibrated in v0.2.",
+  },
+  openReport: { nb: "Åpne rapport", nn: "Opne rapport", en: "Open report" },
+  pipelineReview: { nb: "Pipeline-review", nn: "Pipeline-review", en: "Pipeline review" },
+  noReportYet: { nb: "Ingen rapport ennå", nn: "Ingen rapport enno", en: "No report yet" },
+  processing: { nb: "Behandles fortsatt", nn: "Blir framleis behandla", en: "Still processing" },
+  failedNoResume: {
+    nb: "Kunne ikke fullføres. Start en ny beregning fra forsiden.",
+    nn: "Kunne ikkje fullførast. Start ei ny berekning frå forsida.",
+    en: "Could not complete. Start a new calculation from the front page.",
   },
 };
 
@@ -295,14 +305,18 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
   const phaseLabel = PHASE_LABELS_BY_LANG[langKey][row.phase];
   const phaseColor = PHASE_COLORS[row.phase];
   const date = formatDate(row.date, langKey);
+  const statusText =
+    row.phase === "krasja"
+      ? ML_LABELS.failedNoResume[langKey]
+      : row.phase === "mission_control"
+        ? ML_LABELS.noReportYet[langKey]
+        : row.phase === "workbench"
+          ? ML_LABELS.processing[langKey]
+          : null;
 
   return (
-    <Link
-      href={row.href}
-      className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
-      <div className="uk-card p-4 transition-colors hover:shadow-sm">
-        <div className="flex items-center justify-between gap-4">
+    <article className="uk-card p-4 transition-colors hover:shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="font-medium truncate" style={{ color: "var(--fg)" }}>
               {row.title}
@@ -316,11 +330,16 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
                 </>
               )}
             </div>
+            {statusText && (
+              <p className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
+                {statusText}
+              </p>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0 sm:justify-end">
             {row.tillit !== null && (
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <div
                   className="text-xl font-semibold leading-none"
                   style={{ color: getTillitColor(row.tillit) }}
@@ -346,7 +365,21 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
             </span>
           </div>
         </div>
-      </div>
-    </Link>
+
+        {(row.href || row.pipelineHref) && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {row.href && (
+              <Link href={row.href} className="uk-btn uk-btn--primary">
+                {ML_LABELS.openReport[langKey]}
+              </Link>
+            )}
+            {row.pipelineHref && (
+              <Link href={row.pipelineHref} className="uk-btn">
+                {ML_LABELS.pipelineReview[langKey]}
+              </Link>
+            )}
+          </div>
+        )}
+    </article>
   );
 }
