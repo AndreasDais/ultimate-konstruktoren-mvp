@@ -158,7 +158,7 @@ export default async function VilkarPage() {
           <Section title={VILKAR_LABELS.s4Title[locale]}>
             <p>
               {VILKAR_LABELS.s4P1Pre[locale]}
-              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>
+              <a href="mailto:pilot@pilarcalc.com" className="underline">pilot@pilarcalc.com</a>
               {VILKAR_LABELS.s4P1Post[locale]}
             </p>
           </Section>
@@ -170,7 +170,7 @@ export default async function VilkarPage() {
           <Section title={VILKAR_LABELS.s6Title[locale]}>
             <p>
               {VILKAR_LABELS.s6P1Pre[locale]}
-              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>
+              <a href="mailto:pilot@pilarcalc.com" className="underline">pilot@pilarcalc.com</a>
               {VILKAR_LABELS.s6P1Post[locale]}
             </p>
           </Section>
