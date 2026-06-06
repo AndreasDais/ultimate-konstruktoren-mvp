@@ -33,6 +33,8 @@ Known:
 - the global non-admin footer is landed;
 - exactly one footer appears on user-facing routes;
 - `/admin` and `/admin/login` show zero footer instances;
+- downloadable artifact QA trust-boundary blocker is CLOSED/GREEN on production
+  at `43a74c2`;
 - Norwegian Bokmal/Nynorsk support must be preserved;
 - Agent LiveOps remains admin-only and manual live-read only;
 - DB/Supabase migration repair remains outside launch hardening.
@@ -92,6 +94,42 @@ Trust-framing evidence:
 - Professional-review framing remains visible.
 
 Domain/email cutover remains RED until provider evidence is pasted back.
+
+## Downloadable Artifact QA Evidence
+
+**Verdict:** CLOSED/GREEN.
+
+**Retest target:** public report `a769c891-1a2c-4b3b-b8f1-415e58a56eab`.
+
+**Prod/main commit:** `43a74c2`.
+
+Artifact results:
+
+- PDF report clean.
+- DOCX report clean.
+- Raw request/prompt block absent.
+- No `raw_text`, `structured_output`, provider payload, chain-of-thought, or
+  secrets observed.
+- No `PRELIMINARILY APPROVED` or `DECISION PRELIMINARILY APPROVED` text
+  observed.
+- Professional-review framing remains intact.
+
+PDF/DOCX fact parity:
+
+| Fact | Observed value |
+|---|---|
+| Span | `L = 5,0 m` |
+| Design line load | `qEd = 8,0 kN/m` |
+| Design bending moment | `MEd = 25,0 kNm` |
+| Design shear force | `VEd = 20,0 kN` |
+
+Caveats:
+
+- Calculation-sheet SSR/downloadable verification remains deferred; this is not
+  a blocker for the artifact trust-boundary fix.
+- P3 DOCX language polish remains: `Controller / Completeness` labels.
+- P3 DOCX language polish remains: Bokmal `Forelopig godkjent` appears in a
+  Nynorsk report.
 
 ## P0 Checklist
 
