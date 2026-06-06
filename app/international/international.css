@@ -594,6 +594,24 @@
   line-height: 1.55;
   color: var(--fg-muted);
 }
+.intl-modal__status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.intl-modal__status.is-success {
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: var(--ok-border);
+}
+.intl-modal__status.is-error {
+  color: var(--bad);
+  background: var(--bad-bg);
+  border-color: var(--bad-border);
+}
 .intl-modal__field {
   display: grid;
   gap: 5px;

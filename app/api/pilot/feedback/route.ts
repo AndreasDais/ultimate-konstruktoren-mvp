@@ -29,6 +29,63 @@ function isValidTrust(value: unknown): value is PilotFeedbackPayload["trustLevel
   return value === "trusted" || value === "partly_trusted" || value === "not_trusted" || value === "not_sure";
 }
 
+function isValidUseCase(value: unknown): value is PilotFeedbackPayload["useCase"] {
+  return (
+    value === "understand_task" ||
+    value === "check_answer" ||
+    value === "report_writing" ||
+    value === "calculation_sheet" ||
+    value === "latex_overleaf" ||
+    value === "word_report" ||
+    value === "international_support" ||
+    value === "other"
+  );
+}
+
+function isValidSource(value: unknown): value is NonNullable<PilotFeedbackPayload["source"]> {
+  return (
+    value === "report" ||
+    value === "calculation_sheet" ||
+    value === "pilot_page" ||
+    value === "international_page" ||
+    value === "admin"
+  );
+}
+
+function boundedText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, maxLength);
+}
+
+function sanitizeMetadata(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const input = value as Record<string, unknown>;
+  const metadata: Record<string, unknown> = {};
+
+  const allowedTextFields: Record<string, number> = {
+    region: 120,
+    standard: 160,
+    requested_improvement: 1200,
+    followup_email: 254,
+    current_path: 500,
+    ui_mode: 30,
+    locale: 20,
+    selected_region: 30,
+    selected_standard: 80,
+    support_level: 40,
+    page: 80,
+  };
+
+  for (const [key, maxLength] of Object.entries(allowedTextFields)) {
+    const text = boundedText(input[key], maxLength);
+    if (text) metadata[key] = text;
+  }
+
+  return metadata;
+}
+
 export async function POST(request: NextRequest) {
   let payload: PilotFeedbackPayload;
 
@@ -49,6 +106,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid trust level." }, { status: 400 });
   }
 
+  if (payload.useCase && !isValidUseCase(payload.useCase)) {
+    return NextResponse.json({ ok: false, error: "Invalid use case." }, { status: 400 });
+  }
+
+  if (payload.source && !isValidSource(payload.source)) {
+    return NextResponse.json({ ok: false, error: "Invalid source." }, { status: 400 });
+  }
+
+  const comment = boundedText(payload.comment, 2000);
+  const reportUrl = boundedText(payload.reportUrl, 500);
+  const metadata = sanitizeMetadata(payload.metadata);
+  const isInternationalFeedback =
+    payload.source === "international_page" || payload.useCase === "international_support";
+
+  if (
+    isInternationalFeedback &&
+    !comment &&
+    !metadata.region &&
+    !metadata.standard &&
+    !metadata.requested_improvement
+  ) {
+    return NextResponse.json(
+      { ok: false, error: "Tell us what international support you need." },
+      { status: 400 },
+    );
+  }
+
   try {
     const supabase = getAdminClient();
     const { data, error } = await supabase
@@ -58,23 +142,27 @@ export async function POST(request: NextRequest) {
         rating: payload.rating,
         trust_level: payload.trustLevel,
         use_case: payload.useCase || "other",
-        comment: payload.comment?.trim() || null,
+        comment,
         wants_followup: Boolean(payload.wantsFollowup),
-        report_url: payload.reportUrl || null,
+        report_url: reportUrl,
         source: payload.source || "report",
-        metadata: payload.metadata || {},
+        metadata,
       })
       .select("id")
       .single();
 
     if (error) {
-      console.error("[pilot/feedback] insert failed:", error);
+      console.error("[pilot/feedback] insert failed", {
+        code: typeof error === "object" && error && "code" in error ? String(error.code) : "unknown",
+      });
       return NextResponse.json({ ok: false, error: "Could not save feedback." }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, id: data?.id ?? null });
   } catch (error) {
-    console.error("[pilot/feedback] FAILED:", error);
+    console.error("[pilot/feedback] FAILED", {
+      error_name: error instanceof Error ? error.name : typeof error,
+    });
     return NextResponse.json(
       { ok: false, error: "Could not save feedback." },
       { status: 500 },

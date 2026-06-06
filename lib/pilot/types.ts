@@ -41,6 +41,7 @@ export type PilotUseCase =
   | "calculation_sheet"
   | "latex_overleaf"
   | "word_report"
+  | "international_support"
   | "other";
 
 export type PilotFeedbackPayload = {
@@ -51,7 +52,7 @@ export type PilotFeedbackPayload = {
   comment?: string | null;
   wantsFollowup?: boolean;
   reportUrl?: string | null;
-  source?: "report" | "calculation_sheet" | "pilot_page" | "admin";
+  source?: "report" | "calculation_sheet" | "pilot_page" | "international_page" | "admin";
   metadata?: Record<string, unknown>;
 };
 
