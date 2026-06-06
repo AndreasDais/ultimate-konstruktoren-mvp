@@ -585,6 +585,27 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }, [streamingTolkar.phase]);
 
+  // Scroll til topp når use kjem inn i rapport-steget ("Calculation note").
+  // Medan berekninga køyrer, auto-scrollar MissionControl vindauget NEDOVER til
+  // Comparator (sjå sammenlignerRef.scrollIntoView i MissionControl). Når fasen
+  // så vippar til calculation_result, beheld vindauget den nedscrolla posisjonen
+  // — utan denne resetten ville rapporten opna midt på sida i staden for ved
+  // steg-overskrifta + "Calculation note". Vi nullstiller éin gong, ved
+  // overgangen INN i rapporten.
+  //
+  // Deps er [phase] åleine: effekten køyrer på fase-endringa inn i rapporten,
+  // IKKJE på dei mange state-oppdateringane medan use les rapporten (utvide
+  // rader, byte tab, toggle disclosure) — dei lèt `phase` stå uendra, so use
+  // blir aldri rykt tilbake til toppen under lesing. behavior:"auto" (instant)
+  // unngår ein animert hopp frå midt-på-sida til topp. Dekkjer alle inngangar:
+  // fullført pipeline, comparator/controller-feil, "Tilbake→Start"-snarvegen og
+  // resume frå URL/sessionStorage (set phase=calculation_result → fyrer éin gong).
+  useEffect(() => {
+    if (phase !== "calculation_result") return;
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [phase]);
+
   // Eksempel-kollaps (#07): når Tolkar gir første gangs resultat, kollaps
   // eksempel-chips. Ref-flagg hindrar at vi re-kollapsar om use manuelt
   // utvidar igjen og deretter Tolk-ar på nytt (respekterer use-val).
