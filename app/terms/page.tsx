@@ -91,7 +91,7 @@ export default function TermsPage() {
             <p>
               You have the right to have all your data deleted. Send an email
               to{" "}
-              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>{" "}
+              <a href="mailto:pilot@pilarcalc.com" className="underline">pilot@pilarcalc.com</a>{" "}
               with a deletion request and we will handle it manually during
               the pilot phase. Deletion is irreversible.
             </p>
@@ -108,7 +108,7 @@ export default function TermsPage() {
           <Section title="6. Contact">
             <p>
               Questions, feedback or concerns? Email{" "}
-              <a href="mailto:pilot@pilar.no" className="underline">pilot@pilar.no</a>.
+              <a href="mailto:pilot@pilarcalc.com" className="underline">pilot@pilarcalc.com</a>.
             </p>
           </Section>
         </div>

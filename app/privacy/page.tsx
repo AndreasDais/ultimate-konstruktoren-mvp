@@ -37,8 +37,8 @@ export default function PrivacyPage() {
       <PublicSection title="Deletion">
         <p>
           You can ask us to delete your data. Email{" "}
-          <a className="underline" href="mailto:pilot@pilar.no">
-            pilot@pilar.no
+          <a className="underline" href="mailto:pilot@pilarcalc.com">
+            pilot@pilarcalc.com
           </a>{" "}
           and we will handle it manually during the pilot. Deletion is
           irreversible.

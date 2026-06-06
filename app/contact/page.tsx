@@ -12,8 +12,8 @@ export default function ContactPage() {
       <PublicSection title="Email">
         <p>
           For questions, feedback, concerns or data-deletion requests, email{" "}
-          <a className="underline" href="mailto:pilot@pilar.no">
-            pilot@pilar.no
+          <a className="underline" href="mailto:pilot@pilarcalc.com">
+            pilot@pilarcalc.com
           </a>
           .
         </p>
