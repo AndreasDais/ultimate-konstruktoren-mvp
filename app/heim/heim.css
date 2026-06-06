@@ -353,7 +353,7 @@
 }
 
 /* parallel engineer lanes */
-.lp .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3.5vw, 48px); position: relative; }
+.lp .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(104px, 9vw, 132px); position: relative; }
 .lp .lanes__divider {
   position: absolute; top: 18px; bottom: 18px; left: 50%;
   transform: translateX(-50%);
