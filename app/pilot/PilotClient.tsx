@@ -7,10 +7,16 @@ import { useLocale } from "@/lib/locale-context";
 import { PILOT_EXAMPLES } from "@/lib/pilot/examples";
 import type { PilotExample, PilotLocale } from "@/lib/pilot/types";
 import {
-  ENGINEERING_CONTEXT_STORAGE_KEY,
+  REGION_LABELS,
   STANDARD_OPTIONS,
+  buildEngineeringContext,
   type EngineeringStandardFamily,
 } from "@/lib/engineering-context";
+import type { EngineeringContext, EngineeringRegionCode } from "@/lib/engineering-context";
+import {
+  loadEngineeringContextFromStorage,
+  saveEngineeringContextToStorage,
+} from "@/lib/engineering-context/client";
 import type { HeaderUiMode } from "../components/Header";
 import "./pilot.css";
 
@@ -38,8 +44,6 @@ type Copy = {
   honestyLabel: string;
   honestyTitle: string;
   honestyBody: string;
-  terms: string;
-  termsHref: string;
 };
 
 const COPY: Record<LangKey, Copy> = {
@@ -67,8 +71,6 @@ const COPY: Record<LangKey, Copy> = {
     honestyTitle: "Viktig for pilot",
     honestyBody:
       "PILAR er et AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrolleres av kvalifisert fagperson før bruk i prosjektering.",
-    terms: "Vilkår for bruk →",
-    termsHref: "/vilkar",
   },
   nn: {
     eyebrow: "PILAR · Pilot",
@@ -94,8 +96,6 @@ const COPY: Record<LangKey, Copy> = {
     honestyTitle: "Viktig for pilot",
     honestyBody:
       "PILAR er eit AI-generert lærings- og dokumentasjonsverktøy. Resultat skal alltid kontrollerast av kvalifisert fagperson før bruk i prosjektering.",
-    terms: "Vilkår for bruk →",
-    termsHref: "/vilkar",
   },
   en: {
     eyebrow: "PILAR · Pilot",
@@ -121,8 +121,6 @@ const COPY: Record<LangKey, Copy> = {
     honestyTitle: "Important for the pilot",
     honestyBody:
       "PILAR is an AI-generated learning and documentation tool. Results must always be verified by a qualified engineer before use in real design work.",
-    terms: "Terms of use →",
-    termsHref: "/terms",
   },
 };
 
@@ -139,6 +137,47 @@ function countLabel(n: number, lang: LangKey): string {
   if (lang === "en") return `${n} ${n === 1 ? "task" : "tasks"}`;
   if (lang === "nn") return `${n} ${n === 1 ? "oppgåve" : "oppgåver"}`;
   return `${n} ${n === 1 ? "oppgave" : "oppgaver"}`;
+}
+
+function isKnownStandardProfile(value: unknown): value is EngineeringStandardFamily {
+  return typeof value === "string" && STANDARD_OPTIONS.some((option) => option.value === value);
+}
+
+function primaryRegionForProfile(profile: EngineeringStandardFamily): EngineeringRegionCode {
+  const option = STANDARD_OPTIONS.find((candidate) => candidate.value === profile) ?? STANDARD_OPTIONS[0];
+  return option.regionHint[0] ?? "OTHER";
+}
+
+function buildPilotEngineeringContext(
+  profile: EngineeringStandardFamily,
+  langKey: LangKey,
+): EngineeringContext {
+  const region = primaryRegionForProfile(profile);
+  const option = STANDARD_OPTIONS.find((candidate) => candidate.value === profile) ?? STANDARD_OPTIONS[0];
+  const language = langKey === "en" ? "en" : langKey;
+
+  return buildEngineeringContext({
+    language,
+    languagePolicy: {
+      uiLocale: language,
+      outputMode: "same_as_prompt",
+      fallbackLanguage: "en",
+    },
+    region: {
+      countryCode: region,
+      countryName: REGION_LABELS[region],
+    },
+    standards: {
+      family: profile,
+      label: option.label,
+      supportLevel: option.supportLevel,
+      confidence: "user_selected",
+    },
+    outputPreferences: {
+      units: option.recommendedUnits,
+      notationStyle: option.notationStyle,
+    },
+  });
 }
 
 // Trufast problem-ark: behald råteksten; berre attkjende section-heads (korte
@@ -308,21 +347,26 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
     const onMq = (e: MediaQueryListEvent) => setReduce(e.matches);
     mq.addEventListener("change", onMq);
 
-    try {
-      const raw = window.localStorage.getItem(ENGINEERING_CONTEXT_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { standards?: { family?: string } };
-        const fam = parsed?.standards?.family;
-        if (fam && STANDARD_OPTIONS.some((o) => o.value === fam)) {
-          setProfile(fam as EngineeringStandardFamily);
-        }
-      }
-    } catch {
-      // ignorer korrupt localStorage — held trygg default
+    const storedProfile = loadEngineeringContextFromStorage()?.standards.family;
+    if (isKnownStandardProfile(storedProfile)) {
+      setProfile(storedProfile);
     }
 
     return () => mq.removeEventListener("change", onMq);
   }, []);
+
+  function persistProfileForWorkbench(nextProfile: EngineeringStandardFamily) {
+    saveEngineeringContextToStorage(buildPilotEngineeringContext(nextProfile, langKey));
+  }
+
+  function changeProfile(nextProfile: EngineeringStandardFamily) {
+    setProfile(nextProfile);
+    persistProfileForWorkbench(nextProfile);
+  }
+
+  function startOwnTask() {
+    persistProfileForWorkbench(profile);
+  }
 
   const filtered = PILOT_EXAMPLES.filter((e) => e.profiles.includes(profile));
 
@@ -372,7 +416,7 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
           <h1 className="pilot-hero__title">{t.title}</h1>
           <p className="pilot-hero__lead">{t.lead}</p>
           <div className="pilot-hero__cta">
-            <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn">
+            <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn" onClick={startOwnTask}>
               {t.startOwn}{" "}
               <span className="arrow" aria-hidden="true">
                 →
@@ -411,7 +455,7 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
                 <select
                   className="pilot-select"
                   value={profile}
-                  onChange={(e) => setProfile(e.target.value as EngineeringStandardFamily)}
+                  onChange={(e) => changeProfile(e.target.value as EngineeringStandardFamily)}
                 >
                   {STANDARD_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -446,7 +490,7 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
               </span>
               <h3 className="pilot-empty__title">{t.emptyTitle}</h3>
               <p className="pilot-empty__body">{t.emptyBody}</p>
-              <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn">
+              <Link href="/" className="uk-btn uk-btn--primary pilot-hero__btn" onClick={startOwnTask}>
                 {t.startOwn}{" "}
                 <span className="arrow" aria-hidden="true">
                   →
@@ -468,9 +512,6 @@ export default function PilotClient({ uiMode }: { uiMode: HeaderUiMode }) {
           </div>
         </section>
 
-        <div className="pilot-foot">
-          <Link href={t.termsHref}>{t.terms}</Link>
-        </div>
       </div>
     </main>
   );
