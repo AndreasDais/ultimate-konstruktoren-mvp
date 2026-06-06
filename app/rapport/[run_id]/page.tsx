@@ -364,6 +364,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   handlingar: { nb: "Handlinger", nn: "Handlingar" },
   lastNedPDF: { nb: "Last ned PDF", nn: "Last ned PDF" },
   lastNedWord: { nb: "Last ned Word", nn: "Last ned Word" },
+  pipelineReview: { nb: "Del pipeline-review", nn: "Del pipeline-review" },
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
   resumeDisabledLaunch: { nb: "Kopiering og Mission Control-gjenopptak er midlertidig av for offentlige rapportlenker.", nn: "Kopiering og Mission Control-gjenopptak er mellombels av for offentlege rapportlenker." },
@@ -828,6 +829,7 @@ export default function RapportPage() {
     handlingar: "Actions",
     lastNedPDF: "Download PDF",
     lastNedWord: "Download Word",
+    pipelineReview: "Share pipeline review",
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
     resumeDisabledLaunch: "Copying and Mission Control resume are temporarily disabled for public report links.",
@@ -865,6 +867,7 @@ export default function RapportPage() {
   const wordFilename = `${data.report.document_id}.docx`;
   const pdfUrl = `/api/rapport/${runId}/pdf`;
   const pdfFilename = `${data.report.document_id}.pdf`;
+  const pipelineReviewUrl = `/rapport/${runId}/pipeline`;
   const calculationSheetUrl = `/rapport/${runId}/beregning?locale=${locale}`;
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
@@ -2150,6 +2153,9 @@ export default function RapportPage() {
           </a>
           <a href={calculationSheetUrl} className="uk-btn">
             {calculationSheetLabel}
+          </a>
+          <a href={pipelineReviewUrl} className="uk-btn">
+            {RP_LABELS.pipelineReview[locale]}
           </a>
           <p style={{ margin: 0, fontSize: 12, color: "var(--fg-2, #475569)", maxWidth: 320 }}>
             {RP_LABELS.resumeDisabledLaunch[locale]}
