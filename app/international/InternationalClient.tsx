@@ -65,6 +65,11 @@ export default function InternationalClient() {
   const [reduce, setReduce] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const [tick, setTick] = useState(0);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [fbRegion, setFbRegion] = useState("");
+  const [fbStandard, setFbStandard] = useState("");
+  const [fbImprove, setFbImprove] = useState("");
+  const [fbEmail, setFbEmail] = useState("");
 
   const ctxRef = useRef<HTMLElement>(null);
   const bridgeRef = useRef<HTMLDivElement>(null);
@@ -229,6 +234,22 @@ export default function InternationalClient() {
     } catch {
       // Lokal lagring er nok for MVP; server-logging er valfritt.
     }
+  }
+
+  // International region/standard feedback is sent via the user's email app
+  // (mailto). Backend submission is deferred: the existing /api/pilot/feedback
+  // endpoint is shaped for calculation rating/trust, not region/standard needs.
+  function submitFeedback() {
+    const lines = [
+      fbRegion.trim() ? `Region/country: ${fbRegion.trim()}` : null,
+      fbStandard.trim() ? `Standard/profile: ${fbStandard.trim()}` : null,
+      fbImprove.trim() ? `What to implement/improve:\n${fbImprove.trim()}` : null,
+      fbEmail.trim() ? `Contact: ${fbEmail.trim()}` : null,
+    ].filter(Boolean);
+    const subject = encodeURIComponent("PILAR international pilot feedback");
+    const body = encodeURIComponent(lines.join("\n\n"));
+    window.location.href = `mailto:pilot@pilarcalc.com?subject=${subject}&body=${body}`;
+    setFeedbackOpen(false);
   }
 
   return (
@@ -421,20 +442,105 @@ export default function InternationalClient() {
                 Report it as pilot feedback. The international mode is intentionally feedback-driven
                 so language and regional-standard bugs can be corrected quickly.
               </p>
-              <Link href="/pilot" className="uk-btn intl-fb__link">
+              <button
+                type="button"
+                className="uk-btn intl-fb__link"
+                onClick={() => setFeedbackOpen(true)}
+              >
                 Open pilot feedback flow{" "}
                 <span className="arrow" aria-hidden="true">
                   →
                 </span>
-              </Link>
+              </button>
             </div>
           </section>
         </div>
-
-        <div className="intl-foot">
-          <Link href="/terms">Terms of use →</Link>
-        </div>
       </div>
+
+      {feedbackOpen && (
+        <div
+          className="intl-modal-backdrop"
+          role="presentation"
+          onClick={() => setFeedbackOpen(false)}
+        >
+          <div
+            className="intl-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="intl-fb-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="intl-fb-modal-title" className="intl-modal__title">
+              Help improve international support
+            </h2>
+            <p className="intl-modal__intro">
+              Tell us which region, standard, or language support you need. This
+              helps prioritize the pilot roadmap.
+            </p>
+            <label className="intl-modal__field">
+              <span>Region / country</span>
+              <input
+                type="text"
+                value={fbRegion}
+                onChange={(event) => setFbRegion(event.target.value)}
+                placeholder="e.g. United States, Germany"
+              />
+            </label>
+            <label className="intl-modal__field">
+              <span>Standard / profile</span>
+              <input
+                type="text"
+                value={fbStandard}
+                onChange={(event) => setFbStandard(event.target.value)}
+                placeholder="e.g. AISC 360, DIN EN 1993"
+              />
+            </label>
+            <label className="intl-modal__field">
+              <span>What should PILAR implement or improve?</span>
+              <textarea
+                rows={4}
+                value={fbImprove}
+                onChange={(event) => setFbImprove(event.target.value)}
+                placeholder="Describe the region, standard or language support you need."
+              />
+            </label>
+            <label className="intl-modal__field">
+              <span>Email (optional)</span>
+              <input
+                type="email"
+                value={fbEmail}
+                onChange={(event) => setFbEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </label>
+            <p className="intl-modal__note">
+              Submitting opens your email app, pre-filled to the pilot team.
+              PILAR output stays preliminary and requires review by a qualified
+              engineer.
+            </p>
+            <div className="intl-modal__actions">
+              <button
+                type="button"
+                className="uk-btn"
+                onClick={() => setFeedbackOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="uk-btn uk-btn--primary"
+                onClick={submitFeedback}
+                disabled={
+                  !fbRegion.trim() && !fbStandard.trim() && !fbImprove.trim()
+                }
+              >
+                Send feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
