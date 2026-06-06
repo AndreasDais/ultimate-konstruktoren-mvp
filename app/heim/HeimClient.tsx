@@ -174,9 +174,13 @@ const COPY: Record<Lang, {
 export default function HeimClient({
   lang,
   showRegionModal,
+  startHref = "/pilot",
 }: {
   lang: Lang;
   showRegionModal: boolean;
+  // Primary-CTA destination. Defaults to /pilot (Norwegian /heim flow); the
+  // English /home passes /international so users pick region/standard first.
+  startHref?: string;
 }) {
   const t = COPY[lang];
 
@@ -270,7 +274,7 @@ export default function HeimClient({
               <em>{t.leadEm}</em>
             </p>
             <div className="hero__cta">
-              <Link className="btn btn--primary" href="/pilot">
+              <Link className="btn btn--primary" href={startHref}>
                 {t.startCta}
               </Link>
               <a className="btn btn--secondary" href="#how">

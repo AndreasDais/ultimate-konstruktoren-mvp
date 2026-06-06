@@ -21,7 +21,7 @@ export default function HomePage() {
             "try{document.documentElement.classList.add('js-anim')}catch(e){}",
         }}
       />
-      <HeimClient lang="en" showRegionModal={false} />
+      <HeimClient lang="en" showRegionModal={false} startHref="/international" />
     </>
   );
 }
