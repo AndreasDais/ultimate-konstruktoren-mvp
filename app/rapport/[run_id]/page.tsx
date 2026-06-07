@@ -364,10 +364,9 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   handlingar: { nb: "Handlinger", nn: "Handlingar" },
   lastNedPDF: { nb: "Last ned PDF", nn: "Last ned PDF" },
   lastNedWord: { nb: "Last ned Word", nn: "Last ned Word" },
-  pipelineReview: { nb: "Del pipeline-review", nn: "Del pipeline-review" },
+  pipelineReview: { nb: "Pipeline-review og deling", nn: "Pipeline-review og deling" },
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
-  resumeDisabledLaunch: { nb: "Kopiering og Mission Control-gjenopptak er midlertidig av for offentlige rapportlenker.", nn: "Kopiering og Mission Control-gjenopptak er mellombels av for offentlege rapportlenker." },
   sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
   giPilotFeedback: { nb: "Gi tilbakemelding på piloten", nn: "Gi tilbakemelding på piloten" },
   // Kontrollstatus-panel
@@ -829,10 +828,9 @@ export default function RapportPage() {
     handlingar: "Actions",
     lastNedPDF: "Download PDF",
     lastNedWord: "Download Word",
-    pipelineReview: "Share pipeline review",
+    pipelineReview: "Pipeline review and sharing",
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
-    resumeDisabledLaunch: "Copying and Mission Control resume are temporarily disabled for public report links.",
     sendTilbakemelding: "Report an error",
     giPilotFeedback: "Give pilot feedback",
     kontrollstatus: "Control status",
@@ -2157,9 +2155,6 @@ export default function RapportPage() {
           <a href={pipelineReviewUrl} className="uk-btn">
             {RP_LABELS.pipelineReview[locale]}
           </a>
-          <p style={{ margin: 0, fontSize: 12, color: "var(--fg-2, #475569)", maxWidth: 320 }}>
-            {RP_LABELS.resumeDisabledLaunch[locale]}
-          </p>
           <button
             onClick={() => setFeedbackOpen(true)}
             className="uk-btn"
