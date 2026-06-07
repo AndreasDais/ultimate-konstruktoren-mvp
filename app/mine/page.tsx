@@ -219,21 +219,22 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
       run.run_status === "aborted" || run.run_status === "failed";
 
     let phase: MineRow["phase"];
-    let href: string;
-    if (documentId) {
+    let href: string | null;
+    let pipelineHref: string | null = null;
+    if (report) {
       // Rapport finst — uansett status, vis han.
       phase = "rapport";
       href = `/rapport/${run.id}`;
+      pipelineHref = `/rapport/${run.id}/pipeline`;
     } else if (isKrasja) {
-      // Krasja før rapport — send use til workbench for å prøve på nytt.
       phase = "krasja";
-      href = `/?from_request=${run.request_id}`;
+      href = null;
     } else if (hasEngineerOutputs) {
       phase = "mission_control";
-      href = `/?from_run=${run.id}`;
+      href = null;
     } else {
       phase = "workbench";
-      href = `/?from_request=${run.request_id}`;
+      href = null;
     }
 
     return {
@@ -242,6 +243,7 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
       date: run.started_at,
       phase,
       href,
+      pipelineHref,
       tillit,
       documentId,
     };
@@ -261,7 +263,8 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
         title: titleFromInputReview(review, langKey),
         date: r.created_at,
         phase: "workbench" as const,
-        href: `/?from_request=${r.id}`,
+        href: null,
+        pipelineHref: null,
         tillit: null,
         documentId: null,
       };
