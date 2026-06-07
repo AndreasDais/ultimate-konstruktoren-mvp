@@ -512,6 +512,7 @@ type Report = {
 type FullReportResponse = {
   report: Report;
   cached: boolean;
+  sourceMode?: string | null;
   run: {
     request_id?: string | null;
     request: { raw_text: string };
@@ -525,6 +526,7 @@ type FullReportResponse = {
 };
 
 type RunReadResponse = {
+  mode?: string | null;
   run?: {
     request_id?: string | null;
     request?: { raw_text: string };
@@ -547,6 +549,7 @@ function existingReportResponse(data: RunReadResponse): FullReportResponse | nul
   return {
     report: data.report,
     cached: true,
+    sourceMode: data.mode ?? null,
     run: {
       ...data.run,
       request: {
@@ -719,8 +722,10 @@ export default function RapportPage() {
     agentA: normalizeAgentOutput(data.agentA, "agent_a"),
     agentB: normalizeAgentOutput(data.agentB, "agent_b"),
   };
+  const responseShouldIncludeAgentOutput = data.sourceMode !== "public_report_snapshot";
   const degradedAgentOutput =
-    !data.agentA?.structured_output || !data.agentB?.structured_output;
+    responseShouldIncludeAgentOutput &&
+    (!data.agentA?.structured_output || !data.agentB?.structured_output);
   const blocked = reportData.controllerDecision?.blocked_outputs ?? [];
   const isBlocked = (field: string) => blocked.includes(field);
   const primary = reportData.agentA;
