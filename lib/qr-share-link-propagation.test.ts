@@ -77,6 +77,8 @@ describe("QR / share-link token propagation", () => {
     expect(shareRoute).toContain("new URL(`/rapport/${id}`");
     expect(readSource("app/api/runs/[id]/route.ts")).toContain('mode: "shared_report"');
     expect(readSource("app/api/runs/[id]/route.ts")).toContain("verifyPipelineShareToken");
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain("SHARED_REPORT_INPUT_REVIEW_SELECT");
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain("parsed_data: row.extracted_inputs ?? null");
     // Naked report stays a sanitized public snapshot; resume stays owner/token-gated.
     expect(readSource("app/api/runs/[id]/route.ts")).toContain(
       "resume_requires_owner_or_share_token",

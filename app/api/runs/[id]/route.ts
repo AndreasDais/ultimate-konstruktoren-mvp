@@ -8,6 +8,8 @@ import { PIPELINE_REVIEW_SAFE_SELECTS } from "@/lib/report/pipeline-review";
 export const dynamic = "force-dynamic";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" } as const;
+const SHARED_REPORT_INPUT_REVIEW_SELECT =
+  "input_status, calculation_type, extracted_inputs, can_calculate, cannot_calculate, assumptions, prompt_version";
 
 function jsonNoStore(body: unknown, status = 200) {
   return NextResponse.json(body, {
@@ -164,7 +166,7 @@ function inputReviewForSharedReport(row: Record<string, unknown> | null) {
   if (!row) return null;
   return {
     input_status: row.input_status ?? "unknown",
-    parsed_data: row.parsed_data ?? null,
+    parsed_data: row.extracted_inputs ?? null,
     calculation_type: row.calculation_type ?? null,
     extracted_inputs: row.extracted_inputs ?? {},
     can_calculate: row.can_calculate ?? [],
@@ -231,7 +233,7 @@ async function sharedReportResponse(req: NextRequest, runId: string) {
       run.request_id
         ? supabase
             .from("input_reviews")
-            .select(PIPELINE_REVIEW_SAFE_SELECTS.inputReview)
+            .select(SHARED_REPORT_INPUT_REVIEW_SELECT)
             .eq("request_id", run.request_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
