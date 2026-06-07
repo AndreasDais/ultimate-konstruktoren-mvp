@@ -3,32 +3,11 @@ import { cookies } from "next/headers";
 import { getLocaleFromCookies } from "@/lib/locale";
 import { buildReportModel, type UpstreamReportData } from "@/lib/report/build-report-model";
 import { buildCalculationSheetModel, type CalculationSheetModel } from "@/lib/report/calculation-sheet-model";
+import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type PuppeteerModule = {
-  default?: {
-    launch: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
-  };
-  launch?: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
-};
-
-type PuppeteerBrowser = {
-  newPage: () => Promise<PuppeteerPage>;
-  close: () => Promise<void>;
-};
-
-type PuppeteerPage = {
-  setExtraHTTPHeaders: (headers: Record<string, string>) => Promise<void>;
-  setViewport: (viewport: { width: number; height: number; deviceScaleFactor?: number }) => Promise<void>;
-  goto: (url: string, options?: Record<string, unknown>) => Promise<unknown>;
-  setContent: (html: string, options?: Record<string, unknown>) => Promise<void>;
-  waitForSelector: (selector: string, options?: Record<string, unknown>) => Promise<unknown>;
-  emulateMediaType: (type: "screen" | "print") => Promise<void>;
-  pdf: (options: Record<string, unknown>) => Promise<Buffer>;
-};
 
 function safeFilename(value: string): string {
   return (value || "pilar-beregning")
@@ -203,26 +182,12 @@ function renderCalculationSheetHtml(sheet: CalculationSheetModel): string {
 </html>`;
 }
 
-async function loadPuppeteer(): Promise<PuppeteerModule> {
-  try {
-    // Bruk variabel import slik at prosjektet framleis kan typechecke før
-    // puppeteer er installert. Runtime gir ei tydeleg feilmelding om pakken manglar.
-    const moduleName = "puppeteer";
-    return (await import(moduleName)) as PuppeteerModule;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `PDF-motoren manglar. Installer puppeteer først: npm install puppeteer. Detalj: ${message}`,
-    );
-  }
-}
-
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ run_id: string }> },
 ) {
   let stage = "init";
-  let browser: PuppeteerBrowser | null = null;
+  let browser: PdfBrowser | null = null;
 
   try {
     stage = "params";
@@ -278,21 +243,7 @@ export async function GET(
     const html = renderCalculationSheetHtml(sheet);
 
     stage = "launch_puppeteer";
-    const puppeteerModule = await loadPuppeteer();
-    const launcher = puppeteerModule.default?.launch ?? puppeteerModule.launch;
-    if (!launcher) {
-      throw new Error("Kunne ikkje starte puppeteer: launch() manglar.");
-    }
-
-    browser = await launcher({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=medium",
-      ],
-    });
+    browser = await launchPdfBrowser();
 
     stage = "open_page";
     const page = await browser.newPage();
