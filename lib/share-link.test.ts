@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { appendShareToken, SHARE_PARAM } from "./share-link";
+import { appendShareToken, maskShareTokenForDisplay, SHARE_PARAM } from "./share-link";
 
 describe("appendShareToken", () => {
   it("appends ?share=<token> to a URL with no query", () => {
@@ -35,5 +35,16 @@ describe("appendShareToken", () => {
   it("uses the canonical share param name", () => {
     expect(SHARE_PARAM).toBe("share");
     expect(appendShareToken("/x", "t")).toContain(`${SHARE_PARAM}=`);
+  });
+
+  it("masks the bearer token for visible report copy only", () => {
+    const url = appendShareToken("/rapport/run-1/pipeline", "secret-token");
+    expect(maskShareTokenForDisplay(url, "secret-token")).toBe(
+      "/rapport/run-1/pipeline?share=secure-link",
+    );
+  });
+
+  it("keeps non-share URLs unchanged when masking", () => {
+    expect(maskShareTokenForDisplay("/rapport/run-1", "")).toBe("/rapport/run-1");
   });
 });
