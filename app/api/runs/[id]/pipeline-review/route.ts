@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { getSupabase } from "@/lib/supabase";
 import {
   buildReportModel,
@@ -13,6 +15,7 @@ import {
 import type { EngineeringContext } from "@/lib/engineering-context/types";
 import type { Locale } from "@/lib/locale";
 import type { TillitBreakdown } from "@/lib/tillit-score";
+import { verifyPipelineShareToken } from "@/lib/pipeline-share-token";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +89,68 @@ function jsonNoStore(body: unknown, status = 200) {
 
 function safeError(status: number, error: string) {
   return jsonNoStore({ error }, status);
+}
+
+async function currentUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {
+            // Read-only auth check for this route.
+          },
+        },
+      },
+    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function verifyPipelineReviewAccess(request: NextRequest, runId: string) {
+  const shareToken = request.nextUrl.searchParams.get("share");
+  if (shareToken) {
+    const verified = verifyPipelineShareToken({ token: shareToken });
+    if (!verified.ok) {
+      return {
+        ok: false as const,
+        status: verified.error === "share_secret_missing" ? 503 : 403,
+        error: verified.error,
+      };
+    }
+    if (verified.payload.run_id !== runId) {
+      return { ok: false as const, status: 403, error: "share_run_mismatch" };
+    }
+    return { ok: true as const };
+  }
+
+  const userId = await currentUserId();
+  if (!userId) return { ok: false as const, status: 403, error: "share_token_required" };
+
+  const { data: ownerRun, error } = await getSupabase()
+    .from("calculation_runs")
+    .select("id, user_id")
+    .eq("id", runId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[api/runs/pipeline-review] owner check failed");
+    return { ok: false as const, status: 500, error: "pipeline_review_unavailable" };
+  }
+
+  return ownerRun?.user_id === userId
+    ? { ok: true as const }
+    : { ok: false as const, status: 403, error: "share_token_required" };
 }
 
 function localeFromDisplayLanguage(value: string | null | undefined): Locale {
@@ -184,6 +249,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     if (!id) return safeError(400, "missing_run_id");
+
+    const access = await verifyPipelineReviewAccess(request, id);
+    if (!access.ok) return safeError(access.status, access.error);
 
     const supabase = getSupabase();
     const { data: run, error: runError } = await supabase

@@ -130,18 +130,26 @@ describe("report save idempotency", () => {
     );
     expect(runRead).toContain("executive_summary, technical_assessment, conclusion");
     expect(runRead).toContain('mode: "public_report_snapshot"');
-    expect(runRead).not.toContain("structured_output");
-    expect(runRead).not.toContain("agentA:");
-    expect(runRead).not.toContain("agentB:");
+    expect(runRead).toContain('mode: "owner_resume"');
+    expect(runRead).toContain("resume_requires_owner_or_share_token");
+    expect(runRead).toContain('.select("id, run_status, calculation_type, started_at, completed_at, display_language")');
+    expect(runRead).toContain("run.user_id !== userId");
+    expect(runRead).not.toContain("input_payload");
+    expect(runRead).not.toContain("output_text");
+    expect(runRead).not.toContain("raw_message");
   });
 
-  it("blocks public request resume without exposing raw request data", () => {
+  it("blocks public request resume while allowing owner-gated raw request resume", () => {
     const requestRead = readSource("app/api/requests/[id]/route.ts");
 
     expect(requestRead).toContain("request_resume_requires_owner_or_share_token");
+    expect(requestRead).toContain('mode: "owner_request_resume"');
+    expect(requestRead).toContain("requestRow.user_id !== userId");
+    expect(requestRead).toContain("request: { id: requestRow.id, raw_text: requestRow.raw_text }");
     expect(requestRead).toContain("Cache-Control");
-    expect(requestRead).not.toContain("raw_text");
-    expect(requestRead).not.toContain("user_id");
     expect(requestRead).not.toContain('select("*")');
+    expect(requestRead).not.toContain("input_payload");
+    expect(requestRead).not.toContain("output_text");
+    expect(requestRead).not.toContain("raw_message");
   });
 });
