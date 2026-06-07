@@ -365,7 +365,6 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   handlingar: { nb: "Handlinger", nn: "Handlingar" },
   lastNedPDF: { nb: "Last ned PDF", nn: "Last ned PDF" },
   lastNedWord: { nb: "Last ned Word", nn: "Last ned Word" },
-  pipelineReview: { nb: "Pipeline-review og deling", nn: "Pipeline-review og deling" },
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
   sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
@@ -678,6 +677,40 @@ export default function RapportPage() {
     setShareToken("");
 
     (async () => {
+      const urlShareToken =
+        typeof window === "undefined"
+          ? ""
+          : new URLSearchParams(window.location.search).get("share") ?? "";
+      if (urlShareToken) {
+        if (!cancelled) setShareToken(urlShareToken);
+        try {
+          const sharedResponse = await fetch(
+            `/api/runs/${runId}?share=${encodeURIComponent(urlShareToken)}`,
+            { cache: "no-store" },
+          );
+          if (!sharedResponse.ok) {
+            if (!cancelled) {
+              setError(locale === "nn" ? "Kunne ikkje opne delt rapport." : "Kunne ikke åpne delt rapport.");
+              setExistingReportChecked(true);
+            }
+            return;
+          }
+          const sharedData = (await sharedResponse.json()) as RunReadResponse;
+          if (cancelled) return;
+          const existing = existingReportResponse(sharedData);
+          if (existing) {
+            setData(existing);
+          }
+          setExistingReportChecked(true);
+        } catch {
+          if (!cancelled) {
+            setError(locale === "nn" ? "Kunne ikkje opne delt rapport." : "Kunne ikke åpne delt rapport.");
+            setExistingReportChecked(true);
+          }
+        }
+        return;
+      }
+
       let ownerData: RunReadResponse | null = null;
       try {
         const ownerResponse = await fetch(`/api/runs/${runId}?mode=resume`, {
@@ -690,19 +723,11 @@ export default function RapportPage() {
         ownerData = null;
       }
 
-      // Share-token resolution. A shared viewer arrives with ?share=<token> —
-      // keep it so report → pipeline/sheet navigation preserves shared access.
-      // The owner (ownerData present) instead mints a fresh signed link from the
-      // owner-gated share route, so the QR/share card targets the sanitized
-      // shared flow. Best-effort: on failure we fall back to the naked public
-      // URL. The signing secret never reaches the client; the token is not logged.
-      const urlShareToken =
-        typeof window === "undefined"
-          ? ""
-          : new URLSearchParams(window.location.search).get("share") ?? "";
-      if (urlShareToken) {
-        if (!cancelled) setShareToken(urlShareToken);
-      } else if (ownerData) {
+      // Owner-only share-token minting. A signed token makes the QR/share card
+      // point at the sanitized shared report flow, never naked public resume.
+      // Best-effort: on failure we fall back to the public report URL. The
+      // signing secret never reaches the client; the token is not logged.
+      if (ownerData) {
         try {
           const shareResponse = await fetch(`/api/runs/${runId}/share`, {
             method: "POST",
@@ -740,7 +765,7 @@ export default function RapportPage() {
     return () => {
       cancelled = true;
     };
-  }, [runId]);
+  }, [runId, locale]);
 
   // Scroll-spy: marker aktiv TOC-lenke basert på kva seksjon som er synleg.
   // Etter konsolidering ser observer only på dei 4 outer-sections.
@@ -955,7 +980,6 @@ export default function RapportPage() {
     handlingar: "Actions",
     lastNedPDF: "Download PDF",
     lastNedWord: "Download Word",
-    pipelineReview: "Pipeline review and sharing",
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
     sendTilbakemelding: "Report an error",
@@ -994,15 +1018,14 @@ export default function RapportPage() {
   const pdfFilename = `${data.report.document_id}.pdf`;
   // Preserve the signed share token across in-app navigation so a shared viewer
   // keeps pipeline/sheet access. Naked URLs (no token) are left untouched.
-  const pipelineReviewUrl = appendShareToken(`/rapport/${runId}/pipeline`, shareToken);
   const calculationSheetUrl = appendShareToken(`/rapport/${runId}/beregning?locale=${locale}`, shareToken);
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
   // Shareable web link for the QR/share card. When a signed token is available
-  // (owner-minted or carried in the URL), point at the sanitized shared
-  // pipeline-review flow instead of a naked /rapport/<id> public snapshot.
+  // (owner-minted or carried in the URL), point at the sanitized shared report
+  // flow instead of a naked /rapport/<id> public snapshot.
   const shareableUrl = shareToken
-    ? appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)
+    ? appendShareToken(stableRapportUrl, shareToken)
     : stableRapportUrl;
   const shareableDisplayUrl = maskShareTokenForDisplay(shareableUrl, shareToken);
   const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
@@ -2287,9 +2310,6 @@ export default function RapportPage() {
           </a>
           <a href={calculationSheetUrl} className="uk-btn">
             {calculationSheetLabel}
-          </a>
-          <a href={pipelineReviewUrl} className="uk-btn">
-            {RP_LABELS.pipelineReview[locale]}
           </a>
           <button
             onClick={() => setFeedbackOpen(true)}

@@ -225,18 +225,19 @@ describe("public pipeline review", () => {
     expect(PIPELINE_REVIEW_SAFE_SELECTS.agentOutputs).toContain("structured_output");
   });
 
-  it("keeps the launch route separate from public resume and links the report page to review", () => {
+  it("keeps the launch route separate from public resume and keeps report as the share entrypoint", () => {
     const runRoute = readSource("app/api/runs/[id]/route.ts");
     const reviewRoute = readSource("app/api/runs/[id]/pipeline-review/route.ts");
     const reviewHelper = readSource("lib/report/pipeline-review.ts");
     const reportPage = readSource("app/rapport/[run_id]/page.tsx");
 
     expect(runRoute).toContain("resume_requires_owner_or_share_token");
+    expect(runRoute).toContain('mode: "shared_report"');
+    expect(runRoute).toContain("verifyPipelineShareToken");
     expect(reviewHelper).toContain('mode: "public_pipeline_review"');
     expect(reviewRoute).toContain("buildPublicPipelineReview");
-    expect(reportPage).toContain(
-      "const pipelineReviewUrl = appendShareToken(`/rapport/${runId}/pipeline`, shareToken)",
-    );
-    expect(reportPage).toContain("RP_LABELS.pipelineReview");
+    expect(reportPage).toContain("appendShareToken(stableRapportUrl, shareToken)");
+    expect(reportPage).not.toContain("const pipelineReviewUrl");
+    expect(reportPage).not.toContain("RP_LABELS.pipelineReview");
   });
 });

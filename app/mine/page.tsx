@@ -222,12 +222,11 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
       let phase: MineRow["phase"];
       let href: string | null;
       let pipelineHref: string | null = null;
-      if (report) {
-        // Rapport finst — uansett status, vis han.
-        phase = "rapport";
-        href = `/rapport/${run.id}`;
-        pipelineHref = `/rapport/${run.id}/pipeline`;
-      } else if (isKrasja) {
+    if (report) {
+      // Rapport finst — uansett status, vis han.
+      phase = "rapport";
+      href = `/rapport/${run.id}`;
+    } else if (isKrasja) {
         return null;
       } else if (hasEngineerOutputs) {
         phase = "mission_control";
