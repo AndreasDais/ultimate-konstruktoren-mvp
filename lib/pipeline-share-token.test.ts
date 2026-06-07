@@ -128,7 +128,8 @@ describe("pipeline share tokens", () => {
     expect(forkSeedRoute).not.toContain("parsed_data");
     expect(forkSeedRoute).not.toMatch(/raw_text|input_payload|output_text|raw_message|structured_output|user_id/i);
     expect(forkSeedRoute).not.toContain("request_id:");
-    expect(minePage).not.toMatch(/\?from_run|\?from_request|from_run=|from_request=/);
+    expect(minePage).toContain('href = `/?from_run=${run.id}`');
+    expect(minePage).toContain('href: `/?from_request=${r.id}`');
     expect(pipelinePage).toContain("pilar-pipeline-fork-seed-v1");
     expect(pipelinePage).toContain("/?from_run=");
     expect(pipelinePage).toContain("Sharing is not configured in this environment.");

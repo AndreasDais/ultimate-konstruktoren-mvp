@@ -129,6 +129,12 @@ const ML_LABELS: Record<string, Record<LangKey, string>> = {
     en: "replace professional review. The formula is a pilot hypothesis and will be recalibrated in v0.2.",
   },
   openReport: { nb: "Åpne rapport", nn: "Opne rapport", en: "Open report" },
+  openMissionControl: {
+    nb: "Åpne Mission Control",
+    nn: "Opne Mission Control",
+    en: "Open Mission Control",
+  },
+  openWorkbench: { nb: "Åpne Workbench", nn: "Opne Workbench", en: "Open Workbench" },
   pipelineReview: { nb: "Pipeline-review", nn: "Pipeline-review", en: "Pipeline review" },
   noReportYet: { nb: "Ingen rapport ennå", nn: "Ingen rapport enno", en: "No report yet" },
   processing: { nb: "Behandles fortsatt", nn: "Blir framleis behandla", en: "Still processing" },
@@ -313,6 +319,12 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
         : row.phase === "workbench"
           ? ML_LABELS.processing[langKey]
           : null;
+  const primaryActionLabel =
+    row.phase === "rapport"
+      ? ML_LABELS.openReport[langKey]
+      : row.phase === "mission_control"
+        ? ML_LABELS.openMissionControl[langKey]
+        : ML_LABELS.openWorkbench[langKey];
 
   return (
     <article className="uk-card p-4 transition-colors hover:shadow-sm">
@@ -370,7 +382,7 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
           <div className="mt-4 flex flex-wrap gap-2">
             {row.href && (
               <Link href={row.href} className="uk-btn uk-btn--primary">
-                {ML_LABELS.openReport[langKey]}
+                {primaryActionLabel}
               </Link>
             )}
             {row.pipelineHref && (

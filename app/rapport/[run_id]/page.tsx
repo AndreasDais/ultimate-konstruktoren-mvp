@@ -495,6 +495,12 @@ type InputReview = {
   input_status: string;
   parsed_data: unknown;
   prompt_version: string;
+  extracted_inputs?: unknown;
+  missing_inputs?: unknown;
+  can_calculate?: unknown;
+  cannot_calculate?: unknown;
+  assumptions?: unknown;
+  interpretation_summary?: string | null;
 };
 
 type Report = {
@@ -535,32 +541,101 @@ type RunReadResponse = {
   request?: { raw_text?: string | null } | null;
   report?: Report | null;
   inputReview?: InputReview | null;
+  tolking?: Record<string, unknown> | null;
   agentA?: AgentOutput | null;
   agentB?: AgentOutput | null;
+  calculationA?: Record<string, unknown> | null;
+  calculationB?: Record<string, unknown> | null;
   comparison?: Comparison | null;
   comparisonRaw?: Comparison | null;
   controllerDecision?: ControllerDecision | null;
   controllerDecisionRaw?: ControllerDecision | null;
 };
 
-function existingReportResponse(data: RunReadResponse): FullReportResponse | null {
+function ownerTolkingToInputReview(tolking: Record<string, unknown> | null | undefined): InputReview | null {
+  if (!tolking) return null;
+  const parsedData = {
+    calculation_type: tolking.berekningstype ?? null,
+    discipline: tolking.fagomraade ?? null,
+    extracted_inputs: tolking.tolkte_verdiar ?? {},
+    missing_inputs: tolking.manglande_verdiar ?? [],
+    can_calculate: tolking.kan_reknast_no ?? [],
+    cannot_calculate: tolking.kan_ikkje_reknast ?? [],
+    assumptions: tolking.antakingar ?? [],
+    interpretation_summary: tolking.tolkings_oppsummering ?? "",
+  };
+  return {
+    input_status: typeof tolking.status === "string" ? tolking.status : "unknown",
+    parsed_data: parsedData,
+    prompt_version: typeof tolking.prompt_version === "string" ? tolking.prompt_version : "",
+    extracted_inputs: parsedData.extracted_inputs,
+    missing_inputs: parsedData.missing_inputs,
+    can_calculate: parsedData.can_calculate,
+    cannot_calculate: parsedData.cannot_calculate,
+    assumptions: parsedData.assumptions,
+    interpretation_summary:
+      typeof parsedData.interpretation_summary === "string"
+        ? parsedData.interpretation_summary
+        : "",
+  };
+}
+
+function ownerCalculationToAgentOutput(
+  calculation: Record<string, unknown> | null | undefined,
+  agentName: "agent_a" | "agent_b",
+): AgentOutput | null {
+  if (!calculation) return null;
+  return {
+    agent_name: agentName,
+    prompt_version:
+      typeof calculation.prompt_version === "string" ? calculation.prompt_version : null,
+    structured_output: calculation as AgentOutput["structured_output"],
+  };
+}
+
+function existingReportResponse(
+  data: RunReadResponse,
+  ownerData: RunReadResponse | null = null,
+): FullReportResponse | null {
   if (!data.report?.executive_summary || !data.run) return null;
+
+  const ownerInputReview = ownerTolkingToInputReview(ownerData?.tolking);
+  const ownerAgentA =
+    ownerData?.agentA ?? ownerCalculationToAgentOutput(ownerData?.calculationA, "agent_a");
+  const ownerAgentB =
+    ownerData?.agentB ?? ownerCalculationToAgentOutput(ownerData?.calculationB, "agent_b");
 
   return {
     report: data.report,
     cached: true,
-    sourceMode: data.mode ?? null,
+    sourceMode: ownerData?.mode ?? data.mode ?? null,
     run: {
       ...data.run,
+      ...(ownerData?.run ?? {}),
       request: {
-        raw_text: data.run.request?.raw_text ?? data.request?.raw_text ?? "",
+        raw_text:
+          ownerData?.request?.raw_text ??
+          ownerData?.run?.request?.raw_text ??
+          data.run.request?.raw_text ??
+          data.request?.raw_text ??
+          "",
       },
     },
-    inputReview: data.inputReview ?? null,
-    agentA: data.agentA ?? null,
-    agentB: data.agentB ?? null,
-    comparison: data.comparisonRaw ?? data.comparison ?? null,
-    controllerDecision: data.controllerDecisionRaw ?? data.controllerDecision ?? null,
+    inputReview: ownerInputReview ?? ownerData?.inputReview ?? data.inputReview ?? null,
+    agentA: ownerAgentA ?? data.agentA ?? null,
+    agentB: ownerAgentB ?? data.agentB ?? null,
+    comparison:
+      ownerData?.comparisonRaw ??
+      ownerData?.comparison ??
+      data.comparisonRaw ??
+      data.comparison ??
+      null,
+    controllerDecision:
+      ownerData?.controllerDecisionRaw ??
+      ownerData?.controllerDecision ??
+      data.controllerDecisionRaw ??
+      data.controllerDecision ??
+      null,
   };
 }
 
@@ -596,24 +671,36 @@ export default function RapportPage() {
     setError(null);
     setExistingReportChecked(false);
 
-    fetch(`/api/runs/${runId}`, { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return (await response.json()) as RunReadResponse;
-      })
-      .then((runData) => {
+    (async () => {
+      let ownerData: RunReadResponse | null = null;
+      try {
+        const ownerResponse = await fetch(`/api/runs/${runId}?mode=resume`, {
+          cache: "no-store",
+        });
+        if (ownerResponse.ok) {
+          ownerData = (await ownerResponse.json()) as RunReadResponse;
+        }
+      } catch {
+        ownerData = null;
+      }
+
+      try {
+        const publicResponse = await fetch(`/api/runs/${runId}`, { cache: "no-store" });
+        const runData = publicResponse.ok
+          ? ((await publicResponse.json()) as RunReadResponse)
+          : null;
         if (cancelled) return;
-        const existing = runData ? existingReportResponse(runData) : null;
+        const existing = runData ? existingReportResponse(runData, ownerData) : null;
         if (existing) {
           setData(existing);
         }
         setExistingReportChecked(true);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setExistingReportChecked(true);
         }
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
