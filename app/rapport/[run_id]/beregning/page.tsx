@@ -16,6 +16,7 @@ import "./beregning.css";
 import { inferCalculationEnglishDisplay, isInternationalEnglishContext } from "@/lib/international/display";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
+import { appendShareToken } from "@/lib/share-link";
 
 const LABELS: Record<PilarDisplayLanguage, Record<string, string>> = {
   nb: {
@@ -101,11 +102,15 @@ export default function CalculationSheetPage() {
   const params = useParams();
   const router = useRouter();
   const runId = params.run_id as string;
+  const shareToken = searchParams?.get("share") ?? "";
   const [data, setData] = useState<UpstreamReportData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const reportUrl = typeof window === "undefined" ? `/rapport/${runId}` : `${window.location.origin}/rapport/${runId}`;
+  const fullReportUrl = appendShareToken(`/rapport/${runId}`, shareToken);
+  const reportUrl = typeof window === "undefined"
+    ? fullReportUrl
+    : appendShareToken(`${window.location.origin}/rapport/${runId}`, shareToken);
 
   const { sheet, latex } = useMemo(() => {
     if (!data) return { sheet: null, latex: "" };
@@ -144,7 +149,7 @@ export default function CalculationSheetPage() {
       <div className="rapport-loading">
         <h1>{L.loadingError}</h1>
         <p>{error}</p>
-        <button onClick={() => router.push(`/rapport/${runId}`)} className="uk-btn">
+        <button onClick={() => router.push(fullReportUrl)} className="uk-btn">
           {L.back}
         </button>
       </div>
@@ -166,7 +171,7 @@ export default function CalculationSheetPage() {
       <div className="beregning-shell">
         <div className="beregning-actions no-print">
           <div className="beregning-actions__left">
-            <button className="uk-btn" onClick={() => router.push(`/rapport/${runId}`)}>
+            <button className="uk-btn" onClick={() => router.push(fullReportUrl)}>
               {L.back}
             </button>
           </div>

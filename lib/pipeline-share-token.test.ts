@@ -111,6 +111,7 @@ describe("pipeline share tokens", () => {
     expect(requestRoute).toContain("request_resume_requires_owner_or_share_token");
     expect(shareRoute).toContain("createPipelineShareToken");
     expect(shareRoute).toContain("share_requires_completed_run");
+    expect(shareRoute).toContain("new URL(`/rapport/${id}`");
     expect(reviewRoute).toContain("verifyPipelineShareToken");
     expect(reviewRoute).toContain("share_token_required");
     expect(reviewRoute.indexOf('access: "owner"')).toBeLessThan(
@@ -130,6 +131,7 @@ describe("pipeline share tokens", () => {
     expect(forkSeedRoute).not.toContain("request_id:");
     expect(minePage).toContain('href = `/?from_run=${run.id}`');
     expect(minePage).toContain('href: `/?from_request=${r.id}`');
+    expect(minePage).not.toContain("`/rapport/${run.id}/pipeline`");
     expect(pipelinePage).toContain("pilar-pipeline-fork-seed-v1");
     expect(pipelinePage).toContain("/?from_run=");
     expect(pipelinePage).toContain("Sharing is not configured in this environment.");

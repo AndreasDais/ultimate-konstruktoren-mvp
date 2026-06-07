@@ -24,15 +24,17 @@ describe("QR / share-link token propagation", () => {
     // QR + displayed link use the share-aware URL, not the naked report URL.
     expect(reportPage).toContain("value={shareableUrl}");
     expect(reportPage).toContain("const shareableUrl = shareToken");
-    // Shared link targets the sanitized shared pipeline-review flow.
-    expect(reportPage).toContain("appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)");
+    // Shared link targets the sanitized shared report flow.
+    expect(reportPage).toContain("appendShareToken(stableRapportUrl, shareToken)");
+    expect(reportPage).not.toContain("appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)");
   });
 
-  it("report page preserves ?share across report -> pipeline and report -> sheet navigation", () => {
-    expect(reportPage).toContain("appendShareToken(`/rapport/${runId}/pipeline`, shareToken)");
+  it("report page preserves ?share across report -> sheet navigation without linking pipeline-review", () => {
     expect(reportPage).toContain(
       "appendShareToken(`/rapport/${runId}/beregning?locale=${locale}`, shareToken)",
     );
+    expect(reportPage).not.toContain("const pipelineReviewUrl");
+    expect(reportPage).not.toContain("RP_LABELS.pipelineReview");
   });
 
   it("pipeline page preserves ?share across pipeline -> report and pipeline -> sheet navigation", () => {
@@ -72,6 +74,11 @@ describe("QR / share-link token propagation", () => {
     expect(shareRoute).toContain("owner_required");
     expect(reviewRoute).toContain("verifyPipelineShareToken");
     expect(reviewRoute).toContain("share_token_required");
+    expect(shareRoute).toContain("new URL(`/rapport/${id}`");
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain('mode: "shared_report"');
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain("verifyPipelineShareToken");
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain("SHARED_REPORT_INPUT_REVIEW_SELECT");
+    expect(readSource("app/api/runs/[id]/route.ts")).toContain("parsed_data: row.extracted_inputs ?? null");
     // Naked report stays a sanitized public snapshot; resume stays owner/token-gated.
     expect(readSource("app/api/runs/[id]/route.ts")).toContain(
       "resume_requires_owner_or_share_token",

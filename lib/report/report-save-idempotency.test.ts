@@ -124,6 +124,7 @@ describe("report save idempotency", () => {
     const runRead = readSource("app/api/runs/[id]/route.ts");
 
     expect(page).toContain('fetch(`/api/runs/${runId}?mode=resume`,');
+    expect(page).toContain("`/api/runs/${runId}?share=${encodeURIComponent(urlShareToken)}`");
     expect(page).toContain('fetch(`/api/runs/${runId}`, { cache: "no-store" })');
     expect(page).toContain("existingReportResponse(runData, ownerData)");
     expect(page).toContain("sourceMode: ownerData?.mode ?? data.mode ?? null");
@@ -132,6 +133,7 @@ describe("report save idempotency", () => {
       page.indexOf("<RapportLoadingPilelinja"),
     );
     expect(runRead).toContain("executive_summary, technical_assessment, conclusion");
+    expect(runRead).toContain('mode: "shared_report"');
     expect(runRead).toContain('mode: "public_report_snapshot"');
     expect(runRead).toContain('mode: "owner_resume"');
     expect(runRead).toContain("resume_requires_owner_or_share_token");

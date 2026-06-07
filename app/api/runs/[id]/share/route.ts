@@ -85,7 +85,7 @@ export async function POST(
     return jsonNoStore({ error: created.error }, created.error === "share_secret_missing" ? 503 : 400);
   }
 
-  const shareUrl = new URL(`/rapport/${id}/pipeline`, request.nextUrl.origin);
+  const shareUrl = new URL(`/rapport/${id}`, request.nextUrl.origin);
   shareUrl.searchParams.set("share", created.token);
 
   return jsonNoStore({
