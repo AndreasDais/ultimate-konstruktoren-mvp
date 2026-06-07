@@ -41,7 +41,7 @@ import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
 import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polishNorwegianRoleText } from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
-import { appendShareToken } from "@/lib/share-link";
+import { appendShareToken, maskShareTokenForDisplay } from "@/lib/share-link";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
   isMarginaliaRelevantForLanguage,
@@ -1004,6 +1004,7 @@ export default function RapportPage() {
   const shareableUrl = shareToken
     ? appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)
     : stableRapportUrl;
+  const shareableDisplayUrl = maskShareTokenForDisplay(shareableUrl, shareToken);
   const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
@@ -1561,7 +1562,7 @@ export default function RapportPage() {
                     {RP_LABELS.qrAccessUrlLabel[locale]}
                   </div>
                   <div className="rapport-access-card__url uk-mono">
-                    {shareableUrl}
+                    {shareableDisplayUrl}
                   </div>
                 </div>
                 <div className="rapport-access-card__qr" aria-hidden="true">
@@ -2250,7 +2251,7 @@ export default function RapportPage() {
                   <span className="uk-mono">{reportPromptVersion}</span>
                 </div>
                 {stableRapportUrl && (
-                  <div className="rapport-footer__url uk-mono">{shareableUrl}</div>
+                  <div className="rapport-footer__url uk-mono">{shareableDisplayUrl}</div>
                 )}
               </div>
               {stableRapportUrl && (

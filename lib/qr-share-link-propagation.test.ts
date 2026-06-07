@@ -14,7 +14,8 @@ const reviewRoute = readSource("app/api/runs/[id]/pipeline-review/route.ts");
 
 describe("QR / share-link token propagation", () => {
   it("report page mints an owner share link and carries it on the QR/share card (not naked)", () => {
-    expect(reportPage).toContain('import { appendShareToken } from "@/lib/share-link"');
+    expect(reportPage).toContain("appendShareToken");
+    expect(reportPage).toContain("maskShareTokenForDisplay");
     // Reads an inbound share token (shared viewer) ...
     expect(reportPage).toContain('.get("share")');
     // ... or mints one for the owner via the owner-gated share route.

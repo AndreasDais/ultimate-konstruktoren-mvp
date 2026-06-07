@@ -19,3 +19,13 @@ export function appendShareToken(url: string, token: string | null | undefined):
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}${SHARE_PARAM}=${encodeURIComponent(token)}`;
 }
+
+/**
+ * Hide the bearer token in visible report copy while keeping the URL shape
+ * recognizable. Use this only for display text; QR codes and anchors must keep
+ * the real URL.
+ */
+export function maskShareTokenForDisplay(url: string, token: string | null | undefined): string {
+  if (!token) return url;
+  return url.replace(new RegExp(`([?&]${SHARE_PARAM}=)[^&]+`), "$1secure-link");
+}
