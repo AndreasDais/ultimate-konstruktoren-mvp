@@ -125,6 +125,8 @@ describe("report save idempotency", () => {
 
     expect(page).toContain('fetch(`/api/runs/${runId}`, { cache: "no-store" })');
     expect(page).toContain("existingReportResponse(runData)");
+    expect(page).toContain("sourceMode: data.mode ?? null");
+    expect(page).toContain('data.sourceMode !== "public_report_snapshot"');
     expect(page.indexOf("if (!data && !existingReportChecked)")).toBeLessThan(
       page.indexOf("<RapportLoadingPilelinja"),
     );
