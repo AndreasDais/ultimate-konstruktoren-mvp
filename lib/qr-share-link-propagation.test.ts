@@ -21,9 +21,14 @@ describe("QR / share-link token propagation", () => {
     // ... or mints one for the owner via the owner-gated share route.
     expect(reportPage).toContain("/api/runs/${runId}/share");
     expect(reportPage).toContain('method: "POST"');
-    // QR + displayed link use the share-aware URL, not the naked report URL.
+    // QR + clickable link use the real share-aware URL, not the naked report URL.
     expect(reportPage).toContain("value={shareableUrl}");
+    expect(reportPage).toContain("href={shareableUrl}");
     expect(reportPage).toContain("const shareableUrl = shareToken");
+    // The visible label must not be the fake secure-link URL that users can
+    // paste into the address bar; the real token stays in href/QR only.
+    expect(reportPage).toContain("shareableDisplayText");
+    expect(reportPage).toContain("qrAccessSecureLink");
     // Shared link targets the sanitized shared report flow.
     expect(reportPage).toContain("appendShareToken(stableRapportUrl, shareToken)");
     expect(reportPage).not.toContain("appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)");

@@ -326,6 +326,10 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Opnar rapporten på nett med kontrollstatus, pipeline og delbar lenkje for medstudentar eller kollegaer.",
   },
   qrAccessUrlLabel: { nb: "Rapportlenke", nn: "Rapportlenkje" },
+  qrAccessSecureLink: {
+    nb: "Opne sikker delingslenke",
+    nn: "Opne trygg delingslenkje",
+  },
   qrAccessPipeline: { nb: "Nettversjon + pipeline", nn: "Nettversjon + pipeline" },
   coverKeyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
   disclaimerKort: {
@@ -951,6 +955,7 @@ export default function RapportPage() {
     qrAccessTitle: "Scan for web version",
     qrAccessText: "Opens the report online with control status, pipeline trace and shareable link for classmates or colleagues.",
     qrAccessUrlLabel: "Report link",
+    qrAccessSecureLink: "Open secure share link",
     qrAccessPipeline: "Web version + pipeline",
     coverKeyResults: "Key results",
     disclaimerKort: "The content is support, learning aid or preliminary technical assessment only. It does not replace review by a qualified professional.",
@@ -1028,6 +1033,9 @@ export default function RapportPage() {
     ? appendShareToken(stableRapportUrl, shareToken)
     : stableRapportUrl;
   const shareableDisplayUrl = maskShareTokenForDisplay(shareableUrl, shareToken);
+  const shareableDisplayText = shareToken
+    ? RP_LABELS.qrAccessSecureLink[locale]
+    : shareableDisplayUrl;
   const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
@@ -1584,9 +1592,12 @@ export default function RapportPage() {
                   <div className="rapport-access-card__url-label">
                     {RP_LABELS.qrAccessUrlLabel[locale]}
                   </div>
-                  <div className="rapport-access-card__url uk-mono">
-                    {shareableDisplayUrl}
-                  </div>
+                  <a
+                    className="rapport-access-card__url uk-mono"
+                    href={shareableUrl}
+                  >
+                    {shareableDisplayText}
+                  </a>
                 </div>
                 <div className="rapport-access-card__qr" aria-hidden="true">
                   <QRCodeSVG
@@ -2274,7 +2285,12 @@ export default function RapportPage() {
                   <span className="uk-mono">{reportPromptVersion}</span>
                 </div>
                 {stableRapportUrl && (
-                  <div className="rapport-footer__url uk-mono">{shareableDisplayUrl}</div>
+                  <a
+                    className="rapport-footer__url uk-mono"
+                    href={shareableUrl}
+                  >
+                    {shareableDisplayText}
+                  </a>
                 )}
               </div>
               {stableRapportUrl && (
