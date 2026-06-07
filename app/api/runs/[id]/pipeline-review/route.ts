@@ -118,39 +118,40 @@ async function currentUserId(): Promise<string | null> {
 }
 
 async function verifyPipelineReviewAccess(request: NextRequest, runId: string) {
-  const shareToken = request.nextUrl.searchParams.get("share");
-  if (shareToken) {
-    const verified = verifyPipelineShareToken({ token: shareToken });
-    if (!verified.ok) {
-      return {
-        ok: false as const,
-        status: verified.error === "share_secret_missing" ? 503 : 403,
-        error: verified.error,
-      };
-    }
-    if (verified.payload.run_id !== runId) {
-      return { ok: false as const, status: 403, error: "share_run_mismatch" };
-    }
-    return { ok: true as const };
-  }
-
   const userId = await currentUserId();
-  if (!userId) return { ok: false as const, status: 403, error: "share_token_required" };
+  const shareToken = request.nextUrl.searchParams.get("share");
 
-  const { data: ownerRun, error } = await getSupabase()
-    .from("calculation_runs")
-    .select("id, user_id")
-    .eq("id", runId)
-    .maybeSingle();
+  if (userId) {
+    const { data: ownerRun, error } = await getSupabase()
+      .from("calculation_runs")
+      .select("id, user_id")
+      .eq("id", runId)
+      .maybeSingle();
 
-  if (error) {
-    console.error("[api/runs/pipeline-review] owner check failed");
-    return { ok: false as const, status: 500, error: "pipeline_review_unavailable" };
+    if (error) {
+      console.error("[api/runs/pipeline-review] owner check failed");
+      return { ok: false as const, status: 500, error: "pipeline_review_unavailable" };
+    }
+
+    if (ownerRun?.user_id === userId) {
+      return { ok: true as const, access: "owner" as const };
+    }
   }
 
-  return ownerRun?.user_id === userId
-    ? { ok: true as const }
-    : { ok: false as const, status: 403, error: "share_token_required" };
+  if (!shareToken) return { ok: false as const, status: 403, error: "share_token_required" };
+
+  const verified = verifyPipelineShareToken({ token: shareToken });
+  if (!verified.ok) {
+    return {
+      ok: false as const,
+      status: verified.error === "share_secret_missing" ? 503 : 403,
+      error: verified.error,
+    };
+  }
+  if (verified.payload.run_id !== runId) {
+    return { ok: false as const, status: 403, error: "share_run_mismatch" };
+  }
+  return { ok: true as const, access: "shared" as const };
 }
 
 function localeFromDisplayLanguage(value: string | null | undefined): Locale {
@@ -333,35 +334,38 @@ export async function GET(request: NextRequest, context: RouteContext) {
       audience: "engineer",
     });
 
-    return jsonNoStore(
-      buildPublicPipelineReview({
-        run: {
-          id: run.id,
-          status: run.run_status ?? null,
-          calculationType: run.calculation_type ?? null,
-          startedAt: run.started_at ?? null,
-          completedAt: run.completed_at ?? null,
-          displayLanguage: runDisplayLanguage,
-        },
-        reportModel,
-        engineeringContext: run.engineering_context,
-        links: {
-          report: reportUrl,
-          pdf: `${origin}/api/rapport/${id}/pdf`,
-          word: `${origin}/api/rapport/${id}/word`,
-          calculationSheet: `${origin}/rapport/${id}/beregning?locale=${locale}`,
-        },
-        agents: [
-          agentSource(agentA, "engineer_a", blockedFields),
-          agentSource(agentB, "engineer_b", blockedFields),
-        ],
-        controller: {
-          riskLevel: controllerDecision?.risk_level ?? null,
-          manualReviewRequired: controllerDecision?.manual_review_required ?? true,
-          blockedFields: controllerDecision?.blocked_outputs ?? [],
-        },
-      }),
-    );
+    const review = buildPublicPipelineReview({
+      run: {
+        id: run.id,
+        status: run.run_status ?? null,
+        calculationType: run.calculation_type ?? null,
+        startedAt: run.started_at ?? null,
+        completedAt: run.completed_at ?? null,
+        displayLanguage: runDisplayLanguage,
+      },
+      reportModel,
+      engineeringContext: run.engineering_context,
+      links: {
+        report: reportUrl,
+        pdf: `${origin}/api/rapport/${id}/pdf`,
+        word: `${origin}/api/rapport/${id}/word`,
+        calculationSheet: `${origin}/rapport/${id}/beregning?locale=${locale}`,
+      },
+      agents: [
+        agentSource(agentA, "engineer_a", blockedFields),
+        agentSource(agentB, "engineer_b", blockedFields),
+      ],
+      controller: {
+        riskLevel: controllerDecision?.risk_level ?? null,
+        manualReviewRequired: controllerDecision?.manual_review_required ?? true,
+        blockedFields: controllerDecision?.blocked_outputs ?? [],
+      },
+    });
+
+    return jsonNoStore({
+      ...review,
+      viewer: { access: access.access },
+    });
   } catch {
     console.error("[api/runs/pipeline-review] read failed");
     return safeError(500, "pipeline_review_unavailable");

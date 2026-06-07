@@ -8,9 +8,13 @@ import type { PublicPipelineReview } from "@/lib/report/pipeline-review";
 type LoadState =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; review: PublicPipelineReview };
+  | { status: "ready"; review: PipelineReviewResponse };
 
 type Lang = "nb" | "nn" | "en";
+
+type PipelineReviewResponse = PublicPipelineReview & {
+  viewer?: { access?: "owner" | "shared" };
+};
 
 const PIPELINE_FORK_SEED_KEY = "pilar-pipeline-fork-seed-v1";
 
@@ -24,10 +28,15 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Last ned PDF",
     downloadWord: "Last ned Word",
     calculationSheet: "Beregningsark",
+    openWorkbench: "Åpne i Workbench",
     createShare: "Lag trygg delingslenke",
     shareCreated: "Delingslenke klar",
     forkRequest: "Fork / rediger forespørsel",
     actionFailed: "Handlingen kunne ikke fullføres trygt.",
+    shareSecretMissing: "Deling er ikke konfigurert i dette miljøet.",
+    shareOwnerRequired: "Bare eieren kan lage delingslenke.",
+    shareRequiresReport: "En rapport må finnes før deling.",
+    shareUnavailable: "Deling er midlertidig utilgjengelig.",
     problem: "Problemgrunnlag",
     interpretation: "Input-tolkning",
     engineers: "Uavhengige konstruktører",
@@ -54,10 +63,15 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Last ned PDF",
     downloadWord: "Last ned Word",
     calculationSheet: "Berekningsark",
+    openWorkbench: "Opne i Workbench",
     createShare: "Lag trygg delingslenke",
     shareCreated: "Delingslenke klar",
     forkRequest: "Fork / rediger førespurnad",
     actionFailed: "Handlinga kunne ikkje fullførast trygt.",
+    shareSecretMissing: "Deling er ikkje konfigurert i dette miljøet.",
+    shareOwnerRequired: "Berre eigaren kan lage delingslenke.",
+    shareRequiresReport: "Ein rapport må finnast før deling.",
+    shareUnavailable: "Deling er mellombels utilgjengeleg.",
     problem: "Problemgrunnlag",
     interpretation: "Input-tolking",
     engineers: "Uavhengige konstruktørar",
@@ -84,10 +98,15 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Download PDF",
     downloadWord: "Download Word",
     calculationSheet: "Calculation sheet",
+    openWorkbench: "Open in Workbench",
     createShare: "Create safe share link",
     shareCreated: "Share link ready",
     forkRequest: "Fork / edit request",
     actionFailed: "The action could not be completed safely.",
+    shareSecretMissing: "Sharing is not configured in this environment.",
+    shareOwnerRequired: "Only the owner can create a share link.",
+    shareRequiresReport: "A report must exist before sharing.",
+    shareUnavailable: "Sharing is temporarily unavailable.",
     problem: "Problem summary",
     interpretation: "Input interpretation",
     engineers: "Independent engineers",
@@ -123,6 +142,23 @@ function preLine(text: string) {
     .filter(Boolean);
 }
 
+function shareErrorMessage(error: unknown, labels: Record<string, string>): string {
+  switch (error) {
+    case "share_secret_missing":
+      return labels.shareSecretMissing;
+    case "owner_required":
+      return labels.shareOwnerRequired;
+    case "share_requires_completed_run":
+    case "share_requires_report":
+      return labels.shareRequiresReport;
+    case "run_not_found":
+    case "share_unavailable":
+      return labels.shareUnavailable;
+    default:
+      return labels.actionFailed;
+  }
+}
+
 export default function PipelineReviewPage() {
   const params = useParams();
   const runId = String(params.run_id ?? "");
@@ -147,7 +183,7 @@ export default function PipelineReviewPage() {
     fetch(`/api/runs/${runId}/pipeline-review${query}`, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("pipeline_review_unavailable");
-        return (await response.json()) as PublicPipelineReview;
+        return (await response.json()) as PipelineReviewResponse;
       })
       .then((review) => {
         if (!cancelled) setState({ status: "ready", review });
@@ -199,6 +235,7 @@ export default function PipelineReviewPage() {
 
   const { review } = state;
   const context = review.problem.engineering_context;
+  const isSharedView = review.viewer?.access === "shared";
 
   async function createShareLink() {
     setActionError(null);
@@ -207,7 +244,8 @@ export default function PipelineReviewPage() {
       cache: "no-store",
     });
     if (!response.ok) {
-      setActionError(T.actionFailed);
+      const data = await response.json().catch(() => null) as { error?: unknown } | null;
+      setActionError(shareErrorMessage(data?.error, T));
       return;
     }
     const data = await response.json() as { share_url?: string; token?: string };
@@ -216,8 +254,6 @@ export default function PipelineReviewPage() {
       return;
     }
     setShareUrl(data.share_url);
-    setShareToken(data.token);
-    window.history.replaceState(null, "", data.share_url);
   }
 
   async function forkFromShare() {
@@ -283,14 +319,19 @@ export default function PipelineReviewPage() {
               <a href={review.report.links.calculationSheet} className="uk-btn">
                 {T.calculationSheet}
               </a>
-              {shareToken ? (
+              {isSharedView ? (
                 <button type="button" className="uk-btn uk-btn--primary" onClick={forkFromShare}>
                   {T.forkRequest}
                 </button>
               ) : (
-                <button type="button" className="uk-btn" onClick={createShareLink}>
-                  {T.createShare}
-                </button>
+                <>
+                  <a href={`/?from_run=${encodeURIComponent(runId)}`} className="uk-btn uk-btn--primary">
+                    {T.openWorkbench}
+                  </a>
+                  <button type="button" className="uk-btn" onClick={createShareLink}>
+                    {T.createShare}
+                  </button>
+                </>
               )}
             </div>
           </div>
