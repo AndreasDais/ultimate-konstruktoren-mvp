@@ -62,19 +62,17 @@ function contextLine(engineeringContext: unknown): string {
 
 function problemSeedLines(inputReview: unknown, calculationType: string | null): string[] {
   const review = asRecord(inputReview);
-  const parsed = asRecord(review?.parsed_data);
-  const extracted =
-    asRecord(review?.extracted_inputs) ??
-    asRecord(parsed?.extracted_inputs) ??
-    asRecord(parsed?.tolkte_verdiar);
-  const sources = [parsed, extracted, review];
+  const extracted = asRecord(review?.extracted_inputs);
+  const sources = [extracted, review];
+  const interpretationSummary = text(review?.interpretation_summary, 220);
+  const discipline = text(review?.discipline, 120);
   const lines = [
-    firstText(sources, ["report_title"], 220),
-    firstText(sources, ["report_subtitle"], 220),
     calculationType ? `Calculation type: ${text(calculationType, 120)}` : "",
     firstText(sources, ["calculation_type"], 120)
       ? `Interpreted type: ${firstText(sources, ["calculation_type"], 120)}`
       : "",
+    discipline ? `Discipline: ${discipline}` : "",
+    interpretationSummary ? `Input interpretation: ${interpretationSummary}` : "",
     firstText(sources, ["profileName", "profile", "profil"], 120)
       ? `Profile: ${firstText(sources, ["profileName", "profile", "profil"], 120)}`
       : "",
@@ -152,7 +150,7 @@ export async function GET(
   const { data: inputReview, error: inputReviewError } = run.request_id
     ? await supabase
         .from("input_reviews")
-        .select("parsed_data, calculation_type, extracted_inputs, can_calculate, assumptions")
+        .select("calculation_type, extracted_inputs, can_calculate, assumptions, interpretation_summary, discipline")
         .eq("request_id", run.request_id)
         .maybeSingle()
     : { data: null, error: null };
