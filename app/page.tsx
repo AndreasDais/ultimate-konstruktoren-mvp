@@ -86,6 +86,7 @@ import {
 } from "@/app/components/workbench/WorkbenchComponents";
 
 const WORKBENCH_SESSION_STATE_KEY = "uk-state";
+const PIPELINE_FORK_SEED_KEY = "pilar-pipeline-fork-seed-v1";
 
 type WorkbenchSessionState = {
   input: string;
@@ -107,6 +108,10 @@ type WorkbenchSessionState = {
 
 function isRestorablePhase(value: unknown): value is Phase {
   return value === "workbench" || value === "calculating" || value === "calculation_result";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 // A live SSE stream cannot resume after the user navigates away (the fetch is
@@ -374,6 +379,48 @@ export default function Home() {
   }, [result, phase]);
 
   const showScrollHint = phase === "workbench" && result !== null && !ctaInView;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("from_run") || params.has("from_request")) return;
+
+    const raw = sessionStorage.getItem(PIPELINE_FORK_SEED_KEY);
+    if (!raw) return;
+
+    try {
+      const seed = JSON.parse(raw) as {
+        seedText?: unknown;
+        engineeringContext?: unknown;
+      };
+      const seedText = typeof seed.seedText === "string" ? seed.seedText.trim() : "";
+      if (!seedText) return;
+
+      setInput(seedText);
+      setResult(null);
+      setRequestId(null);
+      setCalculationA(null);
+      setCalculationB(null);
+      setComparison(null);
+      setControllerDecision(null);
+      setCurrentRunId(null);
+      setError(null);
+      setPhase("workbench");
+      setStreamingA(INITIAL_STREAMING);
+      setStreamingB(INITIAL_STREAMING);
+      setStreamingTolkar(INITIAL_TOLKAR);
+      setRetryCountA(0);
+      setRetryCountB(0);
+      setActiveCalculationRestored(false);
+      if (isRecord(seed.engineeringContext)) {
+        setEngineeringContext(seed.engineeringContext as EngineeringContext);
+      }
+    } catch {
+      // Ignore malformed local fork seed data.
+    } finally {
+      sessionStorage.removeItem(PIPELINE_FORK_SEED_KEY);
+    }
+  }, []);
 
   // Resume frå tidlegare berekning: les ?from_request=X eller ?from_run=X
   // frå URL ved mount, hent data frå API, og pre-fyll state.

@@ -12,6 +12,8 @@ type LoadState =
 
 type Lang = "nb" | "nn" | "en";
 
+const PIPELINE_FORK_SEED_KEY = "pilar-pipeline-fork-seed-v1";
+
 const TEXT: Record<Lang, Record<string, string>> = {
   nb: {
     eyebrow: "Delt pipeline-review",
@@ -22,6 +24,10 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Last ned PDF",
     downloadWord: "Last ned Word",
     calculationSheet: "Beregningsark",
+    createShare: "Lag trygg delingslenke",
+    shareCreated: "Delingslenke klar",
+    forkRequest: "Fork / rediger forespørsel",
+    actionFailed: "Handlingen kunne ikke fullføres trygt.",
     problem: "Problemgrunnlag",
     interpretation: "Input-tolkning",
     engineers: "Uavhengige konstruktører",
@@ -48,6 +54,10 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Last ned PDF",
     downloadWord: "Last ned Word",
     calculationSheet: "Berekningsark",
+    createShare: "Lag trygg delingslenke",
+    shareCreated: "Delingslenke klar",
+    forkRequest: "Fork / rediger førespurnad",
+    actionFailed: "Handlinga kunne ikkje fullførast trygt.",
     problem: "Problemgrunnlag",
     interpretation: "Input-tolking",
     engineers: "Uavhengige konstruktørar",
@@ -74,6 +84,10 @@ const TEXT: Record<Lang, Record<string, string>> = {
     downloadPdf: "Download PDF",
     downloadWord: "Download Word",
     calculationSheet: "Calculation sheet",
+    createShare: "Create safe share link",
+    shareCreated: "Share link ready",
+    forkRequest: "Fork / edit request",
+    actionFailed: "The action could not be completed safely.",
     problem: "Problem summary",
     interpretation: "Input interpretation",
     engineers: "Independent engineers",
@@ -113,12 +127,24 @@ export default function PipelineReviewPage() {
   const params = useParams();
   const runId = String(params.run_id ?? "");
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [urlSearchReady, setUrlSearchReady] = useState(false);
+  const [shareToken, setShareToken] = useState("");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("share") ?? "";
+    setShareToken(token);
+    setUrlSearchReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!urlSearchReady) return;
     let cancelled = false;
     setState({ status: "loading" });
 
-    fetch(`/api/runs/${runId}/pipeline-review`, { cache: "no-store" })
+    const query = shareToken ? `?share=${encodeURIComponent(shareToken)}` : "";
+    fetch(`/api/runs/${runId}/pipeline-review${query}`, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("pipeline_review_unavailable");
         return (await response.json()) as PublicPipelineReview;
@@ -138,7 +164,7 @@ export default function PipelineReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [runId]);
+  }, [runId, shareToken, urlSearchReady]);
 
   const lang: Lang = useMemo(() => {
     if (state.status !== "ready") return "nb";
@@ -174,6 +200,58 @@ export default function PipelineReviewPage() {
   const { review } = state;
   const context = review.problem.engineering_context;
 
+  async function createShareLink() {
+    setActionError(null);
+    const response = await fetch(`/api/runs/${runId}/share`, {
+      method: "POST",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      setActionError(T.actionFailed);
+      return;
+    }
+    const data = await response.json() as { share_url?: string; token?: string };
+    if (!data.share_url || !data.token) {
+      setActionError(T.actionFailed);
+      return;
+    }
+    setShareUrl(data.share_url);
+    setShareToken(data.token);
+    window.history.replaceState(null, "", data.share_url);
+  }
+
+  async function forkFromShare() {
+    if (!shareToken) return;
+    setActionError(null);
+    const response = await fetch(`/api/pipeline-shares/${encodeURIComponent(shareToken)}/fork-seed`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      setActionError(T.actionFailed);
+      return;
+    }
+    const data = await response.json() as {
+      seed_text?: string;
+      source_run_id?: string;
+      engineering_context?: unknown;
+      display_language?: string;
+    };
+    if (!data.seed_text) {
+      setActionError(T.actionFailed);
+      return;
+    }
+    sessionStorage.setItem(
+      PIPELINE_FORK_SEED_KEY,
+      JSON.stringify({
+        seedText: data.seed_text,
+        sourceRunId: data.source_run_id ?? runId,
+        engineeringContext: data.engineering_context ?? null,
+        displayLanguage: data.display_language ?? review.run.display_language,
+      }),
+    );
+    window.location.href = "/";
+  }
+
   return (
     <main className="flex-1 px-4 py-8 md:py-12">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -205,8 +283,28 @@ export default function PipelineReviewPage() {
               <a href={review.report.links.calculationSheet} className="uk-btn">
                 {T.calculationSheet}
               </a>
+              {shareToken ? (
+                <button type="button" className="uk-btn uk-btn--primary" onClick={forkFromShare}>
+                  {T.forkRequest}
+                </button>
+              ) : (
+                <button type="button" className="uk-btn" onClick={createShareLink}>
+                  {T.createShare}
+                </button>
+              )}
             </div>
           </div>
+          {(shareUrl || actionError) && (
+            <div className="rounded-md border px-4 py-3 text-sm" style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--fg)" }}>
+              {actionError ? (
+                <span>{actionError}</span>
+              ) : (
+                <a href={shareUrl ?? "#"} style={{ textDecoration: "underline" }}>
+                  {T.shareCreated}
+                </a>
+              )}
+            </div>
+          )}
           <div className="rounded-md border px-4 py-3 text-sm" style={{ borderColor: "var(--warn-border)", background: "var(--warn-bg)", color: "var(--fg)" }}>
             {review.safety.review_required_text}
           </div>

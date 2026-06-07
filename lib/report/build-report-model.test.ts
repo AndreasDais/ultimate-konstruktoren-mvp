@@ -346,21 +346,22 @@ describe("buildReportModel", () => {
     );
   });
 
-  it("keeps the public run read surface as a sanitized report snapshot", () => {
+  it("keeps the public run read surface sanitized while owner resume is gated", () => {
     const runRead = readSource("app/api/runs/[id]/route.ts");
 
     expect(runRead).toContain('mode: "public_report_snapshot"');
+    expect(runRead).toContain('mode: "owner_resume"');
     expect(runRead).toContain("resume_requires_owner_or_share_token");
     expect(runRead).toContain("Cache-Control");
     expect(runRead).toContain("executive_summary, technical_assessment, conclusion");
-    expect(runRead).not.toContain("raw_text");
-    expect(runRead).not.toContain("structured_output");
-    expect(runRead).not.toContain("inputReview");
-    expect(runRead).not.toContain("agentA:");
-    expect(runRead).not.toContain("agentB:");
+    expect(runRead).toContain('.select("id, run_status, calculation_type, started_at, completed_at, display_language")');
+    expect(runRead).toContain("run.user_id !== userId");
+    expect(runRead).toContain("request: requestRow ? { id: requestRow.id, raw_text: requestRow.raw_text } : null");
+    expect(runRead).not.toContain("input_payload");
+    expect(runRead).not.toContain("output_text");
+    expect(runRead).not.toContain("raw_message");
     expect(runRead).not.toContain("comparisonRaw");
     expect(runRead).not.toContain("controllerDecisionRaw");
-    expect(runRead).not.toContain("user_id");
   });
 
   it("omits results_a from ReportModel result rows when controller blocks it", () => {
