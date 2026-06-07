@@ -208,46 +208,47 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
   }
 
   // Map calculation_runs → MineRow
-  const runRows: MineRow[] = (runs ?? []).map((run: RawRunRow) => {
-    const report = firstOrNull(run.reports);
-    const tillit = report?.tillit_score ?? null;
-    const documentId = report?.document_id ?? null;
-    const hasEngineerOutputs = (run.agent_outputs ?? []).some(
-      (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
-    );
-    const isKrasja =
-      run.run_status === "aborted" || run.run_status === "failed";
+  const runRows: MineRow[] = (runs ?? [])
+    .map((run: RawRunRow): MineRow | null => {
+      const report = firstOrNull(run.reports);
+      const tillit = report?.tillit_score ?? null;
+      const documentId = report?.document_id ?? null;
+      const hasEngineerOutputs = (run.agent_outputs ?? []).some(
+        (a) => a.agent_name === "agent_a" || a.agent_name === "agent_b"
+      );
+      const isKrasja =
+        run.run_status === "aborted" || run.run_status === "failed";
 
-    let phase: MineRow["phase"];
-    let href: string | null;
-    let pipelineHref: string | null = null;
-    if (report) {
-      // Rapport finst — uansett status, vis han.
-      phase = "rapport";
-      href = `/rapport/${run.id}`;
-      pipelineHref = `/rapport/${run.id}/pipeline`;
-    } else if (isKrasja) {
-      phase = "krasja";
-      href = null;
-    } else if (hasEngineerOutputs) {
-      phase = "mission_control";
-      href = `/?from_run=${run.id}`;
-    } else {
-      phase = "workbench";
-      href = `/?from_run=${run.id}`;
-    }
+      let phase: MineRow["phase"];
+      let href: string | null;
+      let pipelineHref: string | null = null;
+      if (report) {
+        // Rapport finst — uansett status, vis han.
+        phase = "rapport";
+        href = `/rapport/${run.id}`;
+        pipelineHref = `/rapport/${run.id}/pipeline`;
+      } else if (isKrasja) {
+        return null;
+      } else if (hasEngineerOutputs) {
+        phase = "mission_control";
+        href = `/?from_run=${run.id}`;
+      } else {
+        phase = "workbench";
+        href = `/?from_run=${run.id}`;
+      }
 
-    return {
-      key: `run-${run.id}`,
-      title: prettyCalculationType(run.calculation_type, langKey),
-      date: run.started_at,
-      phase,
-      href,
-      pipelineHref,
-      tillit,
-      documentId,
-    };
-  });
+      return {
+        key: `run-${run.id}`,
+        title: prettyCalculationType(run.calculation_type, langKey),
+        date: run.started_at,
+        phase,
+        href,
+        pipelineHref,
+        tillit,
+        documentId,
+      };
+    })
+    .filter((row): row is MineRow => row !== null);
 
   // Map requests UTAN run → workbench-only MineRow
   const requestIdsWithRuns = new Set(

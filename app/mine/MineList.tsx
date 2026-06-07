@@ -11,7 +11,7 @@ export type MineRow = {
   key: string;
   title: string;
   date: string | null;
-  phase: "workbench" | "mission_control" | "rapport" | "krasja";
+  phase: "workbench" | "mission_control" | "rapport";
   href: string | null;
   pipelineHref: string | null;
   tillit: number | null;
@@ -25,7 +25,6 @@ const PHASE_COLORS: Record<MineRow["phase"], CSSProperties> = {
   workbench: { background: "var(--warn-bg)", color: "var(--warn)", borderColor: "var(--warn-border)" },
   mission_control: { background: "var(--info-bg)", color: "var(--info)", borderColor: "var(--info-border)" },
   rapport: { background: "var(--ok-bg)", color: "var(--ok)", borderColor: "var(--ok-border)" },
-  krasja: { background: "var(--bad-bg)", color: "var(--bad)", borderColor: "var(--bad-border)" },
 };
 
 type PhaseLabelInfo = { label: string; explanation: string };
@@ -48,11 +47,6 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       explanation:
         "Ferdig beregningsnotat. Åpne rapporten eller se en sanitert pipeline-review.",
     },
-    krasja: {
-      label: "Krasjet",
-      explanation:
-        "Beregningen ble avbrutt eller feilet før en trygg rapport kunne lages.",
-    },
   },
   nn: {
     workbench: {
@@ -70,11 +64,6 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       explanation:
         "Ferdig berekningsnotat. Opne rapporten eller sjå ein sanitert pipeline-review.",
     },
-    krasja: {
-      label: "Krasja",
-      explanation:
-        "Berekninga vart avbroten eller feila før ein trygg rapport kunne lagast.",
-    },
   },
   en: {
     workbench: {
@@ -91,11 +80,6 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       label: "Report",
       explanation:
         "Completed calculation note. Open the report or inspect a sanitized pipeline review.",
-    },
-    krasja: {
-      label: "Crashed",
-      explanation:
-        "The calculation was aborted or failed before a safe report could be created.",
     },
   },
 };
@@ -138,19 +122,13 @@ const ML_LABELS: Record<string, Record<LangKey, string>> = {
   pipelineReview: { nb: "Pipeline-review", nn: "Pipeline-review", en: "Pipeline review" },
   noReportYet: { nb: "Ingen rapport ennå", nn: "Ingen rapport enno", en: "No report yet" },
   processing: { nb: "Behandles fortsatt", nn: "Blir framleis behandla", en: "Still processing" },
-  failedNoResume: {
-    nb: "Kunne ikke fullføres. Start en ny beregning fra forsiden.",
-    nn: "Kunne ikkje fullførast. Start ei ny berekning frå forsida.",
-    en: "Could not complete. Start a new calculation from the front page.",
-  },
 };
 
-// Vis-rekkjefølge — pipeline-orden + Krasja sist.
+// Vis-rekkjefølge — pipeline-orden.
 const PHASE_ORDER: MineRow["phase"][] = [
   "workbench",
   "mission_control",
   "rapport",
-  "krasja",
 ];
 
 function formatDate(iso: string | null, langKey: LangKey): string {
@@ -189,7 +167,6 @@ export function MineList({
       workbench: false,
       mission_control: false,
       rapport: false,
-      krasja: false,
     }
   );
 
@@ -214,7 +191,6 @@ export function MineList({
       workbench: [],
       mission_control: [],
       rapport: [],
-      krasja: [],
     };
     for (const row of filteredRows) {
       out[row.phase].push(row);
@@ -312,9 +288,7 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
   const phaseColor = PHASE_COLORS[row.phase];
   const date = formatDate(row.date, langKey);
   const statusText =
-    row.phase === "krasja"
-      ? ML_LABELS.failedNoResume[langKey]
-      : row.phase === "mission_control"
+    row.phase === "mission_control"
         ? ML_LABELS.noReportYet[langKey]
         : row.phase === "workbench"
           ? ML_LABELS.processing[langKey]
