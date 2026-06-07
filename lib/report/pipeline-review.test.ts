@@ -234,7 +234,9 @@ describe("public pipeline review", () => {
     expect(runRoute).toContain("resume_requires_owner_or_share_token");
     expect(reviewHelper).toContain('mode: "public_pipeline_review"');
     expect(reviewRoute).toContain("buildPublicPipelineReview");
-    expect(reportPage).toContain("const pipelineReviewUrl = `/rapport/${runId}/pipeline`");
+    expect(reportPage).toContain(
+      "const pipelineReviewUrl = appendShareToken(`/rapport/${runId}/pipeline`, shareToken)",
+    );
     expect(reportPage).toContain("RP_LABELS.pipelineReview");
   });
 });

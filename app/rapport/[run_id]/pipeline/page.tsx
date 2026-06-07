@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { PublicPipelineReview } from "@/lib/report/pipeline-review";
+import { appendShareToken } from "@/lib/share-link";
 
 type LoadState =
   | { status: "loading" }
@@ -207,6 +208,9 @@ export default function PipelineReviewPage() {
     return state.review.run.display_language;
   }, [state]);
   const T = TEXT[lang];
+  // Preserve the share token across in-app navigation (pipeline → report/sheet)
+  // so a shared viewer keeps shared access when leaving the pipeline review.
+  const withShare = (url: string): string => appendShareToken(url, shareToken);
 
   if (state.status === "loading") {
     return (
@@ -224,7 +228,7 @@ export default function PipelineReviewPage() {
         <div className="mx-auto max-w-4xl" style={cardStyle()}>
           <div className="p-6">
             <p style={{ color: "var(--fg)" }}>{state.message || T.unavailable}</p>
-            <Link href={`/rapport/${runId}`} className="uk-btn uk-btn--primary mt-4">
+            <Link href={withShare(`/rapport/${runId}`)} className="uk-btn uk-btn--primary mt-4">
               {T.openReport}
             </Link>
           </div>
@@ -307,7 +311,7 @@ export default function PipelineReviewPage() {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <a href={review.report.links.report} className="uk-btn uk-btn--primary">
+              <a href={withShare(review.report.links.report)} className="uk-btn uk-btn--primary">
                 {T.openReport}
               </a>
               <a href={review.report.links.pdf} className="uk-btn" download>
@@ -316,7 +320,7 @@ export default function PipelineReviewPage() {
               <a href={review.report.links.word} className="uk-btn" download>
                 {T.downloadWord}
               </a>
-              <a href={review.report.links.calculationSheet} className="uk-btn">
+              <a href={withShare(review.report.links.calculationSheet)} className="uk-btn">
                 {T.calculationSheet}
               </a>
               {isSharedView ? (

@@ -41,6 +41,7 @@ import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
 import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polishNorwegianRoleText } from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
+import { appendShareToken } from "@/lib/share-link";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
   isMarginaliaRelevantForLanguage,
@@ -664,12 +665,17 @@ export default function RapportPage() {
   const [existingReportChecked, setExistingReportChecked] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Signed share token: carried in ?share=<token> for shared viewers, or minted
+  // by the owner (via the owner-gated share route) so the QR/share card points
+  // at the sanitized shared flow instead of a naked /rapport/<id>.
+  const [shareToken, setShareToken] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     setData(null);
     setError(null);
     setExistingReportChecked(false);
+    setShareToken("");
 
     (async () => {
       let ownerData: RunReadResponse | null = null;
@@ -682,6 +688,35 @@ export default function RapportPage() {
         }
       } catch {
         ownerData = null;
+      }
+
+      // Share-token resolution. A shared viewer arrives with ?share=<token> —
+      // keep it so report → pipeline/sheet navigation preserves shared access.
+      // The owner (ownerData present) instead mints a fresh signed link from the
+      // owner-gated share route, so the QR/share card targets the sanitized
+      // shared flow. Best-effort: on failure we fall back to the naked public
+      // URL. The signing secret never reaches the client; the token is not logged.
+      const urlShareToken =
+        typeof window === "undefined"
+          ? ""
+          : new URLSearchParams(window.location.search).get("share") ?? "";
+      if (urlShareToken) {
+        if (!cancelled) setShareToken(urlShareToken);
+      } else if (ownerData) {
+        try {
+          const shareResponse = await fetch(`/api/runs/${runId}/share`, {
+            method: "POST",
+            cache: "no-store",
+          });
+          if (shareResponse.ok) {
+            const shareData = (await shareResponse.json()) as { token?: unknown };
+            if (!cancelled && typeof shareData.token === "string" && shareData.token) {
+              setShareToken(shareData.token);
+            }
+          }
+        } catch {
+          // Best-effort: no token → QR/share card uses the public report URL.
+        }
       }
 
       try {
@@ -957,10 +992,18 @@ export default function RapportPage() {
   const wordFilename = `${data.report.document_id}.docx`;
   const pdfUrl = `/api/rapport/${runId}/pdf`;
   const pdfFilename = `${data.report.document_id}.pdf`;
-  const pipelineReviewUrl = `/rapport/${runId}/pipeline`;
-  const calculationSheetUrl = `/rapport/${runId}/beregning?locale=${locale}`;
+  // Preserve the signed share token across in-app navigation so a shared viewer
+  // keeps pipeline/sheet access. Naked URLs (no token) are left untouched.
+  const pipelineReviewUrl = appendShareToken(`/rapport/${runId}/pipeline`, shareToken);
+  const calculationSheetUrl = appendShareToken(`/rapport/${runId}/beregning?locale=${locale}`, shareToken);
   const calculationSheetLabel = reportDisplayLanguage === "en" ? "Calculation sheet" : locale === "nn" ? "Vis kun berekningar" : "Vis kun beregninger";
   const stableRapportUrl = rapportUrl || `/rapport/${runId}`;
+  // Shareable web link for the QR/share card. When a signed token is available
+  // (owner-minted or carried in the URL), point at the sanitized shared
+  // pipeline-review flow instead of a naked /rapport/<id> public snapshot.
+  const shareableUrl = shareToken
+    ? appendShareToken(`${stableRapportUrl}/pipeline`, shareToken)
+    : stableRapportUrl;
   const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
@@ -1518,12 +1561,12 @@ export default function RapportPage() {
                     {RP_LABELS.qrAccessUrlLabel[locale]}
                   </div>
                   <div className="rapport-access-card__url uk-mono">
-                    {stableRapportUrl}
+                    {shareableUrl}
                   </div>
                 </div>
                 <div className="rapport-access-card__qr" aria-hidden="true">
                   <QRCodeSVG
-                    value={stableRapportUrl}
+                    value={shareableUrl}
                     size={118}
                     level="M"
                     marginSize={1}
@@ -2207,13 +2250,13 @@ export default function RapportPage() {
                   <span className="uk-mono">{reportPromptVersion}</span>
                 </div>
                 {stableRapportUrl && (
-                  <div className="rapport-footer__url uk-mono">{stableRapportUrl}</div>
+                  <div className="rapport-footer__url uk-mono">{shareableUrl}</div>
                 )}
               </div>
               {stableRapportUrl && (
                 <div className="rapport-footer__qr" aria-label={reportModel.cover.qrLabel}>
                   <QRCodeSVG
-                    value={stableRapportUrl}
+                    value={shareableUrl}
                     size={88}
                     level="M"
                     marginSize={1}
