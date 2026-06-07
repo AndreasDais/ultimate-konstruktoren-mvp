@@ -231,10 +231,10 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
       href = null;
     } else if (hasEngineerOutputs) {
       phase = "mission_control";
-      href = null;
+      href = `/?from_run=${run.id}`;
     } else {
       phase = "workbench";
-      href = null;
+      href = `/?from_run=${run.id}`;
     }
 
     return {
@@ -263,7 +263,7 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
         title: titleFromInputReview(review, langKey),
         date: r.created_at,
         phase: "workbench" as const,
-        href: null,
+        href: `/?from_request=${r.id}`,
         pipelineHref: null,
         tillit: null,
         documentId: null,
