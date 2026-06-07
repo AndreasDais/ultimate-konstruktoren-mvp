@@ -326,10 +326,8 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
     nn: "Opnar rapporten på nett med kontrollstatus, pipeline og delbar lenkje for medstudentar eller kollegaer.",
   },
   qrAccessUrlLabel: { nb: "Rapportlenke", nn: "Rapportlenkje" },
-  qrAccessSecureLink: {
-    nb: "Opne sikker delingslenke",
-    nn: "Opne trygg delingslenkje",
-  },
+  qrAccessCopyLink: { nb: "Kopier delingslenke", nn: "Kopier delingslenkje" },
+  qrAccessCopied: { nb: "Lenke kopiert", nn: "Lenkje kopiert" },
   qrAccessPipeline: { nb: "Nettversjon + pipeline", nn: "Nettversjon + pipeline" },
   coverKeyResults: { nb: "Nøkkelresultater", nn: "Nøkkelresultat" },
   disclaimerKort: {
@@ -672,6 +670,7 @@ export default function RapportPage() {
   // by the owner (via the owner-gated share route) so the QR/share card points
   // at the sanitized shared flow instead of a naked /rapport/<id>.
   const [shareToken, setShareToken] = useState("");
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -679,6 +678,7 @@ export default function RapportPage() {
     setError(null);
     setExistingReportChecked(false);
     setShareToken("");
+    setShareLinkCopied(false);
 
     (async () => {
       const urlShareToken =
@@ -955,7 +955,8 @@ export default function RapportPage() {
     qrAccessTitle: "Scan for web version",
     qrAccessText: "Opens the report online with control status, pipeline trace and shareable link for classmates or colleagues.",
     qrAccessUrlLabel: "Report link",
-    qrAccessSecureLink: "Open secure share link",
+    qrAccessCopyLink: "Copy share link",
+    qrAccessCopied: "Link copied",
     qrAccessPipeline: "Web version + pipeline",
     coverKeyResults: "Key results",
     disclaimerKort: "The content is support, learning aid or preliminary technical assessment only. It does not replace review by a qualified professional.",
@@ -1034,8 +1035,38 @@ export default function RapportPage() {
     : stableRapportUrl;
   const shareableDisplayUrl = maskShareTokenForDisplay(shareableUrl, shareToken);
   const shareableDisplayText = shareToken
-    ? RP_LABELS.qrAccessSecureLink[locale]
+    ? shareLinkCopied
+      ? RP_LABELS.qrAccessCopied[locale]
+      : RP_LABELS.qrAccessCopyLink[locale]
     : shareableDisplayUrl;
+  const copyShareableUrl = async () => {
+    if (!shareableUrl || typeof window === "undefined") return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareableUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        try {
+          textarea.value = shareableUrl;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+        } finally {
+          if (textarea.parentNode) {
+            textarea.parentNode.removeChild(textarea);
+          }
+        }
+      }
+      setShareLinkCopied(true);
+      window.setTimeout(() => setShareLinkCopied(false), 1800);
+    } catch {
+      setShareLinkCopied(false);
+    }
+  };
   const reportModel = buildReportModel(reportData as Parameters<typeof buildReportModel>[0], { locale, reportUrl: stableRapportUrl });
   const reportModelValidation = validateReportModel(reportModel);
 
@@ -1592,12 +1623,19 @@ export default function RapportPage() {
                   <div className="rapport-access-card__url-label">
                     {RP_LABELS.qrAccessUrlLabel[locale]}
                   </div>
-                  <a
-                    className="rapport-access-card__url uk-mono"
-                    href={shareableUrl}
-                  >
-                    {shareableDisplayText}
-                  </a>
+                  {shareToken ? (
+                    <button
+                      type="button"
+                      className="rapport-access-card__url rapport-share-copy-button uk-mono"
+                      onClick={copyShareableUrl}
+                    >
+                      {shareableDisplayText}
+                    </button>
+                  ) : (
+                    <div className="rapport-access-card__url uk-mono">
+                      {shareableDisplayText}
+                    </div>
+                  )}
                 </div>
                 <div className="rapport-access-card__qr" aria-hidden="true">
                   <QRCodeSVG
@@ -2285,12 +2323,17 @@ export default function RapportPage() {
                   <span className="uk-mono">{reportPromptVersion}</span>
                 </div>
                 {stableRapportUrl && (
-                  <a
-                    className="rapport-footer__url uk-mono"
-                    href={shareableUrl}
-                  >
-                    {shareableDisplayText}
-                  </a>
+                  shareToken ? (
+                    <button
+                      type="button"
+                      className="rapport-footer__url rapport-share-copy-button uk-mono"
+                      onClick={copyShareableUrl}
+                    >
+                      {shareableDisplayText}
+                    </button>
+                  ) : (
+                    <div className="rapport-footer__url uk-mono">{shareableDisplayText}</div>
+                  )
                 )}
               </div>
               {stableRapportUrl && (

@@ -293,6 +293,24 @@
   word-break: break-all;
 }
 
+.rapport-share-copy-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.rapport-share-copy-button:hover,
+.rapport-share-copy-button:focus-visible {
+  color: var(--fg);
+}
+
 .rapport-footer__qr {
   flex-shrink: 0;
   padding: 6px;
