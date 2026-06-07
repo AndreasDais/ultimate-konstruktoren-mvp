@@ -8,6 +8,7 @@ import {
 } from "@/lib/report/build-report-model";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { renderReportModelDocx } from "@/lib/report/render-docx";
+import { appendShareToken } from "@/lib/share-link";
 
 const ERROR_LABELS = {
   nb: {
@@ -28,6 +29,33 @@ function safeFilename(value: string): string {
     .slice(0, 120);
 }
 
+async function fetchUpstreamReportData(options: {
+  origin: string;
+  runId: string;
+  locale: string;
+  cookieHeader: string;
+  shareToken: string;
+}): Promise<Response> {
+  const { origin, runId, locale, cookieHeader, shareToken } = options;
+
+  if (shareToken) {
+    return fetch(`${origin}/api/runs/${runId}?share=${encodeURIComponent(shareToken)}`, {
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+    });
+  }
+
+  return fetch(`${origin}/api/agent-e`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    },
+    body: JSON.stringify({ run_id: runId, locale }),
+  });
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ run_id: string }> },
@@ -44,17 +72,17 @@ export async function GET(
       return NextResponse.json({ error: "run_id is required" }, { status: 400 });
     }
 
-    stage = "fetch_agent_e";
+    stage = "fetch_report_data";
     const origin = request.nextUrl.origin;
     const cookieHeader = request.headers.get("cookie") ?? "";
+    const shareToken = request.nextUrl.searchParams.get("share") ?? "";
 
-    const agentERes = await fetch(`${origin}/api/agent-e`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ run_id, locale }),
+    const agentERes = await fetchUpstreamReportData({
+      origin,
+      runId: run_id,
+      locale,
+      cookieHeader,
+      shareToken,
     });
 
     if (!agentERes.ok) {
@@ -73,7 +101,7 @@ export async function GET(
     const upstream: UpstreamReportData = await agentERes.json();
 
     stage = "build_report_model";
-    const reportUrl = `${origin}/rapport/${run_id}`;
+    const reportUrl = appendShareToken(`${origin}/rapport/${run_id}`, shareToken);
     const model = buildReportModel(upstream, {
       locale,
       reportUrl,

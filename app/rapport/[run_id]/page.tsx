@@ -1018,9 +1018,9 @@ export default function RapportPage() {
   const matchPhraseText =
     matchPhrase(data.comparison?.match_status ?? "", locale) ?? "";
 
-  const wordUrl = `/api/rapport/${runId}/word`;
+  const wordUrl = appendShareToken(`/api/rapport/${runId}/word`, shareToken);
   const wordFilename = `${data.report.document_id}.docx`;
-  const pdfUrl = `/api/rapport/${runId}/pdf`;
+  const pdfUrl = appendShareToken(`/api/rapport/${runId}/pdf`, shareToken);
   const pdfFilename = `${data.report.document_id}.pdf`;
   // Preserve the signed share token across in-app navigation so a shared viewer
   // keeps pipeline/sheet access. Naked URLs (no token) are left untouched.
@@ -1551,7 +1551,11 @@ export default function RapportPage() {
 
       {/* === Hovudkolonne: dokument === */}
       <main className="rapport-main">
-        <article className="rapport-document" data-report-ready="true">
+        <article
+          className="rapport-document"
+          data-report-ready="true"
+          data-report-document-id={data.report.document_id}
+        >
           {/* ============================================================
               FORSIDE — Retning B (Konsulent-notat). PageStripe topp,
               serif-tittel + italic underrubrikk, tabular metadata,

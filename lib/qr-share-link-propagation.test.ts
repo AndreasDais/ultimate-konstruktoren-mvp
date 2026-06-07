@@ -38,6 +38,12 @@ describe("QR / share-link token propagation", () => {
     expect(reportPage).toContain(
       "appendShareToken(`/rapport/${runId}/beregning?locale=${locale}`, shareToken)",
     );
+    expect(reportPage).toContain(
+      "appendShareToken(`/api/rapport/${runId}/pdf`, shareToken)",
+    );
+    expect(reportPage).toContain(
+      "appendShareToken(`/api/rapport/${runId}/word`, shareToken)",
+    );
     expect(reportPage).not.toContain("const pipelineReviewUrl");
     expect(reportPage).not.toContain("RP_LABELS.pipelineReview");
   });

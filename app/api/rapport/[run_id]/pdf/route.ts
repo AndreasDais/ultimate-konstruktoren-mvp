@@ -1,82 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getLocaleFromCookies } from "@/lib/locale";
-import {
-  buildReportModel,
-  type UpstreamReportData,
-} from "@/lib/report/build-report-model";
-import type { ReportModel } from "@/lib/report/report-model";
-import { validateReportModel } from "@/lib/report/validate-report-model";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ERROR_LABELS = {
-  nb: {
-    couldNotFetch: "Kunne ikke hente rapport-data",
-    unknown: "Ukjent feil",
-  },
-  nn: {
-    couldNotFetch: "Kunne ikkje hente rapport-data",
-    unknown: "Ukjend feil",
-  },
-} as const;
+type PuppeteerModule = {
+  default?: {
+    launch: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
+  };
+  launch?: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
+};
 
-const PAGE_WIDTH = 595;
-const PAGE_HEIGHT = 842;
-const PAGE_MARGIN = 48;
-const LINE_HEIGHT = 15;
-const TITLE_LINE_HEIGHT = 19;
-const MAX_BODY_CHARS = 88;
-const MAX_TITLE_CHARS = 58;
+type PuppeteerBrowser = {
+  newPage: () => Promise<PuppeteerPage>;
+  close: () => Promise<void>;
+};
 
-const PDF_LABELS = {
-  nb: {
-    document: "Dokument",
-    status: "Status",
-    date: "Dato",
-    summary: "Sammendrag",
-    keyResults: "Nøkkelresultater",
-    results: "Resultater",
-    steps: "Beregningssteg",
-    assessment: "Faglig vurdering",
-    warnings: "Varsler",
-    limitations: "Begrensninger",
-    control: "Kontroll",
-    conclusion: "Konklusjon",
-    disclaimer: "Forbehold",
-  },
-  nn: {
-    document: "Dokument",
-    status: "Status",
-    date: "Dato",
-    summary: "Samandrag",
-    keyResults: "Nøkkelresultat",
-    results: "Resultat",
-    steps: "Berekningssteg",
-    assessment: "Fagleg vurdering",
-    warnings: "Varsel",
-    limitations: "Avgrensingar",
-    control: "Kontroll",
-    conclusion: "Konklusjon",
-    disclaimer: "Atterhald",
-  },
-  en: {
-    document: "Document",
-    status: "Status",
-    date: "Date",
-    summary: "Summary",
-    keyResults: "Key results",
-    results: "Results",
-    steps: "Calculation steps",
-    assessment: "Professional assessment",
-    warnings: "Warnings",
-    limitations: "Limitations",
-    control: "Control",
-    conclusion: "Conclusion",
-    disclaimer: "Disclaimer",
-  },
-} as const;
+type PuppeteerPage = {
+  setExtraHTTPHeaders: (headers: Record<string, string>) => Promise<void>;
+  setViewport: (viewport: { width: number; height: number; deviceScaleFactor?: number }) => Promise<void>;
+  goto: (url: string, options?: Record<string, unknown>) => Promise<unknown>;
+  waitForSelector: (selector: string, options?: Record<string, unknown>) => Promise<unknown>;
+  emulateMediaType: (type: "screen" | "print") => Promise<void>;
+  evaluate: <T>(pageFunction: () => T | Promise<T>) => Promise<T>;
+  pdf: (options: Record<string, unknown>) => Promise<Buffer>;
+};
 
 function safeFilename(value: string): string {
   return (value || "pilar-rapport")
@@ -86,203 +33,25 @@ function safeFilename(value: string): string {
     .slice(0, 120);
 }
 
-function cleanPdfText(value: string): string {
-  return value
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/\t/g, " ")
-    .replace(/[^\S\n]+/g, " ")
-    .trim();
-}
-
-function wrapText(value: string, maxChars: number): string[] {
-  const text = cleanPdfText(value);
-  if (!text) {
-    return [];
-  }
-
-  const lines: string[] = [];
-  for (const paragraph of text.split(/\n+/)) {
-    const words = paragraph.split(/\s+/).filter(Boolean);
-    let line = "";
-    for (const word of words) {
-      if (!line) {
-        line = word;
-      } else if (`${line} ${word}`.length <= maxChars) {
-        line = `${line} ${word}`;
-      } else {
-        lines.push(line);
-        line = word;
-      }
-    }
-    if (line) {
-      lines.push(line);
-    }
-    lines.push("");
-  }
-
-  while (lines.at(-1) === "") {
-    lines.pop();
-  }
-  return lines;
-}
-
-function pdfHexText(value: string): string {
-  const bytes = [0xfe, 0xff];
-  for (let index = 0; index < value.length; index += 1) {
-    const code = value.charCodeAt(index);
-    bytes.push((code >> 8) & 0xff, code & 0xff);
-  }
-  return `<${bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase()}>`;
-}
-
-type PdfLine = {
-  text: string;
-  size: number;
-  bold?: boolean;
-};
-
-function addWrapped(lines: PdfLine[], text: string, options: { size?: number; bold?: boolean; title?: boolean } = {}) {
-  const wrapped = wrapText(text, options.title ? MAX_TITLE_CHARS : MAX_BODY_CHARS);
-  for (const line of wrapped) {
-    lines.push({ text: line, size: options.size ?? 10, bold: options.bold });
-  }
-}
-
-function addSection(lines: PdfLine[], title: string, body: string | string[]) {
-  lines.push({ text: "", size: 10 });
-  addWrapped(lines, title, { size: 12, bold: true });
-  const paragraphs = Array.isArray(body) ? body : [body];
-  for (const paragraph of paragraphs) {
-    addWrapped(lines, paragraph, { size: 10 });
-  }
-}
-
-function reportModelToPdfLines(model: ReportModel): PdfLine[] {
-  const labels = PDF_LABELS[model.meta.displayLanguage ?? model.meta.locale] ?? PDF_LABELS.nb;
-  const lines: PdfLine[] = [];
-  addWrapped(lines, model.cover.title, { size: 16, bold: true, title: true });
-  addWrapped(lines, model.cover.subtitle, { size: 10 });
-  addWrapped(lines, `${labels.document}: ${model.meta.documentId}`, { size: 9 });
-  addWrapped(lines, `${labels.status}: ${model.meta.status}`, { size: 9 });
-  addWrapped(lines, `${labels.date}: ${model.meta.displayDate}`, { size: 9 });
-
-  addSection(lines, labels.summary, model.summary.text);
-  if (model.keyResults.length > 0) {
-    addSection(
-      lines,
-      labels.keyResults,
-      model.keyResults.map((row) => `${row.label}: ${row.raw}`),
+async function loadPuppeteer(): Promise<PuppeteerModule> {
+  try {
+    const moduleName = "puppeteer";
+    return (await import(moduleName)) as PuppeteerModule;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `PDF-motoren manglar. Installer puppeteer først: npm install puppeteer. Detalj: ${message}`,
     );
   }
-  if (model.calculation.resultRows.length > 0) {
-    addSection(
-      lines,
-      labels.results,
-      model.calculation.resultRows.map((row) => `${row.label}: ${row.raw}`),
-    );
-  }
-  if (model.calculation.steps.length > 0) {
-    addSection(
-      lines,
-      labels.steps,
-      model.calculation.steps.flatMap((step) => [
-        `${step.number}. ${step.title}`,
-        step.prose,
-        ...step.formulas,
-      ]),
-    );
-  }
-  addSection(lines, labels.assessment, model.assessment.professionalAssessment);
-  if (model.assessment.warnings.length > 0) {
-    addSection(lines, labels.warnings, model.assessment.warnings);
-  }
-  if (model.assessment.limitations.length > 0) {
-    addSection(lines, labels.limitations, model.assessment.limitations);
-  }
-  addSection(lines, labels.control, model.control.controllerText);
-  addSection(lines, labels.conclusion, model.conclusion);
-  addSection(lines, labels.disclaimer, model.disclaimer);
-  return lines;
 }
 
-function renderPdfPage(lines: PdfLine[]): string {
-  const commands: string[] = [];
-  let y = PAGE_HEIGHT - PAGE_MARGIN;
-  for (const line of lines) {
-    if (!line.text) {
-      y -= LINE_HEIGHT / 2;
-      continue;
-    }
-    const font = line.bold ? "F2" : "F1";
-    const lineHeight = line.size >= 12 ? TITLE_LINE_HEIGHT : LINE_HEIGHT;
-    commands.push(`BT /${font} ${line.size} Tf ${PAGE_MARGIN} ${y.toFixed(2)} Td ${pdfHexText(line.text)} Tj ET`);
-    y -= lineHeight;
+function reportPageUrl(request: NextRequest, runId: string): string {
+  const url = new URL(`/rapport/${runId}`, request.nextUrl.origin);
+  const shareToken = request.nextUrl.searchParams.get("share");
+  if (shareToken) {
+    url.searchParams.set("share", shareToken);
   }
-  return commands.join("\n");
-}
-
-function chunkPdfLines(lines: PdfLine[]): PdfLine[][] {
-  const pages: PdfLine[][] = [];
-  let current: PdfLine[] = [];
-  let y = PAGE_HEIGHT - PAGE_MARGIN;
-
-  for (const line of lines) {
-    const lineHeight = !line.text ? LINE_HEIGHT / 2 : line.size >= 12 ? TITLE_LINE_HEIGHT : LINE_HEIGHT;
-    if (current.length > 0 && y - lineHeight < PAGE_MARGIN) {
-      pages.push(current);
-      current = [];
-      y = PAGE_HEIGHT - PAGE_MARGIN;
-    }
-    current.push(line);
-    y -= lineHeight;
-  }
-
-  if (current.length > 0) {
-    pages.push(current);
-  }
-  return pages;
-}
-
-function buildReportPdfBytes(model: ReportModel): Uint8Array {
-  const pages = chunkPdfLines(reportModelToPdfLines(model));
-  const pageObjectStart = 5;
-  const contentObjectStart = pageObjectStart + pages.length;
-  const objects: string[] = [];
-
-  objects.push("<< /Type /Catalog /Pages 2 0 R >>");
-  objects.push(`<< /Type /Pages /Kids [${pages.map((_, index) => `${pageObjectStart + index} 0 R`).join(" ")}] /Count ${pages.length} >>`);
-  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
-  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
-
-  pages.forEach((_, index) => {
-    const contentObjectId = contentObjectStart + index;
-    objects.push(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
-    );
-  });
-
-  pages.forEach((pageLines) => {
-    const stream = renderPdfPage(pageLines);
-    objects.push(`<< /Length ${Buffer.byteLength(stream, "utf8")} >>\nstream\n${stream}\nendstream`);
-  });
-
-  const offsets = [0];
-  let body = "%PDF-1.4\n";
-  objects.forEach((object, index) => {
-    offsets.push(Buffer.byteLength(body, "utf8"));
-    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-
-  const xrefOffset = Buffer.byteLength(body, "utf8");
-  body += `xref\n0 ${objects.length + 1}\n`;
-  body += "0000000000 65535 f \n";
-  for (const offset of offsets.slice(1)) {
-    body += `${offset.toString().padStart(10, "0")} 00000 n \n`;
-  }
-  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-
-  return new Uint8Array(Buffer.from(body, "utf8"));
+  return url.toString();
 }
 
 export async function GET(
@@ -291,7 +60,7 @@ export async function GET(
 ) {
   const requestStart = Date.now();
   let stage = "init";
-  const locale = getLocaleFromCookies(await cookies());
+  let browser: PuppeteerBrowser | null = null;
 
   try {
     stage = "params";
@@ -300,66 +69,76 @@ export async function GET(
       return NextResponse.json({ error: "run_id is required" }, { status: 400 });
     }
 
-    stage = "fetch_agent_e";
-    const origin = request.nextUrl.origin;
+    stage = "launch_puppeteer";
+    const puppeteerModule = await loadPuppeteer();
+    const launcher = puppeteerModule.default?.launch ?? puppeteerModule.launch;
+    if (!launcher) {
+      throw new Error("Kunne ikkje starte puppeteer: launch() manglar.");
+    }
+
+    browser = await launcher({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--font-render-hinting=medium",
+      ],
+    });
+
+    stage = "open_page";
+    const page = await browser.newPage();
     const cookieHeader = request.headers.get("cookie") ?? "";
+    if (cookieHeader) {
+      await page.setExtraHTTPHeaders({ Cookie: cookieHeader });
+    }
+    await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 1 });
 
-    const agentERes = await fetch(`${origin}/api/agent-e`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ run_id, locale }),
+    stage = "navigate_report";
+    await page.goto(reportPageUrl(request, run_id), {
+      waitUntil: "domcontentloaded",
+      timeout: 45_000,
     });
 
-    if (!agentERes.ok) {
-      console.error("PDF export: agent-e fetch failed", {
-        run_id,
-        status: agentERes.status,
-        had_cookie: cookieHeader.length > 0,
-      });
-      return NextResponse.json(
-        { error: ERROR_LABELS[locale].couldNotFetch },
-        { status: agentERes.status },
-      );
-    }
-
-    stage = "parse_agent_e";
-    const upstream: UpstreamReportData = await agentERes.json();
-
-    stage = "build_report_model";
-    const reportUrl = `${origin}/rapport/${run_id}`;
-    const model = buildReportModel(upstream, {
-      locale,
-      reportUrl,
-      audience: "engineer",
+    stage = "wait_for_report";
+    await page.waitForSelector('[data-report-ready="true"]', {
+      timeout: 90_000,
     });
 
-    stage = "validate_report_model";
-    const validation = validateReportModel(model);
-    if (!validation.ok || validation.warnings.length > 0) {
-      console.warn("PDF export: report model validation", {
-        run_id,
-        ok: validation.ok,
-        errors: validation.errors,
-        warnings: validation.warnings,
+    stage = "prepare_print";
+    await page.emulateMediaType("print");
+    const documentId = await page.evaluate(() => {
+      document.querySelectorAll("details").forEach((details) => {
+        details.open = true;
       });
-    }
+      document.documentElement.dataset.pilarExport = "pdf";
+      return document
+        .querySelector("[data-report-document-id]")
+        ?.getAttribute("data-report-document-id") ?? "";
+    });
 
     stage = "render_pdf";
-    const pdf = buildReportPdfBytes(model);
-    const filename = safeFilename(model.meta.documentId || `PILAR-${run_id}`);
+    const pdf = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: "16mm",
+        right: "15mm",
+        bottom: "18mm",
+        left: "15mm",
+      },
+    });
 
-    console.log("PDF export: success", {
+    const filename = safeFilename(documentId || `PILAR-${run_id.slice(0, 8)}`);
+    console.log("Report PDF export: success", {
       run_id,
-      document_id: model.meta.documentId,
+      document_id: documentId || null,
       elapsed_ms: Date.now() - requestStart,
       size_bytes: pdf.length,
     });
 
-    const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
-    return new NextResponse(body, {
+    return new NextResponse(new Uint8Array(pdf), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
@@ -375,6 +154,10 @@ export async function GET(
       error_name: errorName,
       message_length: messageLength,
     });
-    return NextResponse.json({ error: ERROR_LABELS[locale].unknown }, { status: 500 });
+    return NextResponse.json({ error: "Ukjent feil" }, { status: 500 });
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => undefined);
+    }
   }
 }

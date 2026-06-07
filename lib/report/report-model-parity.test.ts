@@ -187,6 +187,10 @@ describe("report model parity across report surfaces", () => {
     expect(source).toContain(
       'from "@/lib/report/build-report-model"',
     );
+    expect(source).toContain('import { appendShareToken } from "@/lib/share-link"');
+    expect(source).toContain("const shareToken = request.nextUrl.searchParams.get(\"share\") ?? \"\"");
+    expect(source).toContain("fetch(`${origin}/api/runs/${runId}?share=${encodeURIComponent(shareToken)}`");
+    expect(source).toContain("const reportUrl = appendShareToken(`${origin}/rapport/${run_id}`, shareToken)");
     expect(source).toContain("const model = buildReportModel(");
     expect(source).toContain("validateReportModel(model)");
     expect(source).toContain("renderReportModelDocx(model");
@@ -197,21 +201,23 @@ describe("report model parity across report surfaces", () => {
     const page = readSource("app/rapport/[run_id]/page.tsx");
     const pdfRoute = readSource("app/api/rapport/[run_id]/pdf/route.ts");
 
-    expect(page).toContain("const pdfUrl = `/api/rapport/${runId}/pdf`");
+    expect(page).toContain(
+      "const pdfUrl = appendShareToken(`/api/rapport/${runId}/pdf`, shareToken)",
+    );
     expect(page).toContain("href={pdfUrl}");
     expect(page).toContain("download={pdfFilename}");
     expect(page).toContain('data-report-ready="true"');
+    expect(page).toContain("data-report-document-id={data.report.document_id}");
     expect(page).not.toContain("onClick={handlePdfPrint}");
 
-    expect(pdfRoute).toContain(
-      'from "@/lib/report/build-report-model"',
-    );
-    expect(pdfRoute).toContain("const model = buildReportModel(");
-    expect(pdfRoute).toContain("validateReportModel(model)");
-    expect(pdfRoute).toContain("buildReportPdfBytes(model)");
+    expect(pdfRoute).toContain("function reportPageUrl(request: NextRequest, runId: string): string");
+    expect(pdfRoute).toContain('url.searchParams.set("share", shareToken)');
+    expect(pdfRoute).toContain("await page.goto(reportPageUrl(request, run_id)");
+    expect(pdfRoute).toContain("await page.waitForSelector('[data-report-ready=\"true\"]'");
+    expect(pdfRoute).toContain("document.documentElement.dataset.pilarExport = \"pdf\"");
+    expect(pdfRoute).toContain("page.pdf({");
     expect(pdfRoute).toContain('"Content-Type": "application/pdf"');
     expect(pdfRoute).toContain('"Content-Disposition": `attachment; filename="${filename}.pdf"`');
-    expect(pdfRoute).not.toContain("puppeteer");
     expect(pdfRoute).not.toContain("@sparticuz/chromium");
   });
 
