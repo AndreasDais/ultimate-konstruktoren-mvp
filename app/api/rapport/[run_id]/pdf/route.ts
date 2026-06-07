@@ -1,29 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type PuppeteerModule = {
-  default?: {
-    launch: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
-  };
-  launch?: (options: Record<string, unknown>) => Promise<PuppeteerBrowser>;
-};
-
-type PuppeteerBrowser = {
-  newPage: () => Promise<PuppeteerPage>;
-  close: () => Promise<void>;
-};
-
-type PuppeteerPage = {
-  setExtraHTTPHeaders: (headers: Record<string, string>) => Promise<void>;
-  setViewport: (viewport: { width: number; height: number; deviceScaleFactor?: number }) => Promise<void>;
-  goto: (url: string, options?: Record<string, unknown>) => Promise<unknown>;
-  waitForSelector: (selector: string, options?: Record<string, unknown>) => Promise<unknown>;
-  emulateMediaType: (type: "screen" | "print") => Promise<void>;
-  evaluate: <T>(pageFunction: () => T | Promise<T>) => Promise<T>;
-  pdf: (options: Record<string, unknown>) => Promise<Buffer>;
-};
 
 function safeFilename(value: string): string {
   return (value || "pilar-rapport")
@@ -31,18 +10,6 @@ function safeFilename(value: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 120);
-}
-
-async function loadPuppeteer(): Promise<PuppeteerModule> {
-  try {
-    const moduleName = "puppeteer";
-    return (await import(moduleName)) as PuppeteerModule;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `PDF-motoren manglar. Installer puppeteer først: npm install puppeteer. Detalj: ${message}`,
-    );
-  }
 }
 
 function reportPageUrl(request: NextRequest, runId: string): string {
@@ -60,7 +27,7 @@ export async function GET(
 ) {
   const requestStart = Date.now();
   let stage = "init";
-  let browser: PuppeteerBrowser | null = null;
+  let browser: PdfBrowser | null = null;
 
   try {
     stage = "params";
@@ -70,21 +37,7 @@ export async function GET(
     }
 
     stage = "launch_puppeteer";
-    const puppeteerModule = await loadPuppeteer();
-    const launcher = puppeteerModule.default?.launch ?? puppeteerModule.launch;
-    if (!launcher) {
-      throw new Error("Kunne ikkje starte puppeteer: launch() manglar.");
-    }
-
-    browser = await launcher({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=medium",
-      ],
-    });
+    browser = await launchPdfBrowser();
 
     stage = "open_page";
     const page = await browser.newPage();

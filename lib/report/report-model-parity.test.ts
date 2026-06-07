@@ -200,6 +200,7 @@ describe("report model parity across report surfaces", () => {
   it("keeps full PDF export as an actual attachment download", () => {
     const page = readSource("app/rapport/[run_id]/page.tsx");
     const pdfRoute = readSource("app/api/rapport/[run_id]/pdf/route.ts");
+    const pdfBrowser = readSource("lib/report/pdf-browser.ts");
 
     expect(page).toContain(
       "const pdfUrl = appendShareToken(`/api/rapport/${runId}/pdf`, shareToken)",
@@ -211,6 +212,7 @@ describe("report model parity across report surfaces", () => {
     expect(page).not.toContain("onClick={handlePdfPrint}");
 
     expect(pdfRoute).toContain("function reportPageUrl(request: NextRequest, runId: string): string");
+    expect(pdfRoute).toContain('import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";');
     expect(pdfRoute).toContain('url.searchParams.set("share", shareToken)');
     expect(pdfRoute).toContain("await page.goto(reportPageUrl(request, run_id)");
     expect(pdfRoute).toContain("await page.waitForSelector('[data-report-ready=\"true\"]'");
@@ -218,7 +220,11 @@ describe("report model parity across report surfaces", () => {
     expect(pdfRoute).toContain("page.pdf({");
     expect(pdfRoute).toContain('"Content-Type": "application/pdf"');
     expect(pdfRoute).toContain('"Content-Disposition": `attachment; filename="${filename}.pdf"`');
-    expect(pdfRoute).not.toContain("@sparticuz/chromium");
+    expect(pdfRoute).toContain("browser = await launchPdfBrowser()");
+
+    expect(pdfBrowser).toContain('const moduleName = "@sparticuz/chromium"');
+    expect(pdfBrowser).toContain("const executablePath = await chromium.executablePath()");
+    expect(pdfBrowser).toContain("process.env.VERCEL");
   });
 
   it("renders full web and Word prose from the same ReportModel text fields", () => {
@@ -336,6 +342,8 @@ describe("report model parity across report surfaces", () => {
     expect(word).toContain("renderCalculationSheetDocx(sheet)");
     expect(latex).toContain("renderCalculationSheetLatex(sheet");
     expect(pdf).toContain("renderCalculationSheetHtml(sheet)");
+    expect(pdf).toContain('import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";');
+    expect(pdf).toContain("browser = await launchPdfBrowser()");
     expect(pdf).toContain("page.setContent(html");
     expect(pdf).toContain('[data-calculation-sheet-ready="true"]');
   });
@@ -376,6 +384,8 @@ describe("report model parity across report surfaces", () => {
     }
 
     expect(calculationPdf).toContain("renderCalculationSheetHtml(sheet)");
+    expect(calculationPdf).toContain('import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";');
+    expect(calculationPdf).toContain("browser = await launchPdfBrowser()");
     expect(calculationPdf).toContain("page.setContent(html");
     expect(calculationPdf).toContain('[data-calculation-sheet-ready="true"]');
   });
