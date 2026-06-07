@@ -116,7 +116,11 @@ describe("pipeline share tokens", () => {
     expect(forkSeedRoute).toContain("verifyPipelineShareToken");
     expect(forkSeedRoute).toContain('mode: "pipeline_share_fork_seed"');
     expect(forkSeedRoute).toContain('.select("document_id")');
+    expect(forkSeedRoute).toContain(
+      '.select("calculation_type, extracted_inputs, can_calculate, assumptions, interpretation_summary, discipline")',
+    );
     expect(forkSeedRoute).toContain("does not include the original raw prompt");
+    expect(forkSeedRoute).not.toContain("parsed_data");
     expect(forkSeedRoute).not.toMatch(/raw_text|input_payload|output_text|raw_message|structured_output|user_id/i);
     expect(forkSeedRoute).not.toContain("request_id:");
     expect(minePage).not.toMatch(/\?from_run|\?from_request|from_run=|from_request=/);
