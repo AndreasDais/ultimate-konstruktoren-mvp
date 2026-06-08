@@ -42,6 +42,7 @@ import { buildReportModel } from "@/lib/report/build-report-model";
 import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polishNorwegianRoleText } from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { appendShareToken, maskShareTokenForDisplay } from "@/lib/share-link";
+import { rememberSharedReportShortcut } from "@/lib/shared-report-shortcuts";
 import { cleanReportText, displayResultLabel, limitText } from "@/lib/report/normalize-report-model";
 import {
   isMarginaliaRelevantForLanguage,
@@ -641,6 +642,18 @@ function existingReportResponse(
   };
 }
 
+function titleForSharedShortcut(data: FullReportResponse): string {
+  const parsed =
+    data.inputReview?.parsed_data &&
+    typeof data.inputReview.parsed_data === "object" &&
+    !Array.isArray(data.inputReview.parsed_data)
+      ? (data.inputReview.parsed_data as Record<string, unknown>)
+      : null;
+  const reportTitle = parsed?.report_title;
+  if (typeof reportTitle === "string" && reportTitle.trim()) return reportTitle.trim();
+  return data.report.document_id || "Shared report";
+}
+
 function normalizeAgentOutput(
   agent: AgentOutput | null | undefined,
   agentName: "agent_a" | "agent_b",
@@ -805,6 +818,17 @@ export default function RapportPage() {
       setRapportUrl(`${window.location.origin}/rapport/${runId}`);
     }
   }, [runId]);
+
+  useEffect(() => {
+    if (!data || data.sourceMode !== "shared_report" || !shareToken) return;
+    rememberSharedReportShortcut({
+      runId,
+      shareToken,
+      title: titleForSharedShortcut(data),
+      date: data.report.created_at,
+      documentId: data.report.document_id,
+    });
+  }, [data, runId, shareToken]);
 
   // Tving alle <details>-element til å vere opne under print.
   // CSS aleine klarar ikkje overstyre user-agent sin closed-state.
