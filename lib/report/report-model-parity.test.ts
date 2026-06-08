@@ -200,6 +200,7 @@ describe("report model parity across report surfaces", () => {
   it("keeps full PDF export as an actual attachment download", () => {
     const nextConfig = readSource("next.config.ts");
     const page = readSource("app/rapport/[run_id]/page.tsx");
+    const reportCss = readSource("app/rapport/[run_id]/rapport.css");
     const pdfRoute = readSource("app/api/rapport/[run_id]/pdf/route.ts");
     const pdfBrowser = readSource("lib/report/pdf-browser.ts");
 
@@ -218,6 +219,12 @@ describe("report model parity across report surfaces", () => {
     expect(page).toContain('data-report-ready="true"');
     expect(page).toContain("data-report-document-id={data.report.document_id}");
     expect(page).not.toContain("onClick={handlePdfPrint}");
+    expect(reportCss).toContain("Report Engine v4 / Sprint 12 - export polish");
+    expect(reportCss).toContain("@page");
+    expect(reportCss).toContain("margin: 15mm 14mm 17mm");
+    expect(reportCss).toContain(".rapport-forside + .rapport-section");
+    expect(reportCss).toContain("orphans: 3");
+    expect(reportCss).toContain("widows: 3");
 
     expect(pdfRoute).toContain("function reportPageUrl(request: NextRequest, runId: string): string");
     expect(pdfRoute).toContain('import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";');
@@ -407,6 +414,11 @@ describe("report model parity across report surfaces", () => {
     expect(calculationPdf).toContain("browser = await launchPdfBrowser()");
     expect(calculationPdf).toContain("page.setContent(html");
     expect(calculationPdf).toContain('[data-calculation-sheet-ready="true"]');
+    expect(calculationPdf).toContain('class="review-note"');
+    expect(calculationPdf).toContain('class="section-head"');
+    expect(calculationPdf).toContain('class="step-head"');
+    expect(calculationPdf).toContain("@page { size: A4; margin: 16mm 14mm 17mm; }");
+    expect(calculationPdf).toContain("print-color-adjust: exact");
   });
 
   it("keeps blocked-field evidence from becoming ordinary export prose", () => {

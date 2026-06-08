@@ -80,8 +80,14 @@ function renderCalculationSheetHtml(sheet: CalculationSheetModel): string {
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(value || "-")}</strong>
     </div>`;
-  const section = (heading: string, body: string) => body.trim()
-    ? `<section><h2>${escapeHtml(heading)}</h2>${body}</section>`
+  const section = (index: string, heading: string, body: string, modifier = "") => body.trim()
+    ? `<section class="section ${escapeHtml(modifier)}">
+        <div class="section-head">
+          <span>${escapeHtml(index)}</span>
+          <h2>${escapeHtml(heading)}</h2>
+        </div>
+        ${body}
+      </section>`
     : "";
 
   const given = sheet.given
@@ -97,7 +103,10 @@ function renderCalculationSheetHtml(sheet: CalculationSheetModel): string {
   const steps = sheet.steps
     .map((step) => `
       <article class="step">
-        <h3>${step.number}. ${escapeHtml(step.title)}</h3>
+        <div class="step-head">
+          <span>${escapeHtml(String(step.number).padStart(2, "0"))}</span>
+          <h3>${escapeHtml(step.title)}</h3>
+        </div>
         ${step.explanation ? `<p>${escapeHtml(step.explanation)}</p>` : ""}
         ${step.formulas
           .map((formula) => `<pre>${escapeHtml(formula.plain || formula.latex)}</pre>`)
@@ -111,7 +120,7 @@ function renderCalculationSheetHtml(sheet: CalculationSheetModel): string {
         <span>${escapeHtml(item.unit ? `${item.value} ${item.unit}` : item.value)}</span>
       </div>`)
     .join("");
-  const notes = [...sheet.notes, labels.generatedNote]
+  const notes = sheet.notes
     .map((item) => `<li>${escapeHtml(item)}</li>`)
     .join("");
 
@@ -121,62 +130,160 @@ function renderCalculationSheetHtml(sheet: CalculationSheetModel): string {
   <meta charset="utf-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    @page { size: A4; margin: 18mm 16mm; }
+    @page { size: A4; margin: 16mm 14mm 17mm; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      color: #172033;
+      color: #171717;
       background: #fff;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
+      font-size: 10pt;
+      line-height: 1.44;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .sheet { width: 100%; }
-    .kicker { color: #617089; font-size: 8.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    h1 { margin: 8px 0 6px; font-size: 24pt; line-height: 1.12; }
-    .subtitle { margin: 0 0 18px; color: #4c5a70; }
-    .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 24px; }
+    .cover {
+      padding-bottom: 8mm;
+      margin-bottom: 7mm;
+      border-bottom: 0.8pt solid #d8d3c8;
+      break-after: avoid;
+    }
+    .kicker {
+      color: #8a5d00;
+      font-size: 7.8pt;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    h1 {
+      margin: 2.5mm 0 1.8mm;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 24pt;
+      font-weight: 650;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+    .subtitle { margin: 0; color: #4f4a42; font-size: 10.4pt; }
+    .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; margin: 7mm 0 0; }
     .meta-card, .data-row {
-      border: 1px solid #d8dee8;
-      border-radius: 6px;
-      padding: 8px 10px;
+      border: 0.8pt solid #d8d3c8;
+      border-left: 2.4pt solid #1f1d18;
+      padding: 2.6mm 3mm;
+      break-inside: avoid;
+      background: #faf8f2;
+    }
+    .meta-card span {
+      display: block;
+      color: #6d665b;
+      font-size: 7.4pt;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1.2mm;
+    }
+    .meta-card strong { font-size: 10pt; }
+    .review-note {
+      margin: 0 0 7mm;
+      padding: 3.2mm 4mm;
+      border: 0.8pt solid #d4a017;
+      border-left: 3pt solid #b9821a;
+      background: #fff7e1;
+      color: #1f1d18;
       break-inside: avoid;
     }
-    .meta-card span { display: block; color: #617089; font-size: 8.5pt; text-transform: uppercase; }
-    section { margin: 22px 0; break-inside: auto; }
-    h2 { margin: 0 0 10px; font-size: 15pt; }
-    h3 { margin: 0 0 6px; font-size: 12pt; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-    .data-row { display: flex; justify-content: space-between; gap: 12px; }
-    .step { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid #e5e9f0; break-inside: avoid; }
+    .section { margin: 7mm 0; break-inside: auto; }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      padding-bottom: 1.8mm;
+      border-bottom: 0.7pt solid #d8d3c8;
+      break-after: avoid;
+    }
+    .section-head span {
+      color: #b9821a;
+      font-size: 8pt;
+      font-weight: 700;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    h2 { margin: 0; font-size: 14.5pt; line-height: 1.15; }
+    h3 { margin: 0; font-size: 11.3pt; line-height: 1.2; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.4mm; }
+    .data-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+      gap: 4mm;
+    }
+    .data-row strong { min-width: 0; overflow-wrap: anywhere; }
+    .data-row span { font-weight: 650; white-space: nowrap; }
+    .step {
+      margin: 0 0 4.2mm;
+      padding-bottom: 3.8mm;
+      border-bottom: 0.7pt solid #e7e1d6;
+      break-inside: auto;
+    }
+    .step-head {
+      display: flex;
+      align-items: baseline;
+      gap: 2.4mm;
+      margin-bottom: 1.6mm;
+      break-after: avoid;
+    }
+    .step-head span {
+      color: #b9821a;
+      font-size: 7.6pt;
+      font-weight: 700;
+      letter-spacing: .08em;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      white-space: nowrap;
+    }
+    .step p { margin: 0 0 2.2mm; color: #2f2b26; }
     pre {
-      margin: 8px 0 0;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: #f6f8fb;
+      margin: 2mm 0 0;
+      padding: 2.4mm 3mm;
+      border-left: 2pt solid #d8d3c8;
+      background: #f5f3ee;
       white-space: pre-wrap;
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 9.5pt;
+      font-size: 8.2pt;
+      line-height: 1.36;
+      overflow-wrap: anywhere;
+      break-inside: avoid;
     }
     ul { margin: 0; padding-left: 18px; }
-    li { margin: 4px 0; }
+    li { margin: 2mm 0; }
+    footer {
+      margin-top: 8mm;
+      padding-top: 3mm;
+      border-top: 0.8pt solid #d8d3c8;
+      color: #666;
+      font-size: 8.6pt;
+    }
   </style>
 </head>
 <body>
   <main class="sheet" data-calculation-sheet-ready="true">
-    <div class="kicker">${escapeHtml(labels.kicker)}</div>
-    <h1>${escapeHtml(title)}</h1>
-    ${sheet.meta.subtitle ? `<p class="subtitle">${escapeHtml(sheet.meta.subtitle)}</p>` : ""}
-    <div class="meta">
-      ${row(labels.documentId, sheet.meta.documentId)}
-      ${row(labels.date, sheet.meta.date)}
-      ${row(labels.status, sheet.meta.status)}
-    </div>
-    ${section(labels.given, given ? `<div class="grid">${given}</div>` : "")}
-    ${section(labels.assumptions, assumptions ? `<ul>${assumptions}</ul>` : "")}
-    ${section(labels.calculation, steps)}
-    ${section(labels.results, results ? `<div class="grid">${results}</div>` : "")}
-    ${section(labels.notes, notes ? `<ul>${notes}</ul>` : "")}
+    <header class="cover">
+      <div class="kicker">${escapeHtml(labels.kicker)}</div>
+      <h1>${escapeHtml(title)}</h1>
+      ${sheet.meta.subtitle ? `<p class="subtitle">${escapeHtml(sheet.meta.subtitle)}</p>` : ""}
+      <div class="meta">
+        ${row(labels.documentId, sheet.meta.documentId)}
+        ${row(labels.date, sheet.meta.date)}
+        ${row(labels.status, sheet.meta.status)}
+      </div>
+    </header>
+    <p class="review-note">${escapeHtml(labels.generatedNote)}</p>
+    ${section("01", labels.given, given ? `<div class="grid">${given}</div>` : "", "section--given")}
+    ${section("02", labels.assumptions, assumptions ? `<ul>${assumptions}</ul>` : "", "section--assumptions")}
+    ${section("03", labels.calculation, steps, "section--calculation")}
+    ${section("04", labels.results, results ? `<div class="grid">${results}</div>` : "", "section--results")}
+    ${section("05", labels.notes, notes ? `<ul>${notes}</ul>` : "", "section--notes")}
+    <footer>${escapeHtml(labels.generatedNote)}</footer>
   </main>
 </body>
 </html>`;
