@@ -4583,3 +4583,113 @@
     word-break: normal !important;
   }
 }
+
+/* =================================================================
+   Report Engine v4 / Sprint 12 - export polish.
+   The full report PDF is rendered from the web report. Keep that parity,
+   but tune print rhythm so A4 pages feel deliberate rather than like a
+   clipped browser viewport.
+   ================================================================= */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm 14mm 17mm;
+  }
+
+  .rapport-shell {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .rapport-main,
+  .rapport-main .rapport-document,
+  .rapport-document {
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  .rapport-document {
+    font-size: 9.4pt !important;
+    line-height: 1.48 !important;
+    color: #171717 !important;
+  }
+
+  .rapport-document p,
+  .rapport-prose,
+  .rapport-step-row__text {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .rapport-forside {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .rapport-forside + .rapport-section {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .rapport-section,
+  .rapport-section--group,
+  .rapport-berekning-content,
+  .rapport-step-list,
+  .rapport-step-row {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .rapport-access-card,
+  .rapport-cover-results,
+  .rapport-advarsel-stripe,
+  .rapport-verdict-box,
+  .rapport-signatur-grid,
+  .rapport-footer__qr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-chapter-heading,
+  .rapport-subchapter__eyebrow,
+  .rapport-step-row__kicker,
+  .rapport-step-row__title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .rapport-chapter-heading {
+    margin-top: 6mm !important;
+    margin-bottom: 4mm !important;
+  }
+
+  .rapport-step-row {
+    padding-top: 3mm !important;
+    padding-bottom: 4mm !important;
+  }
+
+  .rapport-step-row__text--print,
+  .rapport-step-prose pre,
+  .rapport-data {
+    font-size: 8.1pt !important;
+    line-height: 1.36 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .rapport-results-table tr,
+  .rapport-ikkje-rekna-table__row,
+  .rapport-verifikasjon-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .rapport-access-card__url,
+  .rapport-footer__url {
+    color: #4f4a42 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+}
