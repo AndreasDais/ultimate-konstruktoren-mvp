@@ -198,9 +198,14 @@ describe("report model parity across report surfaces", () => {
   });
 
   it("keeps full PDF export as an actual attachment download", () => {
+    const nextConfig = readSource("next.config.ts");
     const page = readSource("app/rapport/[run_id]/page.tsx");
     const pdfRoute = readSource("app/api/rapport/[run_id]/pdf/route.ts");
     const pdfBrowser = readSource("lib/report/pdf-browser.ts");
+
+    expect(nextConfig).toContain("serverExternalPackages");
+    expect(nextConfig).toContain('"@sparticuz/chromium"');
+    expect(nextConfig).toContain('"puppeteer-core"');
 
     expect(page).toContain(
       "const pdfUrl = appendShareToken(`/api/rapport/${runId}/pdf`, shareToken)",
