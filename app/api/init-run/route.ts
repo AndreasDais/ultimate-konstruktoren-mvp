@@ -3,6 +3,55 @@ import { sweepOrphanRuns } from "@/lib/calculation-runs/sweep-orphans";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const DEFAULT_MAX_ACTIVE_CALCULATIONS = 10;
+const BUSY_MESSAGE = "PILAR is busy. Try again in a few minutes.";
+
+export function maxActiveCalculationsFromEnv(
+  value: string | undefined = process.env.MAX_ACTIVE_CALCULATIONS,
+): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0
+    ? Math.floor(parsed)
+    : DEFAULT_MAX_ACTIVE_CALCULATIONS;
+}
+
+export function isActiveCalculationCapReached(
+  activeCount: number,
+  cap = maxActiveCalculationsFromEnv(),
+): boolean {
+  return activeCount >= cap;
+}
+
+function busyResponse() {
+  return Response.json(
+    { error: BUSY_MESSAGE },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": "180",
+        "Cache-Control": "no-store",
+      },
+    },
+  );
+}
+
+async function checkActiveCalculationCapacity(
+  supabase: ReturnType<typeof getSupabase>,
+): Promise<Response | null> {
+  const cap = maxActiveCalculationsFromEnv();
+  const { count, error } = await supabase
+    .from("calculation_runs")
+    .select("id", { count: "exact", head: true })
+    .eq("run_status", "running");
+
+  if (error) {
+    console.error("[init-run] active calculation capacity check failed");
+    return null;
+  }
+
+  return isActiveCalculationCapReached(count ?? 0, cap) ? busyResponse() : null;
+}
+
 /**
  * Hent user_id frå innlogga session viss han finst. Returnerer null for
  * anonyme køyringar — det er forventa og OK. Auth-utfall != produkt-utfall.
@@ -102,14 +151,17 @@ export async function POST(request: Request) {
     const userId = await getCurrentUserId();
     const supabase = getSupabase();
 
-    // Lazy orphan-cleanup (sprint 62.0). Fire-and-forget — sweep-feil skal
-    // aldri stoppe ein ny berekning. Dekker anonyme runs (som /mine-sweepen
-    // ikkje rører) + innlogga brukar sine egne. Sjå
+    // Lazy orphan-cleanup (sprint 62.0). Run before the active-cap check so
+    // old orphaned runs do not consume launch capacity. Dekker anonyme runs
+    // (som /mine-sweepen ikkje rører) + innlogga brukar sine egne. Sjå
     // lib/calculation-runs/sweep-orphans.ts for terskel og åtferd.
-    void sweepOrphanRuns(
+    await sweepOrphanRuns(
       supabase,
       userId ? { userId, includeAnonymous: true } : { anonymous: true },
     );
+
+    const activeCapacityResponse = await checkActiveCalculationCapacity(supabase);
+    if (activeCapacityResponse) return activeCapacityResponse;
 
     // Best-effort: oppdater requests.user_id viss innlogga.
     // Feil her stoppar ikkje køyringa — vi har framleis calculation_runs.user_id.
@@ -162,8 +214,12 @@ export async function POST(request: Request) {
 
     return Response.json({ run_id: data.id });
   } catch (err) {
-    console.error("init-run error:", err);
-    const errorMessage = err instanceof Error ? err.message : "Ukjent feil";
-    return Response.json({ error: errorMessage }, { status: 500 });
+    console.error("[init-run] bounded failure:", {
+      error_name: err instanceof Error ? err.name : typeof err,
+    });
+    return Response.json(
+      { error: "Klarte ikkje opprette berekningskøyring" },
+      { status: 500 },
+    );
   }
 }
