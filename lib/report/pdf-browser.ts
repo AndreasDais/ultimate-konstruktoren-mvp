@@ -1,14 +1,15 @@
 type PuppeteerModule = {
   default?: {
     launch: (options: Record<string, unknown>) => Promise<PdfBrowser>;
+    defaultArgs?: (options?: Record<string, unknown>) => string[] | Promise<string[]>;
   };
   launch?: (options: Record<string, unknown>) => Promise<PdfBrowser>;
+  defaultArgs?: (options?: Record<string, unknown>) => string[] | Promise<string[]>;
 };
 
 type ChromiumRuntime = {
   args?: string[];
   executablePath: () => Promise<string>;
-  headless?: boolean | "shell";
 };
 
 type ChromiumModule = ChromiumRuntime & {
@@ -31,14 +32,14 @@ export type PdfPage = {
   pdf: (options: Record<string, unknown>) => Promise<Buffer>;
 };
 
-async function loadPuppeteer(): Promise<PuppeteerModule> {
+async function loadPuppeteer(packageName: "puppeteer" | "puppeteer-core"): Promise<PuppeteerModule> {
   try {
-    const moduleName = "puppeteer";
+    const moduleName = packageName;
     return (await import(moduleName)) as PuppeteerModule;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `PDF-motoren manglar. Installer puppeteer først: npm install puppeteer. Detalj: ${message}`,
+      `PDF-motoren manglar. Installer ${packageName} først. Detalj: ${message}`,
     );
   }
 }
@@ -51,37 +52,35 @@ function isServerlessRuntime(): boolean {
   );
 }
 
-async function serverlessChromiumOptions(): Promise<Record<string, unknown>> {
-  if (!isServerlessRuntime()) {
-    return {};
-  }
-
+async function loadServerlessChromium(): Promise<ChromiumRuntime> {
   const moduleName = "@sparticuz/chromium";
   const chromiumModule = (await import(moduleName)) as ChromiumModule;
-  const chromium = chromiumModule.default ?? chromiumModule;
-  const executablePath = await chromium.executablePath();
-
-  return {
-    args: [
-      ...(chromium.args ?? []),
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--font-render-hinting=medium",
-    ],
-    executablePath,
-    headless: chromium.headless ?? true,
-  };
+  return chromiumModule.default ?? chromiumModule;
 }
 
 export async function launchPdfBrowser(): Promise<PdfBrowser> {
-  const puppeteerModule = await loadPuppeteer();
+  const serverless = isServerlessRuntime();
+  const puppeteerModule = await loadPuppeteer(serverless ? "puppeteer-core" : "puppeteer");
   const launcher = puppeteerModule.default?.launch ?? puppeteerModule.launch;
   if (!launcher) {
     throw new Error("Kunne ikkje starte puppeteer: launch() manglar.");
   }
 
-  const serverlessOptions = await serverlessChromiumOptions();
+  if (serverless) {
+    const chromium = await loadServerlessChromium();
+    const defaultArgs = puppeteerModule.default?.defaultArgs ?? puppeteerModule.defaultArgs;
+    const chromiumArgs = chromium.args ?? [];
+    const args = defaultArgs
+      ? await defaultArgs({ args: chromiumArgs, headless: "shell" })
+      : chromiumArgs;
+
+    return launcher({
+      args,
+      executablePath: await chromium.executablePath(),
+      headless: "shell",
+    });
+  }
+
   return launcher({
     headless: true,
     args: [
@@ -90,6 +89,5 @@ export async function launchPdfBrowser(): Promise<PdfBrowser> {
       "--disable-dev-shm-usage",
       "--font-render-hinting=medium",
     ],
-    ...serverlessOptions,
   });
 }
