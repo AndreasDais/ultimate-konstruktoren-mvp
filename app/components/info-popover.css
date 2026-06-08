@@ -18,6 +18,7 @@
   .info-popover-trigger {
     display: inline-grid;
     place-items: center;
+    position: relative;
     width: 16px;
     height: 16px;
     margin-left: 0.375rem;
@@ -48,6 +49,32 @@
     background: var(--fg, #0f172a);
     color: var(--surface, #ffffff);
     border-color: var(--fg, #0f172a);
+  }
+
+  @media (max-width: 768px) {
+    .info-popover-trigger {
+      width: 44px;
+      height: 44px;
+      margin-left: 0;
+      border-color: transparent;
+      background: radial-gradient(
+        circle at center,
+        var(--surface-alt, #f8fafc) 0 7px,
+        var(--border, #cbd5e1) 7px 8px,
+        transparent 8px
+      );
+    }
+
+    .info-popover-trigger:hover,
+    .info-popover-trigger:focus-visible,
+    .info-popover-trigger[aria-expanded="true"] {
+      background: radial-gradient(
+        circle at center,
+        var(--fg, #0f172a) 0 8px,
+        transparent 8px
+      );
+      border-color: transparent;
+    }
   }
   
   /* === Popover-boks (portal'd, position: fixed via inline style) === */

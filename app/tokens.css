@@ -1067,7 +1067,12 @@
     .uk-theme-trigger {
       padding: 0 8px 0 6px;
       min-height: 44px;
+      min-width: 44px;
       gap: 6px;
+    }
+    .uk-footer-link {
+      justify-content: center;
+      min-width: 44px;
     }
     .uk-header__authlink {
       display: inline-flex;
