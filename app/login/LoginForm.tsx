@@ -114,7 +114,7 @@ export default function LoginForm({ uiMode }: { uiMode: HeaderUiMode }) {
                   setStatus("idle");
                   setEmail("");
                 }}
-                className="mt-3 text-sm underline"
+                className="mt-3 inline-flex min-h-[44px] items-center text-sm underline"
                 style={{ color: "var(--ok)" }}
               >
                 {t(LOGIN_LABELS.brukAnnaEpost)}
@@ -139,7 +139,7 @@ export default function LoginForm({ uiMode }: { uiMode: HeaderUiMode }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={status === "sending"}
-                  className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full min-h-[44px] rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--fg)" }}
                   placeholder={t(LOGIN_LABELS.epostPlaceholder)}
                 />
@@ -160,7 +160,7 @@ export default function LoginForm({ uiMode }: { uiMode: HeaderUiMode }) {
               <button
                 type="submit"
                 disabled={status === "sending" || !email.trim()}
-                className="uk-btn uk-btn--primary w-full justify-center"
+                className="uk-btn uk-btn--primary min-h-[44px] w-full justify-center"
               >
                 {status === "sending" ? t(LOGIN_LABELS.senderLenke) : t(LOGIN_LABELS.sendLenke)}
               </button>

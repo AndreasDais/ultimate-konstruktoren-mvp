@@ -418,6 +418,12 @@ export default function InternationalClient() {
                   <span>{saved ? "Context saved" : "Save context"}</span>
                 </span>
               </button>
+              <Link href="/pilot" className="uk-btn uk-btn--primary intl-cta intl-config__pilot">
+                Go to pilot{" "}
+                <span className="arrow" aria-hidden="true">
+                  &rarr;
+                </span>
+              </Link>
             </div>
           </section>
 

@@ -21,7 +21,7 @@ export default function BackToPilar({
   return (
     <Link
       href={from ?? fallback}
-      className="text-sm hover:underline"
+      className="uk-touch-link text-sm hover:underline"
       style={{ color: "var(--fg-muted)" }}
     >
       {label}

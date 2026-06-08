@@ -450,8 +450,8 @@
 /* reveal-animasjon — initial-skjult gata bak .js-anim (sett av init-script
    foer paint), saa sida renderer fullstendig utan JS. */
 .js-anim .lp .reveal {
-  opacity: 0;
-  transform: translateY(18px);
+  opacity: 1;
+  transform: none;
   transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
 }
 .lp .reveal.in { opacity: 1; transform: none; }
@@ -549,14 +549,49 @@
   line-height: 1.55;
   color: var(--fg-muted);
 }
-.lp .region-modal__helper {
-  margin: 0 0 22px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--fg-faint);
-}
 .lp .region-modal__actions { display: flex; gap: 12px; }
 .lp .region-modal__actions .btn { flex: 1; justify-content: center; }
+
+@media (max-width: 560px) {
+  .lp .btn {
+    min-height: 44px;
+  }
+  .lp .brand {
+    min-height: 44px;
+  }
+  .lp .header__inner {
+    gap: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .lp .footer__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .lp .footer__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 0;
+  }
+  .lp .region-modal-backdrop {
+    align-items: end;
+    place-items: end center;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.34);
+  }
+  .lp .region-modal {
+    width: 100%;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding: 22px 20px;
+  }
+  .lp .region-modal__actions {
+    flex-direction: column;
+  }
+  .lp .region-modal__actions .btn {
+    min-height: 48px;
+  }
+}
 
 /* =========================================================
    Animasjonar (porta frå Claude Design §5). Initial-skjulte

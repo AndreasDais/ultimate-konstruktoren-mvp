@@ -18,7 +18,7 @@ export default function HomePage() {
       <script
         dangerouslySetInnerHTML={{
           __html:
-            "try{document.documentElement.classList.add('js-anim')}catch(e){}",
+            "try{document.documentElement.classList.add('js-anim');document.cookie='pilar-ui-mode=intl; path=/; max-age=31536000; samesite=lax';document.documentElement.lang='en'}catch(e){}",
         }}
       />
       <HeimClient lang="en" showRegionModal={false} startHref="/international" />
