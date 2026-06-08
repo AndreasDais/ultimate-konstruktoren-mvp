@@ -17,6 +17,7 @@
  */
 
 import { Fragment } from "react";
+import katex from "katex";
 import type { Locale } from "@/lib/locale";
 import {
   matchStatusLabel, MATCH_STATUS_TONES, decisionStatusLabel, DECISION_STATUS_TONES, CONFIDENCE_TONES, SEVERITY_TONES, } from "@/lib/format";
@@ -91,6 +92,171 @@ type CalculationResultViewProps = {
   handleBackToWorkbench: () => void;
   saveStateToSession: () => void;
 };
+
+function splitFormulaLine(rawLine: string): {
+  label: string | null;
+  math: string;
+  note: string | null;
+} {
+  let math = rawLine.trim();
+  let label: string | null = null;
+  let note: string | null = null;
+
+  const labelled = math.match(/^([^:=]{2,44}:)\s+(.+)$/);
+  if (labelled && labelled[2]?.includes("=") && /[A-Za-z]/.test(labelled[1] ?? "")) {
+    label = labelled[1].trim();
+    math = labelled[2].trim();
+  }
+
+  const trailingNote = math.match(/^(.*?)(\s+\([^()]*[A-Za-z][^()]*\))$/);
+  if (trailingNote && trailingNote[1]?.includes("=")) {
+    math = trailingNote[1].trim();
+    note = trailingNote[2].trim();
+  }
+
+  const leadingProse = math.match(/^(Since|Fordi|Sidan|Då|Da)\s+(.+)$/i);
+  if (leadingProse && /[=<>≤≥]/.test(leadingProse[2] ?? "")) {
+    label = label ?? `${leadingProse[1]}:`;
+    math = leadingProse[2].trim();
+  }
+
+  const commaNote = math.match(/^(.*?[=<>≤≥].*?)(,\s+[A-Za-z].*)$/);
+  if (commaNote) {
+    math = commaNote[1].trim();
+    note = [note, commaNote[2].replace(/^,\s*/, "").trim()].filter(Boolean).join(" ");
+  }
+
+  return { label, math, note };
+}
+
+function splitMathForVerticalStack(rawMath: string): string[] {
+  const operators = rawMath.match(/=|≤|≥|<|>/g) ?? [];
+  if (operators.length === 0) return [rawMath];
+
+  const parts = rawMath
+    .split(/\s*(=|≤|≥|<|>)\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 3) return [rawMath];
+  if (operators.length === 1 && rawMath.length < 72) return [rawMath];
+  if (operators.length === 1) return [`${parts[0]}`, `${parts[1]} ${parts[2]}`];
+
+  const segments: string[] = [];
+  const lhs = parts[0];
+  for (let i = 1; i < parts.length; i += 2) {
+    const operator = parts[i];
+    const rhs = parts[i + 1];
+    if (!operator || !rhs) continue;
+    segments.push(`${segments.length === 0 ? `${lhs} ` : ""}${operator} ${rhs}`);
+  }
+
+  return segments.length > 0 ? segments : [rawMath];
+}
+
+function normalizeFormulaLineForKatex(rawMath: string): string {
+  return rawMath
+    .replace(/√\s*\(([^()]+)\)/g, "\\sqrt{$1}")
+    .replace(/²/g, "^2")
+    .replace(/³/g, "^3")
+    .replace(/≤/g, "\\le ")
+    .replace(/≥/g, "\\ge ")
+    .replace(/→/g, "\\to ")
+    .replace(/[·⋅]/g, "\\cdot ")
+    .replace(/×/g, "\\times ")
+    .replace(/\b(gamma|psi|phi|eta|epsilon|alpha|beta|delta|mu)_/g, "\\$1_")
+    .replace(/γ([A-Za-z0-9]+)/g, "\\gamma_{$1}")
+    .replace(/ψ([A-Za-z0-9]+)/g, "\\psi_{$1}")
+    .replace(/φ([A-Za-z0-9]+)/g, "\\phi_{$1}")
+    .replace(/η([A-Za-z0-9]+)/g, "\\eta_{$1}")
+    .replace(/ε([A-Za-z0-9]+)/g, "\\varepsilon_{$1}")
+    .replace(/α([A-Za-z0-9]+)/g, "\\alpha_{$1}")
+    .replace(/β([A-Za-z0-9]+)/g, "\\beta_{$1}")
+    .replace(/γ/g, "\\gamma ")
+    .replace(/ψ/g, "\\psi ")
+    .replace(/φ/g, "\\phi ")
+    .replace(/η/g, "\\eta ")
+    .replace(/ε/g, "\\varepsilon ")
+    .replace(/α/g, "\\alpha ")
+    .replace(/β/g, "\\beta ")
+    .replace(/\b([A-Za-z]+)_([A-Za-z0-9]+(?:,[A-Za-z0-9]+)*)\b/g, "$1_{$2}")
+    .replace(/\b(kNm|kN|N|MPa|GPa|mm|cm|m)\b/g, "\\mathrm{$1}");
+}
+
+function FormulaOnlyMathLine({ line }: { line: string }) {
+  const { label, math, note } = splitFormulaLine(line);
+  const mathSegments = splitMathForVerticalStack(math);
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: 5,
+        padding: "7px 0",
+        borderBottom: "1px solid color-mix(in srgb, var(--border) 45%, transparent)",
+      }}
+    >
+      {label ? (
+        <div
+          className="uk-mono"
+          style={{
+            color: "var(--fg-muted)",
+            fontSize: 11,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {label}
+        </div>
+      ) : null}
+      <div
+        style={{
+          display: "grid",
+          gap: 4,
+          minWidth: 0,
+        }}
+      >
+        {mathSegments.map((segment, segmentIndex) => {
+          const latex = normalizeFormulaLineForKatex(segment);
+          const html = katex.renderToString(latex, {
+            displayMode: false,
+            throwOnError: false,
+            strict: "ignore",
+            output: "html",
+          });
+          return (
+            <div
+              key={segmentIndex}
+              aria-label={segment}
+              role="math"
+              style={{
+                color: "var(--fg)",
+                fontSize: 15,
+                lineHeight: 1.7,
+                maxWidth: "100%",
+                minWidth: 0,
+                overflow: "visible",
+                overflowWrap: "anywhere",
+                paddingLeft: segmentIndex === 0 ? 0 : 18,
+                whiteSpace: "normal",
+              }}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          );
+        })}
+      </div>
+      {note ? (
+        <div
+          style={{
+            color: "var(--fg-muted)",
+            fontSize: 12,
+            lineHeight: 1.45,
+          }}
+        >
+          {note}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function CalculationResultView(props: CalculationResultViewProps) {
   const {
@@ -776,19 +942,21 @@ export function CalculationResultView(props: CalculationResultViewProps) {
                                 {!isCollapsed && (
                                   <>
                                     {stegvisViewMode === "minimal" && formulaLines.length > 0 ? (
-                                      // Minimal: only formel-linjer i mono
-                                      <pre
+                                      // Minimal: only formel-linjer, rendra som kompakt matte.
+                                      <div
                                         style={{
                                           margin: 0,
-                                          fontFamily: "var(--font-mono, monospace)",
-                                          fontSize: 13,
-                                          color: "var(--fg)",
-                                          whiteSpace: "pre-wrap",
-                                          lineHeight: 1.6,
+                                          display: "grid",
+                                          gap: 2,
                                         }}
                                       >
-                                        {uiText(formulaLines.join("\n"))}
-                                      </pre>
+                                        {formulaLines.map((line, lineIndex) => (
+                                          <FormulaOnlyMathLine
+                                            key={`${i}-formula-${lineIndex}`}
+                                            line={uiText(line)}
+                                          />
+                                        ))}
+                                      </div>
                                     ) : (
                                       // Full: heile text (innsetting + prosa)
                                       <pre
