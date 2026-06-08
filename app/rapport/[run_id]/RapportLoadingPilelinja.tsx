@@ -144,6 +144,7 @@ function extractCurrentField(
 type RapportLoadingPilelinjaProps = {
   runId: string;
   locale: Locale;
+  displayLanguage?: LangKey;
   onComplete: (data: Record<string, unknown>) => void;
   onError: (message: string) => void;
 };
@@ -151,6 +152,7 @@ type RapportLoadingPilelinjaProps = {
 export function RapportLoadingPilelinja({
   runId,
   locale,
+  displayLanguage,
   onComplete,
   onError,
 }: RapportLoadingPilelinjaProps) {
@@ -166,15 +168,16 @@ export function RapportLoadingPilelinja({
   // Engineering-context i localStorage avgjer engelsk modus. Pre-mount er
   // contexten null, så vi viser locale-default (norsk) først — same flicker-
   // mønster som resten av workbench-laget.
-  const langKey: LangKey = isInternationalEnglishContext(engineeringContext)
+  const langKey: LangKey = displayLanguage ?? (isInternationalEnglishContext(engineeringContext)
     ? "en"
-    : locale;
+    : locale);
   const L = LABELS[langKey];
 
   // Bruk ref for callbacks slik at streamAgent ikkje må re-startast ved
   // foreldre-re-render. Vi bind nyaste callback inn ved kvar call.
   const onCompleteRef = useRef(onComplete);
   const onErrorRef = useRef(onError);
+  const completeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     onCompleteRef.current = onComplete;
     onErrorRef.current = onError;
@@ -215,7 +218,10 @@ export function RapportLoadingPilelinja({
           setPhase("finalizing");
           // Liten delay slik at use ser steg 4 vise seg kort
           // før navigering. Føles meir kontrollert enn brå hopp.
-          setTimeout(() => {
+          if (completeTimeoutRef.current) {
+            clearTimeout(completeTimeoutRef.current);
+          }
+          completeTimeoutRef.current = setTimeout(() => {
             onCompleteRef.current(data);
           }, 400);
         },
@@ -226,7 +232,13 @@ export function RapportLoadingPilelinja({
       abortController.signal,
     );
 
-    return () => abortController.abort();
+    return () => {
+      abortController.abort();
+      if (completeTimeoutRef.current) {
+        clearTimeout(completeTimeoutRef.current);
+        completeTimeoutRef.current = null;
+      }
+    };
   }, [runId, locale, engineeringContext, engineeringContextLoaded]);
 
   const activeStep = PHASE_TO_STEP[phase];
