@@ -231,6 +231,10 @@ describe("report model parity across report surfaces", () => {
     expect(pdfRoute).toContain("browser = await launchPdfBrowser()");
 
     expect(pdfBrowser).toContain('await loadPuppeteer(serverless ? "puppeteer-core" : "puppeteer")');
+    expect(pdfBrowser).toContain('await import("puppeteer-core")');
+    expect(pdfBrowser).toContain('await import("puppeteer")');
+    expect(pdfBrowser).not.toContain("const moduleName = packageName");
+    expect(pdfBrowser).toContain("PdfBrowserDependencyError:");
     expect(pdfBrowser).toContain('const moduleName = "@sparticuz/chromium"');
     expect(pdfBrowser).toContain('await defaultArgs({ args: chromiumArgs, headless: "shell" })');
     expect(pdfBrowser).toContain("executablePath: await chromium.executablePath()");
