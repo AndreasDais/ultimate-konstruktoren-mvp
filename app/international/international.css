@@ -67,6 +67,7 @@
 }
 .intl-cta {
   height: 42px;
+  min-height: 44px;
   padding: 0 20px;
   font-size: 14px;
 }
@@ -74,6 +75,12 @@
    config-boksen. Header-action, motsett av teksten. */
 .intl-hero__cta {
   flex-shrink: 0;
+}
+.intl-config__pilot {
+  display: none;
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
 }
 .arrow {
   display: inline-block;
@@ -550,6 +557,7 @@
 }
 .intl-fb__link {
   width: fit-content;
+  min-height: 44px;
 }
 
 /* === FEEDBACK MODAL ====================================== */
@@ -626,6 +634,7 @@
 .intl-modal__field input,
 .intl-modal__field textarea {
   width: 100%;
+  min-height: 44px;
   padding: 8px 10px;
   border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
@@ -644,14 +653,17 @@
   gap: 10px;
   margin-top: 4px;
 }
+.intl-modal__actions .uk-btn {
+  min-height: 44px;
+}
 
 /* === SCROLL-REVEAL + SWAP/FLIP ============================ */
 .intl .reveal {
   transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
 }
 .js-anim .intl .reveal {
-  opacity: 0;
-  transform: translateY(16px);
+  opacity: 1;
+  transform: none;
 }
 .intl .reveal.in {
   opacity: 1;
@@ -743,6 +755,12 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 18px;
+  }
+  .intl-hero__cta {
+    display: none;
+  }
+  .intl-config__pilot {
+    display: inline-flex;
   }
   .intl-grid {
     grid-template-columns: 1fr;

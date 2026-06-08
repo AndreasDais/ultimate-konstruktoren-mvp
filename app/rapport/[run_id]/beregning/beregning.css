@@ -256,6 +256,46 @@
   .beregning-title { font-size: 27px; }
   .beregning-meta,
   .beregning-grid { grid-template-columns: 1fr; }
+  .beregning-actions .uk-btn {
+    height: auto;
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .beregning-formula-item {
+    overflow-x: visible;
+  }
+
+  .beregning-formula-item .rapport-formula-scroll {
+    display: block;
+    overflow-x: visible;
+    overflow-y: visible;
+    max-width: 100%;
+  }
+
+  .beregning-formula-item .rapport-formula,
+  .beregning-formula-item .rapport-formula .katex-display,
+  .beregning-formula-item .rapport-formula .katex,
+  .beregning-formula-item .rapport-formula .katex-html,
+  .beregning-formula-item .rapport-formula .base {
+    max-width: 100%;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .beregning-formula-item .rapport-formula .katex-display {
+    font-size: clamp(0.82rem, 3.55vw, 0.96rem);
+  }
+
+  .beregning-formula-item .rapport-formula .base {
+    display: inline;
+  }
+
+  .beregning-formula-item .rapport-formula .mord.text {
+    white-space: normal !important;
+  }
 }
 
 /* ── FormulaStack-sentrering på beregning-sida ────────────────────────

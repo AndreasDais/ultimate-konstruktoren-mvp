@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useLocale } from "@/lib/locale-context";
 import Header, { type HeaderUiMode } from "./Header";
 
 /**
@@ -15,6 +17,7 @@ const MARKETING_ROUTES = new Set(["/heim", "/home"]);
 // of the pilar-ui-mode cookie. nb/nn routes (e.g. /vilkar) and the app keep
 // their cookie-driven mode.
 const ENGLISH_HEADER_ROUTES = new Set([
+  "/international",
   "/about",
   "/guide",
   "/safety",
@@ -30,9 +33,17 @@ export default function ConditionalAppHeader({
   uiMode: HeaderUiMode;
 }) {
   const pathname = usePathname();
-  if (MARKETING_ROUTES.has(pathname)) return null;
+  const { locale } = useLocale();
+  const isMarketingRoute = MARKETING_ROUTES.has(pathname);
   const effectiveUiMode: HeaderUiMode = ENGLISH_HEADER_ROUTES.has(pathname)
     ? "intl"
     : uiMode;
+
+  useEffect(() => {
+    if (isMarketingRoute) return;
+    document.documentElement.lang = effectiveUiMode === "intl" ? "en" : locale;
+  }, [effectiveUiMode, isMarketingRoute, locale]);
+
+  if (isMarketingRoute) return null;
   return <Header uiMode={effectiveUiMode} />;
 }

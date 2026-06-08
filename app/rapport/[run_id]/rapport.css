@@ -741,6 +741,26 @@
       max-width: none;
       padding: 2rem 1.5rem 3rem;
     }
+    .rapport-back-link {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 0;
+      margin-bottom: 16px;
+    }
+    .rapport-toc a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .rapport-actions .uk-btn,
+    .rapport-ordliste-trigger {
+      height: auto;
+      min-height: 44px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
   }
 
   /* === Manuell signatur-blokk på rapport-footer === */

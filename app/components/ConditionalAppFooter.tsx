@@ -70,7 +70,7 @@ export default function ConditionalAppFooter({
             <Link
               key={link.href}
               href={withFrom(link.href, origin)}
-              className="text-sm hover:underline"
+              className="uk-footer-link text-sm hover:underline"
               style={{ color: "var(--fg-muted)" }}
             >
               {link.label}
