@@ -125,7 +125,7 @@ describe("report save idempotency", () => {
 
     expect(page).toContain('fetch(`/api/runs/${runId}?mode=resume`,');
     expect(page).toContain("`/api/runs/${runId}?share=${encodeURIComponent(urlShareToken)}`");
-    expect(page).toContain('fetch(`/api/runs/${runId}`, { cache: "no-store" })');
+    expect(page).toContain("fetch(`/api/runs/${runId}`, readOptions)");
     expect(page).toContain("existingReportResponse(runData, ownerData)");
     expect(page).toContain("sourceMode: ownerData?.mode ?? data.mode ?? null");
     expect(page).toContain('data.sourceMode !== "public_report_snapshot"');
