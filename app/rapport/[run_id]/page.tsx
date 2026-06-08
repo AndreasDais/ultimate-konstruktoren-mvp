@@ -23,6 +23,8 @@ import "./rapport.css";
 import FeilrapportModal from "./feilrapport-modal";
 import { type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
+import type { EngineeringContext } from "@/lib/engineering-context";
+import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
 import { RapportLoadingPilelinja } from "./RapportLoadingPilelinja";
 import { PageStripe } from "./_components/PageStripe";
 import { ChapterHeading } from "./_components/ChapterHeading";
@@ -39,7 +41,13 @@ import {
 } from "@/lib/result/tile-heuristics";
 import { renderMathKey } from "@/lib/result/formula-extract";
 import { buildReportModel } from "@/lib/report/build-report-model";
-import { buildLocalizedLabelProxyForLanguage, inferReportDisplayLanguage, polishNorwegianRoleText } from "@/lib/international/display";
+import {
+  buildLocalizedLabelProxyForLanguage,
+  inferReportDisplayLanguage,
+  isInternationalEnglishContext,
+  polishNorwegianRoleText,
+  type PilarDisplayLanguage,
+} from "@/lib/international/display";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { appendShareToken, maskShareTokenForDisplay } from "@/lib/share-link";
 import { rememberSharedReportShortcut } from "@/lib/shared-report-shortcuts";
@@ -389,6 +397,34 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
 };
 
 
+const REPORT_CHROME_LABELS = {
+  generererRapport: {
+    nb: "Genererer rapport...",
+    nn: "Genererer rapport...",
+    en: "Generating report...",
+  },
+  kanTaTid: {
+    nb: "Kan ta 10–30 sekunder første gang rapporten genereres.",
+    nn: "Kan ta 10–30 sekund første gong rapporten genererast.",
+    en: "Can take 10-30 seconds the first time the report is generated.",
+  },
+  feilVedGenerering: {
+    nb: "Feil ved generering av rapport",
+    nn: "Feil ved generering av rapport",
+    en: "Report generation error",
+  },
+  tilbakeStart: {
+    nb: "Tilbake til start",
+    nn: "Tilbake til start",
+    en: "Back to start",
+  },
+  kunneIkkjeOpneDelt: {
+    nb: "Kunne ikke åpne delt rapport.",
+    nn: "Kunne ikkje opne delt rapport.",
+    en: "Could not open the shared report.",
+  },
+} satisfies Record<string, Record<PilarDisplayLanguage, string>>;
+
 import { QRCodeSVG } from "qrcode.react";
 import { TillitGauge } from "@/app/components/TillitGauge";
 import { CapacityScreening } from "@/app/components/result/CapacityScreening";
@@ -684,9 +720,26 @@ export default function RapportPage() {
   // at the sanitized shared flow instead of a naked /rapport/<id>.
   const [shareToken, setShareToken] = useState("");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  const reportChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(engineeringContext)
+    ? "en"
+    : locale;
+
+  useEffect(() => {
+    setEngineeringContext(loadEngineeringContextFromStorage());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const abortController = new AbortController();
+    const timeoutId = window.setTimeout(() => abortController.abort(), 30000);
+    const fetchChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(
+      loadEngineeringContextFromStorage(),
+    )
+      ? "en"
+      : locale;
+    const readOptions = { cache: "no-store" as const, signal: abortController.signal };
+
     setData(null);
     setError(null);
     setExistingReportChecked(false);
@@ -703,11 +756,11 @@ export default function RapportPage() {
         try {
           const sharedResponse = await fetch(
             `/api/runs/${runId}?share=${encodeURIComponent(urlShareToken)}`,
-            { cache: "no-store" },
+            readOptions,
           );
           if (!sharedResponse.ok) {
             if (!cancelled) {
-              setError(locale === "nn" ? "Kunne ikkje opne delt rapport." : "Kunne ikke åpne delt rapport.");
+              setError(REPORT_CHROME_LABELS.kunneIkkjeOpneDelt[fetchChromeLanguage]);
               setExistingReportChecked(true);
             }
             return;
@@ -721,7 +774,7 @@ export default function RapportPage() {
           setExistingReportChecked(true);
         } catch {
           if (!cancelled) {
-            setError(locale === "nn" ? "Kunne ikkje opne delt rapport." : "Kunne ikke åpne delt rapport.");
+            setError(REPORT_CHROME_LABELS.kunneIkkjeOpneDelt[fetchChromeLanguage]);
             setExistingReportChecked(true);
           }
         }
@@ -730,9 +783,7 @@ export default function RapportPage() {
 
       let ownerData: RunReadResponse | null = null;
       try {
-        const ownerResponse = await fetch(`/api/runs/${runId}?mode=resume`, {
-          cache: "no-store",
-        });
+        const ownerResponse = await fetch(`/api/runs/${runId}?mode=resume`, readOptions);
         if (ownerResponse.ok) {
           ownerData = (await ownerResponse.json()) as RunReadResponse;
         }
@@ -748,7 +799,7 @@ export default function RapportPage() {
         try {
           const shareResponse = await fetch(`/api/runs/${runId}/share`, {
             method: "POST",
-            cache: "no-store",
+            ...readOptions,
           });
           if (shareResponse.ok) {
             const shareData = (await shareResponse.json()) as { token?: unknown };
@@ -762,7 +813,7 @@ export default function RapportPage() {
       }
 
       try {
-        const publicResponse = await fetch(`/api/runs/${runId}`, { cache: "no-store" });
+        const publicResponse = await fetch(`/api/runs/${runId}`, readOptions);
         const runData = publicResponse.ok
           ? ((await publicResponse.json()) as RunReadResponse)
           : null;
@@ -781,6 +832,8 @@ export default function RapportPage() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
+      abortController.abort();
     };
   }, [runId, locale]);
 
@@ -862,10 +915,10 @@ export default function RapportPage() {
   if (error) {
     return (
       <div className="rapport-loading">
-        <h1>{BASE_RP_LABELS.feilVedGenerering[locale]}</h1>
+        <h1>{REPORT_CHROME_LABELS.feilVedGenerering[reportChromeLanguage]}</h1>
         <p>{error}</p>
         <button onClick={() => router.push("/")} className="uk-btn">
-          {BASE_RP_LABELS.tilbakeStart[locale]}
+          {REPORT_CHROME_LABELS.tilbakeStart[reportChromeLanguage]}
         </button>
       </div>
     );
@@ -874,8 +927,8 @@ export default function RapportPage() {
   if (!data && !existingReportChecked) {
     return (
       <div className="rapport-loading">
-        <h1>{BASE_RP_LABELS.generererRapport[locale]}</h1>
-        <p>{BASE_RP_LABELS.kanTaTid[locale]}</p>
+        <h1>{REPORT_CHROME_LABELS.generererRapport[reportChromeLanguage]}</h1>
+        <p>{REPORT_CHROME_LABELS.kanTaTid[reportChromeLanguage]}</p>
       </div>
     );
   }
@@ -885,6 +938,7 @@ export default function RapportPage() {
       <RapportLoadingPilelinja
         runId={runId}
         locale={locale}
+        displayLanguage={reportChromeLanguage}
         onComplete={(responseData: Record<string, unknown>) =>
           setData(responseData as unknown as FullReportResponse)
         }

@@ -161,6 +161,7 @@ export default function CalculationSheetPage() {
       <RapportLoadingPilelinja
         runId={runId}
         locale={locale}
+        displayLanguage={displayLanguage}
         onComplete={(responseData: Record<string, unknown>) => setData(responseData as unknown as UpstreamReportData)}
         onError={(message: string) => setError(message)}
       />
