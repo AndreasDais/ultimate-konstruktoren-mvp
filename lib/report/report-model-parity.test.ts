@@ -222,8 +222,11 @@ describe("report model parity across report surfaces", () => {
     expect(pdfRoute).toContain('"Content-Disposition": `attachment; filename="${filename}.pdf"`');
     expect(pdfRoute).toContain("browser = await launchPdfBrowser()");
 
+    expect(pdfBrowser).toContain('await loadPuppeteer(serverless ? "puppeteer-core" : "puppeteer")');
     expect(pdfBrowser).toContain('const moduleName = "@sparticuz/chromium"');
-    expect(pdfBrowser).toContain("const executablePath = await chromium.executablePath()");
+    expect(pdfBrowser).toContain('await defaultArgs({ args: chromiumArgs, headless: "shell" })');
+    expect(pdfBrowser).toContain("executablePath: await chromium.executablePath()");
+    expect(pdfBrowser).toContain('headless: "shell"');
     expect(pdfBrowser).toContain("process.env.VERCEL");
   });
 
