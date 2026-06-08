@@ -206,6 +206,9 @@ describe("report model parity across report surfaces", () => {
     expect(nextConfig).toContain("serverExternalPackages");
     expect(nextConfig).toContain('"@sparticuz/chromium"');
     expect(nextConfig).toContain('"puppeteer-core"');
+    expect(nextConfig).toContain("outputFileTracingIncludes");
+    expect(nextConfig).toContain('"/api/rapport/**/*"');
+    expect(nextConfig).toContain('"./node_modules/@sparticuz/chromium/bin/**/*"');
 
     expect(page).toContain(
       "const pdfUrl = appendShareToken(`/api/rapport/${runId}/pdf`, shareToken)",
@@ -232,6 +235,10 @@ describe("report model parity across report surfaces", () => {
     expect(pdfBrowser).toContain('await defaultArgs({ args: chromiumArgs, headless: "shell" })');
     expect(pdfBrowser).toContain("executablePath: await chromium.executablePath()");
     expect(pdfBrowser).toContain('headless: "shell"');
+    expect(pdfBrowser).toContain("function classifyLaunchError");
+    expect(pdfBrowser).toContain("chromium_bin_missing");
+    expect(pdfBrowser).toContain("browser_spawn_enoent");
+    expect(pdfBrowser).toContain("PdfBrowserLaunchError:");
     expect(pdfBrowser).toContain("process.env.VERCEL");
   });
 

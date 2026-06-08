@@ -58,6 +58,23 @@ async function loadServerlessChromium(): Promise<ChromiumRuntime> {
   return chromiumModule.default ?? chromiumModule;
 }
 
+function classifyLaunchError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/input directory.+does not exist/i.test(message)) return "chromium_bin_missing";
+  if (/spawn.+enoent/i.test(message)) return "browser_spawn_enoent";
+  if (/eacces|permission/i.test(message)) return "browser_permission";
+  if (/loading shared libraries|lib.+\.so/i.test(message)) return "browser_missing_library";
+  if (/executable/i.test(message)) return "browser_executable";
+  return "browser_launch_unknown";
+}
+
+function launchError(error: unknown): Error {
+  const code = classifyLaunchError(error);
+  const wrapped = new Error(`pdf_browser_launch_failed:${code}`);
+  wrapped.name = `PdfBrowserLaunchError:${code}`;
+  return wrapped;
+}
+
 export async function launchPdfBrowser(): Promise<PdfBrowser> {
   const serverless = isServerlessRuntime();
   const puppeteerModule = await loadPuppeteer(serverless ? "puppeteer-core" : "puppeteer");
@@ -67,18 +84,22 @@ export async function launchPdfBrowser(): Promise<PdfBrowser> {
   }
 
   if (serverless) {
-    const chromium = await loadServerlessChromium();
-    const defaultArgs = puppeteerModule.default?.defaultArgs ?? puppeteerModule.defaultArgs;
-    const chromiumArgs = chromium.args ?? [];
-    const args = defaultArgs
-      ? await defaultArgs({ args: chromiumArgs, headless: "shell" })
-      : chromiumArgs;
+    try {
+      const chromium = await loadServerlessChromium();
+      const defaultArgs = puppeteerModule.default?.defaultArgs ?? puppeteerModule.defaultArgs;
+      const chromiumArgs = chromium.args ?? [];
+      const args = defaultArgs
+        ? await defaultArgs({ args: chromiumArgs, headless: "shell" })
+        : chromiumArgs;
 
-    return launcher({
-      args,
-      executablePath: await chromium.executablePath(),
-      headless: "shell",
-    });
+      return await launcher({
+        args,
+        executablePath: await chromium.executablePath(),
+        headless: "shell",
+      });
+    } catch (error) {
+      throw launchError(error);
+    }
   }
 
   return launcher({

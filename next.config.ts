@@ -40,6 +40,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  outputFileTracingIncludes: {
+    "/api/rapport/**/*": ["./node_modules/@sparticuz/chromium/bin/**/*"],
+  },
   turbopack: {
     root: process.cwd(),
   },
