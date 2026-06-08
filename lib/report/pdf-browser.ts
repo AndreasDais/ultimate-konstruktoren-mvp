@@ -34,13 +34,14 @@ export type PdfPage = {
 
 async function loadPuppeteer(packageName: "puppeteer" | "puppeteer-core"): Promise<PuppeteerModule> {
   try {
-    const moduleName = packageName;
-    return (await import(moduleName)) as PuppeteerModule;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `PDF-motoren manglar. Installer ${packageName} først. Detalj: ${message}`,
-    );
+    if (packageName === "puppeteer-core") {
+      return (await import("puppeteer-core")) as PuppeteerModule;
+    }
+    return (await import("puppeteer")) as PuppeteerModule;
+  } catch {
+    const wrapped = new Error(`pdf_browser_dependency_missing:${packageName}`);
+    wrapped.name = `PdfBrowserDependencyError:${packageName}`;
+    throw wrapped;
   }
 }
 
