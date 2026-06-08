@@ -1820,6 +1820,7 @@ useEffect(() => {
                 <input ref={fileInputRef} type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFileSelect} style={{ display: "none" }} id="file-upload-input" />
                 <button
                   type="button"
+                  className="uk-upload-support-button"
                   onClick={() => fileInputRef.current?.click()}
                   aria-label={WB_LABELS.lastOppFil[locale]}
                   style={{
@@ -1857,7 +1858,7 @@ useEffect(() => {
                     <span aria-hidden="true">📎</span>
                     <span style={{ fontWeight: 500 }}>{selectedFile.name}</span>
                     <span style={{ color: "var(--fg-muted, #94A3B8)" }}>({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                    <button type="button" onClick={clearFile} aria-label={WB_LABELS.fjernFil[locale]} style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
+                    <button type="button" className="uk-file-remove-button" onClick={clearFile} aria-label={WB_LABELS.fjernFil[locale]} style={{ marginLeft: 4, padding: "0 6px", fontSize: 16, lineHeight: 1, color: "var(--fg-muted, #94A3B8)", background: "transparent", border: "none", cursor: "pointer" }}>×</button>
                   </div>
                 )}
                 {/* Eksempel-kollaps-lenke (#07) — synleg når eksempla er kollapsa */}

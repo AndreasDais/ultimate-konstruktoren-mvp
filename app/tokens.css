@@ -835,6 +835,16 @@
       min-width: 44px;
       padding: 0 12px;
     }
+    .uk-upload-support-button {
+      min-height: 44px;
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+    .uk-file-remove-button {
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+    }
   }
   
   @media (max-width: 480px) {
