@@ -183,18 +183,26 @@ describe("report model parity across report surfaces", () => {
 
   it("keeps full Word export rendering the canonical ReportModel", () => {
     const source = readSource("app/api/rapport/[run_id]/word/route.ts");
+    const exportShare = readSource("app/api/rapport/[run_id]/export-share.ts");
 
     expect(source).toContain(
       'from "@/lib/report/build-report-model"',
     );
-    expect(source).toContain('import { appendShareToken } from "@/lib/share-link"');
-    expect(source).toContain("const shareToken = request.nextUrl.searchParams.get(\"share\") ?? \"\"");
-    expect(source).toContain("fetch(`${origin}/api/runs/${runId}?share=${encodeURIComponent(shareToken)}`");
-    expect(source).toContain("const reportUrl = appendShareToken(`${origin}/rapport/${run_id}`, shareToken)");
+    expect(source).toContain('import { reportUrlForExport, resolveExportShareToken } from "../export-share"');
+    expect(source).toContain("const share = await resolveExportShareToken({ request, runId: run_id, cookieHeader })");
+    expect(source).toContain('shareSource: "query" | "owner_minted" | "none"');
+    expect(source).toContain("if (shareToken && shareSource === \"query\")");
+    expect(source).toContain("const reportUrl = reportUrlForExport(origin, run_id, share.token)");
     expect(source).toContain("const model = buildReportModel(");
     expect(source).toContain("validateReportModel(model)");
     expect(source).toContain("renderReportModelDocx(model");
     expect(source).toContain("model.meta.documentId");
+    expect(exportShare).toContain("request.nextUrl.searchParams.get(\"share\") ?? \"\"");
+    expect(exportShare).toContain("`${options.request.nextUrl.origin}/api/runs/${options.runId}/share`");
+    expect(exportShare).toContain("method: \"POST\"");
+    expect(exportShare).toContain("Cookie: options.cookieHeader");
+    expect(exportShare).toContain("appendShareToken(`${origin}/rapport/${runId}`, shareToken)");
+    expect(exportShare).not.toContain("console.log");
   });
 
   it("keeps full PDF export as an actual attachment download", () => {
@@ -226,10 +234,10 @@ describe("report model parity across report surfaces", () => {
     expect(reportCss).toContain("orphans: 3");
     expect(reportCss).toContain("widows: 3");
 
-    expect(pdfRoute).toContain("function reportPageUrl(request: NextRequest, runId: string): string");
     expect(pdfRoute).toContain('import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";');
-    expect(pdfRoute).toContain('url.searchParams.set("share", shareToken)');
-    expect(pdfRoute).toContain("await page.goto(reportPageUrl(request, run_id)");
+    expect(pdfRoute).toContain('import { reportUrlForExport, resolveExportShareToken } from "../export-share"');
+    expect(pdfRoute).toContain("const share = await resolveExportShareToken({ request, runId: run_id, cookieHeader })");
+    expect(pdfRoute).toContain("await page.goto(reportUrlForExport(request.nextUrl.origin, run_id, share.token)");
     expect(pdfRoute).toContain("await page.waitForSelector('[data-report-ready=\"true\"]'");
     expect(pdfRoute).toContain("document.documentElement.dataset.pilarExport = \"pdf\"");
     expect(pdfRoute).toContain("page.pdf({");
@@ -365,6 +373,15 @@ describe("report model parity across report surfaces", () => {
     }
 
     expect(page).toContain("renderCalculationSheetLatex(calculationSheet)");
+    for (const [name, source] of [
+      ["calculation Word export", word],
+      ["calculation LaTeX export", latex],
+      ["calculation PDF export", pdf],
+    ] as const) {
+      expect(source, `${name} carries share-aware report URLs into the sheet`).toContain(
+        "reportUrlForExport(origin, run_id, share.token)",
+      );
+    }
     expect(word).toContain("renderCalculationSheetDocx(sheet)");
     expect(latex).toContain("renderCalculationSheetLatex(sheet");
     expect(pdf).toContain("renderCalculationSheetHtml(sheet)");

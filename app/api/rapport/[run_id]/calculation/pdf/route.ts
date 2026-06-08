@@ -5,6 +5,7 @@ import { buildReportModel, type UpstreamReportData } from "@/lib/report/build-re
 import { buildCalculationSheetModel, type CalculationSheetModel } from "@/lib/report/calculation-sheet-model";
 import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";
 import { validateReportModel } from "@/lib/report/validate-report-model";
+import { reportUrlForExport, resolveExportShareToken } from "../../export-share";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -307,16 +308,23 @@ export async function GET(
     const locale = getLocaleFromCookies(await cookies());
     const origin = request.nextUrl.origin;
     const cookieHeader = request.headers.get("cookie") ?? "";
+    const share = await resolveExportShareToken({ request, runId: run_id, cookieHeader });
 
     stage = "fetch_agent_e";
-    const agentERes = await fetch(`${origin}/api/agent-e`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ run_id, locale }),
-    });
+    const agentERes = share.token && share.source === "query"
+      ? await fetch(`${origin}/api/runs/${run_id}?share=${encodeURIComponent(share.token)}`, {
+          headers: {
+            ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+          },
+        })
+      : await fetch(`${origin}/api/agent-e`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+          },
+          body: JSON.stringify({ run_id, locale }),
+        });
 
     if (!agentERes.ok) {
       return NextResponse.json(
@@ -329,7 +337,7 @@ export async function GET(
     const upstream: UpstreamReportData = await agentERes.json();
 
     stage = "build_models";
-    const reportUrl = `${origin}/rapport/${run_id}`;
+    const reportUrl = reportUrlForExport(origin, run_id, share.token);
     const reportModel = buildReportModel(upstream, {
       locale,
       reportUrl,

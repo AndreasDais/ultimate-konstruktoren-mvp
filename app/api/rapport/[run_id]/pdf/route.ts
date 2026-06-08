@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { launchPdfBrowser, type PdfBrowser } from "@/lib/report/pdf-browser";
+import { reportUrlForExport, resolveExportShareToken } from "../export-share";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,15 +11,6 @@ function safeFilename(value: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 120);
-}
-
-function reportPageUrl(request: NextRequest, runId: string): string {
-  const url = new URL(`/rapport/${runId}`, request.nextUrl.origin);
-  const shareToken = request.nextUrl.searchParams.get("share");
-  if (shareToken) {
-    url.searchParams.set("share", shareToken);
-  }
-  return url.toString();
 }
 
 export async function GET(
@@ -42,13 +34,14 @@ export async function GET(
     stage = "open_page";
     const page = await browser.newPage();
     const cookieHeader = request.headers.get("cookie") ?? "";
+    const share = await resolveExportShareToken({ request, runId: run_id, cookieHeader });
     if (cookieHeader) {
       await page.setExtraHTTPHeaders({ Cookie: cookieHeader });
     }
     await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 1 });
 
     stage = "navigate_report";
-    await page.goto(reportPageUrl(request, run_id), {
+    await page.goto(reportUrlForExport(request.nextUrl.origin, run_id, share.token), {
       waitUntil: "domcontentloaded",
       timeout: 45_000,
     });
@@ -87,6 +80,7 @@ export async function GET(
     console.log("Report PDF export: success", {
       run_id,
       document_id: documentId || null,
+      share_source: share.source,
       elapsed_ms: Date.now() - requestStart,
       size_bytes: pdf.length,
     });

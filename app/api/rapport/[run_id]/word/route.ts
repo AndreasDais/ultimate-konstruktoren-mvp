@@ -8,7 +8,7 @@ import {
 } from "@/lib/report/build-report-model";
 import { validateReportModel } from "@/lib/report/validate-report-model";
 import { renderReportModelDocx } from "@/lib/report/render-docx";
-import { appendShareToken } from "@/lib/share-link";
+import { reportUrlForExport, resolveExportShareToken } from "../export-share";
 
 const ERROR_LABELS = {
   nb: {
@@ -35,10 +35,11 @@ async function fetchUpstreamReportData(options: {
   locale: string;
   cookieHeader: string;
   shareToken: string;
+  shareSource: "query" | "owner_minted" | "none";
 }): Promise<Response> {
-  const { origin, runId, locale, cookieHeader, shareToken } = options;
+  const { origin, runId, locale, cookieHeader, shareToken, shareSource } = options;
 
-  if (shareToken) {
+  if (shareToken && shareSource === "query") {
     return fetch(`${origin}/api/runs/${runId}?share=${encodeURIComponent(shareToken)}`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
@@ -75,14 +76,15 @@ export async function GET(
     stage = "fetch_report_data";
     const origin = request.nextUrl.origin;
     const cookieHeader = request.headers.get("cookie") ?? "";
-    const shareToken = request.nextUrl.searchParams.get("share") ?? "";
+    const share = await resolveExportShareToken({ request, runId: run_id, cookieHeader });
 
     const agentERes = await fetchUpstreamReportData({
       origin,
       runId: run_id,
       locale,
       cookieHeader,
-      shareToken,
+      shareToken: share.token,
+      shareSource: share.source,
     });
 
     if (!agentERes.ok) {
@@ -101,7 +103,7 @@ export async function GET(
     const upstream: UpstreamReportData = await agentERes.json();
 
     stage = "build_report_model";
-    const reportUrl = appendShareToken(`${origin}/rapport/${run_id}`, shareToken);
+    const reportUrl = reportUrlForExport(origin, run_id, share.token);
     const model = buildReportModel(upstream, {
       locale,
       reportUrl,
@@ -132,6 +134,7 @@ export async function GET(
     console.log("Word export: success", {
       run_id,
       document_id: model.meta.documentId,
+      share_source: share.source,
       elapsed_ms: Date.now() - requestStart,
       size_bytes: body.length,
     });
