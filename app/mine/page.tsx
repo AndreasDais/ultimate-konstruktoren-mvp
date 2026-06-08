@@ -4,7 +4,6 @@ import { getLocaleFromCookies } from "@/lib/locale";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabase } from "@/lib/supabase";
 import { sweepOrphanRuns } from "@/lib/calculation-runs/sweep-orphans";
-import Link from "next/link";
 import { MineList, type MineRow } from "./MineList";
 
 // Tving server-rendring per request — sessions må sjekkast på hver hit.
@@ -275,7 +274,6 @@ async function getUserCalculations(userId: string, langKey: LangKey): Promise<Mi
     (b.date ?? "").localeCompare(a.date ?? "")
   );
 }
-
 // === SIDE ===
 export default async function MinePage() {
   const cookieStore = await cookies();
@@ -312,28 +310,8 @@ export default async function MinePage() {
           </p>
         </div>
 
-        {rows.length === 0 ? (
-          <EmptyState langKey={langKey} />
-        ) : (
-          <MineList rows={rows} displayLanguage={langKey} />
-        )}
+        <MineList rows={rows} displayLanguage={langKey} />
       </div>
     </main>
-  );
-}
-
-function EmptyState({ langKey }: { langKey: LangKey }) {
-  return (
-    <div className="rounded-lg border border-dashed p-10 text-center" style={{ borderColor: "var(--border-2)", background: "var(--surface-2)" }}>
-      <p className="font-medium mb-1" style={{ color: "var(--fg-2)" }}>
-        {MINE_LABELS.ingenBerekningar[langKey]}
-      </p>
-      <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
-        {MINE_LABELS.narDuStartar[langKey]}
-      </p>
-      <Link href="/" className="uk-btn uk-btn--primary">
-        {MINE_LABELS.startEiBerekning[langKey]}
-      </Link>
-    </div>
   );
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { InfoPopover } from "@/app/components/InfoPopover";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
+import { loadSharedReportShortcuts } from "@/lib/shared-report-shortcuts";
 
 // === DELT TYPE — speilar serverdefinert MineRow i page.tsx ===
 export type MineRow = {
   key: string;
   title: string;
   date: string | null;
-  phase: "workbench" | "mission_control" | "rapport";
+  phase: "workbench" | "mission_control" | "rapport" | "shared";
   href: string | null;
   pipelineHref: string | null;
   tillit: number | null;
@@ -25,6 +26,7 @@ const PHASE_COLORS: Record<MineRow["phase"], CSSProperties> = {
   workbench: { background: "var(--warn-bg)", color: "var(--warn)", borderColor: "var(--warn-border)" },
   mission_control: { background: "var(--info-bg)", color: "var(--info)", borderColor: "var(--info-border)" },
   rapport: { background: "var(--ok-bg)", color: "var(--ok)", borderColor: "var(--ok-border)" },
+  shared: { background: "var(--surface-2)", color: "var(--fg-2)", borderColor: "var(--border-2)" },
 };
 
 type PhaseLabelInfo = { label: string; explanation: string };
@@ -47,6 +49,11 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       explanation:
         "Ferdig beregningsnotat. Åpne rapporten eller se en sanitert pipeline-review.",
     },
+    shared: {
+      label: "Delt",
+      explanation:
+        "Rapporter du har åpnet via en delelenke i denne nettleseren.",
+    },
   },
   nn: {
     workbench: {
@@ -64,6 +71,11 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       explanation:
         "Ferdig berekningsnotat. Opne rapporten eller sjå ein sanitert pipeline-review.",
     },
+    shared: {
+      label: "Delt",
+      explanation:
+        "Rapportar du har opna via ei delelenkje i denne nettlesaren.",
+    },
   },
   en: {
     workbench: {
@@ -80,6 +92,11 @@ const PHASE_LABELS_BY_LANG: Record<LangKey, Record<MineRow["phase"], PhaseLabelI
       label: "Report",
       explanation:
         "Completed calculation note. Open the report or inspect a sanitized pipeline review.",
+    },
+    shared: {
+      label: "Shared",
+      explanation:
+        "Reports you have opened from a share link in this browser.",
     },
   },
 };
@@ -119,9 +136,25 @@ const ML_LABELS: Record<string, Record<LangKey, string>> = {
     en: "Open Mission Control",
   },
   openWorkbench: { nb: "Åpne Workbench", nn: "Opne Workbench", en: "Open Workbench" },
+  openSharedReport: { nb: "Åpne delt rapport", nn: "Opne delt rapport", en: "Open shared report" },
   pipelineReview: { nb: "Pipeline-review", nn: "Pipeline-review", en: "Pipeline review" },
   noReportYet: { nb: "Ingen rapport ennå", nn: "Ingen rapport enno", en: "No report yet" },
   processing: { nb: "Behandles fortsatt", nn: "Blir framleis behandla", en: "Still processing" },
+  ingenBerekningar: {
+    nb: "Ingen beregninger ennå",
+    nn: "Ingen berekningar enno",
+    en: "No calculations yet",
+  },
+  narDuStartar: {
+    nb: "Når du starter din første beregning, dukker den opp her.",
+    nn: "Når du startar di første berekning, dukkar ho opp her.",
+    en: "When you start your first calculation, it will appear here.",
+  },
+  startEiBerekning: {
+    nb: "Start en beregning →",
+    nn: "Start ei berekning →",
+    en: "Start a calculation →",
+  },
 };
 
 // Vis-rekkjefølge — pipeline-orden.
@@ -129,6 +162,7 @@ const PHASE_ORDER: MineRow["phase"][] = [
   "workbench",
   "mission_control",
   "rapport",
+  "shared",
 ];
 
 function formatDate(iso: string | null, langKey: LangKey): string {
@@ -161,29 +195,54 @@ export function MineList({
   const { locale } = useLocale();
   const langKey: LangKey = displayLanguage ?? locale;
   const [search, setSearch] = useState("");
+  const [sharedRows, setSharedRows] = useState<MineRow[]>([]);
   // Folde-state per fase. Default: alle opne.
   const [collapsed, setCollapsed] = useState<Record<MineRow["phase"], boolean>>(
     {
       workbench: false,
       mission_control: false,
       rapport: false,
+      shared: false,
     }
   );
+
+  useEffect(() => {
+    const load = () => {
+      setSharedRows(
+        loadSharedReportShortcuts().map((row) => ({
+          key: `shared-${row.runId}`,
+          title: row.title,
+          date: row.date ?? row.savedAt,
+          phase: "shared" as const,
+          href: row.href,
+          pipelineHref: null,
+          tillit: null,
+          documentId: row.documentId,
+        })),
+      );
+    };
+    load();
+    window.addEventListener("storage", load);
+    return () => window.removeEventListener("storage", load);
+  }, []);
 
   function toggle(phase: MineRow["phase"]) {
     setCollapsed((prev) => ({ ...prev, [phase]: !prev[phase] }));
   }
 
+  const hasAnyRows = rows.length > 0 || sharedRows.length > 0;
+
   // Filtrer på søk (title + document_id, case-insensitive)
   const filteredRows = useMemo(() => {
+    const allRows = [...rows, ...sharedRows];
     const q = search.toLowerCase().trim();
-    if (!q) return rows;
-    return rows.filter(
+    if (!q) return allRows;
+    return allRows.filter(
       (r) =>
         r.title.toLowerCase().includes(q) ||
         (r.documentId?.toLowerCase().includes(q) ?? false)
     );
-  }, [search, rows]);
+  }, [search, rows, sharedRows]);
 
   // Grupper på fase
   const grouped = useMemo(() => {
@@ -191,6 +250,7 @@ export function MineList({
       workbench: [],
       mission_control: [],
       rapport: [],
+      shared: [],
     };
     for (const row of filteredRows) {
       out[row.phase].push(row);
@@ -213,7 +273,22 @@ export function MineList({
         />
       </div>
 
-      {filteredRows.length === 0 ? (
+      {!hasAnyRows && !search ? (
+        <div
+          className="rounded-lg border border-dashed p-10 text-center"
+          style={{ borderColor: "var(--border-2)", background: "var(--surface-2)" }}
+        >
+          <p className="font-medium mb-1" style={{ color: "var(--fg-2)" }}>
+            {ML_LABELS.ingenBerekningar[langKey]}
+          </p>
+          <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
+            {ML_LABELS.narDuStartar[langKey]}
+          </p>
+          <Link href="/" className="uk-btn uk-btn--primary">
+            {ML_LABELS.startEiBerekning[langKey]}
+          </Link>
+        </div>
+      ) : filteredRows.length === 0 ? (
         <p
           className="rounded-lg border border-dashed p-6 text-center text-sm"
           style={{ borderColor: "var(--border-2)", background: "var(--surface-2)", color: "var(--fg-muted)" }}
@@ -296,6 +371,8 @@ function CalculationCard({ row, langKey }: { row: MineRow; langKey: LangKey }) {
   const primaryActionLabel =
     row.phase === "rapport"
       ? ML_LABELS.openReport[langKey]
+      : row.phase === "shared"
+        ? ML_LABELS.openSharedReport[langKey]
       : row.phase === "mission_control"
         ? ML_LABELS.openMissionControl[langKey]
         : ML_LABELS.openWorkbench[langKey];
