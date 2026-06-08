@@ -256,6 +256,12 @@
   .beregning-title { font-size: 27px; }
   .beregning-meta,
   .beregning-grid { grid-template-columns: 1fr; }
+  .beregning-actions .uk-btn {
+    height: auto;
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 
   .beregning-formula-item {
     overflow-x: visible;

@@ -634,6 +634,7 @@
 .intl-modal__field input,
 .intl-modal__field textarea {
   width: 100%;
+  min-height: 44px;
   padding: 8px 10px;
   border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
@@ -651,6 +652,9 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 4px;
+}
+.intl-modal__actions .uk-btn {
+  min-height: 44px;
 }
 
 /* === SCROLL-REVEAL + SWAP/FLIP ============================ */

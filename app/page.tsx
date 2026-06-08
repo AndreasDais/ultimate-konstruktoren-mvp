@@ -16,7 +16,10 @@ import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import type { EngineeringContext } from "@/lib/engineering-context";
 import { loadEngineeringContextFromStorage } from "@/lib/engineering-context/client";
-import { buildLocalizedLabelProxy, displayLanguageForContext } from "@/lib/international/display";
+import {
+  buildLocalizedLabelProxyForLanguage,
+  displayLanguageForContext,
+} from "@/lib/international/display";
 import {
   type CalculationStep,
   type CalculationResult,
@@ -114,6 +117,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+type WorkbenchUiMode = "no" | "intl";
+
+function readWorkbenchUiModeCookie(): WorkbenchUiMode | null {
+  if (typeof document === "undefined") return null;
+
+  const value = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("pilar-ui-mode="))
+    ?.split("=")[1];
+
+  return value === "intl" || value === "no" ? value : null;
+}
+
 // A live SSE stream cannot resume after the user navigates away (the fetch is
 // aborted on unmount). When restoring an interrupted run, settle a still-running
 // agent into a calm, non-error state — keep the steps it had already shown, but
@@ -128,7 +144,10 @@ function settleInterruptedStreamingState(state: AgentStreamingState): AgentStrea
 export default function Home() {
   const { locale } = useLocale();
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
-  const WB_LABELS = buildLocalizedLabelProxy(BASE_WB_LABELS, locale, engineeringContext, {
+  const [uiMode, setUiMode] = useState<WorkbenchUiMode | null>(null);
+  const pageDisplayLanguage =
+    uiMode === "intl" ? "en" : displayLanguageForContext(locale, engineeringContext);
+  const WB_LABELS = buildLocalizedLabelProxyForLanguage(BASE_WB_LABELS, locale, pageDisplayLanguage, {
     skrivInnOppgave: "Describe a structural engineering task",
     placeholderEksempel: "For example: Evaluate a simply supported W12x26 steel beam with L = 20 ft, D = 0.45 kip/ft and L = 0.80 kip/ft...",
     lastOppFil: "Upload file",
@@ -257,10 +276,15 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
-    setEngineeringContext(loadEngineeringContextFromStorage());
+    const refreshDisplayContext = () => {
+      setEngineeringContext(loadEngineeringContextFromStorage());
+      setUiMode(readWorkbenchUiModeCookie());
+    };
+
+    refreshDisplayContext();
 
     const handleFocus = () => {
-      setEngineeringContext(loadEngineeringContextFromStorage());
+      refreshDisplayContext();
     };
 
     window.addEventListener("focus", handleFocus);
@@ -1323,7 +1347,6 @@ useEffect(() => {
     );
   };
 
-  const pageDisplayLanguage = displayLanguageForContext(locale, engineeringContext);
   const englishPhaseHeaders: Record<Phase, { eyebrow: string; title: string; description: string }> = {
     workbench: {
       eyebrow: "NEW CALCULATION",
