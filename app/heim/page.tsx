@@ -5,7 +5,30 @@ import "./heim.css";
 
 export const metadata: Metadata = {
   title: "Pilar — AI-konstruksjonsassistent",
-  description: "AI-basert konstruksjonsassistent. Skriv et konstruksjonsproblem, faa en kontrollert beregning.",
+  description:
+    "AI-basert konstruksjonsassistent. Skriv et konstruksjonsproblem, få en kontrollert beregning klar for faglig gjennomgang.",
+  alternates: {
+    canonical: "/heim",
+    languages: {
+      "nb-NO": "/heim",
+      en: "/home",
+    },
+  },
+  openGraph: {
+    title: "Pilar — AI-konstruksjonsassistent",
+    description:
+      "Skriv et konstruksjonsproblem og få en kontrollert AI-beregning klar for faglig gjennomgang.",
+    url: "/heim",
+    siteName: "Pilar",
+    type: "website",
+    locale: "nb_NO",
+  },
+  twitter: {
+    card: "summary",
+    title: "Pilar — AI-konstruksjonsassistent",
+    description:
+      "Skriv et konstruksjonsproblem og få en kontrollert AI-beregning klar for faglig gjennomgang.",
+  },
 };
 
 type Lang = "nb" | "en";

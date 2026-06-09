@@ -6,6 +6,28 @@ export const metadata: Metadata = {
   title: "Pilar — AI Structural Assistant",
   description:
     "Describe a structural problem and get a checked calculation, ready for professional review.",
+  alternates: {
+    canonical: "/home",
+    languages: {
+      en: "/home",
+      "nb-NO": "/heim",
+    },
+  },
+  openGraph: {
+    title: "Pilar — AI Structural Assistant",
+    description:
+      "Describe a structural problem and get a checked calculation, ready for professional review.",
+    url: "/home",
+    siteName: "Pilar",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Pilar — AI Structural Assistant",
+    description:
+      "Describe a structural problem and get a checked calculation, ready for professional review.",
+  },
 };
 
 // English canonical landing. Reuses the marketing landing surface (HeimClient)
