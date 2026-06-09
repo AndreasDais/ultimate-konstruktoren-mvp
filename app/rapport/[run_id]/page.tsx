@@ -379,7 +379,7 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
   sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
-  bugfixTool: { nb: "Bugfix", nn: "Bugfix" },
+  bugfixTool: { nb: "Meld fra", nn: "Meld frå" },
   bugfixToolAria: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
   giPilotFeedback: { nb: "Gi tilbakemelding på piloten", nn: "Gi tilbakemelding på piloten" },
   // Kontrollstatus-panel
@@ -706,6 +706,13 @@ function normalizeAgentOutput(
   };
 }
 
+function isInternationalUiModeCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === "pilar-ui-mode=intl");
+}
+
 export default function RapportPage() {
   const { locale } = useLocale();
   const params = useParams();
@@ -724,7 +731,8 @@ export default function RapportPage() {
   const [shareToken, setShareToken] = useState("");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
-  const reportChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(engineeringContext)
+  const [isInternationalUiMode, setIsInternationalUiMode] = useState(false);
+  const reportChromeLanguage: PilarDisplayLanguage = isInternationalUiMode || isInternationalEnglishContext(engineeringContext)
     ? "en"
     : locale;
 
@@ -734,6 +742,7 @@ export default function RapportPage() {
   }
 
   useEffect(() => {
+    setIsInternationalUiMode(isInternationalUiModeCookie());
     setEngineeringContext(loadEngineeringContextFromStorage());
   }, []);
 
@@ -741,9 +750,8 @@ export default function RapportPage() {
     let cancelled = false;
     const abortController = new AbortController();
     const timeoutId = window.setTimeout(() => abortController.abort(), 30000);
-    const fetchChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(
-      loadEngineeringContextFromStorage(),
-    )
+    const fetchChromeLanguage: PilarDisplayLanguage = isInternationalUiModeCookie() ||
+      isInternationalEnglishContext(loadEngineeringContextFromStorage())
       ? "en"
       : locale;
     const readOptions = { cache: "no-store" as const, signal: abortController.signal };
@@ -1075,8 +1083,8 @@ export default function RapportPage() {
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
     sendTilbakemelding: "Report an error",
-    bugfixTool: "Bugfix",
-    bugfixToolAria: "Report a bug in this report",
+    bugfixTool: "Report an issue",
+    bugfixToolAria: "Report an issue in this report",
     giPilotFeedback: "Give pilot feedback",
     kontrollstatus: "Control status",
     statusInputTolking: "Input interpretation",

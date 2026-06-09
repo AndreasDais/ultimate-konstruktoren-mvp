@@ -14,8 +14,8 @@ export default async function HeimPage() {
   const c = await cookies();
   const uiMode = c.get("pilar-ui-mode")?.value;
 
-  // To variantar: bokmaal (norsk-default) eller engelsk (intl).
-  const lang: Lang = uiMode === "intl" ? "en" : "nb";
+  // /heim er den norske inngangen. /home er den engelske/internasjonale flata.
+  const lang: Lang = "nb";
   // Modal viser berre naar brukaren ikkje har valt region enno.
   const hasRegionChoice = uiMode === "intl" || uiMode === "no";
 

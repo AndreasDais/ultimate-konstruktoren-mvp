@@ -145,16 +145,58 @@ const COPY: Record<LangKey, {
   },
 };
 
+function isInternationalUiModeCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === "pilar-ui-mode=intl");
+}
+
 export default function ReportFeedbackPage() {
   const { locale } = useLocale();
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
-  useEffect(() => {
-    setEngineeringContext(loadEngineeringContextFromStorage());
-  }, []);
-  const langKey: LangKey = isInternationalEnglishContext(engineeringContext) ? "en" : locale;
-  const T = COPY[langKey];
+  const [reportLanguage, setReportLanguage] = useState<LangKey | null>(null);
+  const [isInternationalUiMode, setIsInternationalUiMode] = useState(false);
   const params = useParams<{ run_id: string }>();
   const runId = params?.run_id ?? null;
+
+  useEffect(() => {
+    setIsInternationalUiMode(isInternationalUiModeCookie());
+    setEngineeringContext(loadEngineeringContextFromStorage());
+  }, []);
+
+  useEffect(() => {
+    if (!runId) return;
+    let cancelled = false;
+
+    async function loadReportLanguage() {
+      try {
+        const response = await fetch(`/api/runs/${encodeURIComponent(runId ?? "")}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json().catch(() => null)) as {
+          run?: { display_language?: unknown };
+        } | null;
+        const value = data?.run?.display_language;
+        if ((value === "nb" || value === "nn" || value === "en") && !cancelled) {
+          setReportLanguage(value);
+        }
+      } catch {
+        // Behald eksisterande UI-språkfallback om rapport-språket ikkje kan hentast.
+      }
+    }
+
+    void loadReportLanguage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runId]);
+
+  const langKey: LangKey =
+    reportLanguage ?? (isInternationalUiMode || isInternationalEnglishContext(engineeringContext) ? "en" : locale);
+  const T = COPY[langKey];
   const [rating, setRating] = useState<PilotFeedbackRating>("useful");
   const [trustLevel, setTrustLevel] = useState<PilotTrustLevel>("partly_trusted");
   const [useCase, setUseCase] = useState<PilotUseCase>("check_answer");

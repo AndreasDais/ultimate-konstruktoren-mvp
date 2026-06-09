@@ -94,6 +94,13 @@ function valueWithUnit(value: string, unit: string | null) {
   return unit ? `${value} ${unit}` : value;
 }
 
+function isInternationalUiModeCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === "pilar-ui-mode=intl");
+}
+
 export default function CalculationSheetPage() {
   const { locale: contextLocale } = useLocale();
   const searchParams = useSearchParams();
@@ -130,10 +137,12 @@ export default function CalculationSheetPage() {
   // (loading/error-state) slik at "Tilbake til full rapport"-knappen ikkje
   // viser på norsk for intl-brukar.
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
+  const [isInternationalUiMode, setIsInternationalUiMode] = useState(false);
   useEffect(() => {
+    setIsInternationalUiMode(isInternationalUiModeCookie());
     setEngineeringContext(loadEngineeringContextFromStorage());
   }, []);
-  const contextLang: PilarDisplayLanguage = isInternationalEnglishContext(engineeringContext) ? "en" : locale;
+  const contextLang: PilarDisplayLanguage = isInternationalUiMode || isInternationalEnglishContext(engineeringContext) ? "en" : locale;
   const displayLanguage = (sheet?.meta.displayLanguage ?? contextLang) as keyof typeof LABELS;
   const L = LABELS[displayLanguage];
 
