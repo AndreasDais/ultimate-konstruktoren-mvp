@@ -42,18 +42,22 @@ function buildSupabaseAndResponse(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  if (pathname === "/" && !request.cookies.has(UI_MODE_COOKIE)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
+  if (pathname === "/") {
+    if (!request.cookies.has(UI_MODE_COOKIE)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
 
-    const response = NextResponse.redirect(url);
-    response.cookies.set(UI_MODE_COOKIE, "intl", {
-      maxAge: 60 * 60 * 24 * 365,
-      path: "/",
-      sameSite: "lax",
-    });
+      const response = NextResponse.redirect(url);
+      response.cookies.set(UI_MODE_COOKIE, "intl", {
+        maxAge: 60 * 60 * 24 * 365,
+        path: "/",
+        sameSite: "lax",
+      });
 
-    return response;
+      return response;
+    }
+
+    return NextResponse.next();
   }
 
   // === RATE-LIMIT-BRANCH ===
