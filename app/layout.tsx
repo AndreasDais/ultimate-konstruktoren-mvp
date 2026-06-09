@@ -9,10 +9,39 @@ import "./tokens.css";
 import "katex/dist/katex.min.css";
 
 const UI_MODE_COOKIE = "pilar-ui-mode";
+const SITE_URL = new URL("https://www.pilarcalc.com");
+const SITE_TITLE = "Pilar";
+const SITE_DESCRIPTION =
+  "AI structural calculation assistant for reviewable structural engineering notes. Results are AI-generated and require professional review.";
 
 export const metadata: Metadata = {
-  title: "Pilar — AI-konstruksjonsassistent",
-  description: "AI-basert konstruksjonsassistent for norsk byggfagleg praksis",
+  metadataBase: SITE_URL,
+  applicationName: SITE_TITLE,
+  title: {
+    default: "Pilar — AI Structural Assistant",
+    template: "%s | Pilar",
+  },
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/home",
+    languages: {
+      en: "/home",
+      "nb-NO": "/heim",
+    },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_TITLE,
+    url: "/home",
+    title: "Pilar — AI Structural Assistant",
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Pilar — AI Structural Assistant",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 // Inline-skript som køyrer FØR React hydrerer:
