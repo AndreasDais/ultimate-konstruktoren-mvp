@@ -141,6 +141,13 @@ function extractCurrentField(
   return { field, value };
 }
 
+function isInternationalUiModeCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === "pilar-ui-mode=intl");
+}
+
 type RapportLoadingPilelinjaProps = {
   runId: string;
   locale: Locale;
@@ -165,10 +172,11 @@ export function RapportLoadingPilelinja({
   const [isCached, setIsCached] = useState(false);
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
   const [engineeringContextLoaded, setEngineeringContextLoaded] = useState(false);
+  const [isInternationalUiMode, setIsInternationalUiMode] = useState(false);
   // Engineering-context i localStorage avgjer engelsk modus. Pre-mount er
   // contexten null, så vi viser locale-default (norsk) først — same flicker-
   // mønster som resten av workbench-laget.
-  const langKey: LangKey = displayLanguage ?? (isInternationalEnglishContext(engineeringContext)
+  const langKey: LangKey = displayLanguage ?? (isInternationalUiMode || isInternationalEnglishContext(engineeringContext)
     ? "en"
     : locale);
   const L = LABELS[langKey];
@@ -184,6 +192,7 @@ export function RapportLoadingPilelinja({
   });
 
   useEffect(() => {
+    setIsInternationalUiMode(isInternationalUiModeCookie());
     setEngineeringContext(loadEngineeringContextFromStorage());
     setEngineeringContextLoaded(true);
   }, []);

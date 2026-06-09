@@ -46,6 +46,10 @@ const ERROR_TYPES: { value: string; labels: Record<LangKey, string> }[] = [
       en: "Missing check",
     },
   },
+  {
+    value: "anna",
+    labels: { nb: "Annet", nn: "Anna", en: "Other" },
+  },
 ];
 
 const SECTION_VALUES = [
@@ -99,6 +103,16 @@ const COPY: Record<LangKey, {
   errorCommentShort: string;
   errorGeneric: string;
   errorUnknown: string;
+  bugToolTitle: string;
+  bugToolSubtitle: string;
+  screenshotLabel: string;
+  screenshotHint: string;
+  screenshotPickedLabel: string;
+  contextLabel: string;
+  pageUrlLabel: string;
+  viewportLabel: string;
+  browserLabel: string;
+  entryPointLabel: string;
 }> = {
   nb: {
     title: "Send tilbakemelding",
@@ -124,6 +138,16 @@ const COPY: Record<LangKey, {
     errorCommentShort: "Kommentaren må være minst 5 tegn.",
     errorGeneric: "Kunne ikke sende tilbakemelding",
     errorUnknown: "Ukjent feil",
+    bugToolTitle: "Meld fra",
+    bugToolSubtitle: "Send en rask tilbakemelding fra denne rapportvisningen. Teknisk kontekst legges ved automatisk.",
+    screenshotLabel: "Skjermbilde",
+    screenshotHint: "Midlertidig: velg et bilde hvis du har et. Filnavn og størrelse lagres i admin, men selve bildet lagres ikke ennå.",
+    screenshotPickedLabel: "Valgt skjermbilde:",
+    contextLabel: "Teknisk kontekst",
+    pageUrlLabel: "Side:",
+    viewportLabel: "Visning:",
+    browserLabel: "Nettleser:",
+    entryPointLabel: "Kilde:",
   },
   nn: {
     title: "Send tilbakemelding",
@@ -149,6 +173,16 @@ const COPY: Record<LangKey, {
     errorCommentShort: "Kommentaren må vere minst 5 teikn.",
     errorGeneric: "Kunne ikkje sende tilbakemelding",
     errorUnknown: "Ukjend feil",
+    bugToolTitle: "Meld frå",
+    bugToolSubtitle: "Send ei rask tilbakemelding frå denne rapportvisinga. Teknisk kontekst blir lagt ved automatisk.",
+    screenshotLabel: "Skjermbilete",
+    screenshotHint: "Mellombels: vel eit bilete om du har eit. Filnamn og storleik blir lagra i admin, men sjølve biletet blir ikkje lagra enno.",
+    screenshotPickedLabel: "Valt skjermbilete:",
+    contextLabel: "Teknisk kontekst",
+    pageUrlLabel: "Side:",
+    viewportLabel: "Vising:",
+    browserLabel: "Nettlesar:",
+    entryPointLabel: "Kjelde:",
   },
   en: {
     title: "Send feedback",
@@ -174,11 +208,28 @@ const COPY: Record<LangKey, {
     errorCommentShort: "The comment must be at least 5 characters.",
     errorGeneric: "Could not send feedback",
     errorUnknown: "Unknown error",
+    bugToolTitle: "Report an issue",
+    bugToolSubtitle: "Send quick feedback from this report view. Technical context is attached automatically.",
+    screenshotLabel: "Screenshot",
+    screenshotHint: "Temporary: select an image if you have one. The file name and size are saved in admin, but the image itself is not stored yet.",
+    screenshotPickedLabel: "Selected screenshot:",
+    contextLabel: "Technical context",
+    pageUrlLabel: "Page:",
+    viewportLabel: "Viewport:",
+    browserLabel: "Browser:",
+    entryPointLabel: "Source:",
   },
 };
 
 type Severity = "low" | "medium" | "high";
 type SubmitState = "idle" | "submitting" | "submitted" | "error";
+type FeedbackEntryPoint = "actions" | "bugfix";
+type PageContext = {
+  url: string;
+  viewport: string;
+  browser: string;
+  source: string;
+};
 
 type Props = {
   open: boolean;
@@ -188,7 +239,24 @@ type Props = {
   runId: string;
   /** "nb" | "nn" | "en" — frå parent (typisk reportDisplayLanguage). Default "nb". */
   displayLanguage?: LangKey;
+  entryPoint?: FeedbackEntryPoint;
 };
+
+function truncate(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+}
+
+function maskShareTokenInUrl(href: string) {
+  try {
+    const url = new URL(href);
+    if (url.searchParams.has("share")) {
+      url.searchParams.set("share", "secure-link");
+    }
+    return url.toString();
+  } catch {
+    return href.replace(/([?&]share=)[^&]+/, "$1secure-link");
+  }
+}
 
 export default function FeilrapportModal({
   open,
@@ -197,17 +265,37 @@ export default function FeilrapportModal({
   documentId,
   runId,
   displayLanguage = "nb",
+  entryPoint = "actions",
 }: Props) {
   const T = COPY[displayLanguage];
   const [errorTypes, setErrorTypes] = useState<string[]>([]);
   const [section, setSection] = useState<string>("Heile rapporten");
   const [severity, setSeverity] = useState<Severity>("medium");
   const [comment, setComment] = useState("");
+  const [screenshotNote, setScreenshotNote] = useState("");
+  const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   const modalRef = useRef<HTMLDivElement>(null);
   const firstChipRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+
+    setPageContext({
+      url: maskShareTokenInUrl(window.location.href),
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      browser: truncate(window.navigator.userAgent, 180),
+      source: entryPoint === "bugfix" ? "floating bugfix button" : "report actions",
+    });
+
+    if (entryPoint === "bugfix") {
+      setErrorTypes((prev) => (prev.length > 0 ? prev : ["anna"]));
+      setSection("Heile rapporten");
+      setSeverity("medium");
+    }
+  }, [entryPoint, open]);
 
   // Focus-trap + Escape + body-scroll-lock når modal er open
   useEffect(() => {
@@ -265,6 +353,8 @@ export default function FeilrapportModal({
       setSection("Heile rapporten");
       setSeverity("medium");
       setComment("");
+      setScreenshotNote("");
+      setPageContext(null);
       setSubmitState("idle");
       setErrorMessage("");
     }, 220);
@@ -291,6 +381,18 @@ export default function FeilrapportModal({
     setSubmitState("submitting");
 
     try {
+      const contextLines = [
+        "",
+        "---",
+        "[PILAR bugfix context]",
+        `${T.entryPointLabel} ${pageContext?.source ?? "unknown"}`,
+        `${T.pageUrlLabel} ${pageContext?.url ?? "unknown"}`,
+        `${T.viewportLabel} ${pageContext?.viewport ?? "unknown"}`,
+        `${T.browserLabel} ${pageContext?.browser ?? "unknown"}`,
+        screenshotNote ? `${T.screenshotPickedLabel} ${screenshotNote}` : "",
+      ].filter(Boolean);
+      const enrichedComment = `${comment.trim()}\n${contextLines.join("\n")}`;
+
       const res = await fetch("/api/error-reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -299,7 +401,7 @@ export default function FeilrapportModal({
           error_types: errorTypes,
           selected_section: section,
           severity_user: severity,
-          user_comment: comment.trim(),
+          user_comment: enrichedComment,
         }),
       });
 
@@ -317,6 +419,9 @@ export default function FeilrapportModal({
   }
 
   if (!open) return null;
+
+  const modalTitle = entryPoint === "bugfix" ? T.bugToolTitle : T.title;
+  const modalSubtitle = entryPoint === "bugfix" ? T.bugToolSubtitle : T.subtitle;
 
   return (
     <div
@@ -355,9 +460,9 @@ export default function FeilrapportModal({
             </button>
 
             <h2 id="feilrapport-modal-title" className="feilrapport-modal__title">
-              {T.title}
+              {modalTitle}
             </h2>
-            <p className="feilrapport-modal__subtitle">{T.subtitle}</p>
+            <p className="feilrapport-modal__subtitle">{modalSubtitle}</p>
 
             {/* TYPE-CHIPS (multi-select) */}
             <div className="feilrapport-modal__field">
@@ -436,6 +541,31 @@ export default function FeilrapportModal({
               />
             </div>
 
+            {/* SKJERMBILDE-NOTAT */}
+            <div className="feilrapport-modal__field">
+              <label htmlFor="fr-screenshot" className="feilrapport-modal__label">
+                {T.screenshotLabel}
+              </label>
+              <input
+                id="fr-screenshot"
+                className="feilrapport-modal__file"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.currentTarget.files?.[0];
+                  setScreenshotNote(
+                    file ? `${file.name} (${Math.ceil(file.size / 1024)} KB)` : "",
+                  );
+                }}
+              />
+              <p className="feilrapport-modal__hint">{T.screenshotHint}</p>
+              {screenshotNote && (
+                <p className="feilrapport-modal__hint">
+                  {T.screenshotPickedLabel} {screenshotNote}
+                </p>
+              )}
+            </div>
+
             {/* AUTO-VEDLEGG */}
             <div className="feilrapport-modal__attachment">
               <div className="feilrapport-modal__attachment-label">
@@ -444,6 +574,11 @@ export default function FeilrapportModal({
               <pre className="feilrapport-modal__attachment-data">
 {`${T.reportIdLabel}  ${documentId}
 ${T.runIdLabel}      ${runId.slice(0, 8)}…`}
+              </pre>
+              <pre className="feilrapport-modal__attachment-data feilrapport-modal__attachment-data--context">
+{`${T.contextLabel}
+${T.pageUrlLabel} ${pageContext?.url ?? "unknown"}
+${T.viewportLabel} ${pageContext?.viewport ?? "unknown"}`}
               </pre>
             </div>
 

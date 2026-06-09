@@ -379,6 +379,8 @@ const BASE_RP_LABELS: Record<string, Record<Locale, string>> = {
   lagNyBerekning: { nb: "Lag ny beregning fra denne →", nn: "Lag ny berekning frå denne →" },
   saMissionControl: { nb: "Se Mission Control →", nn: "Sjå Mission Control →" },
   sendTilbakemelding: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
+  bugfixTool: { nb: "Meld fra", nn: "Meld frå" },
+  bugfixToolAria: { nb: "Meld feil i rapporten", nn: "Meld feil i rapporten" },
   giPilotFeedback: { nb: "Gi tilbakemelding på piloten", nn: "Gi tilbakemelding på piloten" },
   // Kontrollstatus-panel
   kontrollstatus: { nb: "Kontrollstatus", nn: "Kontrollstatus" },
@@ -704,6 +706,13 @@ function normalizeAgentOutput(
   };
 }
 
+function isInternationalUiModeCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === "pilar-ui-mode=intl");
+}
+
 export default function RapportPage() {
   const { locale } = useLocale();
   const params = useParams();
@@ -715,17 +724,25 @@ export default function RapportPage() {
   const [existingReportChecked, setExistingReportChecked] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackEntryPoint, setFeedbackEntryPoint] = useState<"actions" | "bugfix">("actions");
   // Signed share token: carried in ?share=<token> for shared viewers, or minted
   // by the owner (via the owner-gated share route) so the QR/share card points
   // at the sanitized shared flow instead of a naked /rapport/<id>.
   const [shareToken, setShareToken] = useState("");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [engineeringContext, setEngineeringContext] = useState<EngineeringContext | null>(null);
-  const reportChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(engineeringContext)
+  const [isInternationalUiMode, setIsInternationalUiMode] = useState(false);
+  const reportChromeLanguage: PilarDisplayLanguage = isInternationalUiMode || isInternationalEnglishContext(engineeringContext)
     ? "en"
     : locale;
 
+  function openFeedback(entryPoint: "actions" | "bugfix") {
+    setFeedbackEntryPoint(entryPoint);
+    setFeedbackOpen(true);
+  }
+
   useEffect(() => {
+    setIsInternationalUiMode(isInternationalUiModeCookie());
     setEngineeringContext(loadEngineeringContextFromStorage());
   }, []);
 
@@ -733,9 +750,8 @@ export default function RapportPage() {
     let cancelled = false;
     const abortController = new AbortController();
     const timeoutId = window.setTimeout(() => abortController.abort(), 30000);
-    const fetchChromeLanguage: PilarDisplayLanguage = isInternationalEnglishContext(
-      loadEngineeringContextFromStorage(),
-    )
+    const fetchChromeLanguage: PilarDisplayLanguage = isInternationalUiModeCookie() ||
+      isInternationalEnglishContext(loadEngineeringContextFromStorage())
       ? "en"
       : locale;
     const readOptions = { cache: "no-store" as const, signal: abortController.signal };
@@ -1067,6 +1083,8 @@ export default function RapportPage() {
     lagNyBerekning: "Create new calculation from this →",
     saMissionControl: "See Mission Control →",
     sendTilbakemelding: "Report an error",
+    bugfixTool: "Report an issue",
+    bugfixToolAria: "Report an issue in this report",
     giPilotFeedback: "Give pilot feedback",
     kontrollstatus: "Control status",
     statusInputTolking: "Input interpretation",
@@ -2453,7 +2471,7 @@ export default function RapportPage() {
             {calculationSheetLabel}
           </a>
           <button
-            onClick={() => setFeedbackOpen(true)}
+            onClick={() => openFeedback("actions")}
             className="uk-btn"
           >
             {RP_LABELS.sendTilbakemelding[locale]}
@@ -2517,6 +2535,16 @@ export default function RapportPage() {
         </div>
         </aside>
 
+<button
+  type="button"
+  className="rapport-bugfix-fab no-print"
+  onClick={() => openFeedback("bugfix")}
+  aria-label={RP_LABELS.bugfixToolAria[locale]}
+>
+  <span className="rapport-bugfix-fab__icon" aria-hidden="true">!</span>
+  <span className="rapport-bugfix-fab__text">{RP_LABELS.bugfixTool[locale]}</span>
+</button>
+
 <FeilrapportModal
   open={feedbackOpen}
   onClose={() => setFeedbackOpen(false)}
@@ -2524,6 +2552,7 @@ export default function RapportPage() {
   documentId={data.report.document_id}
   runId={runId}
   displayLanguage={reportDisplayLanguage}
+  entryPoint={feedbackEntryPoint}
 />
 </div>
 );
